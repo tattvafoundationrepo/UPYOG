@@ -21,7 +21,8 @@ public class VerifierService {
 
 
     public List<VerificationDetails> getApplicationDetails(VerifierRequest request){
-       
+       criteria.setMachineId(null);
+       criteria.setCourseId(null); 
        criteria.setUuid(request.getRequestInfo().getUserInfo().getUuid());
        if("machine".equalsIgnoreCase(request.getType())) {
           criteria.setMachineId(request.getDetailId());
