@@ -160,7 +160,7 @@ public class SchemeApplicationValidator {
             if(benefitted){
 
                 response.setError(message.append("you have already benifitted for ")
-                .append(response.getSchemeName())
+                .append(response.getSchemeName()).append("  ")
                 .append(response.getBenifittedDate().toString()));
                 return response;
             }
@@ -173,9 +173,8 @@ public class SchemeApplicationValidator {
                 case GENDER:
                     if (request.getGender() != null && !gender) {
                         gender = evaluateCondition(request.getGender().toLowerCase(), condition, value.toLowerCase());
+                        gflag =true;
                     }
-                    response.setGenderEligibility(gender);
-                    gflag =true;
                     break;
 
                 case DISABILITY:
@@ -211,7 +210,7 @@ public class SchemeApplicationValidator {
                 case DOCUMENT:
                     if (!document) {
                         for (String documentName : documentNames) {
-                            document = evaluateCondition(documentName, condition, value);
+                            document = evaluateCondition(documentName.toUpperCase(), condition, value.toUpperCase());
                             if (document) {
                                 break;
                             }
