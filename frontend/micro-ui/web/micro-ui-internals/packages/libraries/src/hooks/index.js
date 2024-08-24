@@ -264,8 +264,15 @@ import useServiceSearchPTR from "./ptr/useServiceSearchPTR";
 import usePetDocumentSearch from "./ptr/usePetDocumentSearch";
 import useMyPetPayments from "./ptr/useMyPetPayments";
 import useTenantsPTR from "./ptr/useTenants";
-
-
+import useCommonGet from "./bmc/useCommon";
+import useCommonGetBank from "./bmc/useCommonGetBank";
+import useSaveUserDetail from "./bmc/useSaveUserDetail";
+import useSaveSchemes from './bmc/saveScheme';
+import useVerifierSchemeDetail from './bmc/useVerifierScheme';
+import useVerifierScheme from './bmc/verifyScheme';
+import useSchemesGet from "./bmc/getSchemes";
+import useUsersDetails from "./bmc/useUsers";
+import useLocation from './bmc/useLocation';
 import createTokenAPI from "./digiLockerApi/createTokenAPI";
 
 const pgr = {
@@ -527,6 +534,17 @@ const reports = {
   useReportMeta,
 };
 
+const bmc={
+  useCommonGet,
+  useSchemesGet,
+  useCommonGetBank,
+  useUsersDetails,
+  useSaveUserDetail,
+  useSaveSchemes,
+  useVerifierSchemeDetail,
+  useLocation
+};
+
 const Hooks = {
   useSessionStorage,
   useQueryParams,
@@ -579,9 +597,11 @@ const Hooks = {
   survey,
   noc,
   ws,
+  bmc,
   useCustomMDMS,
   useCustomAPIHook,
   reports,
+  bmc,
   useGetHowItWorksJSON,
   useGetFAQsJSON,
   useGetDSSFAQsJSON,

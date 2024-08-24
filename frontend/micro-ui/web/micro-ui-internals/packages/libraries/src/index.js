@@ -30,7 +30,7 @@ import HrmsService from "./services/elements/HRMS";
 import { InboxGeneral } from "./services/elements/InboxService";
 import EventsServices from "./services/elements/Events";
 import { DigiLockerService } from "./services/elements/DigiLocker";
-
+import SchemeService from "./services/elements/Scheme";
 import ShareFiles from "./services/molecules/ShareFiles";
 import { GetServiceDefinitions } from "./services/molecules/ServiceDefinitions";
 import { ULBService } from "./services/molecules/Ulb";
@@ -117,6 +117,7 @@ const initLibraries = () => {
   setupLibraries("BillServices", BillServices);
   setupLibraries("AuditService",AuditService);
   setupLibraries("PTRService", PTRService);
+  setupLibraries("SchemeService",SchemeService);
   return new Promise((resolve) => {
     initI18n(resolve);
   });

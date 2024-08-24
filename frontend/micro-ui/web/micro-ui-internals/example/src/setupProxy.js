@@ -3,17 +3,18 @@ const { createProxyMiddleware } = require("http-proxy-middleware");
 const createProxy = createProxyMiddleware({
   //target: process.env.REACT_APP_PROXY_API || "https://uat.digit.org",
   // target: process.env.REACT_APP_PROXY_API || "https://qa.digit.org",
-  target: process.env.REACT_APP_PROXY_API || "https://upyog-test.niua.org",
+  target: process.env.REACT_APP_PROXY_API || "http://quickstart.dev-tattvafoundation.org",
   changeOrigin: true,
 });
 const assetsProxy = createProxyMiddleware({
-  target: process.env.REACT_APP_PROXY_ASSETS || "https://upyog-test.niua.org",
+  target: process.env.REACT_APP_PROXY_ASSETS || "http://quickstart.dev-tattvafoundation.org",
   changeOrigin: true,
 });
 module.exports = function (app) {
   [
     "/access/v1/actions/mdms",
     "/egov-mdms-service",
+    "/bmc-service-v1",
     "/egov-location",
     "/localization",
     "/egov-workflow-v2",

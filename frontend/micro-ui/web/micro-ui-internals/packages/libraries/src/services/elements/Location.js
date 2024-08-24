@@ -19,4 +19,28 @@ export const LocationService = {
     });
     return response;
   },
+  getZones: (tenantId) => {
+    return ServiceRequest({
+      serviceName: "getZones",
+      url: Urls.location.zones,
+      params: { tenantId: tenantId },
+      useCache: true,
+    });
+  },
+  getBlocks: (tenantId) => {
+    return ServiceRequest({
+      serviceName: "getBlocks",
+      url: Urls.location.blocks,
+      params: { tenantId: tenantId },
+      useCache: true,
+    });
+  },
+  getWards: (tenantId) => {
+    return ServiceRequest({
+      serviceName: "getWards",
+      url: Urls.location.wards,
+      params: { tenantId: tenantId },
+      useCache: true,
+    });
+  }
 };
