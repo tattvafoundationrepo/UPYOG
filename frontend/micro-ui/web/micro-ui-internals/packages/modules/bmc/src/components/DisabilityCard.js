@@ -125,7 +125,7 @@ const DisabilityCard = ({ tenantId, onUpdate, initialRows = {}, AllowEdit = fals
         <div className="bmc-card-row">
           <div className="bmc-card-row">
             <div className="bmc-col-large-header">
-              <div className="bmc-title">{t("BMC_DISABILITY_DETAILS")}</div>
+              <div className="bmc-title">{t("DISABILITY DETAILS")}</div>
             </div>
             <div className="bmc-col-small-header" style={{ textAlign: "end" }}>
               <ToggleSwitch id={"DisabilityToggle"} isOn={isEditable} handleToggle={handleToggle} onLabel="Yes" offLabel="No" disabled={!AllowEdit} />

@@ -65,17 +65,6 @@ const SchemeService = {
     });
   },
 
-  getverifyScheme: (data) => {
-    return Request({
-      data: data,
-      url: Urls.schemes.verifyScheme,
-      useCache: false,
-      method: "POST",
-      auth: true,
-      userService: true,
-    });
-  },
-
   getBanks: (data) => {
     return Request({
       data: data,

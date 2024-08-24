@@ -5,6 +5,12 @@ import { useTranslation } from "react-i18next";
 
 const BankDetailsForm = ({ tenantId, onUpdate, initialRows = [], AddOption = true, AllowRemove = true, ...props }) => {
   const { t } = useTranslation();
+  /*
+TO DO
+still branch Id is not getting populated. 
+Also try to excute only when ifsc length =11. 
+fix length of input for 11
+*/
   const initialDefaultValues = {
     branchId: "",
     name: "",
@@ -90,7 +96,7 @@ const BankDetailsForm = ({ tenantId, onUpdate, initialRows = [], AddOption = tru
       },
     ];
     setRows(updatedRows);
-
+   
     reset(initialDefaultValues);
     onUpdate(updatedRows);
     console.log("Added Row: ", updatedRows);
@@ -106,24 +112,24 @@ const BankDetailsForm = ({ tenantId, onUpdate, initialRows = [], AddOption = tru
     <React.Fragment>
       <div className="bmc-row-card-header">
         <div className="bmc-card-row">
-          <div className="bmc-title">{t("BMC_BANK DETAILS")}</div>
+          <div className="bmc-title">{t("BANK DETAILS")}</div>
           <div className="bmc-table-container" style={{ padding: "1rem" }}>
             <form onSubmit={handleSubmit(addRow)}>
               <table className="bmc-hover-table">
                 <thead>
                   <tr>
-                    <th scope="col">{t("BMC_IFSC Code")}</th>
-                    <th scope="col">{t("BMC_MICR Code")}</th>
-                    <th scope="col">{t("BMC_Account Number")}</th>
-                    <th scope="col">{t("BMC_Bank Name")}</th>
-                    <th scope="col">{t("BMC_Branch Name")}</th>
+                    <th scope="col">{t("IFSC Code")}</th>
+                    <th scope="col">{t("MICR Code")}</th>
+                    <th scope="col">{t("Account Number")}</th>
+                    <th scope="col">{t("Bank Name")}</th>
+                    <th scope="col">{t("Branch Name")}</th>
                     {AllowRemove && <th scope="col"></th>}
                   </tr>
                 </thead>
                 <tbody>
                   {AddOption && (
                     <tr>
-                      <td data-label={t("BMC_IFSC Code")} style={{ textAlign: "left" }}>
+                      <td data-label={t("IFSC Code")} style={{ textAlign: "left" }}>
                         <Controller
                           control={control}
                           name="ifsc"
@@ -140,7 +146,7 @@ const BankDetailsForm = ({ tenantId, onUpdate, initialRows = [], AddOption = tru
                           )}
                         />
                       </td>
-                      <td data-label={t("BMC_MICR Code")} style={{ textAlign: "left" }}>
+                      <td data-label={t("MICR Code")} style={{ textAlign: "left" }}>
                         <Controller
                           control={control}
                           name="micr"
@@ -152,7 +158,7 @@ const BankDetailsForm = ({ tenantId, onUpdate, initialRows = [], AddOption = tru
                           )}
                         />
                       </td>
-                      <td data-label={t("BMC_Account Number")} style={{ textAlign: "left" }}>
+                      <td data-label={t("Account Number")} style={{ textAlign: "left" }}>
                         <Controller
                           control={control}
                           name="accountNumber"
@@ -165,7 +171,7 @@ const BankDetailsForm = ({ tenantId, onUpdate, initialRows = [], AddOption = tru
                           )}
                         />
                       </td>
-                      <td data-label={t("BMC_BANK_NAME")} style={{ textAlign: "left" }}>
+                      <td data-label={t("Bank Name")} style={{ textAlign: "left" }}>
                         <Controller
                           control={control}
                           name="name"
@@ -176,7 +182,7 @@ const BankDetailsForm = ({ tenantId, onUpdate, initialRows = [], AddOption = tru
                           )}
                         />
                       </td>
-                      <td data-label={t("BMC_BRANCH_NAME")} style={{ textAlign: "left" }}>
+                      <td data-label={t("Branch Name")} style={{ textAlign: "left" }}>
                         <Controller
                           control={control}
                           name="branchName"
@@ -187,7 +193,7 @@ const BankDetailsForm = ({ tenantId, onUpdate, initialRows = [], AddOption = tru
                           )}
                         />
                       </td>
-                      <td data-label={t("BMC_ADD_ROW")}>
+                      <td data-label={t("Add Row")}>
                         <button type="submit">
                           <AddIcon className="bmc-add-icon" />
                         </button>
@@ -197,14 +203,14 @@ const BankDetailsForm = ({ tenantId, onUpdate, initialRows = [], AddOption = tru
 
                   {rows.map((row, index) => (
                     <tr key={index}>
-                      <td style={{ display: "none" }}>{row.branchId}</td>
-                      <td>{row.ifsc}</td>
-                      <td>{row.micr}</td>
-                      <td>{row.accountNumber}</td>
-                      <td>{row.name}</td>
-                      <td>{row.branchName}</td>
+                      <td style={{ display: "none" }}>{row.branchId || "-"}</td>
+                      <td>{row.ifsc || "-"}</td>
+                      <td>{row.micr || "-"}</td>
+                      <td>{row.accountNumber || "-"}</td>
+                      <td>{row.name || "-"}</td>
+                      <td>{row.branchName || "-"}</td>
                       {AllowRemove && (
-                        <td data-label={t("BMC_REMOVE_ROW")}>
+                        <td data-label={t("Remove Row")}>
                           <button type="button" onClick={() => removeRow(index)}>
                             <RemoveIcon className="bmc-remove-icon" />
                           </button>

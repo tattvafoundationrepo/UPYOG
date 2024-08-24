@@ -14,7 +14,7 @@ const SchemeDetailsPage = ({ onUpdate, initialRows = {}, AllowEdit = true, tenan
   const [isEditable, setIsEditable] = useState(AllowEdit);
   const headerLocale = Digit.Utils.locale.getTransformedLocale(tenantId);
   const [documents, setDocuments] = useState([]);
-  const [selectedDocuments, setSelectedDocuments] = useState(initialRows?.documentDetails?.documents || []);
+  const [selectedDocuments, setSelectedDocuments] = useState(initialRows?.documents || []);
 
   const {
     control,
@@ -26,12 +26,12 @@ const SchemeDetailsPage = ({ onUpdate, initialRows = {}, AllowEdit = true, tenan
     formState: { errors, isValid },
   } = useForm({
     defaultValues: {
-      income: initialRows?.UserOtherDetails?.income || "",
+      income: initialRows?.income || "",
       statement: initialRows?.statement || "",
       agreeToPay: initialRows?.agreeToPay || "",
       documents: selectedDocuments || [],
       employed: initialRows?.employed || "",
-      Occupation: initialRows?.UserOtherDetails?.Occupation || "Service",
+      Occupation: initialRows?.Occupation || "Service",
     },
     mode: "onChange",
   });
@@ -142,9 +142,9 @@ const SchemeDetailsPage = ({ onUpdate, initialRows = {}, AllowEdit = true, tenan
             <div className="bmc-card">
               {selectedScheme && selectedScheme.criteria && selectedScheme.criteria.some((criterion) => criterion.criteriaType) ? (
                 <div className="bmc-card-row">
-                  <div className="bmc-title">{t("BMC_SCHEME_DETAILS")}</div>
+                  <div className="bmc-title">Scheme Details</div>
                   <div className="bmc-col1-card">
-                    <CardLabel className="bmc-label">{t("BMC_DOCUMENTS")}</CardLabel>
+                    <CardLabel className="bmc-label">{t("BMC_Documents*")}</CardLabel>
                     <Controller
                       name="documents"
                       control={control}
@@ -184,7 +184,7 @@ const SchemeDetailsPage = ({ onUpdate, initialRows = {}, AllowEdit = true, tenan
                   </div>
                   <div className="bmc-col1-card">
                     <LabelFieldPair>
-                      <CardLabel className="bmc-label">{t("BMC_INCOME")}</CardLabel>
+                      <CardLabel className="bmc-label">{t("BMC_Income*")}</CardLabel>
                       <Controller
                         control={control}
                         name="income"
@@ -217,14 +217,16 @@ const SchemeDetailsPage = ({ onUpdate, initialRows = {}, AllowEdit = true, tenan
                 <div>No criteria available for the selected scheme.</div>
               )}
             </div>
-          ) : null}
+          ) : (
+            <div>Please select a scheme.</div>
+          )}
         </div>
         <div className="bmc-card-row">
           <div className="bmc-col2-card" style={{ padding: "0" }}>
-            <div className="bmc-title">{t("BMC_OCCUPATION")}</div>
+            <div className="bmc-title">Occupation Details</div>
             <div className="bmc-col2-card" style={{ padding: "0" }}>
               <LabelFieldPair t={t} config={config} isMultipleAllow={true}>
-                <CardLabel className="bmc-label">{t("BMC_OCCUPATION")}</CardLabel>
+                <CardLabel className="bmc-label">{t("BMC_Occupation*")}</CardLabel>
                 <Controller
                   control={control}
                   name="employed"
@@ -249,7 +251,7 @@ const SchemeDetailsPage = ({ onUpdate, initialRows = {}, AllowEdit = true, tenan
             {isEmployed && (
               <div className="bmc-col1-card">
                 <LabelFieldPair t={t} config={config} isMultipleAllow={true}>
-                  <CardLabel className="bmc-label">{t("BMC_EMPLOYEEMENT_DETAILS")}</CardLabel>
+                  <CardLabel className="bmc-label">{t("BMC_Employment Detail*")}</CardLabel>
                   <Controller
                     control={control}
                     name="Occupation"
@@ -261,8 +263,8 @@ const SchemeDetailsPage = ({ onUpdate, initialRows = {}, AllowEdit = true, tenan
                             optionsKey="value"
                             disabled={!isEditable}
                             options={[
-                              { label: t("BMC_SERVICE"), value: "Service" },
-                              { label: t("BMC_BUSINESS"), value: "Business" },
+                              { label: t("Service"), value: "Service" },
+                              { label: t("Business"), value: "Business" },
                             ]}
                             style={{ display: "flex", flexDirection: "row", gap: "12px", marginTop: "1rem" }}
                             selectedOption={props.value}
@@ -274,8 +276,8 @@ const SchemeDetailsPage = ({ onUpdate, initialRows = {}, AllowEdit = true, tenan
                             optionsKey="value"
                             disabled={!isEditable}
                             options={[
-                              { label: t("BMC_SERVICE"), value: "Service" },
-                              { label: t("BMC_BUSINESS"), value: "Business" },
+                              { label: t("Service"), value: "Service" },
+                              { label: t("Business"), value: "Business" },
                             ]}
                             style={{ display: "flex", flexDirection: "row", gap: "12px", marginTop: "1rem" }}
                             selectedOption={props.value}
@@ -298,7 +300,7 @@ const SchemeDetailsPage = ({ onUpdate, initialRows = {}, AllowEdit = true, tenan
                 name="agreeToPay"
                 render={(props) => (
                   <CheckBox
-                    label={t("BMC_AGREE_TO_PAY_CONTRIBUTION")}
+                    label={t("Agree to pay Contribution.")}
                     styles={{ height: "auto", color: "#f47738", fontWeight: "bold", fontSize: "18px", float: "left" }}
                     checked={props.value}
                     onChange={() => {
@@ -317,7 +319,7 @@ const SchemeDetailsPage = ({ onUpdate, initialRows = {}, AllowEdit = true, tenan
                 name="statement"
                 render={(props) => (
                   <CheckBox
-                    label={t("BMC_To_the_best_of_my_knowledge_the_information_provided_above_is_correct..")}
+                    label={t("To the best of my knowledge, the information provided above is correct..")}
                     styles={{ height: "auto", color: "#f47738", fontWeight: "bold", fontSize: "18px", float: "left" }}
                     checked={props.value}
                     onChange={() => {

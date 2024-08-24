@@ -111,23 +111,23 @@ const QualificationCard = ({ tenantId, onUpdate, initialRows = [], AddOption = t
     <React.Fragment>
       <div className="bmc-row-card-header">
         <div className="bmc-card-row">
-          <div className="bmc-title">{t("BMC_QUALIFICATION")}</div>
+          <div className="bmc-title">{t("QUALIFICATION")}</div>
           <div className="bmc-table-container" style={{ padding: "1rem" }}>
             <form onSubmit={handleSubmit(addRow)}>
               <table className="bmc-hover-table">
                 <thead>
                   <tr>
-                    <th scope="col">{t("BMC_QUALIFICATION")}</th>
-                    <th scope="col">{t("BMC_YEAR_OF_PASSING")}</th>
-                    <th scope="col">{t("BMC_PERCENTAGE")}</th>
-                    <th scope="col">{t("BMC_BOARD")}</th>
+                    <th scope="col">Qualification</th>
+                    <th scope="col">Year of Passing</th>
+                    <th scope="col">Percentage</th>
+                    <th scope="col">Board</th>
                     {AllowRemove && <th scope="col"></th>}
                   </tr>
                 </thead>
                 <tbody>
                   {AddOption && (
                     <tr>
-                      <td data-label={t("BMC_QUALIFICATION")} style={{ textAlign: "left" }}>
+                      <td data-label="Qualification" style={{ textAlign: "left" }}>
                         <Controller
                           control={control}
                           name="qualification"
@@ -149,7 +149,7 @@ const QualificationCard = ({ tenantId, onUpdate, initialRows = [], AddOption = t
                           )}
                         />
                       </td>
-                      <td data-label={t("BMC_YEAR_OF_PASSING")} style={{ textAlign: "left" }}>
+                      <td data-label="Year of Passing" style={{ textAlign: "left" }}>
                         <Controller
                           control={control}
                           name="yearOfPassing"
@@ -171,7 +171,7 @@ const QualificationCard = ({ tenantId, onUpdate, initialRows = [], AddOption = t
                           )}
                         />
                       </td>
-                      <td data-label={t("BMC_PERCENTAGE")} style={{ textAlign: "left" }}>
+                      <td data-label="Percentage" style={{ textAlign: "left" }}>
                         <Controller
                           control={control}
                           name="percentage"
@@ -201,7 +201,7 @@ const QualificationCard = ({ tenantId, onUpdate, initialRows = [], AddOption = t
                           )}
                         />
                       </td>
-                      <td data-label={t("BMC_BOARD")} style={{ textAlign: "left" }}>
+                      <td data-label="Board" style={{ textAlign: "left" }}>
                         <Controller
                           control={control}
                           name="board"
@@ -237,7 +237,7 @@ const QualificationCard = ({ tenantId, onUpdate, initialRows = [], AddOption = t
                       <td>{row.percentage}</td>
                       <td>{row.board ? row.board.label : "-"}</td>
                       {AllowRemove && (
-                        <td data-label={t("BMC_REMOVE_ROW")}>
+                        <td data-label="Remove Row">
                           <button type="button" onClick={() => removeRow(index)}>
                             <RemoveIcon className="bmc-remove-icon" />
                           </button>

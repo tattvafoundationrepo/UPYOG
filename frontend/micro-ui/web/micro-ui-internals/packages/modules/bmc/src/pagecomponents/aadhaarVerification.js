@@ -1,4 +1,4 @@
-import { CardLabel, LabelFieldPair, TextInput,OTPInput } from "@upyog/digit-ui-react-components";
+import { CardLabel, LabelFieldPair, TextInput } from "@egovernments/digit-ui-react-components";
 import React, { useState } from "react";
 import { useHistory } from "react-router-dom";
 import Timeline from "../components/bmcTimeline";
@@ -39,9 +39,7 @@ const AadhaarVerification = ({ t, setError: setFormError, clearErrors: clearForm
       setError("Aadhaar number should contain only 12 digits");
     }
   };
-  const test =(a)=>{
-    console.log(a);
-  }
+
   const validateAadhaar = () => {
     if (aadhaar.every((digit) => digit !== "")) {
       setError("");
@@ -69,7 +67,7 @@ const AadhaarVerification = ({ t, setError: setFormError, clearErrors: clearForm
       <div className="bmc-card-full">
         {window.location.href.includes("/citizen") ? <Timeline currentStep={1} /> : null}
         <div className="bmc-row-card-header" style={{ padding: "0" }}>
-          <div className="bmc-card-row" style={{ height: "80%" }}>
+          <div className="bmc-card-row" style={{ height: "100%" }}>
             <div
               className="bmc-col2-card"
               style={{ height: "55vh", display: "flex", justifyContent: "center", alignItems: "center", padding: "1rem" }}
@@ -82,7 +80,29 @@ const AadhaarVerification = ({ t, setError: setFormError, clearErrors: clearForm
                 <LabelFieldPair>
                   <CardLabel className="aadhaar-label">{"BMC_AADHAAR_LABEL"}</CardLabel>
                   <div className="aadhaar-container">
-                  <OTPInput length={11} onChange={test}/>
+                    {aadhaar.map((digit, index) => (
+                      <React.Fragment key={index}>
+                        <TextInput
+                          id={`aadhaar-${index}`}
+                          t={t}
+                          type="number"
+                          isMandatory={false}
+                          optionKey="i18nKey"
+                          name={`aadhaar-${index}`}
+                          onBlur={onBlur}
+                          value={digit}
+                          onChange={(e) => handleAadhaarChange(e, index)}
+                          className="aadhaar-input"
+                          maxLength={1}
+                          validation={{
+                            required: true,
+                            minLength: 12,
+                            maxLength: 12,
+                          }}
+                        />
+                        {(index === 3 || index === 7) && <span className="aadhaar-dash">-</span>}
+                      </React.Fragment>
+                    ))}
                   </div>
                 </LabelFieldPair>
                 {message && <div style={{ textAlign: "center", color: aadhaar.join("") === aadhaar ? "green" : "red" }}>{message}</div>}

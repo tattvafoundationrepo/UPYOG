@@ -6,6 +6,9 @@ const Urls = {
   location: {
     localities: `/egov-location/location/v11/boundarys/_search?hierarchyTypeCode=ADMIN&boundaryType=Locality`,
     revenue_localities: `/egov-location/location/v11/boundarys/_search?hierarchyTypeCode=REVENUE&boundaryType=Locality`,
+    zones: `/egov-location/location/v11/boundarys/_search?hierarchyTypeCode=ADMIN&boundaryType=Zone`,
+    blocks: `/egov-location/location/v11/boundarys/_search?hierarchyTypeCode=ADMIN&boundaryType=Block`,
+    wards: `/egov-location/location/v11/boundarys/_search?hierarchyTypeCode=ADMIN&boundaryType=Ward`,
   },
 
   pgr_search: `/pgr-services/v2/request/_search`,
@@ -235,8 +238,7 @@ digiLocker:{
   schemes: {
     getSchemes: "/bmc-service-v1/scheme/_search",
     saveScheme: "/bmc-service-v1/application/_save",
-    getVerifierScheme: "/bmc-service-v1/verifier/_getapplications",
-    verifyScheme: "/bmc-service-v1/Employee/workflow/_transit",
+    getVerifierScheme: "http://localhost:8081/bmc/verifier/_getapplications",
   },
 
   users: {

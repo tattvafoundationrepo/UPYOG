@@ -1,11 +1,9 @@
-import { EmployeeModuleCard, PersonIcon } from "@upyog/digit-ui-react-components";
+import { EmployeeModuleCard, PersonIcon } from "@egovernments/digit-ui-react-components";
 import React from "react";
 import { useTranslation } from "react-i18next";
 
 const DEONARCard = () => {
   const { t } = useTranslation();
-  const tenantId = Digit.ULBService.getCurrentTenantId();
-  //const { isLoading, isError, error, data, ...rest } = Digit.Hooks.hrms.useHRMSCount(tenantId);
 
   const formatLabel = (label) => {
     const [beforeDash, afterDash] = label.split(" - ");
@@ -25,67 +23,67 @@ const DEONARCard = () => {
     links: [
       {
         label: formatLabel(t("SECURITY CHECK - ARRIVAL")),
-        link: `/digit-ui/employee/deonar/securitycheck`,
+        link: `/${window?.contextPath}/employee/deonar/securitycheck`,
       },
       {
         label: t("PARKING FEE"),
-        link: `/digit-ui/employee/deonar/parking`,
+        link: `/${window?.contextPath}/employee/deonar/parking`,
       },
       {
         label: t("REMOVAL"),
-        link: `/digit-ui/employee/deonar/removal`,
+        link: `/${window?.contextPath}/employee/deonar/removal`,
       },
       {
         label: formatLabel(t("COLLECTION POINT - ASSIGN SHOPKEEPER")),
-        link: `/digit-ui/employee/deonar/assignshopkeeper`,
+        link: `/${window?.contextPath}/employee/deonar/assignshopkeeper`,
       },
       {
         label: t("ENTRY FEE"),
-        link: `/digit-ui/employee/deonar/entryfee`,
+        link: `/${window?.contextPath}/employee/deonar/entryfee`,
       },
       {
         label: t("REMOVAL FEE"),
-        link: `/digit-ui/employee/deonar/removalfee`,
+        link: `/${window?.contextPath}/employee/deonar/removalfee`,
       },
       {
         label: t("STABLING FEE"),
-        link: `/digit-ui/employee/deonar/stablingfee`,
+        link: `/${window?.contextPath}/employee/deonar/stablingfee`,
       },
       {
         label: formatLabel(t("INSPECTION POINT - ANTE MORTEM INSPECTION")),
-        link: `/digit-ui/employee/deonar/antemorteminspection`,
+        link: `/${window?.contextPath}/employee/deonar/antemorteminspection`,
       },
       {
         label: t("RE-ANTE MORTEM INSPECTION"),
-        link: `/digit-ui/employee/deonar/reantemorteminspection`,
+        link: `/${window?.contextPath}/employee/deonar/reantemorteminspection`,
       },
       {
         label: t("BEFORE SLAUGHTER ANTE MORTEM INSPECTION"),
-        link: `/digit-ui/employee/deonar/antemortembeforeslaughterinspection`,
+        link: `/${window?.contextPath}/employee/deonar/antemortembeforeslaughterinspection`,
       },
       {
         label: t("POST MORTEM INSPECTION"),
-        link: `/digit-ui/employee/deonar/postmorteminspection`,
+        link: `/${window?.contextPath}/employee/deonar/postmorteminspection`,
       },
       {
         label: formatLabel(t("SLAUGHTER RECOVERY POINT - SLAUGHTER FEE RECOVERY")),
-        link: `/digit-ui/employee/deonar/slaughterfeerecovery`,
+        link: `/${window?.contextPath}/employee/deonar/slaughterfeerecovery`,
       },
       {
         label: formatLabel(t("DELIVERY POINT - VEHICLE WASHING CHARGE COLLECTION")),
-        link: `/digit-ui/employee/deonar/vehiclewashing`,
+        link: `/${window?.contextPath}/employee/deonar/vehiclewashing`,
       },
       {
         label: t("WEIGHING CHARGE"),
-        link: `/digit-ui/employee/deonar/weighingcharge`,
+        link: `/${window?.contextPath}/employee/deonar/weighingcharge`,
       },
       {
         label: t("PENALTY CHARGE"),
-        link: `/digit-ui/employee/deonar/penaltyCharge`,
+        link: `/${window?.contextPath}/employee/deonar/penaltyCharge`,
       },
       {
         label: t("GATE PASS"),
-        link: `/digit-ui/employee/deonar/gatePass`,
+        link: `/${window?.contextPath}/employee/deonar/gatePass`,
       },
     ],
     longModuleName: false,

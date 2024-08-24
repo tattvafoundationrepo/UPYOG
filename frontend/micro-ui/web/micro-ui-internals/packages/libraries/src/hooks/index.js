@@ -269,7 +269,6 @@ import useCommonGetBank from "./bmc/useCommonGetBank";
 import useSaveUserDetail from "./bmc/useSaveUserDetail";
 import useSaveSchemes from './bmc/saveScheme';
 import useVerifierSchemeDetail from './bmc/useVerifierScheme';
-import useVerifierScheme from './bmc/verifyScheme';
 import useSchemesGet from "./bmc/getSchemes";
 import useUsersDetails from "./bmc/useUsers";
 import useLocation from './bmc/useLocation';
@@ -597,7 +596,6 @@ const Hooks = {
   survey,
   noc,
   ws,
-  bmc,
   useCustomMDMS,
   useCustomAPIHook,
   reports,

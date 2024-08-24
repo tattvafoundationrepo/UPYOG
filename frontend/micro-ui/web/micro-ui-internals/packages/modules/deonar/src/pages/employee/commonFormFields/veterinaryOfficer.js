@@ -1,11 +1,18 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CardLabel, Dropdown, LabelFieldPair, TextInput, DatePicker } from "@egovernments/digit-ui-react-components";
 import { Controller, useForm } from "react-hook-form";
-import useCurrentUser from "../../../hooks/useCurrentUser";
 
-const VeterinaryOfficerField = ({control, data, setData, userName}) => {
+const VeterinaryOfficerField = () => {
   const { t } = useTranslation();
+
+  const {
+    control,
+    setValue,
+    handleSubmit,
+    getValues,
+    formState: { errors, isValid },
+  } = useForm({ defaultValues: {}, mode: "onChange" });
 
   return (
     <div className="bmc-col3-card">
@@ -15,16 +22,18 @@ const VeterinaryOfficerField = ({control, data, setData, userName}) => {
                 control={control}
                 name="veterinaryOfficerName"
                 rules={{ required: t("CORE_COMMON_REQUIRED_ERRMSG") }}
-                render={(props) => (
+                render={({ value, onChange, onBlur }) => (
                     <div>
-                      <TextInput
-                      value={userName}
-                      onBlur={props.onBlur}
-                      optionKey="i18nKey"
-                      t={t}
-                      placeholder={t("VETERINARY_OFFICER_NAME")}
-                      disabled={true}
-                      />
+                    <Dropdown
+                        value={value}
+                        name="veterinaryOfficerName"
+                        selected={value}
+                        select={(value) => onChange(value)}
+                        onBlur={onBlur}
+                        optionKey="value"
+                        t={t}
+                        placeholder={t("VETERINARY_OFFICER_NAME")}
+                    />
                     </div>
                 )}
             />

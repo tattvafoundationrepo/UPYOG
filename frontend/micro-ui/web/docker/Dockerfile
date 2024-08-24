@@ -2,10 +2,6 @@ FROM upyogio/alpine-node-builder-14:yarn AS build
 #FROM ghcr.io/egovernments/alpine-node-builder-14:yarn AS build
 RUN apk update && apk upgrade
 RUN apk add --no-cache git>2.30.0
-<<<<<<< Updated upstream
-=======
-RUN yarn add @egovernments/digit-ui-libraries
->>>>>>> Stashed changes
 RUN yarn add @upyog/digit-ui-libraries
 RUN yarn add @upyog/digit-ui-module-pt
 RUN yarn add @upyog/digit-ui-module-fsm
@@ -22,7 +18,6 @@ RUN yarn add @upyog/digit-ui-module-common
 RUN yarn add @upyog/digit-ui-module-ws
 RUN yarn add @upyog/digit-ui-module-commonpt
 RUN yarn add @upyog-niua/upyog-ui-module-ptr
-RUN yarn add @upyog/digit-ui-module-bills
 ARG WORK_DIR
 WORKDIR /app
 ENV NODE_OPTIONS "--max-old-space-size=4096"

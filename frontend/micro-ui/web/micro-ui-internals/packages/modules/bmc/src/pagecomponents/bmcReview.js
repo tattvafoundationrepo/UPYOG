@@ -6,31 +6,11 @@ import BankDetails from "../components/BankDetails";
 import DisabilityCard from "../components/DisabilityCard";
 import PersonalDetailCard from "../components/PersonalDetails";
 import QualificationCard from "../components/QualificationCard";
-// import WorkflowActions from "../components/Workflow";
+import WorkflowActions from "../components/Workflow";
 import Timeline from "../components/bmcTimeline";
 import Title from "../components/title";
 import SchemeDetailsPage from "../components/schemeDetails";
 import { Modal } from "@egovernments/digit-ui-react-components";
-
-const splitMessage = (message, maxLength) => {
-  const words = message.split(" ");
-  let line = "";
-  const result = [];
-
-  for (const word of words) {
-    if ((line + word).length > maxLength) {
-      result.push(line.trim());
-      line = "";
-    }
-    line += word + " ";
-  }
-
-  if (line.length) {
-    result.push(line.trim());
-  }
-
-  return result.join("\n");
-};
 
 const BMCReviewPage = () => {
   const location = useLocation();
@@ -42,7 +22,6 @@ const BMCReviewPage = () => {
   const [userDetail, setUserDetail] = useState({});
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [applicationNumber, setApplicationNumber] = useState(null);
-  const [messages, setMessages] = useState(null);
 
   const userFunction = (data) => {
     if (data && data.UserDetails && data.UserDetails.length > 0) {
@@ -59,21 +38,10 @@ const BMCReviewPage = () => {
     const data = { SchemeApplications: { scheme, schemeType, updateSchemeData } };
     saveSchemeDetail.mutate(data, {
       onSuccess: (response) => {
-        const originalMessage = response?.message || "";
-        const responseMessage = originalMessage.toUpperCase();
-
-        const formattedMessage = splitMessage(responseMessage, 5);
-
         const applicationNumber = response?.userSchemeApplication?.applicationNumber;
-
-        if (formattedMessage) {
-          setMessages(formattedMessage);
-          setApplicationNumber(null);
-        } else if (applicationNumber) {
+        if (applicationNumber) {
           setApplicationNumber(applicationNumber);
-          setMessages(null);
         }
-
         setIsModalOpen(true);
       },
       onError: (error) => {
@@ -132,33 +100,22 @@ const BMCReviewPage = () => {
             </button>
           </div>
         )}
+        <WorkflowActions
+          ActionBarStyle={{}}
+          MenuStyle={{}}
+          businessService={"bmc-schemes"}
+          applicationNo={"MH-0003"}
+          moduleCode={"BMC"}
+          tenantId={tenantId}
+        />
       </div>
-
       {isModalOpen && (
         <div className="bmc-modal">
           <Modal fullScreen hideSubmit={true}>
-            {messages ? (
-              <React.Fragment>
-                <p style={{ fontSize: "20px" }}>
-                  <strong>Sorry, Your Application Is not Eligible!</strong>
-                </p>
-                <p>
-                  {messages.split("\n").map((line, index) => (
-                    <React.Fragment key={index}>
-                      {line}
-                      <br />
-                    </React.Fragment>
-                  ))}
-                </p>
-              </React.Fragment>
-            ) : (
-              <React.Fragment>
-                <p style={{ fontSize: "20px" }}>
-                  <strong>Application Submitted Successfully</strong>
-                </p>
-                {applicationNumber && <p>Your Application Number is: {applicationNumber}</p>}
-              </React.Fragment>
-            )}
+            <p style={{ fontSize: "15px" }}>
+              <strong>Application Submitted Successfully</strong>
+            </p>
+            {applicationNumber && <p>Your Application Number is: {applicationNumber}</p>}
             <button onClick={handleModalSave} className="bmc-card-button">
               OK
             </button>

@@ -260,24 +260,22 @@ export const stablingAfterMockdata = {
 
 export const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
-export const species = [
-    {code: '1', name: 'SPECIES_1'},
-    {code: '2', name: 'SPECIES_2'}
-];
-
 export const anteMortemInspectionMockData = {
-    arrivalUuid: 'abc1234567890',
+    importPermissionNumber: "",
+    licenseNumber: "",
+    veterinaryOfficer: "",
     anteMortemInspectionDate: new Date().toISOString().split('T')[0],
     anteMortemInspectionDay: daysOfWeek[new Date().getDay()],
-    traderName: traderNameOptions[0],
-    licenseNumber: "123456",
-    numberOfAliveAnimals: 1,
-    animalTokenNumber: 455,
+    arrivalUuid: "",
+    traderName: {},
+    licenseNumber: "",
+    numberOfAliveAnimals: 0,
+    animalTokenNumber: 0,
     species: {},
     breed: {},
     sex: {},
     bodyColor: {},
-    pregnancy: {},
+    pregnancy: "",
     approximateAge: 0,
     gait: {},
     posture: {},
@@ -292,24 +290,3 @@ export const anteMortemInspectionMockData = {
     other: "",
     remark: ""
 };
-
-export const breed = [
-    {code: '1', name: 'BREED_1'},
-    {code: '2', name: 'BREED_2'}
-];
-
-export const sex = [
-    {code: '1', name: 'FEMALE'},
-    {code: '2', name: 'MALE'}
-];
-
-export const bodyColor = [
-    {code: '1', name: 'WHITE'},
-    {code: '2', name: 'BLACK'},
-    {code: '3', name: 'BROWN'}
-];
-
-export const pregnancy = [
-    { code: true, name: "PREGNANT" },
-    { code: false, name: "NOT_PREGNANT" }
-];

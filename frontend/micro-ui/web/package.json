@@ -10,7 +10,8 @@
     "micro-ui-internals/packages/modules/core",
     "micro-ui-internals/packages/modules/bmc",
     "micro-ui-internals/packages/modules/deonar",
-    "micro-ui-internals/packages/modules/hrms"
+    "micro-ui-internals/packages/modules/hrms",
+    "micro-ui-internals/packages/css"
   ],
   "engines": {
     "node": ">=14"

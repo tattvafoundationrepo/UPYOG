@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Controller, useForm } from "react-hook-form";
 import ImportPermissionNumberField from "../commonFormFields/importPermissionNumber";
@@ -18,20 +18,11 @@ import RemarkField from "../commonFormFields/remark";
 import SubmitAddButtonFields from "../commonFormFields/submitAddBtn";
 import InspectionDate from "../commonFormFields/inspectionDate";
 import InspectionDayField from "../commonFormFields/inspectionDay";
-import { anteMortemInspectionMockData, bodyColor, breed, daysOfWeek, species } from "../../../constants/dummyData";
-import useCurrentUser from "../../../hooks/useCurrentUser";
-import useSubmitForm from "../../../hooks/useSubmitForm";
-import { COLLECTION_POINT_ENDPOINT } from "../../../constants/apiEndpoints";
 
 const AnteMortemInspectionPage = () => {
   const { t } = useTranslation();
   const [data, setData] = useState({});
-  const userName = useCurrentUser();
-  const [arrivalUuidVal, setArrivalUuidVal] = useState("");
-  const [speciesOptions, setSpeciesOptions] = useState([]);
-  const [breedOptions, setBreedOptions] = useState([]);
-  const [sexOptions, setSexOptions] = useState([]);
-  const [bodyColorOptions, setBodyColorOptions] = useState([]);
+  const [subFormType, setSubFormType] = useState(null);
 
   const {
     control,
@@ -39,80 +30,44 @@ const AnteMortemInspectionPage = () => {
     handleSubmit,
     getValues,
     formState: { errors, isValid },
-  } = useForm({ defaultValues: {
-    importPermissionNumber: "",
-    licenseNumber: "",
-    veterinaryOfficer: "",
-    anteMortemInspectionDate: new Date().toISOString().split('T')[0],
-    anteMortemInspectionDay: daysOfWeek[new Date().getDay()],
-    arrivalUuid: "",
-    traderName: {},
-    licenseNumber: "",
-    numberOfAliveAnimals: 0,
-    animalTokenNumber: 0,
-    species: {},
-    breed: {},
-    sex: {},
-    bodyColor: {},
-    pregnancy: "",
-    approximateAge: 0,
-    gait: {},
-    posture: {},
-    bodyTemperature: {},
-    pulseRate: {},
-    appetite: {},
-    eyes: {},
-    nostrils: {},
-    muzzle: {},
-    opinion: {},
-    animalStabling: {},
-    other: "",
-    remark: ""
-  }, mode: "onChange" });
+  } = useForm({ defaultValues: {}, mode: "onChange" });
 
-  useEffect(() => {
-    setBreedOptions(breed);
-    setSpeciesOptions(species);
-    setBodyColorOptions(bodyColor);
-  }, []);
-
-  const { submitForm, isSubmitting, response, error } = useSubmitForm(COLLECTION_POINT_ENDPOINT);
-
-  const fetchDataByReferenceNumber = async () => {
-    return anteMortemInspectionMockData;
+  const fetchDataByReferenceNumber = async (referenceNumber) => {
+    const mockData = {
+      arrivalUuid: referenceNumber,
+      importType: "Type A",
+      importPermissionNumber: "123456",
+      importPermissionDate: new Date(),
+      traderName: "John Doe",
+      licenseNumber: "LIC123",
+      vehicleNumber: "ABC123",
+      numberOfAliveAnimals: 5,
+      numberOfDeadAnimals: 2,
+      arrivalDate: new Date(),
+      arrivalTime: "12:00",
+    };
+    return mockData;
   };
 
   const handleSearch = async () => {
-    const importPermissionNumber = getValues("importPermissionNumber");
-    const licenseNumber = getValues("licenseNumber");
-    if (importPermissionNumber && licenseNumber) {
+    const referenceNumber = getValues("arrivalUuid");
+    if (referenceNumber) {
       try {
-        const result = await fetchDataByReferenceNumber();
+        const result = await fetchDataByReferenceNumber(referenceNumber);
         setData(result);
-        console.log(result);
         Object.keys(result).forEach((key) => {
           setValue(key, result[key]);
-          if (key === "arrivalUuid") {
-            setArrivalUuidVal(result[key]);
-          }
         });
-        setValue('importPermissionNumber', importPermissionNumber);
-        setValue('licenseNumber', licenseNumber);
       } catch (error) {
         console.error("Failed to fetch data", error);
       }
     }
   };
 
-  const onSubmit = async (formData) => {
-    try {
-      const result = await submitForm(formData);
-      console.log("Form successfully submitted:", result);
-      alert("Form submission successful ! Your ArrivalUUID is: " + formData.arrivalUuid);
-    } catch (error) {
-      console.error("Error submitting form:", error);
-      alert("Form submission failed !");
-    }
+  const onSubmit = (formData) => {
+    console.log("Form data submitted:", formData);
+    const jsonData = JSON.stringify(formData);
+    console.log("Generated JSON:", jsonData);
   };
 
   return (
@@ -122,39 +77,41 @@ const AnteMortemInspectionPage = () => {
           <MainFormHeader title={"ANTE_MORTEM_INSPECTION"} />
           <div className="bmc-row-card-header">
             <div className="bmc-card-row">
-              <ImportPermissionNumberField control={control} setData={setData} data={data} />
-              <LicenseNumberField control={control} setData={setData} data={data} />
-              <SearchButtonField onSearch={handleSearch} />
+            <ImportPermissionNumberField control={control} setData={setData} data={data} />
+            <LicenseNumberField control={control} setData={setData} data={data} />
+            <SearchButtonField />
             </div>
           </div>
           <div className="bmc-row-card-header">
             <div className="bmc-card-row">
-              <VeterinaryOfficerField control={control} setData={setData} data={data} userName={userName} />
-              <InspectionDate label="DEONAR_ANTE_MORTEM_INSPECTION_DATE" name="anteMortemInspectionDate" control={control} setData={setData} data={data} />
-              <InspectionDayField label="DEONAR_ANTE_MORTEM_INSPECTION_DAY" name="anteMortemInspectionDay" control={control} setData={setData} data={data} />
-              <ArrivalUuidField control={control} setData={setData} data={data} uuid={arrivalUuidVal} disabled={true} />
+              <VeterinaryOfficerField />
+              <InspectionDate label="DEONAR_ANTE_MORTEM_INSPECTION_DATE" name="anteMortemInspectionDate" />
+              <InspectionDayField label="DEONAR_ANTE_MORTEM_INSPECTION_DAY" name="anteMortemInspectionDay" />
+              <ImportPermissionNumberField control={control} setData={setData} data={data} />
+              <ArrivalUuidField control={control} setData={setData} data={data} />
               <TraderNameField control={control} setData={setData} data={data} />
+              <LicenseNumberField control={control} setData={setData} data={data} />
               <NumberOfAliveAnimalsField control={control} setData={setData} data={data} />
-              <AnimalTokenNumberField control={control} setData={setData} data={data} />
-              <HealthStatDropdownField name="species" label="DEONAR_SPECIES" control={control} setData={setData} data={data} options={speciesOptions} />
-              <HealthStatDropdownField name="breed" label="DEONAR_BREED" control={control} setData={setData} data={data} options={breedOptions} />
-              <HealthStatDropdownField name="sex" label="DEONAR_SEX" control={control} setData={setData} data={data} options={sexOptions} />
-              <HealthStatDropdownField name="bodyColor" label="DEONAR_BODY_COLOR" control={control} setData={setData} data={data} options={bodyColorOptions} />
-              <PregnancyField control={control} setData={setData} data={data} />
-              <ApproximateAgeField control={control} setData={setData} data={data} />
-              <HealthStatDropdownField name="gait" label="DEONAR_GAIT" control={control} setData={setData} data={data} />
-              <HealthStatDropdownField name="posture" label="DEONAR_POSTURE" control={control} setData={setData} data={data} />
-              <HealthStatDropdownField name="bodyTemperature" label="DEONAR_BODY_TEMPERATURE" control={control} setData={setData} data={data} />
-              <HealthStatDropdownField name="pulseRate" label="DEONAR_PULSE_RATE" control={control} setData={setData} data={data} />
-              <HealthStatDropdownField name="appetite" label="DEONAR_APPETITE" control={control} setData={setData} data={data} />
-              <HealthStatDropdownField name="eyes" label="DEONAR_EYES" control={control} setData={setData} data={data} />
-              <HealthStatDropdownField name="nostrils" label="DEONAR_NOSTRILS" control={control} setData={setData} data={data} />
-              <HealthStatDropdownField name="muzzle" label="DEONAR_MUZZLE" control={control} setData={setData} data={data} />
-              <HealthStatDropdownField name="opinion" label="DEONAR_OPINION" required={true} control={control} setData={setData} data={data} />
-              <HealthStatDropdownField name="animalStabling" label="DEONAR_ANIMAL_STABLING" required={true} control={control} setData={setData} data={data} />
-              <OtherField control={control} setData={setData} data={data} />
-              <RemarkField control={control} setData={setData} data={data} />
-              <SubmitAddButtonFields control={control} setData={setData} data={data} />
+              <AnimalTokenNumberField />
+              <HealthStatDropdownField name="species" label="DEONAR_SPECIES" />
+              <HealthStatDropdownField name="breed" label="DEONAR_BREED" />
+              <HealthStatDropdownField name="sex" label="DEONAR_SEX" />
+              <HealthStatDropdownField name="bodyColor" label="DEONAR_BODY_COLOR" />
+              <PregnancyField />
+              <ApproximateAgeField />
+              <HealthStatDropdownField name="gait" label="DEONAR_GAIT" />
+              <HealthStatDropdownField name="posture" label="DEONAR_POSTURE" />
+              <HealthStatDropdownField name="bodyTemperature" label="DEONAR_BODY_TEMPERATURE" />
+              <HealthStatDropdownField name="pulseRate" label="DEONAR_PULSE_RATE" />
+              <HealthStatDropdownField name="appetite" label="DEONAR_APPETITE" />
+              <HealthStatDropdownField name="eyes" label="DEONAR_EYES" />
+              <HealthStatDropdownField name="nostrils" label="DEONAR_NOSTRILS" />
+              <HealthStatDropdownField name="muzzle" label="DEONAR_MUZZLE" />
+              <HealthStatDropdownField name="opinion" label="DEONAR_OPINION" required={true} />
+              <HealthStatDropdownField name="animalStabling" label="DEONAR_ANIMAL_STABLING" required={true} />
+              <OtherField />
+              <RemarkField />
+              <SubmitAddButtonFields />
             </div>
           </div>
         </form>
@@ -162,6 +119,7 @@ const AnteMortemInspectionPage = () => {
       <div className="bmc-row-card-header">
         <div className="bmc-card-row">
           <div className="bmc-table-container" style={{ padding: "1rem" }}>
+            <form onSubmit={handleSubmit()}>
               <table className="bmc-hover-table">
                 <thead>
                   <tr>
@@ -175,6 +133,7 @@ const AnteMortemInspectionPage = () => {
                   </tr>
                 </tbody>
               </table>
+            </form>
           </div>
         </div>
       </div>

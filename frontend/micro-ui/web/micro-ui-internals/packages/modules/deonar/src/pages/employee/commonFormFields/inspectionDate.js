@@ -3,8 +3,16 @@ import { useTranslation } from "react-i18next";
 import { CardLabel, Dropdown, LabelFieldPair, TextInput, DatePicker } from "@egovernments/digit-ui-react-components";
 import { Controller, useForm } from "react-hook-form";
 
-const InspectionDate = ({label, name, control, setData, data}) => {
+const InspectionDate = ({label, name}) => {
   const { t } = useTranslation();
+
+  const {
+    control,
+    setValue,
+    handleSubmit,
+    getValues,
+    formState: { errors, isValid },
+  } = useForm({ defaultValues: {}, mode: "onChange" });
 
   return (
     <div className="bmc-col3-card">
@@ -14,20 +22,9 @@ const InspectionDate = ({label, name, control, setData, data}) => {
             control={control}
             name={name}
             rules={{ required: t("CORE_COMMON_REQUIRED_ERRMSG") }}
-            render={(props) => (
+            render={({ value, onChange, onBlur }) => (
                 <div>
-                  <DatePicker 
-                  date={props.value} 
-                  onChange={(e) => {
-                    props.onChange(e.target.value);
-                    const newData = {
-                      ...data,
-                      [name]: e.target.value
-                    };
-                    setData(newData);
-                  }} 
-                  onBlur={props.onBlur} 
-                  placeholder={label} />
+                <DatePicker date={value} onChange={onChange} onBlur={onBlur} placeholder={label} />
                 </div>
             )}
             />

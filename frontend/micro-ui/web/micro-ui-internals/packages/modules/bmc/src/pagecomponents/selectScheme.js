@@ -196,7 +196,7 @@ const SelectSchemePage = () => {
                   <button
                     style={{
                       backgroundColor: "#F47738",
-                      width: "140px",
+                      width: "91px",
                       height: "34px",
                       color: "white",
                       marginTop: "1.5rem",
@@ -205,7 +205,7 @@ const SelectSchemePage = () => {
                     }}
                     onClick={openModal}
                   >
-                    {t("BMC_VIEW_MORE")}
+                    View More
                   </button>
                 </div>
                 {isModalOpen && radioValueCheck.value === course.i18nKey && (
@@ -266,7 +266,7 @@ const SelectSchemePage = () => {
                   <button
                     style={{
                       backgroundColor: "#F47738",
-                      width: "140px",
+                      width: "91px",
                       height: "34px",
                       color: "white",
                       marginTop: "1.5rem",
@@ -275,7 +275,7 @@ const SelectSchemePage = () => {
                     }}
                     onClick={openModal}
                   >
-                    {t("BMC_VIEW_MORE")}
+                    View More
                   </button>
                 </div>
                 {isModalOpen && radioValueCheck.value === machine.i18nKey && (
@@ -332,7 +332,7 @@ const SelectSchemePage = () => {
             className="bmc-card-button"
             style={{ backgroundColor: radioValueCheck ? "#F47738" : "grey", borderBottom: "3px solid black", marginRight: "1rem" }}
           >
-            {t("BMC_NEXT")}
+            {t("BMC_Next")}
           </button>
         </Link>
         <button
@@ -340,7 +340,7 @@ const SelectSchemePage = () => {
           style={{ borderBottom: "3px solid black", outline: "none", marginRight: "5rem" }}
           onClick={() => history.goBack()}
         >
-          {t("BMC_CANCEL")}
+          {t("BMC_Cancel")}
         </button>
       </div>
     </React.Fragment>

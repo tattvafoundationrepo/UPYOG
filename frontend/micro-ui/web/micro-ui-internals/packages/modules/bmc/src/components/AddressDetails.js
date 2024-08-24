@@ -149,6 +149,7 @@ const AddressDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = false, tena
 
   useEffect(() => {
     if (initialRows) {
+    
       setValue("house", initialRows?.address?.house || "");
       setValue("street", initialRows?.address?.street || "");
       setValue("landmark", initialRows?.address?.landmark || "");
@@ -192,7 +193,7 @@ const AddressDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = false, tena
       <form className="bmc-row-card-header">
         <div className="bmc-card-row">
           <div className="bmc-col-large-header">
-            <div className="bmc-title">{t("BMC_ADDRESS_DETAILS")}</div>
+            <div className="bmc-title">{t("ADDRESS DETAILS")}</div>
           </div>
           <div className="bmc-col-small-header" style={{ textAlign: "end" }}>
             <ToggleSwitch
@@ -208,7 +209,7 @@ const AddressDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = false, tena
         <div className="bmc-card-row">
           <div className="bmc-col3-card">
             <LabelFieldPair>
-              <CardLabel className="bmc-label">{t("BMC_HOUSE")}</CardLabel>
+              <CardLabel className="bmc-label">{"BMC_HOUSE"}</CardLabel>
               <Controller
                 control={control}
                 name={"house"}
@@ -232,7 +233,7 @@ const AddressDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = false, tena
           </div>
           <div className="bmc-col3-card">
             <LabelFieldPair>
-              <CardLabel className="bmc-label">{t("BMC_STREET")}</CardLabel>
+              <CardLabel className="bmc-label">{"BMC_STREET"}</CardLabel>
               <Controller
                 control={control}
                 name={"street"}
@@ -256,7 +257,7 @@ const AddressDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = false, tena
           </div>
           <div className="bmc-col3-card">
             <LabelFieldPair>
-              <CardLabel className="bmc-label">{t("BMC_LANDMARK")}</CardLabel>
+              <CardLabel className="bmc-label">{"BMC_landmark"}</CardLabel>
               <Controller
                 control={control}
                 name={"landmark"}
@@ -280,7 +281,7 @@ const AddressDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = false, tena
           </div>
           <div className="bmc-col3-card">
             <LabelFieldPair>
-              <CardLabel className="bmc-label">{t("BMC_LOCALITY")}</CardLabel>
+              <CardLabel className="bmc-label">{"BMC_LOCALITY"}</CardLabel>
               <Controller
                 control={control}
                 name={"locality"}
@@ -306,7 +307,7 @@ const AddressDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = false, tena
         <div className="bmc-card-row">
           <div className="bmc-col3-card">
             <LabelFieldPair>
-              <CardLabel className="bmc-label">{t("BMC_CITY")}</CardLabel>
+              <CardLabel className="bmc-label">{"BMC_CITY"}</CardLabel>
               <Controller
                 control={control}
                 name={"city"}
@@ -330,7 +331,7 @@ const AddressDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = false, tena
           </div>
           <div className="bmc-col3-card">
             <LabelFieldPair>
-              <CardLabel className="bmc-label">{t("BMC_SUBDISTRICT")}</CardLabel>
+              <CardLabel className="bmc-label">{"BMC_SUBDISTRICT"}</CardLabel>
               <Controller
                 control={control}
                 name={"subDistrict"}
@@ -354,7 +355,7 @@ const AddressDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = false, tena
           </div>
           <div className="bmc-col3-card">
             <LabelFieldPair>
-              <CardLabel className="bmc-label">{t("BMC_DISTRICT")}</CardLabel>
+              <CardLabel className="bmc-label">{"BMC_DISTRICT"}</CardLabel>
               <Controller
                 control={control}
                 name={"district"}
@@ -378,7 +379,7 @@ const AddressDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = false, tena
           </div>
           <div className="bmc-col3-card">
             <LabelFieldPair>
-              <CardLabel className="bmc-label">{t("BMC_STATE")}</CardLabel>
+              <CardLabel className="bmc-label">{"BMC_STATE"}</CardLabel>
               <Controller
                 control={control}
                 name={"state"}

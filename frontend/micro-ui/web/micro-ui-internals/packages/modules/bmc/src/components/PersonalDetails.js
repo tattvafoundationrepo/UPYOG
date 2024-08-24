@@ -187,7 +187,7 @@ const PersonalDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = true, tena
       <form className="bmc-row-card-header">
         <div className="bmc-card-row">
           <div className="bmc-col-large-header">
-            <div className="bmc-title">{t("BMC_PERSONAL_DETAILS")}</div>
+            <div className="bmc-title">{t("PERSONAL DETAILS")}</div>
           </div>
           <div className="bmc-col-small-header" style={{ textAlign: "end" }}>
             <ToggleSwitch
@@ -201,7 +201,7 @@ const PersonalDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = true, tena
           </div>
         </div>
         <div className="bmc-card-row">
-          <div className="bmc-col3-card" style={{ display: "none" }}>
+          <div className="bmc-col4-card">
             <LabelFieldPair>
               <CardLabel className="bmc-label">{t("BMC_AADHAR_NUMBER")}</CardLabel>
               <Controller
@@ -225,7 +225,7 @@ const PersonalDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = true, tena
               />
             </LabelFieldPair>
           </div>
-          <div className="bmc-col3-card">
+          <div className="bmc-col4-card">
             <LabelFieldPair>
               <CardLabel className="bmc-label">{t("BMC_TITLE")}</CardLabel>
               <Controller
@@ -254,7 +254,7 @@ const PersonalDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = true, tena
               />
             </LabelFieldPair>
           </div>
-          <div className="bmc-col3-card">
+          <div className="bmc-col4-card">
             <LabelFieldPair>
               <CardLabel className="bmc-label">{t("BMC_AADHAR_NAME")}</CardLabel>
               <Controller
@@ -278,7 +278,7 @@ const PersonalDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = true, tena
               />
             </LabelFieldPair>
           </div>
-          <div className="bmc-col3-card">
+          <div className="bmc-col4-card">
             <LabelFieldPair>
               <CardLabel className="bmc-label">{t("BMC_FATHER")}</CardLabel>
               <Controller
@@ -303,7 +303,7 @@ const PersonalDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = true, tena
             </LabelFieldPair>
           </div>
 
-          <div className="bmc-col3-card">
+          <div className="bmc-col4-card">
             <LabelFieldPair>
               <CardLabel className="bmc-label">{t("BMC_DATE_OF_BIRTH")}</CardLabel>
               <Controller
@@ -319,12 +319,11 @@ const PersonalDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = true, tena
               />
             </LabelFieldPair>
           </div>
-         
         </div>
         <div className="bmc-row-card">
-        <div className="bmc-col3-card">
+          <div className="bmc-col4-card">
             <LabelFieldPair>
-              <CardLabel className="bmc-label">{t("BMC_RELIGION")}</CardLabel>
+              <CardLabel className="bmc-label">{t("BMC_RELIGION")}*</CardLabel>
               <Controller
                 control={control}
                 name="religion"
@@ -351,9 +350,9 @@ const PersonalDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = true, tena
               />
             </LabelFieldPair>
           </div>
-          <div className="bmc-col3-card">
+          <div className="bmc-col4-card">
             <LabelFieldPair>
-              <CardLabel className="bmc-label">{t("BMC_CASTECATEGORY")}</CardLabel>
+              <CardLabel className="bmc-label">{t("BMC_CASTECATEGORY")}*</CardLabel>
               <Controller
                 control={control}
                 name="casteCategory"
@@ -381,7 +380,7 @@ const PersonalDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = true, tena
               />
             </LabelFieldPair>
           </div>
-          <div className="bmc-col3-card">
+          <div className="bmc-col4-card">
             <LabelFieldPair>
               <CardLabel className="bmc-label">{t("BMC_GENDER")}</CardLabel>
               <Controller
@@ -415,7 +414,7 @@ const PersonalDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = true, tena
           </div>
 
           {showTransgenderId && (
-            <div className="bmc-col3-card">
+            <div className="bmc-col4-card">
               <LabelFieldPair>
                 <CardLabel className="bmc-label">{t("BMC_TRANSGENDER_ID")}</CardLabel>
                 <Controller
