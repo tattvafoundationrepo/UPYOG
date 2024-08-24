@@ -28,6 +28,7 @@ import digit.repository.UserRepository;
 import digit.repository.UserSchemeCitizenRepository;
 import digit.repository.UserSearchCriteria;
 import digit.validators.SchemeApplicationValidator;
+import digit.web.models.ProcessInstance;
 import digit.web.models.SMSRequest;
 import digit.web.models.SchemeApplication;
 import digit.web.models.SchemeApplicationRequest;
@@ -129,6 +130,17 @@ public class BmcApplicationService {
 
         SMSRequest sms = new SMSRequest("7809840269","hi, how are you");
         producer.push("egov.core.notification.sms",sms);
+        
+        for (DocumentDetails details : schemeApplicationRequest.getSchemeApplication().getUpdateSchemeData()
+                .getDocuments()) {
+            details.setAvailable(true);
+            details.setTenantId(tenantId);
+            details.setUserId(userId);
+            details.setCreatedBy("system");
+            details.setModifiedBy("system");
+            details.setModifiedOn(time);
+        }
+        producer.push("upsert-user-document", schemeApplicationRequest);
 
         SchemeApplicationRequest request = new SchemeApplicationRequest();
         request.setRequestInfo(schemeApplicationRequest.getRequestInfo());
@@ -148,10 +160,13 @@ public class BmcApplicationService {
         }
         producer.push("upsert-userotherdetails", inputTest);
 
-        if (!ObjectUtils.isEmpty(response.getError()) || response.getError() != null) {
-            throw new CustomException("Not eligible for this Scheme",
-                    response.getError().toString());
-        }
+       if (!ObjectUtils.isEmpty(response.getError()) || response.getError() != null) {
+
+        if(response.getError().length() != 0){
+           throw new CustomException("Not eligible for this Scheme",
+                   response.getError().toString());
+        }       
+       }
         List<SchemeApplication> schemeApplicationList = new ArrayList<>();
         schemeApplicationList.add(schemeApplicationRequest.getSchemeApplication());
         schemeApplicationRequest.setSchemeApplicationList(schemeApplicationList);
@@ -185,19 +200,11 @@ public class BmcApplicationService {
         Workflow workflow = new Workflow();
         workflow.setAction("APPLY");
         schemeApplicationRequest.getSchemeApplicationList().get(0).setWorkflow(workflow);
+        ProcessInstance processInstance = new ProcessInstance();
+        processInstance.setPreviousStatus(null);
+        schemeApplicationRequest.getSchemeApplicationList().get(0).setProcessInstance(processInstance);
         workflowService.updateWorkflowStatus(schemeApplicationRequest);
         producer.push("save-user-scheme-application", schemeApplicationRequest);
-
-        for (DocumentDetails details : schemeApplicationRequest.getSchemeApplication().getUpdateSchemeData()
-                .getDocuments()) {
-            details.setAvailable(true);
-            details.setTenantId(tenantId);
-            details.setUserId(userId);
-            details.setCreatedBy("system");
-            details.setModifiedBy("system");
-            details.setModifiedOn(time);
-        }
-        producer.push("upsert-user-document", schemeApplicationRequest);
         
         UserSubSchemeMapping userSubSchemeMapping = new UserSubSchemeMapping();
         userSubSchemeMapping.setApplicationNumber(userSchemeApplication.getApplicationNumber());
