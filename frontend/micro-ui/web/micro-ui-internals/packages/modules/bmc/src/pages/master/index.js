@@ -1,4 +1,4 @@
-import { AppContainer, BackButton, PrivateRoute } from "@egovernments/digit-ui-react-components";
+import { AppContainer, BackButton, PrivateRoute } from "@upyog/digit-ui-react-components";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { Switch, useLocation, useRouteMatch } from "react-router-dom";

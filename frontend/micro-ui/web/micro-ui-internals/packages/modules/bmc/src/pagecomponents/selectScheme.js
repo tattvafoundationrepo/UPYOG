@@ -4,7 +4,7 @@ import { Link, useHistory } from "react-router-dom";
 import Timeline from "../components/bmcTimeline";
 import RadioButton from "../components/radiobutton";
 import Title from "../components/title";
-import { Modal } from "@egovernments/digit-ui-react-components";
+import { Modal } from "@upyog/digit-ui-react-components";
 
 const SelectSchemePage = () => {
   const { t } = useTranslation();

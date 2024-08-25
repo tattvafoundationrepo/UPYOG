@@ -1,6 +1,6 @@
 import React from "react";
 
-import { BackButton, PrivateRoute } from "@egovernments/digit-ui-react-components";
+import { BackButton, PrivateRoute } from "@upyog/digit-ui-react-components";
 import { Switch, useLocation, useRouteMatch } from "react-router-dom";
 
 import { useTranslation } from "react-i18next";

@@ -1,4 +1,4 @@
-import { CardLabel, LabelFieldPair, TextInput } from "@egovernments/digit-ui-react-components";
+import { CardLabel, LabelFieldPair, TextInput } from "@upyog/digit-ui-react-components";
 import React, { useState } from "react";
 import { useHistory } from "react-router-dom";
 import Timeline from "../components/bmcTimeline";

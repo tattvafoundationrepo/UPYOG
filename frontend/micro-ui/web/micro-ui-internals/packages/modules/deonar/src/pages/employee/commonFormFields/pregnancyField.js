@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { CardLabel, Dropdown, LabelFieldPair, TextInput, DatePicker, RadioButtons } from "@egovernments/digit-ui-react-components";
+import { CardLabel, Dropdown, LabelFieldPair, TextInput, DatePicker, RadioButtons } from "@upyog/digit-ui-react-components";
 import { Controller, useForm } from "react-hook-form";
 
 const PregnancyField = ({setIsactive, isActive}) => {

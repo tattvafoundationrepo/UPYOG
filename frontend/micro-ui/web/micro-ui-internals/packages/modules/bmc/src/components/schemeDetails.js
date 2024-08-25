@@ -2,7 +2,7 @@ import React, { useEffect, useCallback, useState, useRef } from "react";
 import { Controller, useForm } from "react-hook-form";
 import isEqual from "lodash.isequal";
 import { useTranslation } from "react-i18next";
-import { CardLabel, CheckBox, Dropdown, LabelFieldPair, TextInput } from "@egovernments/digit-ui-react-components";
+import { CardLabel, CheckBox, Dropdown, LabelFieldPair, TextInput } from "@upyog/digit-ui-react-components";
 import MultiSelect from "../components/multidropdown";
 import RadioButton from "../components/radiobutton";
 import dropdownOptions from "../pagecomponents/dropdownOptions.json";

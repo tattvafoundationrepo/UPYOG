@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { CardLabel, LabelFieldPair, TextInput } from "@egovernments/digit-ui-react-components";
+import { CardLabel, LabelFieldPair, TextInput } from "@upyog/digit-ui-react-components";
 import { Controller } from "react-hook-form";
 import useCurrentTime from "../../../hooks/useCurrentTime";
 

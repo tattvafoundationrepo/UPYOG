@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { CardLabel, TextInput, LabelFieldPair } from "@egovernments/digit-ui-react-components";
+import { CardLabel, TextInput, LabelFieldPair } from "@upyog/digit-ui-react-components";
 import { Controller } from "react-hook-form";
 
 const ArrivalUuidField = ({ control, setData, data, uuid, disabled }) => {

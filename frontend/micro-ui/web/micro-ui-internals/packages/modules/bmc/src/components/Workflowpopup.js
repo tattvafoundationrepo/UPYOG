@@ -1,4 +1,4 @@
-import { Loader, Modal } from '@egovernments/digit-ui-react-components';
+import { Loader, Modal } from '@upyog/digit-ui-react-components';
 import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 //import configEstimateModal from './config/configEstimateModal';

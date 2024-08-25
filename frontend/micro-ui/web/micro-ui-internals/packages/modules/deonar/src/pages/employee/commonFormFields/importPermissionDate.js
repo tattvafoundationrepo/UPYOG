@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { CardLabel, LabelFieldPair, DatePicker } from "@egovernments/digit-ui-react-components";
+import { CardLabel, LabelFieldPair, DatePicker } from "@upyog/digit-ui-react-components";
 import { Controller } from "react-hook-form";
 
 const ImportPermissionDateField = ({ control, data, setData }) => {

@@ -1,4 +1,4 @@
-import { CardLabel, DatePicker, Dropdown, LabelFieldPair, TextInput } from "@egovernments/digit-ui-react-components";
+import { CardLabel, DatePicker, Dropdown, LabelFieldPair, TextInput } from "@upyog/digit-ui-react-components";
 import isEqual from "lodash.isequal";
 import { useLocation } from "react-router-dom";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -201,7 +201,7 @@ const PersonalDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = true, tena
           </div>
         </div>
         <div className="bmc-card-row">
-          <div className="bmc-col4-card">
+          <div className="bmc-col3-card">
             <LabelFieldPair>
               <CardLabel className="bmc-label">{t("BMC_AADHAR_NUMBER")}</CardLabel>
               <Controller
@@ -225,7 +225,7 @@ const PersonalDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = true, tena
               />
             </LabelFieldPair>
           </div>
-          <div className="bmc-col4-card">
+          <div className="bmc-col3-card">
             <LabelFieldPair>
               <CardLabel className="bmc-label">{t("BMC_TITLE")}</CardLabel>
               <Controller
@@ -254,7 +254,7 @@ const PersonalDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = true, tena
               />
             </LabelFieldPair>
           </div>
-          <div className="bmc-col4-card">
+          <div className="bmc-col3-card">
             <LabelFieldPair>
               <CardLabel className="bmc-label">{t("BMC_AADHAR_NAME")}</CardLabel>
               <Controller
@@ -278,7 +278,7 @@ const PersonalDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = true, tena
               />
             </LabelFieldPair>
           </div>
-          <div className="bmc-col4-card">
+          <div className="bmc-col3-card">
             <LabelFieldPair>
               <CardLabel className="bmc-label">{t("BMC_FATHER")}</CardLabel>
               <Controller
@@ -303,7 +303,7 @@ const PersonalDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = true, tena
             </LabelFieldPair>
           </div>
 
-          <div className="bmc-col4-card">
+          <div className="bmc-col3-card">
             <LabelFieldPair>
               <CardLabel className="bmc-label">{t("BMC_DATE_OF_BIRTH")}</CardLabel>
               <Controller
@@ -321,7 +321,7 @@ const PersonalDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = true, tena
           </div>
         </div>
         <div className="bmc-row-card">
-          <div className="bmc-col4-card">
+          <div className="bmc-col3-card">
             <LabelFieldPair>
               <CardLabel className="bmc-label">{t("BMC_RELIGION")}*</CardLabel>
               <Controller
@@ -350,7 +350,7 @@ const PersonalDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = true, tena
               />
             </LabelFieldPair>
           </div>
-          <div className="bmc-col4-card">
+          <div className="bmc-col3-card">
             <LabelFieldPair>
               <CardLabel className="bmc-label">{t("BMC_CASTECATEGORY")}*</CardLabel>
               <Controller
@@ -380,7 +380,7 @@ const PersonalDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = true, tena
               />
             </LabelFieldPair>
           </div>
-          <div className="bmc-col4-card">
+          <div className="bmc-col3-card">
             <LabelFieldPair>
               <CardLabel className="bmc-label">{t("BMC_GENDER")}</CardLabel>
               <Controller
@@ -414,7 +414,7 @@ const PersonalDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = true, tena
           </div>
 
           {showTransgenderId && (
-            <div className="bmc-col4-card">
+            <div className="bmc-col3-card">
               <LabelFieldPair>
                 <CardLabel className="bmc-label">{t("BMC_TRANSGENDER_ID")}</CardLabel>
                 <Controller

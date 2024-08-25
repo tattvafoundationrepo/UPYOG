@@ -1,4 +1,4 @@
-import { ActionBar, Loader, Menu, SubmitBar, Toast } from "@egovernments/digit-ui-react-components";
+import { ActionBar, Loader, Menu, SubmitBar, Toast } from "@upyog/digit-ui-react-components";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";

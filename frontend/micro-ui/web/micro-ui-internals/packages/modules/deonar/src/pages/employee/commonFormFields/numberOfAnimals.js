@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { CardLabel, LabelFieldPair, TextInput } from "@egovernments/digit-ui-react-components";
+import { CardLabel, LabelFieldPair, TextInput } from "@upyog/digit-ui-react-components";
 import { Controller } from "react-hook-form";
 import useRemovalFee from "../../../hooks/useRemovalFee";
 import useStablingFee from "../../../hooks/useStablingFee";

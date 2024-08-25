@@ -6,11 +6,10 @@ import BankDetails from "../components/BankDetails";
 import DisabilityCard from "../components/DisabilityCard";
 import PersonalDetailCard from "../components/PersonalDetails";
 import QualificationCard from "../components/QualificationCard";
-import WorkflowActions from "../components/Workflow";
 import Timeline from "../components/bmcTimeline";
 import Title from "../components/title";
 import SchemeDetailsPage from "../components/schemeDetails";
-import { Modal } from "@egovernments/digit-ui-react-components";
+import { Modal } from "@upyog/digit-ui-react-components";
 
 const BMCReviewPage = () => {
   const location = useLocation();
@@ -100,14 +99,6 @@ const BMCReviewPage = () => {
             </button>
           </div>
         )}
-        <WorkflowActions
-          ActionBarStyle={{}}
-          MenuStyle={{}}
-          businessService={"bmc-schemes"}
-          applicationNo={"MH-0003"}
-          moduleCode={"BMC"}
-          tenantId={tenantId}
-        />
       </div>
       {isModalOpen && (
         <div className="bmc-modal">

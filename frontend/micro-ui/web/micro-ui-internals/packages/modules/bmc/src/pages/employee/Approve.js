@@ -1,4 +1,4 @@
-import { ActionBar, CardLabel, Dropdown, LabelFieldPair } from "@egovernments/digit-ui-react-components";
+import { ActionBar, CardLabel, Dropdown, LabelFieldPair } from "@upyog/digit-ui-react-components";
 import React, { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";

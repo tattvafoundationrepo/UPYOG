@@ -1,4 +1,4 @@
-import { TickMark } from "@egovernments/digit-ui-react-components";
+import { TickMark } from "@upyog/digit-ui-react-components";
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 

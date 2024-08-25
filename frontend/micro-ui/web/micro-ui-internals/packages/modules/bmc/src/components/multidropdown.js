@@ -1,5 +1,5 @@
 import React, { useRef, useState } from "react";
-import { ArrowDown, CheckSvg, CloseSvg } from "@egovernments/digit-ui-react-components";
+import { ArrowDown, CheckSvg, CloseSvg } from "@upyog/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
 
 const MultiSelect = ({

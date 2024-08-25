@@ -1,4 +1,4 @@
-import { AddIcon, RemoveIcon, TextInput } from "@egovernments/digit-ui-react-components";
+import { AddIcon, RemoveIcon, TextInput } from "@upyog/digit-ui-react-components";
 import React, { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";

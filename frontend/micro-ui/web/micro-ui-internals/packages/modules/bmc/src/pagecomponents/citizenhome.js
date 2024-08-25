@@ -9,7 +9,7 @@ import {
   DocumentIcon,
   Loader, OBPSIcon,
   StandaloneSearchBar, WhatsNewCard
-} from "@egovernments/digit-ui-react-components";
+} from "@upyog/digit-ui-react-components";
 
 const BMCCitizenHome = ({ parentRoute }) => {
   const queryClient = useQueryClient();
