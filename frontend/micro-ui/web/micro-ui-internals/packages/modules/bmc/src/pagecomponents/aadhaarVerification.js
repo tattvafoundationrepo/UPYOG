@@ -1,121 +1,86 @@
-import { CardLabel, LabelFieldPair, TextInput } from "@upyog/digit-ui-react-components";
-import React, { useState } from "react";
+import { CardLabel, LabelFieldPair, OTPInput } from "@upyog/digit-ui-react-components";
+import React, { useState, useEffect } from "react";
 import { useHistory } from "react-router-dom";
 import Timeline from "../components/bmcTimeline";
+import { useTranslation } from "react-i18next";
 
-const AadhaarVerification = ({ t, setError: setFormError, clearErrors: clearFormErrors, onBlur }) => {
-  const [aadhaar, setAadhaar] = useState(Array(12).fill(""));
+const AadhaarVerification = () => {
+  const [aadhaar, setAadhaar] = useState("");
   const [error, setError] = useState("");
   const [isAadhaarValid, setIsAadhaarValid] = useState(false);
-  const [message, setMessage] = useState("");
-  const [buttonText, setButtonText] = useState("Submit");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const history = useHistory();
+  const { t } = useTranslation();
 
-  const handleAadhaarChange = (e, index) => {
-    const value = e.target.value;
-    if (/^\d{0,1}$/.test(value)) {
-      const newAadhaar = [...aadhaar];
-      if (value === "" && aadhaar[index] !== "") {
-        newAadhaar[index] = "";
-        setAadhaar(newAadhaar);
-        if (index > 0) {
-          document.getElementById(`aadhaar-${index - 1}`).focus();
-        }
-      } else {
-        newAadhaar[index] = value;
-        setAadhaar(newAadhaar);
-        if (newAadhaar.every((digit) => digit !== "")) {
-          setError("");
-        }
-        setIsAadhaarValid(false);
-        setMessage("");
-        setButtonText("Submit");
-
-        if (e.target.value && value && index < aadhaar.length - 1) {
-          document.getElementById(`aadhaar-${index + 1}`).focus();
-        }
-      }
-    } else {
-      setError("Aadhaar number should contain only 12 digits");
-    }
-  };
-
-  const validateAadhaar = () => {
-    if (aadhaar.every((digit) => digit !== "")) {
-      setError("");
+  useEffect(() => {
+    if (aadhaar.length === 12 && /^[0-9]{12}$/.test(aadhaar)) {
       setIsAadhaarValid(true);
-      setButtonText("Submit");
+      setError("");
     } else {
-      setError("Aadhaar number should contain only 12 digits");
       setIsAadhaarValid(false);
-      setMessage("");
+      if (aadhaar.length === 12) {
+        setError(t("Aadhaar number should contain exactly 12 digits"));
+      } else {
+        setError("");
+      }
     }
-  };
+  }, [aadhaar, t]);
 
-  const handleSubmit = () => {
-    validateAadhaar();
-    if (isAadhaarValid) {
+  const handleSubmit = (event) => {
+    event.preventDefault();
+
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+
+    if (!aadhaar) {
+      setError(t("Aadhaar number should contain exactly 12 digits"));
+    } else if (isAadhaarValid) {
       history.push({
         pathname: "/digit-ui/citizen/bmc/aadhaarForm",
-        state: { aadharRef: aadhaar.join("") },
+        state: { aadharRef: aadhaar },
       });
     }
+
+    setIsSubmitting(false);
+  };
+
+  const handleAadhaarChange = (value) => {
+    setAadhaar(value);
+    setError("");
   };
 
   return (
     <React.Fragment>
       <div className="bmc-card-full">
-        {window.location.href.includes("/citizen") ? <Timeline currentStep={1} /> : null}
-        <div className="bmc-row-card-header" style={{ padding: "0" }}>
-          <div className="bmc-card-row" style={{ height: "100%" }}>
-            <div
-              className="bmc-col2-card"
-              style={{ height: "55vh", display: "flex", justifyContent: "center", alignItems: "center", padding: "1rem" }}
-            >
+        {window.location.href.includes("/citizen") && <Timeline currentStep={1} />}
+        <div className="bmc-row-card-header" style={{ padding: 0 }}>
+          <div className="bmc-row-card-content" style={{ height: "80%" }}>
+            <div className="bmc-col2-card" style={{ height: "49vh", display: "flex", justifyContent: "center", alignItems: "center" }}>
               <div className="bmc-aadhaarText">
                 <div className="bmc-title" style={{ textAlign: "center" }}>
-                  Aadhaar Verification
+                  {t("BMC_AADHAAR_VERIFICATION")}
                 </div>
-
                 <LabelFieldPair>
-                  <CardLabel className="aadhaar-label">{"BMC_AADHAAR_LABEL"}</CardLabel>
-                  <div className="aadhaar-container">
-                    {aadhaar.map((digit, index) => (
-                      <React.Fragment key={index}>
-                        <TextInput
-                          id={`aadhaar-${index}`}
-                          t={t}
-                          type="number"
-                          isMandatory={false}
-                          optionKey="i18nKey"
-                          name={`aadhaar-${index}`}
-                          onBlur={onBlur}
-                          value={digit}
-                          onChange={(e) => handleAadhaarChange(e, index)}
-                          className="aadhaar-input"
-                          maxLength={1}
-                          validation={{
-                            required: true,
-                            minLength: 12,
-                            maxLength: 12,
-                          }}
-                        />
-                        {(index === 3 || index === 7) && <span className="aadhaar-dash">-</span>}
-                      </React.Fragment>
-                    ))}
+                  <CardLabel className="aadhaar-label">{t("BMC_AADHAAR_LABEL")}</CardLabel>
+                  <div className="aadhaar-container" style={{ width: "580px" }}>
+                    <OTPInput length={12} value={aadhaar} onChange={handleAadhaarChange} />
                   </div>
                 </LabelFieldPair>
-                {message && <div style={{ textAlign: "center", color: aadhaar.join("") === aadhaar ? "green" : "red" }}>{message}</div>}
                 {error && <div style={{ textAlign: "center", color: "red" }}>{error}</div>}
                 <div style={{ textAlign: "center" }}>
-                  <button className="bmc-card-button" onClick={handleSubmit} style={{ borderBottom: "3px solid black", textAlign: "center" }}>
-                    {buttonText}
+                  <button
+                    type="submit"
+                    className="bmc-card-button"
+                    onClick={handleSubmit}
+                    style={{ borderBottom: "3px solid black", textAlign: "center", outline: "none" }}
+                  >
+                    {t("BMC_SUBMIT")}
                   </button>
                 </div>
               </div>
             </div>
-            <div className="bmc-col2-card" style={{ padding: "0" }}>
-              <div className="bmc-card-aadharimage"></div>
+            <div className="bmc-col2-card" style={{ padding: 0 }}>
+              <div className="bmc-card-aadharimage" />
             </div>
           </div>
         </div>

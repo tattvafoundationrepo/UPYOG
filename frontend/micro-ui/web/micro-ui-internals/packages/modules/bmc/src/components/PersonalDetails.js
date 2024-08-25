@@ -171,7 +171,7 @@ const PersonalDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = true, tena
       if (religionData) clearErrors("religion");
       if (casteData) clearErrors("casteCategory");
     }
-  }, [initialRows, setValue, headerLocale, clearErrors, processSingleData]);
+  }, [initialRows, setValue, headerLocale, clearErrors, processSingleData, aadharRef]);
 
   const handleToggle = () => {
     setIsEditable(!isEditable);
@@ -184,242 +184,81 @@ const PersonalDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = true, tena
 
   return (
     <React.Fragment>
-      <form className="bmc-row-card-header">
-        <div className="bmc-card-row">
-          <div className="bmc-col-large-header">
-            <div className="bmc-title">{t("PERSONAL DETAILS")}</div>
-          </div>
-          <div className="bmc-col-small-header" style={{ textAlign: "end" }}>
-            <ToggleSwitch
-              id={"PersonalToggle"}
-              isOn={isEditable}
-              handleToggle={handleToggle}
-              onLabel="Editable"
-              offLabel="Readonly"
-              disabled={!AllowEdit}
-            />
-          </div>
-        </div>
-        <div className="bmc-card-row">
-          <div className="bmc-col3-card">
-            <LabelFieldPair>
-              <CardLabel className="bmc-label">{t("BMC_AADHAR_NUMBER")}</CardLabel>
-              <Controller
-                control={control}
-                name="aadharRef"
-                rules={{ required: t("CORE_COMMON_REQUIRED_ERRMSG") }}
-                render={(props) => (
-                  <div>
-                    <TextInput
-                      disabled={true}
-                      readOnly={true}
-                      value={props.value}
-                      onChange={(e) => props.onChange(e.target.value)}
-                      onBlur={props.onBlur}
-                      optionKey="i18nKey"
-                      t={t}
-                    />
-                    {errors.aadharRef && <span style={{ color: "red" }}>{errors.aadharRef.message}</span>}
-                  </div>
-                )}
+      <div className="bmc-row-card-header">
+        <form className="bmc-row-card-header">
+          <div className="bmc-card-row">
+            <div className="bmc-col-large-header bmc-title">{t("PERSONAL DETAILS")}</div>
+            <div className="bmc-col-small-header" style={{ textAlign: "end" }}>
+              <ToggleSwitch
+                id={"PersonalToggle"}
+                isOn={isEditable}
+                handleToggle={handleToggle}
+                onLabel="Editable"
+                offLabel="Readonly"
+                disabled={!AllowEdit}
               />
-            </LabelFieldPair>
+            </div>
           </div>
-          <div className="bmc-col3-card">
-            <LabelFieldPair>
-              <CardLabel className="bmc-label">{t("BMC_TITLE")}</CardLabel>
-              <Controller
-                control={control}
-                name="title"
-                rules={{ required: t("CORE_COMMON_REQUIRED_ERRMSG") }}
-                render={(props) => (
-                  <div>
-                    {isEditable ? (
-                      <Dropdown
-                        placeholder={t("SELECT TITLE")}
-                        selected={props.value}
-                        select={props.onChange}
-                        onBlur={props.onBlur}
-                        option={dropdownOptions.title}
-                        optionKey="name"
-                        t={t}
-                        isMandatory={true}
-                      />
-                    ) : (
-                      <TextInput disabled={!isEditable} readOnly={!isEditable} value={props.value?.name || ""} />
-                    )}
-                    {errors.title && <span style={{ color: "red" }}>{errors.title.message}</span>}
-                  </div>
-                )}
-              />
-            </LabelFieldPair>
-          </div>
-          <div className="bmc-col3-card">
-            <LabelFieldPair>
-              <CardLabel className="bmc-label">{t("BMC_AADHAR_NAME")}</CardLabel>
-              <Controller
-                control={control}
-                name="aadharName"
-                rules={{ required: t("CORE_COMMON_REQUIRED_ERRMSG") }}
-                render={(props) => (
-                  <div>
-                    <TextInput
-                      disabled={!isEditable}
-                      readOnly={!isEditable}
-                      value={props.value}
-                      onChange={(e) => props.onChange(e.target.value)}
-                      onBlur={props.onBlur}
-                      optionKey="i18nKey"
-                      t={t}
-                    />
-                    {errors.aadharName && <span style={{ color: "red" }}>{errors.aadharName.message}</span>}
-                  </div>
-                )}
-              />
-            </LabelFieldPair>
-          </div>
-          <div className="bmc-col3-card">
-            <LabelFieldPair>
-              <CardLabel className="bmc-label">{t("BMC_FATHER")}</CardLabel>
-              <Controller
-                control={control}
-                name="father"
-                rules={{ required: t("CORE_COMMON_REQUIRED_ERRMSG") }}
-                render={(props) => (
-                  <div>
-                    <TextInput
-                      disabled={!isEditable}
-                      readOnly={!isEditable}
-                      value={props.value}
-                      onChange={(e) => props.onChange(e.target.value)}
-                      onBlur={props.onBlur}
-                      optionKey="i18nKey"
-                      t={t}
-                    />
-                    {errors.father && <span style={{ color: "red" }}>{errors.father.message}</span>}
-                  </div>
-                )}
-              />
-            </LabelFieldPair>
-          </div>
-
-          <div className="bmc-col3-card">
-            <LabelFieldPair>
-              <CardLabel className="bmc-label">{t("BMC_DATE_OF_BIRTH")}</CardLabel>
-              <Controller
-                control={control}
-                name="dob"
-                rules={{ required: t("CORE_COMMON_REQUIRED_ERRMSG") }}
-                render={(props) => (
-                  <div>
-                    <DatePicker disabled={!isEditable} date={props.value} onChange={props.onChange} onBlur={props.onBlur} />
-                    {errors.dob && <span style={{ color: "red" }}>{errors.dob.message}</span>}
-                  </div>
-                )}
-              />
-            </LabelFieldPair>
-          </div>
-        </div>
-        <div className="bmc-row-card">
-          <div className="bmc-col3-card">
-            <LabelFieldPair>
-              <CardLabel className="bmc-label">{t("BMC_RELIGION")}*</CardLabel>
-              <Controller
-                control={control}
-                name="religion"
-                rules={{ required: t("CORE_COMMON_REQUIRED_ERRMSG") }}
-                render={(props) => (
-                  <div>
-                    {isEditable ? (
-                      <Dropdown
-                        placeholder={t("SELECT RELIGION")}
-                        selected={props.value}
-                        select={props.onChange}
-                        onBlur={props.onBlur}
-                        option={religions}
-                        optionKey="i18nKey"
-                        t={t}
-                        isMandatory={true}
-                      />
-                    ) : (
-                      <TextInput disabled={!isEditable} readOnly={!isEditable} value={props.value?.i18nKey || ""} />
-                    )}
-                    {errors.religion && <span style={{ color: "red" }}>{errors.religion.message}</span>}
-                  </div>
-                )}
-              />
-            </LabelFieldPair>
-          </div>
-          <div className="bmc-col3-card">
-            <LabelFieldPair>
-              <CardLabel className="bmc-label">{t("BMC_CASTECATEGORY")}*</CardLabel>
-              <Controller
-                control={control}
-                name="casteCategory"
-                rules={{ required: t("CORE_COMMON_REQUIRED_ERRMSG") }}
-                render={(props) => (
-                  <div>
-                    {isEditable ? (
-                      <Dropdown
-                        placeholder={t("SELECT CASTE CATEGORY")}
-                        selected={props.value}
-                        select={props.onChange}
-                        onBlur={props.onBlur}
-                        option={castes}
-                        optionKey="i18nKey"
-                        t={t}
-                        isMandatory={true}
-                        className="employee-select-wrap bmc-form-field"
-                      />
-                    ) : (
-                      <TextInput disabled={!isEditable} readOnly={!isEditable} value={t(props.value?.i18nKey) || ""} />
-                    )}
-                    {errors.casteCategory && <span style={{ color: "red" }}>{errors.casteCategory.message}</span>}
-                  </div>
-                )}
-              />
-            </LabelFieldPair>
-          </div>
-          <div className="bmc-col3-card">
-            <LabelFieldPair>
-              <CardLabel className="bmc-label">{t("BMC_GENDER")}</CardLabel>
-              <Controller
-                control={control}
-                name="gender"
-                rules={{ required: t("CORE_COMMON_REQUIRED_ERRMSG") }}
-                render={(props) => (
-                  <div>
-                    {isEditable ? (
-                      <Dropdown
-                        placeholder={t("SELECT GENDER")}
-                        selected={props.value}
-                        select={(value) => {
-                          handleGenderChange(value);
-                          props.onChange(value);
-                        }}
-                        onBlur={props.onBlur}
-                        option={dropdownOptions.gender}
-                        optionKey="name"
-                        t={t}
-                        isMandatory={true}
-                      />
-                    ) : (
-                      <TextInput disabled={!isEditable} readOnly={!isEditable} value={props.value?.name || ""} />
-                    )}
-                    {errors.gender && <span style={{ color: "red" }}>{errors.gender.message}</span>}
-                  </div>
-                )}
-              />
-            </LabelFieldPair>
-          </div>
-
-          {showTransgenderId && (
+          <div className="bmc-card-row">
             <div className="bmc-col3-card">
               <LabelFieldPair>
-                <CardLabel className="bmc-label">{t("BMC_TRANSGENDER_ID")}</CardLabel>
+                <CardLabel className="bmc-label">{t("BMC_AADHAR_NUMBER")}</CardLabel>
                 <Controller
                   control={control}
-                  name="transgenderId"
+                  name="aadharRef"
+                  rules={{ required: t("CORE_COMMON_REQUIRED_ERRMSG") }}
+                  render={(props) => (
+                    <div>
+                      <TextInput
+                        disabled={true}
+                        readOnly={true}
+                        value={props.value}
+                        onChange={(e) => props.onChange(e.target.value)}
+                        onBlur={props.onBlur}
+                        optionKey="i18nKey"
+                        t={t}
+                      />
+                      {errors.aadharRef && <span style={{ color: "red" }}>{errors.aadharRef.message}</span>}
+                    </div>
+                  )}
+                />
+              </LabelFieldPair>
+            </div>
+            <div className="bmc-col3-card">
+              <LabelFieldPair>
+                <CardLabel className="bmc-label">{t("BMC_TITLE")}</CardLabel>
+                <Controller
+                  control={control}
+                  name="title"
+                  rules={{ required: t("CORE_COMMON_REQUIRED_ERRMSG") }}
+                  render={(props) => (
+                    <div>
+                      {isEditable ? (
+                        <Dropdown
+                          placeholder={t("SELECT TITLE")}
+                          selected={props.value}
+                          select={props.onChange}
+                          onBlur={props.onBlur}
+                          option={dropdownOptions.title}
+                          optionKey="name"
+                          t={t}
+                          isMandatory={true}
+                        />
+                      ) : (
+                        <TextInput disabled={!isEditable} readOnly={!isEditable} value={props.value?.name || ""} />
+                      )}
+                      {errors.title && <span style={{ color: "red" }}>{errors.title.message}</span>}
+                    </div>
+                  )}
+                />
+              </LabelFieldPair>
+            </div>
+            <div className="bmc-col3-card">
+              <LabelFieldPair>
+                <CardLabel className="bmc-label">{t("BMC_AADHAR_NAME")}</CardLabel>
+                <Controller
+                  control={control}
+                  name="aadharName"
                   rules={{ required: t("CORE_COMMON_REQUIRED_ERRMSG") }}
                   render={(props) => (
                     <div>
@@ -432,15 +271,177 @@ const PersonalDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = true, tena
                         optionKey="i18nKey"
                         t={t}
                       />
-                      {errors.transgenderId && <span style={{ color: "red" }}>{errors.transgenderId.message}</span>}
+                      {errors.aadharName && <span style={{ color: "red" }}>{errors.aadharName.message}</span>}
                     </div>
                   )}
                 />
               </LabelFieldPair>
             </div>
-          )}
-        </div>
-      </form>
+            <div className="bmc-col3-card">
+              <LabelFieldPair>
+                <CardLabel className="bmc-label">{t("BMC_FATHER")}</CardLabel>
+                <Controller
+                  control={control}
+                  name="father"
+                  rules={{ required: t("CORE_COMMON_REQUIRED_ERRMSG") }}
+                  render={(props) => (
+                    <div>
+                      <TextInput
+                        disabled={!isEditable}
+                        readOnly={!isEditable}
+                        value={props.value}
+                        onChange={(e) => props.onChange(e.target.value)}
+                        onBlur={props.onBlur}
+                        optionKey="i18nKey"
+                        t={t}
+                      />
+                      {errors.father && <span style={{ color: "red" }}>{errors.father.message}</span>}
+                    </div>
+                  )}
+                />
+              </LabelFieldPair>
+            </div>
+            <div className="bmc-col3-card">
+              <LabelFieldPair>
+                <CardLabel className="bmc-label">{t("BMC_DATE_OF_BIRTH")}</CardLabel>
+                <Controller
+                  control={control}
+                  name="dob"
+                  rules={{ required: t("CORE_COMMON_REQUIRED_ERRMSG") }}
+                  render={(props) => (
+                    <div>
+                      <DatePicker disabled={!isEditable} date={props.value} onChange={props.onChange} onBlur={props.onBlur} />
+                      {errors.dob && <span style={{ color: "red" }}>{errors.dob.message}</span>}
+                    </div>
+                  )}
+                />
+              </LabelFieldPair>
+            </div>
+
+          </div>
+          <div className="bmc-row-card">
+
+            <div className="bmc-col3-card">
+              <LabelFieldPair>
+                <CardLabel className="bmc-label">{t("BMC_RELIGION")}*</CardLabel>
+                <Controller
+                  control={control}
+                  name="religion"
+                  rules={{ required: t("CORE_COMMON_REQUIRED_ERRMSG") }}
+                  render={(props) => (
+                    <div>
+                      {isEditable ? (
+                        <Dropdown
+                          placeholder={t("SELECT RELIGION")}
+                          selected={props.value}
+                          select={props.onChange}
+                          onBlur={props.onBlur}
+                          option={religions}
+                          optionKey="i18nKey"
+                          t={t}
+                          isMandatory={true}
+                        />
+                      ) : (
+                        <TextInput disabled={!isEditable} readOnly={!isEditable} value={props.value?.i18nKey || ""} />
+                      )}
+                      {errors.religion && <span style={{ color: "red" }}>{errors.religion.message}</span>}
+                    </div>
+                  )}
+                />
+              </LabelFieldPair>
+            </div>
+            <div className="bmc-col3-card">
+              <LabelFieldPair>
+                <CardLabel className="bmc-label">{t("BMC_CASTECATEGORY")}*</CardLabel>
+                <Controller
+                  control={control}
+                  name="casteCategory"
+                  rules={{ required: t("CORE_COMMON_REQUIRED_ERRMSG") }}
+                  render={(props) => (
+                    <div>
+                      {isEditable ? (
+                        <Dropdown
+                          placeholder={t("SELECT CASTE CATEGORY")}
+                          selected={props.value}
+                          select={props.onChange}
+                          onBlur={props.onBlur}
+                          option={castes}
+                          optionKey="i18nKey"
+                          t={t}
+                          isMandatory={true}
+                          className="employee-select-wrap bmc-form-field"
+                        />
+                      ) : (
+                        <TextInput disabled={!isEditable} readOnly={!isEditable} value={t(props.value?.i18nKey) || ""} />
+                      )}
+                      {errors.casteCategory && <span style={{ color: "red" }}>{errors.casteCategory.message}</span>}
+                    </div>
+                  )}
+                />
+              </LabelFieldPair>
+            </div>
+            <div className="bmc-col3-card">
+              <LabelFieldPair>
+                <CardLabel className="bmc-label">{t("BMC_GENDER")}</CardLabel>
+                <Controller
+                  control={control}
+                  name="gender"
+                  rules={{ required: t("CORE_COMMON_REQUIRED_ERRMSG") }}
+                  render={(props) => (
+                    <div>
+                      {isEditable ? (
+                        <Dropdown
+                          placeholder={t("SELECT GENDER")}
+                          selected={props.value}
+                          select={(value) => {
+                            handleGenderChange(value);
+                            props.onChange(value);
+                          }}
+                          onBlur={props.onBlur}
+                          option={dropdownOptions.gender}
+                          optionKey="name"
+                          t={t}
+                          isMandatory={true}
+                        />
+                      ) : (
+                        <TextInput disabled={!isEditable} readOnly={!isEditable} value={props.value?.name || ""} />
+                      )}
+                      {errors.gender && <span style={{ color: "red" }}>{errors.gender.message}</span>}
+                    </div>
+                  )}
+                />
+              </LabelFieldPair>
+            </div>
+
+            {showTransgenderId && (
+              <div className="bmc-col3-card">
+                <LabelFieldPair>
+                  <CardLabel className="bmc-label">{t("BMC_TRANSGENDER_ID")}</CardLabel>
+                  <Controller
+                    control={control}
+                    name="transgenderId"
+                    rules={{ required: t("CORE_COMMON_REQUIRED_ERRMSG") }}
+                    render={(props) => (
+                      <div>
+                        <TextInput
+                          disabled={!isEditable}
+                          readOnly={!isEditable}
+                          value={props.value}
+                          onChange={(e) => props.onChange(e.target.value)}
+                          onBlur={props.onBlur}
+                          optionKey="i18nKey"
+                          t={t}
+                        />
+                        {errors.transgenderId && <span style={{ color: "red" }}>{errors.transgenderId.message}</span>}
+                      </div>
+                    )}
+                  />
+                </LabelFieldPair>
+              </div>
+            )}
+          </div>
+        </form>
+      </div>
     </React.Fragment>
   );
 };
