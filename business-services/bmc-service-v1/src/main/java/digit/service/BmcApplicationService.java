@@ -174,8 +174,15 @@ public class BmcApplicationService {
         if (ObjectUtils.isEmpty(scheme.getId())) {
             throw new Exception("Scheme id must not be null or empty");
         }
-        
+
+        Workflow workflow = new Workflow();
+        workflow.setAction("APPLY");
+        schemeApplicationRequest.getSchemeApplicationList().get(0).setWorkflow(workflow);
+        schemeApplicationRequest.getRequestInfo().getUserInfo().setTenantId("mh.mumbai");
         enrichmentUtil.enrichSchemeApplication(schemeApplicationRequest);
+        schemeApplicationRequest.getRequestInfo().getUserInfo().setTenantId(tenantId);
+        workflowService.updateWorkflowStatus(schemeApplicationRequest);
+       
         UserSchemeApplication userSchemeApplication = new UserSchemeApplication();
         for (SchemeApplication application : schemeApplicationRequest.getSchemeApplicationList()) {
 
@@ -197,13 +204,6 @@ public class BmcApplicationService {
             schemeApplicationRequest.setUserSchemeApplication(userSchemeApplication);
 
         }
-        Workflow workflow = new Workflow();
-        workflow.setAction("APPLY");
-        schemeApplicationRequest.getSchemeApplicationList().get(0).setWorkflow(workflow);
-        ProcessInstance processInstance = new ProcessInstance();
-        processInstance.setPreviousStatus(null);
-        schemeApplicationRequest.getSchemeApplicationList().get(0).setProcessInstance(processInstance);
-        workflowService.updateWorkflowStatus(schemeApplicationRequest);
         producer.push("save-user-scheme-application", schemeApplicationRequest);
         
         UserSubSchemeMapping userSubSchemeMapping = new UserSubSchemeMapping();
