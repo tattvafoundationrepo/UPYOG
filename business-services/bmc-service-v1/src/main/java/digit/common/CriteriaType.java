@@ -8,7 +8,7 @@ public enum CriteriaType {
     INCOME("Income"),
     EDUCATION("Education"),
     DOCUMENT("Document"),
-    BENIFITTED("Benifitted");
+    BENIFITTED("Benefitted");
 
     private final String value;
 
