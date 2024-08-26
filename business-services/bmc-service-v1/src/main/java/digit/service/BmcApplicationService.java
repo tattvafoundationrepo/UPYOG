@@ -127,14 +127,11 @@ public class BmcApplicationService {
         Long userId = schemeApplicationRequest.getRequestInfo().getUserInfo().getId();
         String tenantId = schemeApplicationRequest.getRequestInfo().getUserInfo().getTenantId();
         Long time = System.currentTimeMillis();
-
-        SMSRequest sms = new SMSRequest("7809840269","hi, how are you");
-        producer.push("egov.core.notification.sms",sms);
         
         for (DocumentDetails details : schemeApplicationRequest.getSchemeApplication().getUpdateSchemeData()
                 .getDocuments()) {
             details.setAvailable(true);
-            details.setTenantId(tenantId);
+            details.setTenantId(tenantId != null && tenantId.length() >= 2 ? tenantId.substring(0, 2) : tenantId);
             details.setUserId(userId);
             details.setCreatedBy("system");
             details.setModifiedBy("system");
@@ -152,7 +149,7 @@ public class BmcApplicationService {
         inputTest.setUserOtherDetails(response.getUserOtherDetails());
         inputTest.getUserOtherDetails().setIncome(request.getIncome());
         inputTest.getUserOtherDetails().setUserId(userId);
-        inputTest.getUserOtherDetails().setTenantId(tenantId);
+        inputTest.getUserOtherDetails().setTenantId(tenantId != null && tenantId.length() >= 2 ? tenantId.substring(0, 2) : tenantId);
         inputTest.getUserOtherDetails().setOccupation(
                 schemeApplicationRequest.getSchemeApplication().getUpdateSchemeData().getOccupation().getValue());
         if (inputTest.getUserOtherDetails().getDivyang() == null) {
@@ -178,9 +175,9 @@ public class BmcApplicationService {
         Workflow workflow = new Workflow();
         workflow.setAction("APPLY");
         schemeApplicationRequest.getSchemeApplicationList().get(0).setWorkflow(workflow);
-        schemeApplicationRequest.getRequestInfo().getUserInfo().setTenantId("mh.mumbai");
+        //schemeApplicationRequest.getRequestInfo().getUserInfo().setTenantId("mh.mumbai");
         enrichmentUtil.enrichSchemeApplication(schemeApplicationRequest);
-        schemeApplicationRequest.getRequestInfo().getUserInfo().setTenantId(tenantId);
+       // schemeApplicationRequest.getRequestInfo().getUserInfo().setTenantId(tenantId);
         workflowService.updateWorkflowStatus(schemeApplicationRequest);
        
         UserSchemeApplication userSchemeApplication = new UserSchemeApplication();
