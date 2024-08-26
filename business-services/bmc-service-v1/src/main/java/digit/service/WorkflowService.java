@@ -75,11 +75,10 @@ public class WorkflowService {
         processInstance.setBusinessId(application.getApplicationNumber());
         processInstance.setAction(workflow.getAction());
         processInstance.setModuleName("BMC");
-        processInstance.setTenantId("mh.mumbai");
+        processInstance.setTenantId(requestInfo.getUserInfo().getTenantId());
         processInstance.setBusinessService("bmc-services");
         processInstance.setDocuments(workflow.getDocuments());
         processInstance.setComment(workflow.getComments());
-        processInstance.setPreviousStatus(application.getProcessInstance().getPreviousStatus());
         if (!CollectionUtils.isEmpty(workflow.getAssignes())) {
             List<User> users = new ArrayList<>();
             workflow.getAssignes().forEach(uuid -> {
