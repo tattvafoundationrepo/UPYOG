@@ -175,9 +175,9 @@ public class BmcApplicationService {
         Workflow workflow = new Workflow();
         workflow.setAction("APPLY");
         schemeApplicationRequest.getSchemeApplicationList().get(0).setWorkflow(workflow);
-        //schemeApplicationRequest.getRequestInfo().getUserInfo().setTenantId("mh.mumbai");
+        schemeApplicationRequest.getRequestInfo().getUserInfo().setTenantId("mh.mumbai");
         enrichmentUtil.enrichSchemeApplication(schemeApplicationRequest);
-       // schemeApplicationRequest.getRequestInfo().getUserInfo().setTenantId(tenantId);
+        schemeApplicationRequest.getRequestInfo().getUserInfo().setTenantId(tenantId);
         workflowService.updateWorkflowStatus(schemeApplicationRequest);
        
         UserSchemeApplication userSchemeApplication = new UserSchemeApplication();
