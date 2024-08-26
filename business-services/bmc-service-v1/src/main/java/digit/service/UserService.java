@@ -203,6 +203,7 @@ public class UserService {
 
 	public List<UserDetails> getUserDetails(RequestInfo requestInfo, UserSearchCriteria searchcriteria) {
 		// Fetch applications from database according to the given search criteria
+		searchcriteria.setTenantId(requestInfo.getUserInfo().getTenantId());
 		List<UserDetails> common = userRepository.getUserDetails(searchcriteria);
 		// If no applications are found matching the given criteria, return an empty
 		// list
