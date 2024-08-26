@@ -215,6 +215,7 @@ public class UserService {
 
 		Long userId = userRequest.getRequestInfo().getUserInfo().getId();
 		String tenantId = userRequest.getRequestInfo().getUserInfo().getTenantId();
+		tenantId = tenantId != null && tenantId.length() >= 2 ? tenantId.substring(0, 2) : tenantId;
 		Long time = System.currentTimeMillis();
         
 
