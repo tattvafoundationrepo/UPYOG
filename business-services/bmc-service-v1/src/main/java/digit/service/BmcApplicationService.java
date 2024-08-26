@@ -127,6 +127,7 @@ public class BmcApplicationService {
         Long userId = schemeApplicationRequest.getRequestInfo().getUserInfo().getId();
         String tenantId = schemeApplicationRequest.getRequestInfo().getUserInfo().getTenantId();
         Long time = System.currentTimeMillis();
+        String applicationTenantId = schemeApplicationRequest.getSchemeApplication().getTenantId();
         
         for (DocumentDetails details : schemeApplicationRequest.getSchemeApplication().getUpdateSchemeData()
                 .getDocuments()) {
@@ -175,7 +176,7 @@ public class BmcApplicationService {
         Workflow workflow = new Workflow();
         workflow.setAction("APPLY");
         schemeApplicationRequest.getSchemeApplicationList().get(0).setWorkflow(workflow);
-        schemeApplicationRequest.getRequestInfo().getUserInfo().setTenantId("mh.mumbai");
+        schemeApplicationRequest.getRequestInfo().getUserInfo().setTenantId(applicationTenantId);
         enrichmentUtil.enrichSchemeApplication(schemeApplicationRequest);
         schemeApplicationRequest.getRequestInfo().getUserInfo().setTenantId(tenantId);
         workflowService.updateWorkflowStatus(schemeApplicationRequest);
@@ -208,7 +209,7 @@ public class BmcApplicationService {
         userSubSchemeMapping.setCreatedBy("System");
         userSubSchemeMapping.setCreatedOn(time);
         userSubSchemeMapping.setUserId(userId);
-        userSubSchemeMapping.setTenantId(tenantId);
+        userSubSchemeMapping.setTenantId(applicationTenantId);
         if (!ObjectUtils.isEmpty(schemeApplicationRequest.getSchemeApplication().getSchemeType().getId())) {
             String type = schemeApplicationRequest.getSchemeApplication().getSchemeType().getType().toLowerCase();
             Long schemeTypeId = schemeApplicationRequest.getSchemeApplication().getSchemeType().getId();
