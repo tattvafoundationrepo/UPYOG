@@ -122,7 +122,7 @@ public class SchemeApplicationValidator {
         response.setUserOtherDetails(userDetails.get(0).getUserOtherDetails());
 
         Optional<SchemeCriteria> matchingCriteria = criteriaList.stream()
-                    .filter(benifittedCriteria -> "benifitted".equalsIgnoreCase(benifittedCriteria.getCriteriaType()))
+                    .filter(benifittedCriteria -> "benefitted".equalsIgnoreCase(benifittedCriteria.getCriteriaType()))
                     .findFirst();
             if (matchingCriteria.isPresent()) {
                 SchemeCriteria benifittedCriteria = matchingCriteria.get();
