@@ -96,11 +96,12 @@ public class SchemeApplicationValidator {
     }
 
     public SchemeValidationResponse criteriaCheck(SchemeApplicationRequest request) {
+        String tenantId = request.getRequestInfo().getUserInfo().getTenantId();
         SchemeValidationResponse response = new SchemeValidationResponse();
         StringBuilder message = new StringBuilder();
         UserSearchCriteria userSearchCriteria = new UserSearchCriteria();
         userSearchCriteria.setOption("full");
-        userSearchCriteria.setTenantId(request.getRequestInfo().getUserInfo().getTenantId());
+        userSearchCriteria.setTenantId(tenantId != null && tenantId.length() >= 2 ? tenantId.substring(0, 2) : tenantId);
         userSearchCriteria.setUserId(request.getRequestInfo().getUserInfo().getId());
         List<UserDetails> userDetails = userRepository.getUserDetails(userSearchCriteria);
         request.setAadhardob(userDetails.get(0).getAadharUser().getAadharDob());
