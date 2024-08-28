@@ -54,10 +54,12 @@ public class SchemeApplicationSearchCriteria {
     
     @JsonProperty("schemeId")
     private Long schemeId;
-    @JsonProperty("machineId")
-    private Long machineId = null;
-    @JsonProperty("courseId")
-    private Long courseId;
+   
+    @Builder.Default
+    Long machineId = null;
+  
+    @Builder.Default
+    Long courseId = null;
     
     @JsonProperty("state")
     private String state;
@@ -65,6 +67,6 @@ public class SchemeApplicationSearchCriteria {
     @JsonProperty("number")
     private Long randomizationNumber;
 
-    private String previousState = null;
+    private List<String> previousState ;
     
 }

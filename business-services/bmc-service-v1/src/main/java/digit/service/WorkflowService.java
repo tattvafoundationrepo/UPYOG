@@ -75,7 +75,7 @@ public class WorkflowService {
         processInstance.setBusinessId(application.getApplicationNumber());
         processInstance.setAction(workflow.getAction());
         processInstance.setModuleName("BMC");
-        processInstance.setTenantId(requestInfo.getUserInfo().getTenantId());
+        processInstance.setTenantId(application.getTenantId());
         processInstance.setBusinessService("bmc-services");
         processInstance.setDocuments(workflow.getDocuments());
         processInstance.setComment(workflow.getComments());
@@ -88,14 +88,9 @@ public class WorkflowService {
             });
             processInstance.setAssignes(null);
         }
-        List<String> previousStateList = schemeApplicationRepository
-                .getPreviousStatesByActionAndTenant(action.toUpperCase(), requestInfo.getUserInfo().getTenantId());
-        if (previousStateList.size() > 1) {
-            if (action.equalsIgnoreCase("approve"))
-                processInstance.setPreviousStatus(previousStateList.get(1));
-        } else {
-            processInstance.setPreviousStatus(previousStateList.get(0));
-        }
+        State applicationCurrentState = getCurrentState(requestInfo, application.getTenantId(), application.getApplicationNumber());
+        if(applicationCurrentState != null)
+            processInstance.setPreviousStatus(applicationCurrentState.getState());     
         return processInstance;
     }
 

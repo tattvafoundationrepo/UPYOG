@@ -150,9 +150,12 @@ public class BmcApplicationService {
         inputTest.setUserOtherDetails(response.getUserOtherDetails());
         inputTest.getUserOtherDetails().setIncome(request.getIncome());
         inputTest.getUserOtherDetails().setUserId(userId);
-        inputTest.getUserOtherDetails().setTenantId(tenantId != null && tenantId.length() >= 2 ? tenantId.substring(0, 2) : tenantId);
-        inputTest.getUserOtherDetails().setOccupation(
-                schemeApplicationRequest.getSchemeApplication().getUpdateSchemeData().getOccupation().getValue());
+        inputTest.getUserOtherDetails().setTenantId(tenantId);
+        if (!ObjectUtils.isEmpty(schemeApplicationRequest.getSchemeApplication().getUpdateSchemeData().getOccupation())
+                && schemeApplicationRequest.getSchemeApplication().getUpdateSchemeData().getOccupation() != null) {
+            inputTest.getUserOtherDetails().setOccupation(
+                    schemeApplicationRequest.getSchemeApplication().getUpdateSchemeData().getOccupation().getValue());
+        }     
         if (inputTest.getUserOtherDetails().getDivyang() == null) {
             inputTest.getUserOtherDetails().setDivyang(new Divyang());
         }
@@ -179,6 +182,7 @@ public class BmcApplicationService {
         schemeApplicationRequest.getRequestInfo().getUserInfo().setTenantId(applicationTenantId);
         enrichmentUtil.enrichSchemeApplication(schemeApplicationRequest);
         schemeApplicationRequest.getRequestInfo().getUserInfo().setTenantId(tenantId);
+        schemeApplicationRequest.getSchemeApplicationList().get(0).setTenantId(tenantId);
         workflowService.updateWorkflowStatus(schemeApplicationRequest);
        
         UserSchemeApplication userSchemeApplication = new UserSchemeApplication();

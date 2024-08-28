@@ -1,6 +1,7 @@
 package digit.repository.querybuilder;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
@@ -22,12 +23,12 @@ public class EmployeeGetApplicationQueryBuilder {
         LEFT JOIN eg_bmc_usersubschememapping f ON f.applicationnumber = a.applicationnumber 
         LEFT JOIN eg_bmc_schemes bs ON a.optedid = bs.id
         LEFT JOIN eg_bmc_userotherdetails d ON a.userid = d.userid AND a.tenantid = d.tenantid
-        LEFT JOIN eg_bmc_employeewardmapper e ON e.uuid = ? AND e.ward = d.ward
-        LEFT JOIN (
+        INNER JOIN eg_bmc_employeewardmapper e ON e.uuid = ? AND e.ward = d.ward
+        INNER JOIN (
             SELECT h.businessid
             FROM eg_wf_processinstance_v2 h
             INNER JOIN eg_wf_state_v2 b ON h.status = b.uuid
-            WHERE action = ? AND previousstatus = ?
+            WHERE action = ? AND previousstatus IN ( SELECT ewsv.state FROM public.eg_wf_state_v2 ewsv LEFT JOIN public.eg_wf_action_v2 ewav ON ewsv."uuid" = ewav.currentstate  WHERE ewav."action" = ? AND ewav.tenantid = ?)
         ) AS b ON b.businessid = a.applicationnumber
     """;
 
@@ -63,10 +64,12 @@ public class EmployeeGetApplicationQueryBuilder {
         }
         if (!ObjectUtils.isEmpty(criteria.getState())) {
             preparedStmtList.add(criteria.getState().toUpperCase());
+            preparedStmtList.add(criteria.getState().toUpperCase());
         }
-        preparedStmtList.add(criteria.getPreviousState());
+        preparedStmtList.add(criteria.getTenantId());
+
         if (!ObjectUtils.isEmpty(criteria.getSchemeId())) {
-            query.append("where bs.id = ? ");
+            query.append("where a.optedid = ? ");
             preparedStmtList.add(criteria.getSchemeId());
         }
         if (!ObjectUtils.isEmpty(criteria.getMachineId())) {

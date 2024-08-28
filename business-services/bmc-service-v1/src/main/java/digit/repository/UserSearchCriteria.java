@@ -19,6 +19,9 @@ public class UserSearchCriteria {
 
     @JsonProperty("TenantID")
     private String tenantId;
+    
+    @JsonProperty("uuid")
+    private String uuid;
 
 
 }

@@ -2,6 +2,7 @@ package digit.web.controllers;
 
 import java.util.List;
 
+import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.response.ResponseInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -16,9 +17,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import digit.service.CommonService;
 import digit.util.ResponseInfoFactory;
+import digit.web.models.BankDetails;
+import digit.web.models.BankDetailsResponse;
 import digit.web.models.common.CommonDetails;
 import digit.web.models.common.CommonRequest;
 import digit.web.models.common.CommonResponse;
+import digit.web.models.scheme.UserBankDetails;
 import io.swagger.annotations.ApiParam;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -48,6 +52,7 @@ public class CommonApiController {
     public ResponseEntity<CommonResponse>registrationSearchPost(
             @ApiParam(value = "Details for Schemes", required = true) 
             @Valid @RequestBody CommonRequest commonSearchRequest) {
+
         List<CommonDetails> common = commonService.getcommon(
             commonSearchRequest.getRequestInfo(),
             commonSearchRequest.getCommonSearchCriteria());
@@ -55,6 +60,17 @@ public class CommonApiController {
                 .createResponseInfoFromRequestInfo(commonSearchRequest.getRequestInfo(), true);
                 CommonResponse res = CommonResponse.builder()
                 .commonDetails(common).responseInfo(responseInfo).build();
+        return new ResponseEntity<>(res, HttpStatus.OK);
+    }
+    
+    @PostMapping("/common/_get/_banks")
+    public ResponseEntity<BankDetailsResponse> getBanks(@RequestBody RequestInfo request) {
+  //      List<BankDetails> details = commonService.getAllBankDetails();
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request, true);
+        BankDetailsResponse res = BankDetailsResponse.builder()
+  //              .details(details)
+                .responseInfo(responseInfo)
+                .build();
         return new ResponseEntity<>(res, HttpStatus.OK);
     }
 

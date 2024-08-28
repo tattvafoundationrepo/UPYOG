@@ -31,7 +31,6 @@ public class UserApiController {
     private ResponseInfoFactory responseInfoFactory;
 
     @PostMapping("/user/_get")
-
     public ResponseEntity<UserResponse>registrationSearchPost(
             @ApiParam(value = "Details for Users", required = true) 
             @Valid @RequestBody UserRequest userRequest) {
@@ -48,7 +47,6 @@ public class UserApiController {
     }
 
     @PostMapping("/user/_save")
-
     public ResponseEntity<String> saveUserDetails(@RequestBody InputTest userRequest) {
         try {
             userService.saveUserDetails(userRequest);

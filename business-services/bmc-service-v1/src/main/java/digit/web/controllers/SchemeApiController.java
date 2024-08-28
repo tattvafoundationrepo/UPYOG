@@ -45,7 +45,6 @@ public class SchemeApiController {
     }
 
     @PostMapping("/scheme/_search")
-
     public ResponseEntity<SchemeSearchResponse> v1RegistrationSearchPost(
             @ApiParam(value = "Details for Schemes", required = true) 
             @Valid @RequestBody SchemeSearchRequest schemeSearchRequest) {

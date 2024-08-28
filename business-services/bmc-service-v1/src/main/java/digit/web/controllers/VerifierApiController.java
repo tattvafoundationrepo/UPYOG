@@ -34,8 +34,7 @@ public class VerifierApiController {
     @Autowired
     private VerifierService service;
 
-    @PostMapping("/verifier/_getapplications")
-
+    @PostMapping("/verifier/_getapplications")    
     public ResponseEntity<VerifierResponse> getApplicationsForVerification(@ApiParam(value = "Details for Schemes", required = true) 
      @Valid @RequestBody VerifierRequest request ) {
       
