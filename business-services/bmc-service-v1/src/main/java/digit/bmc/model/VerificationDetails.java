@@ -29,6 +29,7 @@ public class VerificationDetails {
     private List<String> machine;
     private Boolean agreeToPay;
     private Boolean statement;
+    private Boolean employed;
     
     @JsonProperty("ApplicantDetails")
     private List<UserDetails> userDetails;
