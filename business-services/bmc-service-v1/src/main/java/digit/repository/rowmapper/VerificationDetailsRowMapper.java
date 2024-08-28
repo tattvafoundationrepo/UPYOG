@@ -49,9 +49,13 @@ public class VerificationDetailsRowMapper implements ResultSetExtractor<List<Ver
                 verificationDetails.setScheme(rs.getString("scheme"));
                 verificationDetails.setMachine(getFieldValue(rs, "machine"));
                 verificationDetails.setCourse(getFieldValue(rs, "course"));
-                UserSearchCriteria criteria  = new UserSearchCriteria("full",verificationDetails.getUserId(),verificationDetails.getTenantId());
+                UserSearchCriteria criteria  = new UserSearchCriteria("full",verificationDetails.getUserId(),verificationDetails.getTenantId(),null);
                 List<UserDetails> userDetails = userRepository.getUserDetails(criteria);
                 verificationDetails.setUserDetails(userDetails);
+                if(userDetails.get(0).getUserOtherDetails().getOccupation() == null)
+                   verificationDetails.setEmployed(false);
+                else
+                   verificationDetails.setEmployed(true);   
                 verificationDetailsMap.put(applicationNumber, verificationDetails);
             }
         }
