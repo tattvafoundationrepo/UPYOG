@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 
+import digit.bmc.model.Divyang;
 import digit.bmc.model.SchemeCriteria;
 import digit.bmc.model.UserCompleteDetails;
 import digit.bmc.model.VerificationDetails;
@@ -44,6 +45,9 @@ public class SchemeApplicationValidator {
 
     @Autowired
     UserRepository userRepository;
+
+    @Autowired
+    Divyang divyang;
 
     EligibilityResponse eligibilityResponse = new EligibilityResponse();
 
@@ -101,12 +105,11 @@ public class SchemeApplicationValidator {
         StringBuilder message = new StringBuilder();
         UserSearchCriteria userSearchCriteria = new UserSearchCriteria();
         userSearchCriteria.setOption("full");
-        userSearchCriteria.setTenantId(tenantId != null && tenantId.length() >= 2 ? tenantId.substring(0, 2) : tenantId);
+        userSearchCriteria.setTenantId(tenantId);
         userSearchCriteria.setUserId(request.getRequestInfo().getUserInfo().getId());
         List<UserDetails> userDetails = userRepository.getUserDetails(userSearchCriteria);
         request.setAadhardob(userDetails.get(0).getAadharUser().getAadharDob());
         request.setGender(userDetails.get(0).getAadharUser().getGender());
-        request.setDivyangPercent(userDetails.get(0).getDivyang().getDivyangpercent());
         List<String> documentNames = userDetails.get(0).getDocumentDetails().stream()
                 .map(DocumentDetails::getDocumentName)
                 .collect(Collectors.toList());
@@ -118,13 +121,19 @@ public class SchemeApplicationValidator {
                 benefitted = false,dflag = false,gflag=false;
         Long schemeId = request.getSchemeId().longValue();
         List<SchemeCriteria> criteriaList = repository.getCriteriaBySchemeIdAndType(schemeId);
-
+        if (userDetails.get(0).getDivyang() != null) {
+            request.setDivyangPercent(userDetails.get(0).getDivyang().getDivyangpercent());
+            if (userDetails.get(0).getDivyang().getDivyangtype() != null) {
+                divyang.setId(userDetails.get(0).getDivyang().getDivyangtype().getId());
+                userDetails.get(0).getUserOtherDetails().setDivyang(divyang);
+            }
+        }
         response.setUserOtherDetails(userDetails.get(0).getUserOtherDetails());
 
         Optional<SchemeCriteria> matchingCriteria = criteriaList.stream()
-                    .filter(benifittedCriteria -> "benefitted".equalsIgnoreCase(benifittedCriteria.getCriteriaType()))
-                    .findFirst();
-            if (matchingCriteria.isPresent()) {
+                .filter(benifittedCriteria -> "benefitted".equalsIgnoreCase(benifittedCriteria.getCriteriaType()))
+                .findFirst();
+        if (matchingCriteria.isPresent()) {
                 SchemeCriteria benifittedCriteria = matchingCriteria.get();
 
                 schemeBeneficiarySearchCritaria.setUserId(request.getRequestInfo().getUserInfo().getId());
