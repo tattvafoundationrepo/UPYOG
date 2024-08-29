@@ -12,24 +12,30 @@ import digit.web.models.SchemeApplicationSearchCriteria;
 public class EmployeeGetApplicationQueryBuilder {
 
 
-     private static final String BASE_QUERY = """
-        SELECT  a.applicationnumber ,a.userid ,a.tenantid,a.agreetopay,a.statement,
-         bs.name as scheme,
-        ROW_NUMBER() OVER (PARTITION BY e.ward, optedid ORDER BY RANDOM()) AS rn
+    private static final String BASE_QUERY = """
+         with data as(
+            Select
+            *,
+            RANK() over (PARTITION BY businessid ORDER BY createdtime DESC) as rank1
+            from eg_wf_processinstance_v2
+            )
+                    SELECT  a.applicationnumber ,a.userid ,a.tenantid,a.agreetopay,a.statement,
+                     bs.name as scheme,
+                    ROW_NUMBER() OVER (PARTITION BY e.ward, optedid ORDER BY RANDOM()) AS rn
     """;
 
     private static final String FROM_TABLES = """
-        FROM eg_bmc_userschemeapplication a
+        FROM data b
+        INNER JOIN eg_bmc_userschemeapplication a ON b.businessid = a.applicationnumber
         LEFT JOIN eg_bmc_usersubschememapping f ON f.applicationnumber = a.applicationnumber 
         LEFT JOIN eg_bmc_schemes bs ON a.optedid = bs.id
         LEFT JOIN eg_bmc_userotherdetails d ON a.userid = d.userid AND a.tenantid = d.tenantid
         INNER JOIN eg_bmc_employeewardmapper e ON e.uuid = ? AND e.ward = d.ward
-        INNER JOIN (
-            SELECT h.businessid
-            FROM eg_wf_processinstance_v2 h
-            INNER JOIN eg_wf_state_v2 b ON h.status = b.uuid
-            WHERE action = ? AND previousstatus IN ( SELECT ewsv.state FROM public.eg_wf_state_v2 ewsv LEFT JOIN public.eg_wf_action_v2 ewav ON ewsv."uuid" = ewav.currentstate  WHERE ewav."action" = ? AND ewav.tenantid = ?)
-        ) AS b ON b.businessid = a.applicationnumber
+        WHERE b.previousstatus IN 
+        (SELECT ewsv.state FROM public.eg_wf_state_v2 ewsv 
+           LEFT JOIN public.eg_wf_action_v2 ewav ON ewsv."uuid" = ewav.currentstate 
+            WHERE ewav."action" = ? AND ewav.tenantid = ?) and b.rank1=1
+
     """;
 
     private static final String RANKED_QUERY = """
@@ -42,7 +48,7 @@ public class EmployeeGetApplicationQueryBuilder {
         CASE WHEN rn <= 1 THEN 'Selected' ELSE 'NotSelected' END
         FROM RankedData
         WHERE rn <= ?
-            """;
+    """;
 
     public String getQueryBasedOnAction(List<Object> preparedStmtList, SchemeApplicationSearchCriteria criteria) {
         StringBuilder query = new StringBuilder();
@@ -64,12 +70,12 @@ public class EmployeeGetApplicationQueryBuilder {
         }
         if (!ObjectUtils.isEmpty(criteria.getState())) {
             preparedStmtList.add(criteria.getState().toUpperCase());
-            preparedStmtList.add(criteria.getState().toUpperCase());
         }
         preparedStmtList.add(criteria.getTenantId());
 
         if (!ObjectUtils.isEmpty(criteria.getSchemeId())) {
-            query.append("where a.optedid = ? ");
+            addClauseIfRequired(query, preparedStmtList);
+            query.append(" a.optedid = ? ");
             preparedStmtList.add(criteria.getSchemeId());
         }
         if (!ObjectUtils.isEmpty(criteria.getMachineId())) {

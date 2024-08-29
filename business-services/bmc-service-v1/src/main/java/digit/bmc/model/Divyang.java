@@ -17,6 +17,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "eg_bmc_divyang")
 @NoArgsConstructor
 @AllArgsConstructor
+@Component
 public class Divyang {
 
     @Id

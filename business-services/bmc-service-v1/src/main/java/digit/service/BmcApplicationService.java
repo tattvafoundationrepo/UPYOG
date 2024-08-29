@@ -179,7 +179,7 @@ public class BmcApplicationService {
         Workflow workflow = new Workflow();
         workflow.setAction("APPLY");
         schemeApplicationRequest.getSchemeApplicationList().get(0).setWorkflow(workflow);
-        schemeApplicationRequest.getRequestInfo().getUserInfo().setTenantId(applicationTenantId);
+        schemeApplicationRequest.getRequestInfo().getUserInfo().setTenantId("mh.mumbai");
         enrichmentUtil.enrichSchemeApplication(schemeApplicationRequest);
         schemeApplicationRequest.getRequestInfo().getUserInfo().setTenantId(tenantId);
         schemeApplicationRequest.getSchemeApplicationList().get(0).setTenantId(tenantId);
