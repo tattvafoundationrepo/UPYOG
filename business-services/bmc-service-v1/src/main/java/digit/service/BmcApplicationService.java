@@ -3,7 +3,9 @@ package digit.service;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.stream.Collectors;
 
@@ -233,8 +235,17 @@ public class BmcApplicationService {
     }
 
 
-    public Long countSchemeApplications(String action){
-        return schemeApplicationRepository.getApplicationCount(action.toUpperCase());
+    public Map<String, Long> countSchemeApplications(String action,RequestInfo request){
+        Map<String, Long> countMap = new HashMap<String,Long>();
+        if(action.equalsIgnoreCase("null")){
+          List<String> actionList = schemeApplicationRepository.getDistinctActionsByTenant(request.getUserInfo().getTenantId());
+          for (String state : actionList) {
+            countMap.put(state, schemeApplicationRepository.getApplicationCount(state.toUpperCase(),request.getUserInfo().getTenantId()));
+          }
+          return countMap;
+        }
+        countMap.put(action, schemeApplicationRepository.getApplicationCount(action.toUpperCase(),request.getUserInfo().getTenantId()));
+        return countMap;
     }
 
 }
