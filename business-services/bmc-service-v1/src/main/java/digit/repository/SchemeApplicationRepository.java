@@ -1,5 +1,6 @@
 package digit.repository;
 
+import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -129,6 +130,24 @@ public class SchemeApplicationRepository {
         sql = String.format(sql, placeholders);
         log.info("Final Query: " + sql);
         return jdbcTemplate.query(sql, new UserSchemeApplicationRowMapper(), applicationNumbers.toArray());
-    }   
+    }  
+    
+    public Long getApplicationCount(String action) {
+        String sql = """
+            WITH data AS (
+                SELECT *,
+                rank() OVER (PARTITION BY businessid ORDER BY createdtime DESC) AS rnk
+                FROM eg_wf_processinstance_v2
+            )
+            SELECT COUNT(*)
+            FROM (
+                SELECT DISTINCT action
+                FROM data
+                WHERE rnk = 1 AND action = ?
+            ) AS subquery
+        """;
+
+        return jdbcTemplate.queryForObject(sql, Long.class, action);
+    }
 
 }

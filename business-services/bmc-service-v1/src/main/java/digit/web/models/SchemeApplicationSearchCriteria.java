@@ -62,7 +62,7 @@ public class SchemeApplicationSearchCriteria {
     Long courseId = null;
     
     @JsonProperty("state")
-    private String state;
+    private List<String> state;
     
     @JsonProperty("number")
     private Long randomizationNumber;

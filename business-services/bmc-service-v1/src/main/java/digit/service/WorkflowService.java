@@ -42,14 +42,12 @@ public class WorkflowService {
 
     @Autowired
     private BmcConfiguration config;
-
-    @Autowired
-    private SchemeApplicationRepository schemeApplicationRepository;
+    
 
     public void updateWorkflowStatus(UserSchemeApplicationRequest schemeApplicationRequest) {
         schemeApplicationRequest.getSchemeApplicationList().forEach(application -> {
             ProcessInstance processInstance = getProcessInstanceForSchemeApplication(application,
-                    schemeApplicationRequest.getRequestInfo());
+                    schemeApplicationRequest.getRequestInfo());        
             ProcessInstanceRequest workflowRequest = new ProcessInstanceRequest(
                     schemeApplicationRequest.getRequestInfo(), Collections.singletonList(processInstance));
             callWorkFlow(workflowRequest);
@@ -70,7 +68,6 @@ public class WorkflowService {
     private ProcessInstance getProcessInstanceForSchemeApplication(SchemeApplication application,
             RequestInfo requestInfo) {
         Workflow workflow = application.getWorkflow();
-        String action = workflow.getAction();
         ProcessInstance processInstance = new ProcessInstance();
         processInstance.setBusinessId(application.getApplicationNumber());
         processInstance.setAction(workflow.getAction());
@@ -86,22 +83,25 @@ public class WorkflowService {
                 user.setUuid(uuid);
                 users.add(user);
             });
-            processInstance.setAssignes(null);
+            processInstance.setAssignes(users);
         }
-        State applicationCurrentState = getCurrentState(requestInfo, application.getTenantId(), application.getApplicationNumber());
-        if(applicationCurrentState != null)
-            processInstance.setPreviousStatus(applicationCurrentState.getState());     
-        return processInstance;
+           State applicationCurrentState = getCurrentState(requestInfo, application.getTenantId(), application.getApplicationNumber());
+           if(applicationCurrentState != null)
+               processInstance.setPreviousStatus(applicationCurrentState.getState());     
+           return processInstance;
     }
 
     public ProcessInstance getCurrentWorkflow(RequestInfo requestInfo, String tenantId, String businessId) {
         RequestInfoWrapper requestInfoWrapper = RequestInfoWrapper.builder().requestInfo(requestInfo).build();
         StringBuilder url = getSearchURLWithParams(tenantId, businessId);
         Object res = repository.fetchResult(url, requestInfoWrapper);
-        if (res == null) {
-            throw new CustomException("WORKFLOW_ERROR", "Workflow service response is null");
+        ProcessInstanceResponse response = null;
+        try{
+            response = mapper.convertValue(res, ProcessInstanceResponse.class);
         }
-        ProcessInstanceResponse response = mapper.convertValue(res, ProcessInstanceResponse.class);
+        catch (Exception e){
+            throw new CustomException("PARSING_ERROR","Failed to parse workflow search response");
+        }
         if (response != null && !CollectionUtils.isEmpty(response.getProcessInstances())
                 && response.getProcessInstances().get(0) != null)
             return response.getProcessInstances().get(0);
@@ -152,6 +152,7 @@ public class WorkflowService {
     }
 
     public State getCurrentState(RequestInfo requestInfo, String tenantId, String businessId) {
+
         RequestInfoWrapper requestInfoWrapper = RequestInfoWrapper.builder().requestInfo(requestInfo).build();
         StringBuilder url = getWorkflowSearchURLWithParams(tenantId, businessId);
         Object res = repository.fetchResult(url, requestInfoWrapper);

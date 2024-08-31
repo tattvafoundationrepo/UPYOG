@@ -32,8 +32,10 @@ public class VerifierService {
           criteria.setCourseId(request.getDetailId());
        }
        criteria.setSchemeId(request.getSchemeId());
+       
        criteria.setState(request.getAction());
-
+      
+       criteria.setRandomizationNumber(request.getNumber());
        criteria.setUuid(request.getRequestInfo().getUserInfo().getUuid());
        criteria.setTenantId(request.getRequestInfo().getUserInfo().getTenantId());
        List<VerificationDetails> details = repository.getApplicationForVerification(criteria);

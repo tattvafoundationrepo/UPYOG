@@ -1,5 +1,7 @@
 package digit.web.models;
 
+import java.util.List;
+
 import org.egov.common.contract.request.RequestInfo;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -26,7 +28,9 @@ public class VerifierRequest {
     @JsonProperty("type")
     private String type;
     @JsonProperty("action")
-    private String action;
+    private List<String> action;
+
+    private Long number;
 
     private String previousState;
 }

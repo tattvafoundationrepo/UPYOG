@@ -179,11 +179,11 @@ public class BmcApplicationService {
         Workflow workflow = new Workflow();
         workflow.setAction("APPLY");
         schemeApplicationRequest.getSchemeApplicationList().get(0).setWorkflow(workflow);
-        schemeApplicationRequest.getRequestInfo().getUserInfo().setTenantId("mh.mumbai");
+        schemeApplicationRequest.getRequestInfo().getUserInfo().setTenantId(applicationTenantId);
         enrichmentUtil.enrichSchemeApplication(schemeApplicationRequest);
-        schemeApplicationRequest.getRequestInfo().getUserInfo().setTenantId(tenantId);
-        schemeApplicationRequest.getSchemeApplicationList().get(0).setTenantId(tenantId);
+        schemeApplicationRequest.getSchemeApplicationList().get(0).setTenantId(applicationTenantId);
         workflowService.updateWorkflowStatus(schemeApplicationRequest);
+        schemeApplicationRequest.getRequestInfo().getUserInfo().setTenantId(tenantId);
        
         UserSchemeApplication userSchemeApplication = new UserSchemeApplication();
         for (SchemeApplication application : schemeApplicationRequest.getSchemeApplicationList()) {
@@ -213,7 +213,7 @@ public class BmcApplicationService {
         userSubSchemeMapping.setCreatedBy("System");
         userSubSchemeMapping.setCreatedOn(time);
         userSubSchemeMapping.setUserId(userId);
-        userSubSchemeMapping.setTenantId(applicationTenantId);
+        userSubSchemeMapping.setTenantId("mh.mumbai");
         if (!ObjectUtils.isEmpty(schemeApplicationRequest.getSchemeApplication().getSchemeType().getId())) {
             String type = schemeApplicationRequest.getSchemeApplication().getSchemeType().getType().toLowerCase();
             Long schemeTypeId = schemeApplicationRequest.getSchemeApplication().getSchemeType().getId();
@@ -230,6 +230,11 @@ public class BmcApplicationService {
         producer.push("upsert-usersubschememapping", schemeApplicationRequest);
 
         return userSchemeApplication;
+    }
+
+
+    public Long countSchemeApplications(String action){
+        return schemeApplicationRepository.getApplicationCount(action.toUpperCase());
     }
 
 }

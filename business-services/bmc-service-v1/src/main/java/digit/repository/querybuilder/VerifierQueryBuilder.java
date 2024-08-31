@@ -10,7 +10,7 @@ import digit.web.models.SchemeApplicationSearchCriteria;
 @Component
 public class VerifierQueryBuilder {
 
-    private static final String BASE_QUERY = """
+/*     private static final String BASE_QUERY = """
 
                 select eb.applicationnumber ,eb.userid ,eb.tenantid,
                 bs.name as scheme
@@ -107,19 +107,13 @@ public class VerifierQueryBuilder {
         return query.toString();
     }
 
-    /**
-     * Adds a clause to the query if required based on the state of the prepared
-     * statement list.
-     *
-     * @param query            The query string builder.
-     * @param preparedStmtList The list of parameters for the prepared statement.
-     */
+
     private void addClauseIfRequired(StringBuilder query, List<Object> preparedStmtList) {
         if (preparedStmtList.isEmpty()) {
             query.append(" WHERE ");
         } else {
             query.append(" AND ");
         }
-    }
+    }*/
 
 }
