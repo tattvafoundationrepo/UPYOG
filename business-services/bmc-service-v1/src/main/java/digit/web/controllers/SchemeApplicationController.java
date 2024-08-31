@@ -1,8 +1,10 @@
 package digit.web.controllers;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.egov.common.contract.models.RequestInfoWrapper;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.response.ResponseInfo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -116,12 +118,12 @@ public class SchemeApplicationController {
 
         @PostMapping("/_count")
         public ResponseEntity<ApplicationCountResponse> countSchemeApplication(
-                        @ApiParam(value = "Count scheme applications based on action", required = true) @Valid @RequestBody RequestInfo request,
+                        @ApiParam(value = "Count scheme applications based on action", required = true) @Valid @RequestBody RequestInfoWrapper request,
                         @RequestParam String action) throws Exception {
 
-                Long number =schemeApplicationService.countSchemeApplications(action);
+                Map<String, Long> number =schemeApplicationService.countSchemeApplications(action,request.getRequestInfo());
                 ResponseInfo responseInfo = responseInfoFactory
-                                .createResponseInfoFromRequestInfo(request, true);
+                                .createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
                 ApplicationCountResponse response = ApplicationCountResponse.builder()
                                 .count(number)
                                 .responseInfo(responseInfo).build();
