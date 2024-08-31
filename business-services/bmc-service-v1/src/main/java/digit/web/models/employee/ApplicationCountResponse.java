@@ -1,5 +1,8 @@
 package digit.web.models.employee;
 
+import java.util.List;
+import java.util.Map;
+
 import org.egov.common.contract.response.ResponseInfo;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -20,6 +23,6 @@ public class ApplicationCountResponse {
    @JsonProperty("ResponseInfo")
    private ResponseInfo responseInfo;
 
-   private Long count;
+   private Map<String, Long> count;
 
 }
