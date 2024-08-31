@@ -132,7 +132,7 @@ public class SchemeApplicationRepository {
         return jdbcTemplate.query(sql, new UserSchemeApplicationRowMapper(), applicationNumbers.toArray());
     }  
     
-    public Long getApplicationCount(String action) {
+    public Long getApplicationCount(String action,String tenantid) {
         String sql = """
             WITH data AS (
                 SELECT *,
@@ -143,11 +143,20 @@ public class SchemeApplicationRepository {
             FROM (
                 SELECT DISTINCT action
                 FROM data
-                WHERE rnk = 1 AND action = ?
+                WHERE rnk = 1 AND action = ? AND tenantid = ?
             ) AS subquery
         """;
 
-        return jdbcTemplate.queryForObject(sql, Long.class, action);
+        return jdbcTemplate.queryForObject(sql, Long.class, action,tenantid);
+    }
+
+    public List<String> getDistinctActionsByTenant(String tenantId) {
+        String sql = """
+            SELECT DISTINCT action 
+            FROM eg_wf_action_v2 
+            WHERE tenantid = ?
+        """;
+        return jdbcTemplate.query(sql, (rs, rowNum) -> rs.getString("action"), tenantId);
     }
 
 }
