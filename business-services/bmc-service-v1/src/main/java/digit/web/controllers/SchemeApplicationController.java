@@ -119,9 +119,10 @@ public class SchemeApplicationController {
 
         @PostMapping("/_count")
         public ResponseEntity<ApplicationCountResponse> countSchemeApplication(
-                        @ApiParam(value = "Count scheme applications based on action", required = true) @Valid @RequestBody ApplicationCountRequest request) throws Exception {
+                        @ApiParam(value = "Count scheme applications based on action", required = true) @Valid @RequestBody ApplicationCountRequest request)  {
 
                 Map<String, Long> number =schemeApplicationService.countSchemeApplications(request);
+                System.out.println("counttttttttttttttttttttttttt"+number);
                 ResponseInfo responseInfo = responseInfoFactory
                                 .createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
                 ApplicationCountResponse response = ApplicationCountResponse.builder()
