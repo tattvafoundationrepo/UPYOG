@@ -30,6 +30,7 @@ public class VerificationDetails {
     private Boolean agreeToPay;
     private Boolean statement;
     private Boolean employed;
+    private String selectionCase;
     
     @JsonProperty("ApplicantDetails")
     private List<UserDetails> userDetails;
