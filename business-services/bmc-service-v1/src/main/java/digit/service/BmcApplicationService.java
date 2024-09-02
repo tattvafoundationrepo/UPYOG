@@ -37,6 +37,7 @@ import digit.web.models.SchemeApplicationRequest;
 import digit.web.models.SchemeApplicationSearchCriteria;
 import digit.web.models.SchemeValidationResponse;
 import digit.web.models.UserSchemeApplicationRequest;
+import digit.web.models.employee.ApplicationCountRequest;
 import digit.web.models.user.DocumentDetails;
 import digit.web.models.user.InputTest;
 import digit.web.models.user.QualificationDetails;
@@ -235,16 +236,16 @@ public class BmcApplicationService {
     }
 
 
-    public Map<String, Long> countSchemeApplications(String action,RequestInfo request){
+    public Map<String, Long> countSchemeApplications(ApplicationCountRequest request){
         Map<String, Long> countMap = new HashMap<String,Long>();
-        if(action.equalsIgnoreCase("null")){
-          List<String> actionList = schemeApplicationRepository.getDistinctActionsByTenant(request.getUserInfo().getTenantId());
+        if(request.getAction() == null){
+          List<String> actionList = schemeApplicationRepository.getDistinctActionsByTenant(request.getRequestInfo().getUserInfo().getTenantId());
           for (String state : actionList) {
-            countMap.put(state, schemeApplicationRepository.getApplicationCount(state.toUpperCase(),request.getUserInfo().getTenantId()));
+            countMap.put(state, schemeApplicationRepository.getApplicationCount(state.toUpperCase(),request.getRequestInfo().getUserInfo().getTenantId()));
           }
           return countMap;
         }
-        countMap.put(action, schemeApplicationRepository.getApplicationCount(action.toUpperCase(),request.getUserInfo().getTenantId()));
+        countMap.put(request.getAction(), schemeApplicationRepository.getApplicationCount(request.getAction().toUpperCase(),request.getRequestInfo().getUserInfo().getTenantId()));
         return countMap;
     }
 
