@@ -117,7 +117,7 @@ public class SchemeApplicationController {
 
         }
 
-        @PostMapping("/_count")
+        @PostMapping("/_getcount")
         public ResponseEntity<ApplicationCountResponse> countSchemeApplication(
                         @ApiParam(value = "Count scheme applications based on action", required = true) @Valid @RequestBody ApplicationCountRequest request)  {
 
