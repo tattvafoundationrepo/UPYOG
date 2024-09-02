@@ -27,6 +27,7 @@ import digit.web.models.SchemeApplicationRequest;
 import digit.web.models.SchemeApplicationResponse;
 import digit.web.models.SchemeApplicationSearchRequest;
 import digit.web.models.UserSchemeApplicationRequest;
+import digit.web.models.employee.ApplicationCountRequest;
 import digit.web.models.employee.ApplicationCountResponse;
 import io.swagger.annotations.ApiParam;
 import jakarta.servlet.http.HttpServletRequest;
@@ -118,10 +119,9 @@ public class SchemeApplicationController {
 
         @PostMapping("/_count")
         public ResponseEntity<ApplicationCountResponse> countSchemeApplication(
-                        @ApiParam(value = "Count scheme applications based on action", required = true) @Valid @RequestBody RequestInfoWrapper request,
-                        @RequestParam String action) throws Exception {
+                        @ApiParam(value = "Count scheme applications based on action", required = true) @Valid @RequestBody ApplicationCountRequest request) throws Exception {
 
-                Map<String, Long> number =schemeApplicationService.countSchemeApplications(action,request.getRequestInfo());
+                Map<String, Long> number =schemeApplicationService.countSchemeApplications(request);
                 ResponseInfo responseInfo = responseInfoFactory
                                 .createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
                 ApplicationCountResponse response = ApplicationCountResponse.builder()
