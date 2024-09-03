@@ -50,6 +50,9 @@ UserOtherDetails userOtherDetails;
 @JsonProperty("updatedPersonalDetails")
 PersonalDetails personalDetails;
 
+@JsonProperty("updatedDocument")
+List<UpdatedDocument> updatedDocuments;
+
 
 
 

@@ -132,16 +132,16 @@ public class BmcApplicationService {
         Long time = System.currentTimeMillis();
         String applicationTenantId = schemeApplicationRequest.getSchemeApplication().getTenantId();
         
-        for (DocumentDetails details : schemeApplicationRequest.getSchemeApplication().getUpdateSchemeData()
-                .getDocuments()) {
-            details.setAvailable(true);
-            details.setTenantId(tenantId != null && tenantId.length() >= 2 ? tenantId.substring(0, 2) : tenantId);
-            details.setUserId(userId);
-            details.setCreatedBy("system");
-            details.setModifiedBy("system");
-            details.setModifiedOn(time);
-        }
-        producer.push("upsert-user-document", schemeApplicationRequest);
+        // for (DocumentDetails details : schemeApplicationRequest.getSchemeApplication().getUpdateSchemeData()
+        //         .getDocuments()) {
+        //     details.setAvailable(true);
+        //     details.setTenantId(tenantId != null && tenantId.length() >= 2 ? tenantId.substring(0, 2) : tenantId);
+        //     details.setUserId(userId);
+        //     details.setCreatedBy("system");
+        //     details.setModifiedBy("system");
+        //     details.setModifiedOn(time);
+        // }
+        // producer.push("upsert-user-document", schemeApplicationRequest);
 
         SchemeApplicationRequest request = new SchemeApplicationRequest();
         request.setRequestInfo(schemeApplicationRequest.getRequestInfo());

@@ -11,18 +11,17 @@ import digit.web.models.SchemeApplicationSearchCriteria;
 @Component
 public class EmployeeGetApplicationQueryBuilder {
 
-
     private static final String BASE_QUERY = """
-         with data as(
-            Select
-            *,
-            RANK() over (PARTITION BY businessid ORDER BY createdtime DESC) as rank1
-            from eg_wf_processinstance_v2
-            )
-                    SELECT  a.applicationnumber ,a.userid ,a.tenantid,a.agreetopay,a.statement,
-                     bs.name as scheme,
-                    ROW_NUMBER() OVER (PARTITION BY e.ward, optedid ORDER BY RANDOM()) AS rn
-    """;
+                 with data as(
+                    Select
+                    *,
+                    RANK() over (PARTITION BY businessid ORDER BY createdtime DESC) as rank1
+                    from eg_wf_processinstance_v2
+                    )
+                            SELECT  a.applicationnumber ,a.userid ,a.tenantid,a.agreetopay,a.statement,
+                             bs.name as scheme,
+                            ROW_NUMBER() OVER (PARTITION BY e.ward, optedid ORDER BY RANDOM()) AS rn
+            """;
 
     private static final String FROM_TABLES = """
         FROM data b
@@ -105,5 +104,3 @@ public class EmployeeGetApplicationQueryBuilder {
         }
     }
 }
-
-

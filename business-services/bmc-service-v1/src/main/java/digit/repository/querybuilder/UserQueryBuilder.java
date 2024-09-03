@@ -28,7 +28,7 @@ public class UserQueryBuilder {
                """;
 
     private static final String DOCUMENT_QUERY = """
-            , ebd.id as documentId, UPPER(ebd."name") as documentname, ebu2.available  \
+            , ebd.id as documentId, UPPER(ebd."name") as documentname, ebu2.available, ebu2.documentnumber \
             """;
     private static final String ADDRESS_QUERY = """
             ,  ea.pincode ,ea.housenobldgapt ,ea.subdistrict ,ea.postoffice ,ea.landmark ,ea.country ,ea.streetroadline ,ea.citytownvillage ,ea.arealocalitysector ,ea.district ,ea.state ,ea.id   \

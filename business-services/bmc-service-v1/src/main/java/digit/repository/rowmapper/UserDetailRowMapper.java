@@ -154,6 +154,7 @@ public class UserDetailRowMapper implements ResultSetExtractor<List<UserDetails>
                                 .documentId(documentID)
                                 .documentName(rs.getString("documentName"))
                                 .available(rs.getBoolean("available"))
+                                .documentNo(rs.getString("documentnumber"))
                                 .build();
 
                         userDetails.getDocumentDetails().add(documentDetails);

@@ -31,6 +31,7 @@ import digit.web.models.SchemeApplication;
 import digit.web.models.SchemeApplicationRequest;
 import digit.web.models.user.InputTest;
 import digit.web.models.user.QualificationSave;
+import digit.web.models.user.UpdatedDocument;
 import digit.web.models.user.UserDetails;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
@@ -203,7 +204,7 @@ public class UserService {
 
 	public List<UserDetails> getUserDetails(RequestInfo requestInfo, UserSearchCriteria searchcriteria) {
 		// Fetch applications from database according to the given search criteria
-		searchcriteria.setTenantId(requestInfo.getUserInfo().getTenantId());
+		//searchcriteria.setTenantId(requestInfo.getUserInfo().getTenantId());
 		List<UserDetails> common = userRepository.getUserDetails(searchcriteria);
 		// If no applications are found matching the given criteria, return an empty
 		// list
@@ -219,6 +220,15 @@ public class UserService {
 		tenantId = tenantId != null && tenantId.length() >= 2 ? tenantId.substring(0, 2) : tenantId;
 		Long time = System.currentTimeMillis();
         
+		for(UpdatedDocument document : userRequest.getUpdatedDocuments()) {
+            document.getDocumentDetails().setUserId(userId);
+			document.getDocumentDetails().setAvailable(true);
+            document.getDocumentDetails().setTenantId(tenantId);
+            document.getDocumentDetails().setCreatedBy("system");
+            document.getDocumentDetails().setModifiedBy("system");
+            document.getDocumentDetails().setModifiedOn(time);
+		}
+		producer.push("upsert-user-document", userRequest);
 
 		userRequest.setAadharUser(new AadharUser());
 		userRequest.getAadharUser().setUserId(userId);
@@ -281,6 +291,7 @@ public class UserService {
 			details.setModifiedBy("system");
 			details.setModifiedOn(time);
 		}
+		
 		if (!ObjectUtils.isEmpty(userRequest.getQualificationDetailsList())) {
 			for (QualificationSave details : userRequest.getQualificationDetailsList()) {
 

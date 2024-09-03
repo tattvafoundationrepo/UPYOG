@@ -18,7 +18,7 @@ import lombok.ToString;
 @Builder
 @ToString
 public class DocumentDetails {
-    @JsonProperty("code")
+    @JsonProperty("id")
     private Long documentId;
     private Boolean available;
     @JsonProperty("name")
@@ -28,6 +28,7 @@ public class DocumentDetails {
     private String createdBy;
     private String modifiedBy;
     private Long modifiedOn;
+    private String documentNo;
   
     
 }
