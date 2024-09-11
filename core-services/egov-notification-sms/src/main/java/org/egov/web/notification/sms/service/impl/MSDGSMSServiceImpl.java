@@ -149,6 +149,7 @@ public class MSDGSMSServiceImpl extends BaseSMSService {
                     configMap.put(SMSConstants.SENDER_MOBNO_IDENTIFIER, key);
                 else if (value.equals("$message"))
                     configMap.put(SMSConstants.SENDER_MESSAGE_IDENTIFIER, key);
+                log.info("configgggggggggggggggg"+configMap.toString());
             }
         }
         return configMap;
