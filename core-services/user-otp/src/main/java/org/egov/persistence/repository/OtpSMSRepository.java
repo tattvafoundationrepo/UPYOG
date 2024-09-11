@@ -1,4 +1,20 @@
 import java.nio.charset.StandardCharsets;
+import javax.net.ssl.SSLContext;
+
+import lombok.extern.slf4j.Slf4j;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.ssl.SSLContextBuilder;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+
+import java.util.Map;
 
 @Service
 @Slf4j
@@ -19,6 +35,9 @@ public class OtpSMSRepository {
 
     @Autowired
     private LocalizationService localizationService;
+
+    @Autowired
+    private RestTemplate restTemplate; // Autowired RestTemplate with SSL disabled
 
     @Autowired
     public OtpSMSRepository(CustomKafkaTemplate<String, SMSRequest> kafkaTemplate,
@@ -80,5 +99,31 @@ public class OtpSMSRepository {
         } else {
             return tenantId;
         }
+    }
+
+    // Example method using RestTemplate
+    public void sendOtpRequest(String url, Object requestBody) {
+        restTemplate.postForObject(url, requestBody, String.class); // Using custom RestTemplate
+    }
+}
+
+@Configuration
+class RestTemplateConfig {
+
+    @Bean
+    public RestTemplate restTemplate() throws Exception {
+        // Create an SSL context that bypasses SSL validation
+        SSLContext sslContext = SSLContextBuilder.create()
+                .loadTrustMaterial((chain, authType) -> true) // Trust all certificates
+                .build();
+
+        // Create an HTTP client that uses this SSL context and disables hostname verification
+        CloseableHttpClient httpClient = HttpClients.custom()
+                .setSSLContext(sslContext)
+                .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE) // Disable hostname verification
+                .build();
+
+        HttpComponentsClientHttpRequestFactory factory = new HttpComponentsClientHttpRequestFactory(httpClient);
+        return new RestTemplate(factory);
     }
 }
