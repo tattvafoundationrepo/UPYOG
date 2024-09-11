@@ -122,6 +122,7 @@ abstract public class BaseSMSService implements SMSService, SMSBodyBuilder {
 
             }
         }
+        log.info("ResponseStringggggggggg"+responseString.toString());
         boolean status = responseString.contains("API000");
 
         if(!status) {
