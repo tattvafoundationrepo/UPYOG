@@ -86,6 +86,7 @@ public class MSDGSMSServiceImpl extends BaseSMSService {
         final MultiValueMap<String, String> requestBody = bodyBuilder.getSmsRequestBody(sms);
         postProcessor(requestBody);
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(requestBody, getHttpHeaders());
+        log.info("RRRRRRRRRRRRRRRRRRRRRRRRRRRR"+request.toString());
         executeAPI(URI.create(url), HttpMethod.POST, request, String.class);
     }
 
