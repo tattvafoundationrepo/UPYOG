@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 import digit.bmc.model.VerificationDetails;
 import digit.repository.UserRepository;
 import digit.repository.UserSearchCriteria;
+import digit.web.models.SnapshotSearchcriteria;
 import digit.web.models.user.UserDetails;
 
 import java.sql.ResultSet;
@@ -60,13 +61,17 @@ public class VerificationDetailsRowMapper implements ResultSetExtractor<List<Ver
                 if (columns.contains("case")){
                   verificationDetails.setSelectionCase(rs.getString("case"));
                 }
-                UserSearchCriteria criteria  = new UserSearchCriteria("full",verificationDetails.getUserId(),verificationDetails.getTenantId(),null);
-                List<UserDetails> userDetails = userRepository.getUserDetails(criteria);
-                verificationDetails.setUserDetails(userDetails);
-                if(userDetails.get(0).getUserOtherDetails().getOccupation() == null)
+  //               UserSearchCriteria criteria  = new UserSearchCriteria("full",verificationDetails.getUserId(),verificationDetails.getTenantId(),null);
+  //              List<UserDetails> userDetails = userRepository.getUserDetails(criteria);
+                SnapshotSearchcriteria criteria  = new SnapshotSearchcriteria(verificationDetails.getUserId(), verificationDetails.getTenantId(), applicationNumber) ;
+                List<VerificationDetails> userDetails = userRepository.getSnapshotData(criteria);
+                if (userDetails != null && !userDetails.isEmpty()) {
+                verificationDetails.setUserDetails(userDetails.get(0).getUserDetails());
+                if(userDetails.get(0).getUserDetails().get(0).getUserOtherDetails().getOccupation() == null)
                    verificationDetails.setEmployed(false);
                 else
                    verificationDetails.setEmployed(true);   
+                } 
                 verificationDetailsMap.put(applicationNumber, verificationDetails);
             }
         }

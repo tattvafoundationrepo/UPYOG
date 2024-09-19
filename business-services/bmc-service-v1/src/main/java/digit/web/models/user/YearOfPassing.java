@@ -12,6 +12,6 @@ import lombok.Setter;
 public class YearOfPassing {
 
     private String label;
-    private Integer value;
+    private Long value;
     
 }

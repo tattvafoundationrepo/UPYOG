@@ -1,12 +1,14 @@
 package digit.web.models;
 
 import java.util.Date;
+import java.util.List;
 
 import org.egov.common.contract.response.ResponseInfo;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import digit.bmc.model.UserOtherDetails;
+
+import digit.web.models.user.UserDetails;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -44,7 +46,7 @@ public class SchemeValidationResponse {
 
    private Boolean rationCardEligibility;
 
-   private UserOtherDetails userOtherDetails;
+   private List<UserDetails> userDetails;
 
 
 

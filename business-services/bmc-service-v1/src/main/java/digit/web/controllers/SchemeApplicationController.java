@@ -22,10 +22,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import digit.bmc.model.UserSchemeApplication;
 import digit.service.BmcApplicationService;
 import digit.util.ResponseInfoFactory;
+import digit.web.models.ApplicationStatusResponse;
 import digit.web.models.SchemeApplication;
 import digit.web.models.SchemeApplicationRequest;
 import digit.web.models.SchemeApplicationResponse;
 import digit.web.models.SchemeApplicationSearchRequest;
+import digit.web.models.SchemeApplicationStatus;
 import digit.web.models.UserSchemeApplicationRequest;
 import digit.web.models.employee.ApplicationCountRequest;
 import digit.web.models.employee.ApplicationCountResponse;
@@ -129,6 +131,23 @@ public class SchemeApplicationController {
                                 .responseInfo(responseInfo).build();
 
                 return new ResponseEntity<>(response, HttpStatus.OK);
-
+                 
         }
+
+        @PostMapping("/_status")
+        public ResponseEntity<ApplicationStatusResponse> getSchemeApplicationStatus(
+                        @ApiParam(value = "get scheme applications based on user", required = true) @Valid @RequestBody RequestInfoWrapper request)  {
+
+               List<SchemeApplicationStatus> applicationStatusList =schemeApplicationService.getAllSchemeApplicationsOfUser(request.getRequestInfo());
+                ResponseInfo responseInfo = responseInfoFactory
+                                .createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
+               ApplicationStatusResponse response = ApplicationStatusResponse.builder()
+                                .list(applicationStatusList)
+                                .responseInfo(responseInfo).build();
+                return new ResponseEntity<>(response, HttpStatus.OK);
+                 
+        }
+        
+
+
 }

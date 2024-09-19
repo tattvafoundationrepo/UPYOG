@@ -24,6 +24,7 @@ import digit.web.models.BankDetails;
 import digit.web.models.Religion;
 import digit.web.models.user.DivyangDetails;
 import digit.web.models.user.DocumentDetails;
+import digit.web.models.user.PinCodeDto;
 import digit.web.models.user.QualificationDetails;
 import digit.web.models.user.UserAddressDetails;
 import digit.web.models.user.UserDetails;
@@ -62,7 +63,7 @@ public class UserDetailRowMapper implements ResultSetExtractor<List<UserDetails>
                             .build();
                 }
 
-
+                PinCodeDto pin = PinCodeDto.builder().value(rs.getString("pincode")).build();
                 UserAddressDetails address = null;
                 if (columns.contains("citytownvillage") && columns.contains("pincode")) {
                     address = UserAddressDetails.builder()
@@ -76,7 +77,7 @@ public class UserDetailRowMapper implements ResultSetExtractor<List<UserDetails>
                             .postOffice(rs.getString("postoffice"))
                             .country(rs.getString("country"))
                             .streetRoadLine(rs.getString("streetroadline"))
-                            .pincode(rs.getString("pincode"))
+                            .pincode(pin)
                             .state(rs.getString("state"))
                             .build();
                 }

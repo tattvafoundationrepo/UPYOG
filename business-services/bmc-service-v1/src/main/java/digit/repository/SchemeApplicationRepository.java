@@ -5,10 +5,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.HashMap;
+import java.sql.SQLException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.PreparedStatementSetter;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 import digit.bmc.model.SchemeCriteria;
 import digit.bmc.model.UserSchemeApplication;
@@ -18,11 +22,13 @@ import digit.repository.querybuilder.SchemeApplicationQueryBuilder;
 import digit.repository.querybuilder.SchemeBenificiaryBuilder;
 import digit.repository.querybuilder.VerifierQueryBuilder;
 import digit.repository.rowmapper.SchemeApplicationRowMapper;
+import digit.repository.rowmapper.SchemeApplicationStatusRowMapper;
 import digit.repository.rowmapper.SchemeBeneficiaryRowMapper;
 import digit.repository.rowmapper.UserSchemeApplicationRowMapper;
 import digit.repository.rowmapper.VerificationDetailsRowMapper;
 import digit.web.models.SchemeApplication;
 import digit.web.models.SchemeApplicationSearchCriteria;
+import digit.web.models.SchemeApplicationStatus;
 import digit.web.models.SchemeBeneficiaryDetails;
 import lombok.extern.slf4j.Slf4j;
 
@@ -49,6 +55,9 @@ public class SchemeApplicationRepository {
     
     @Autowired
     private EmployeeGetApplicationQueryBuilder builder;
+    
+    @Autowired
+    private SchemeApplicationStatusRowMapper schemeApplicationStatusRowMapper;
    
 
     // // Constructor-based dependency injection
@@ -131,32 +140,72 @@ public class SchemeApplicationRepository {
         log.info("Final Query: " + sql);
         return jdbcTemplate.query(sql, new UserSchemeApplicationRowMapper(), applicationNumbers.toArray());
     }  
-    
-    public Long getApplicationCount(String action,String tenantid) {
-        String sql = """
-            WITH data AS (
-                SELECT *,
-                rank() OVER (PARTITION BY businessid ORDER BY createdtime DESC) AS rnk
-                FROM eg_wf_processinstance_v2
-            )
-            SELECT COUNT(*)
-            FROM (
-                SELECT DISTINCT action
-                FROM data
-                WHERE rnk = 1 AND action = ? AND tenantid = ?
-            ) AS subquery
-        """;
-
-        return jdbcTemplate.queryForObject(sql, Long.class, action,tenantid);
-    }
-
     public List<String> getDistinctActionsByTenant(String tenantId) {
         String sql = """
-            SELECT DISTINCT action 
-            FROM eg_wf_action_v2 
-            WHERE tenantid = ?
+                   SELECT DISTINCT ewa.action 
+            FROM eg_wf_action_v2  ewa
+            left join eg_wf_state_v2 ewsv on ewa.currentstate = ewsv."uuid"
+            left join eg_wf_businessservice_v2 ewbv on ewsv.businessserviceid = ewbv."uuid"
+            WHERE ewa.tenantid = ? and ewbv.business = 'BMC'
         """;
         return jdbcTemplate.query(sql, (rs, rowNum) -> rs.getString("action"), tenantId);
+    }
+
+    public List<SchemeApplicationStatus> getSchemeApplicationByUserIdAndTenantId(Long userid, String tenantid) {
+
+        String sql = """
+                            with data as(
+                      select ewpv.businessid,ewpv.lastmodifiedtime,ewsv.state,ewpv.comment,
+                      RANK() over (PARTITION BY ewpv.businessid ORDER BY ewpv.createdtime DESC) as rank1
+                      from eg_wf_processinstance_v2 ewpv
+                      left join eg_wf_state_v2 ewsv on ewpv.status = ewsv.uuid
+                      )
+                select ebu.applicationnumber , ebs."name", ebc.coursename , ebm."name" as machine ,b.state as currentStatus ,b.lastmodifiedtime,b.comment
+                from data b
+                              inner JOIN eg_bmc_userschemeapplication ebu ON b.businessid = ebu.applicationnumber
+                              left join eg_bmc_usersubschememapping ebu2 on ebu2.applicationnumber = ebu.applicationnumber
+                              left join eg_bmc_schemes ebs on ebu.optedid = ebs.id
+                              left join eg_bmc_courses ebc on ebu2.courseid = ebc.id
+                              left join eg_bmc_machines ebm on ebu2.machineid = ebm.id
+                              where ebu.userid =? and ebu.tenantid = ? and b.rank1=1
+                                    """;
+        log.info("Final Query: " + sql);
+        return jdbcTemplate.query(sql, schemeApplicationStatusRowMapper, userid, tenantid);
+    }
+
+    public Map<String, Long> getApplicationCountss(String tenantId, List<String> actions) {
+        String sql = """
+            WITH data AS (
+                SELECT 
+                    *, 
+                    RANK() OVER (PARTITION BY businessid ORDER BY createdtime DESC) AS rnk
+                FROM eg_wf_processinstance_v2 
+                WHERE businessservice='bmc-services' AND tenantid=?
+            )
+            SELECT COUNT(*), action 
+            FROM data 
+            WHERE rnk = 1
+            GROUP BY action 
+            HAVING action IN (%s)
+            """;
+
+        String inClause = String.join(",", actions.stream().map(a -> "?").toList());
+        sql = String.format(sql, inClause);
+        PreparedStatementSetter preparedStatementSetter = ps -> {
+            ps.setString(1, tenantId);
+            for (int i = 0; i < actions.size(); i++) {
+                ps.setString(i + 2, actions.get(i)); 
+            }
+        };
+        Map<String, Long> resultMap = new HashMap<>();
+        log.info("Final Query: " + sql);
+        jdbcTemplate.query(sql, preparedStatementSetter, (ResultSet rs) -> {
+            String action = rs.getString("action");
+            Long count = rs.getLong(1);
+            resultMap.put(action, count);
+        });
+    
+        return resultMap;
     }
 
 }

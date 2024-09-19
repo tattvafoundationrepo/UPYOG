@@ -19,32 +19,37 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
-import digit.bmc.model.Divyang;
+import com.google.gson.Gson;
+
 import digit.bmc.model.Schemes;
+import digit.bmc.model.UserOtherDetails;
 import digit.bmc.model.UserSchemeApplication;
-import digit.config.BmcConfiguration;
 import digit.enrichment.SchemeApplicationEnrichment;
 import digit.kafka.Producer;
 import digit.repository.SchemeApplicationRepository;
-import digit.repository.UserRepository;
+
 import digit.repository.UserSchemeCitizenRepository;
-import digit.repository.UserSearchCriteria;
+
 import digit.validators.SchemeApplicationValidator;
-import digit.web.models.ProcessInstance;
-import digit.web.models.SMSRequest;
+import digit.web.models.ApplicationSnapshot;
+import digit.web.models.ApplicationSnapshotWraper;
 import digit.web.models.SchemeApplication;
 import digit.web.models.SchemeApplicationRequest;
 import digit.web.models.SchemeApplicationSearchCriteria;
+import digit.web.models.SchemeApplicationStatus;
 import digit.web.models.SchemeValidationResponse;
 import digit.web.models.UserSchemeApplicationRequest;
 import digit.web.models.employee.ApplicationCountRequest;
+import digit.web.models.user.Board;
 import digit.web.models.user.DocumentDetails;
 import digit.web.models.user.InputTest;
+import digit.web.models.user.Qualification;
 import digit.web.models.user.QualificationDetails;
+import digit.web.models.user.QualificationSave;
+import digit.web.models.user.UpdatedDocument;
 import digit.web.models.user.UserDetails;
-import digit.web.models.user.UserRequest;
 import digit.web.models.user.UserSubSchemeMapping;
-import jakarta.validation.Valid;
+import digit.web.models.user.YearOfPassing;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
@@ -68,6 +73,12 @@ public class BmcApplicationService {
     private SchemeApplicationRepository schemeApplicationRepository;
     @Autowired
     private Producer producer;
+
+    @Autowired
+	private ApplicationSnapshot snapshot;
+
+	@Autowired
+	private ApplicationSnapshotWraper snapshotWraper;
 
     @Autowired
     public BmcApplicationService(UserSchemeApplicationService userSchemeApplicationService, SchemeService schemeService,
@@ -131,38 +142,11 @@ public class BmcApplicationService {
         String tenantId = schemeApplicationRequest.getRequestInfo().getUserInfo().getTenantId();
         Long time = System.currentTimeMillis();
         String applicationTenantId = schemeApplicationRequest.getSchemeApplication().getTenantId();
-        
-        // for (DocumentDetails details : schemeApplicationRequest.getSchemeApplication().getUpdateSchemeData()
-        //         .getDocuments()) {
-        //     details.setAvailable(true);
-        //     details.setTenantId(tenantId != null && tenantId.length() >= 2 ? tenantId.substring(0, 2) : tenantId);
-        //     details.setUserId(userId);
-        //     details.setCreatedBy("system");
-        //     details.setModifiedBy("system");
-        //     details.setModifiedOn(time);
-        // }
-        // producer.push("upsert-user-document", schemeApplicationRequest);
 
         SchemeApplicationRequest request = new SchemeApplicationRequest();
         request.setRequestInfo(schemeApplicationRequest.getRequestInfo());
-        request.setIncome(Double.parseDouble(
-                schemeApplicationRequest.getSchemeApplication().getUpdateSchemeData().getIncome().getValue()));
         request.setSchemeId(schemeApplicationRequest.getSchemeApplication().getSchemes().getId());
         SchemeValidationResponse response = validator.criteriaCheck(request);
-        InputTest inputTest = new InputTest();
-        inputTest.setUserOtherDetails(response.getUserOtherDetails());
-        inputTest.getUserOtherDetails().setIncome(request.getIncome());
-        inputTest.getUserOtherDetails().setUserId(userId);
-        inputTest.getUserOtherDetails().setTenantId(tenantId);
-        if (!ObjectUtils.isEmpty(schemeApplicationRequest.getSchemeApplication().getUpdateSchemeData().getOccupation())
-                && schemeApplicationRequest.getSchemeApplication().getUpdateSchemeData().getOccupation() != null) {
-            inputTest.getUserOtherDetails().setOccupation(
-                    schemeApplicationRequest.getSchemeApplication().getUpdateSchemeData().getOccupation().getValue());
-        }     
-        if (inputTest.getUserOtherDetails().getDivyang() == null) {
-            inputTest.getUserOtherDetails().setDivyang(new Divyang());
-        }
-        producer.push("upsert-userotherdetails", inputTest);
 
        if (!ObjectUtils.isEmpty(response.getError()) || response.getError() != null) {
 
@@ -231,6 +215,9 @@ public class BmcApplicationService {
         }
         schemeApplicationRequest.setUserSubSchemeMapping(userSubSchemeMapping);
         producer.push("upsert-usersubschememapping", schemeApplicationRequest);
+        
+        UserDetails userDetails = response.getUserDetails().get(0);
+        saveApplicationSnapshot(userDetails,userSchemeApplication,userSubSchemeMapping);
 
         return userSchemeApplication;
     }
@@ -238,15 +225,64 @@ public class BmcApplicationService {
 
     public Map<String, Long> countSchemeApplications(ApplicationCountRequest request){
         Map<String, Long> countMap = new HashMap<String,Long>();
-        if(request.getAction() == null){
-          List<String> actionList = schemeApplicationRepository.getDistinctActionsByTenant(request.getRequestInfo().getUserInfo().getTenantId());
-          for (String state : actionList) {
-            countMap.put(state, schemeApplicationRepository.getApplicationCount(state.toUpperCase(),request.getRequestInfo().getUserInfo().getTenantId()));
-          }
-          return countMap;
-        }
-        countMap.put(request.getAction(), schemeApplicationRepository.getApplicationCount(request.getAction().toUpperCase(),request.getRequestInfo().getUserInfo().getTenantId()));
+        String tenantId = request.getRequestInfo().getUserInfo().getTenantId();
+
+
+        if (request.getAction() == null) {
+        List<String> actionList = schemeApplicationRepository.getDistinctActionsByTenant(tenantId);
+        countMap = schemeApplicationRepository.getApplicationCountss(tenantId, actionList);
+    } else {
+        List<String> actions = Collections.singletonList(request.getAction().toUpperCase());
+        countMap = schemeApplicationRepository.getApplicationCountss(tenantId, actions);
+    }
         return countMap;
     }
+
+    public List<SchemeApplicationStatus> getAllSchemeApplicationsOfUser(RequestInfo request) {
+
+        return schemeApplicationRepository.getSchemeApplicationByUserIdAndTenantId(request.getUserInfo().getId(),
+                request.getUserInfo().getTenantId());
+
+    }
+
+    public void saveApplicationSnapshot(UserDetails userDetails,UserSchemeApplication schemeApplication,UserSubSchemeMapping mapping){
+
+        List<QualificationSave> qlist = new ArrayList<>();
+        for(QualificationDetails details : userDetails.getQualificationDetails()){
+            QualificationSave save = new QualificationSave();
+            save.setQualificationDetails(new Qualification(details.getQualificationId(),details.getQualification()));
+            save.setBoardValue(new Board(details.getBoard(),details.getBoard()));
+            save.setYearOfPassingValue(new YearOfPassing(null,details.getYearOfPassing()));
+            save.setPercentage(details.getPercentage());
+            qlist.add(save);
+        }
+        List<UpdatedDocument> dlist = new ArrayList<>();
+        for(DocumentDetails details : userDetails.getDocumentDetails()){
+            UpdatedDocument doc = new UpdatedDocument();
+            doc.setDocumentDetails(details);
+            doc.setDocumentNumber(details.getDocumentNo());
+            dlist.add(doc);
+        }
+        UserOtherDetails uod = userDetails.getUserOtherDetails();
+        uod.setDivyang(userDetails.getDivyang().getDivyangtype());
+        uod.setDivyangPercent(userDetails.getDivyang().getDivyangpercent());
+        uod.setDivyangCardId(userDetails.getDivyang().getDivyangcardid());
+        Gson gson = new Gson();
+        String userDocumentsJson = gson.toJson(dlist);
+        String userBanksJson = gson.toJson(userDetails.getBankDetail());
+        String userQualificationsJson = gson.toJson(qlist);  
+        snapshot.setAadharUser(userDetails.getAadharUser());
+        snapshot.setUserOtherDetails(uod);
+        snapshot.setUserAddressDetails(userDetails.getAddress());
+        snapshot.setBankDetailsList(userBanksJson);
+        snapshot.setUpdatedDocuments(userDocumentsJson);
+        snapshot.setQualificationDetailsList(userQualificationsJson);
+        snapshot.setUserSchemeApplication(schemeApplication);
+        snapshot.setUserSubSchemeMapping(mapping);
+        snapshotWraper.setSnapshot(snapshot);
+        producer.push("upsert-application-snapshot", snapshotWraper);
+
+    }
+
 
 }

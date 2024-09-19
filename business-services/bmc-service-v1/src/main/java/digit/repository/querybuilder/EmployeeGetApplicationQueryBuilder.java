@@ -20,7 +20,7 @@ public class EmployeeGetApplicationQueryBuilder {
                     )
                             SELECT  a.applicationnumber ,a.userid ,a.tenantid,a.agreetopay,a.statement,
                              bs.name as scheme,
-                            ROW_NUMBER() OVER (PARTITION BY e.ward, optedid ORDER BY RANDOM()) AS rn
+                            ROW_NUMBER() OVER (PARTITION BY upper(d.ward), optedid ORDER BY RANDOM()) AS rn
             """;
 
     private static final String FROM_TABLES = """
@@ -29,9 +29,12 @@ public class EmployeeGetApplicationQueryBuilder {
         LEFT JOIN eg_bmc_usersubschememapping f ON f.applicationnumber = a.applicationnumber 
         LEFT JOIN eg_bmc_schemes bs ON a.optedid = bs.id
         LEFT JOIN eg_bmc_userotherdetails d ON a.userid = d.userid AND a.tenantid = d.tenantid
-        LEFT JOIN eg_bmc_employeewardmapper e ON e.uuid = ? AND e.ward = d.ward
+        
         
     """;
+    private static final String WARD_SORTING_QUERY = """
+        INNER JOIN eg_bmc_employeewardmapper e ON e.uuid = ? AND upper(e.ward) = upper(d.block)
+            """;
 
     private static final String RANKED_QUERY = """
         WITH RankedData AS (
@@ -42,16 +45,17 @@ public class EmployeeGetApplicationQueryBuilder {
         SELECT *,
         CASE WHEN rn <= ? THEN 'SELECTED' ELSE 'NOTSELECTED' END
         FROM RankedData
-        WHERE rn <= ?
     """;
 
     public String getQueryBasedOnAction(List<Object> preparedStmtList, SchemeApplicationSearchCriteria criteria) {
         StringBuilder query = new StringBuilder();
         String query2 = null;
         if (!ObjectUtils.isEmpty(criteria.getUuid())) {
-            preparedStmtList.add(criteria.getUuid());
+            if("APPLY".equalsIgnoreCase(criteria.getState().get(0))){
+                preparedStmtList.add(criteria.getUuid());
+            }       
         }
-
+        
         if (!ObjectUtils.isEmpty(criteria.getState())) {
             String params = criteria.getState().stream()
                 .map(action -> "?")
@@ -65,6 +69,10 @@ public class EmployeeGetApplicationQueryBuilder {
             if ("randomize".equalsIgnoreCase(criteria.getState().get(0))) {
 
                 query.append(String.format(RANKED_QUERY, BASE_QUERY, FROM_TABLES, query2));
+            }
+            else if("APPLY".equalsIgnoreCase(criteria.getState().get(0))){
+                query.append(BASE_QUERY)
+                .append(FROM_TABLES).append(WARD_SORTING_QUERY).append(query2);
             }
             else{
                 query.append(BASE_QUERY)
@@ -90,7 +98,6 @@ public class EmployeeGetApplicationQueryBuilder {
 
         if ("randomize".equalsIgnoreCase(criteria.getState().get(0))) {
             query.append(RANKED_QUERY_SELECT);
-            preparedStmtList.add(criteria.getRandomizationNumber());
             preparedStmtList.add(criteria.getRandomizationNumber());
         }
         return query.toString();

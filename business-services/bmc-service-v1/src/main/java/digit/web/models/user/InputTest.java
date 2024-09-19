@@ -53,9 +53,8 @@ PersonalDetails personalDetails;
 @JsonProperty("updatedDocument")
 List<UpdatedDocument> updatedDocuments;
 
-
-
-
+@JsonProperty("updateOthersDetails")
+OccupationAndIncomeDetails occupationAndIncomeDetails;
 
 
 }

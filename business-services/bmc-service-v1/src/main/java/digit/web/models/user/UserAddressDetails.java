@@ -51,7 +51,7 @@ public class UserAddressDetails {
     private String state;
 
     @JsonProperty("pinCode")
-    private String pincode;
+    private PinCodeDto pincode;
 
     @JsonProperty("id")
     private Long id;

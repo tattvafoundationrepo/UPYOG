@@ -110,6 +110,7 @@ public class SchemeApplicationValidator {
         List<UserDetails> userDetails = userRepository.getUserDetails(userSearchCriteria);
         request.setAadhardob(userDetails.get(0).getAadharUser().getAadharDob());
         request.setGender(userDetails.get(0).getAadharUser().getGender());
+        request.setIncome(userDetails.get(0).getUserOtherDetails().getIncome());
         List<String> documentNames = userDetails.get(0).getDocumentDetails().stream()
                 .map(DocumentDetails::getDocumentName)
                 .collect(Collectors.toList());
@@ -128,7 +129,7 @@ public class SchemeApplicationValidator {
                 userDetails.get(0).getUserOtherDetails().setDivyang(divyang);
             }
         }
-        response.setUserOtherDetails(userDetails.get(0).getUserOtherDetails());
+        response.setUserDetails(userDetails);
 
         Optional<SchemeCriteria> matchingCriteria = criteriaList.stream()
                 .filter(benifittedCriteria -> "benefitted".equalsIgnoreCase(benifittedCriteria.getCriteriaType()))

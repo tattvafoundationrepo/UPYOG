@@ -17,15 +17,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
+
 import digit.bmc.model.AadharUser;
 import digit.bmc.model.Divyang;
 import digit.bmc.model.UserOtherDetails;
+
 import digit.config.BmcConfiguration;
 import digit.kafka.Producer;
 import digit.repository.UserRepository;
 import digit.repository.UserSearchCriteria;
 
 import digit.util.UserUtil;
+
 import digit.web.models.BankDetails;
 import digit.web.models.SchemeApplication;
 import digit.web.models.SchemeApplicationRequest;
@@ -33,6 +36,7 @@ import digit.web.models.user.InputTest;
 import digit.web.models.user.QualificationSave;
 import digit.web.models.user.UpdatedDocument;
 import digit.web.models.user.UserDetails;
+
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 
@@ -48,8 +52,6 @@ public class UserService {
 
 	@Autowired
 	private Producer producer;
-
-
 
 	@Inject
 	public UserService(UserUtil userUtils, BmcConfiguration config) {
@@ -219,14 +221,14 @@ public class UserService {
 		String tenantId = userRequest.getRequestInfo().getUserInfo().getTenantId();
 		tenantId = tenantId != null && tenantId.length() >= 2 ? tenantId.substring(0, 2) : tenantId;
 		Long time = System.currentTimeMillis();
-        
+
 		for(UpdatedDocument document : userRequest.getUpdatedDocuments()) {
-            document.getDocumentDetails().setUserId(userId);
+			document.getDocumentDetails().setUserId(userId);
 			document.getDocumentDetails().setAvailable(true);
-            document.getDocumentDetails().setTenantId(tenantId);
-            document.getDocumentDetails().setCreatedBy("system");
-            document.getDocumentDetails().setModifiedBy("system");
-            document.getDocumentDetails().setModifiedOn(time);
+			document.getDocumentDetails().setTenantId(tenantId);
+			document.getDocumentDetails().setCreatedBy("system");
+			document.getDocumentDetails().setModifiedBy("system");
+			document.getDocumentDetails().setModifiedOn(time);
 		}
 		producer.push("upsert-user-document", userRequest);
 
@@ -234,7 +236,8 @@ public class UserService {
 		userRequest.getAadharUser().setUserId(userId);
 		userRequest.getAadharUser().setTenantId(tenantId);
 		userRequest.getAadharUser().setAadharDob(userRequest.getPersonalDetails().getAadharDob());
-		userRequest.getAadharUser().setAadharName(userRequest.getPersonalDetails().getTitle().getName() + ". " + userRequest.getPersonalDetails().getAadharName());
+		userRequest.getAadharUser().setAadharName(userRequest.getPersonalDetails().getTitle().getName() + ". "
+				+ userRequest.getPersonalDetails().getAadharName());
 		userRequest.getAadharUser().setAadharFatherName(userRequest.getPersonalDetails().getAadharFatherName());
 		userRequest.getAadharUser().setGender(userRequest.getPersonalDetails().getGender().getName());
 		userRequest.getAadharUser().setAadharMobile(userRequest.getRequestInfo().getUserInfo().getMobileNumber());
@@ -250,11 +253,11 @@ public class UserService {
 		userRequest.getUserOtherDetails().setTenantId(tenantId);
 		userRequest.getUserOtherDetails().setCreatedBy("system");
 		userRequest.getUserOtherDetails().setCreatedOn(time);
-		if (userRequest.getDivyangDetails() != null) {
+		if (userRequest.getDivyangDetails() != null && userRequest.getDivyangDetails().getDivyangtype() != null) {
 			userRequest.getUserOtherDetails().setDivyang(userRequest.getDivyangDetails().getDivyangtype());
 			userRequest.getUserOtherDetails().setDivyangCardId(userRequest.getDivyangDetails().getDivyangcardid());
 			userRequest.getUserOtherDetails().setDivyangPercent(userRequest.getDivyangDetails().getDivyangpercent());
-		}else{
+		} else {
 			userRequest.getUserOtherDetails().setDivyang(new Divyang());
 		}
 		userRequest.getUserOtherDetails().setZone(userRequest.getUserAddressDetails().getZoneName());
@@ -262,8 +265,18 @@ public class UserService {
 		userRequest.getUserOtherDetails().setWard(userRequest.getUserAddressDetails().getWardName().getCode());
 		userRequest.getUserOtherDetails().setModifiedBy("system");
 		userRequest.getUserOtherDetails().setModifiedOn(time);
+		if (userRequest.getOccupationAndIncomeDetails() != null) {
 
-        Long addressId = null;
+			if (userRequest.getOccupationAndIncomeDetails().getIncome() != null) {
+				userRequest.getUserOtherDetails().setIncome(
+						Double.parseDouble(userRequest.getOccupationAndIncomeDetails().getIncome().getValue()));
+			}
+			if (userRequest.getOccupationAndIncomeDetails().getOccupation() != null) {
+				userRequest.getUserOtherDetails()
+						.setOccupation(userRequest.getOccupationAndIncomeDetails().getOccupation().getValue());
+			}
+		}
+		Long addressId = null;
 		UserSearchCriteria userSearchCriteria = new UserSearchCriteria();
 		userSearchCriteria.setOption("address");
 		userSearchCriteria.setTenantId(tenantId);
@@ -271,14 +284,20 @@ public class UserService {
 		List<UserDetails> userDetails = userRepository.getUserDetails(userSearchCriteria);
 		userRequest.getUserAddressDetails().setUserId(userId);
 		userRequest.getUserAddressDetails().setTenantId(tenantId);
-		if(!userDetails.isEmpty()){
-           addressId = userDetails.get(0).getAddress().getId();
+		if (!userDetails.isEmpty()) {
+			addressId = userDetails.get(0).getAddress().getId();
 		}
-		if(addressId != null && addressId != 0){
+		if (addressId != null && addressId != 0) {
 			userRequest.getUserAddressDetails().setId(addressId);
- 			producer.push("update-useraddress", userRequest);
+			producer.push("update-useraddress", userRequest);
 		} else {
-			addressId = userRepository.getUserAddressMaxId() + 1;
+			if(userRepository.getUserAddressMaxId()!=null){
+				addressId = userRepository.getUserAddressMaxId() + 1;
+			}
+			else{
+				addressId = 1l;
+			}
+			
 			userRequest.getUserAddressDetails().setId(addressId);
 
 			producer.push("insert-useraddress", userRequest);
@@ -291,7 +310,7 @@ public class UserService {
 			details.setModifiedBy("system");
 			details.setModifiedOn(time);
 		}
-		
+
 		if (!ObjectUtils.isEmpty(userRequest.getQualificationDetailsList())) {
 			for (QualificationSave details : userRequest.getQualificationDetailsList()) {
 
@@ -303,14 +322,11 @@ public class UserService {
 				details.setModifiedOn(time);
 			}
 		}
-		producer.push("upsert-userbank", userRequest);
-		producer.push("upsert-userqualification", userRequest);
-		producer.push("upsert-aadharuser", userRequest);
-		producer.push("upsert-userotherdetails", userRequest);
-
+	    producer.push("upsert-userbank", userRequest);
+	    producer.push("upsert-userqualification", userRequest);
+	    producer.push("upsert-aadharuser", userRequest);
+	    producer.push("upsert-userotherdetails", userRequest);
 		return userRequest;
 	}
-
-
 
 }

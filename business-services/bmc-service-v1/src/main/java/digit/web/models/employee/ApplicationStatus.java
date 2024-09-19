@@ -14,7 +14,7 @@ public class ApplicationStatus {
     private String action;
 
     @JsonProperty("Comment")
-    private String comment; 
+    private CommentDto comment; 
 
     @JsonProperty("ApplicationNumbers")
     private List<String> applicationNumbers;

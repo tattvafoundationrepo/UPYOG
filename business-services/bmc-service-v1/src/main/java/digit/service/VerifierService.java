@@ -49,6 +49,10 @@ public class VerifierService {
           if (request.getAction().contains("RANDOMIZE")) {
              updateRandomizeState("SELECTED", details, request);
              updateRandomizeState("NOTSELECTED", details, request);
+             List<VerificationDetails> selectedDetails =  details.stream()
+                  .filter(detail->"SELECTED".equalsIgnoreCase(detail.getSelectionCase()))
+                  .collect(Collectors.toList());
+             return selectedDetails;   
           }
        }
 
@@ -61,15 +65,17 @@ public class VerifierService {
              .filter(detail -> selection.equals(detail.getSelectionCase()))
              .map(VerificationDetails::getApplicationNumber)
              .collect(Collectors.toList());
-       ApplicationStatus applicationStatus = ApplicationStatus.builder()
-             .action(selection)
-             .applicationNumbers(filteredList)
+       if (filteredList.size() != 0) {
+          ApplicationStatus applicationStatus = ApplicationStatus.builder()
+                .action(selection)
+                .applicationNumbers(filteredList)
                 .build();
           ApplicationStatusRequest asr = ApplicationStatusRequest.builder()
                 .applicationStatus(applicationStatus)
                 .requestInfo(request.getRequestInfo())
                 .build();
           ewfs.updateApplicationsStatus(asr);
+       }
 
     }
 

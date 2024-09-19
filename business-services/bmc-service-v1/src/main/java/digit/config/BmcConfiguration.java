@@ -98,6 +98,18 @@ public class BmcConfiguration {
     @Value("${bmc.kafka.create.topic}")
     private String createTopic;
 
+    @Value("${egov.hrms.create.endpoint}")
+    private String hrmsCreateEndpoint;
+
+    @Value("${egov.hrms.UserName}")
+    private String UserName;
+
+    @Value("${egov.hrms.password}")
+    private String password;
+
+    @Value("${egov.hrms.search.employee.URL}")
+    private String URL;
+
     @Value("${bmc.kafka.update.topic}")
     private String updateTopic;
 
