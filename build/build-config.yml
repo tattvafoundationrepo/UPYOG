@@ -38,7 +38,7 @@ config:
   - name: "builds/upyog/business-services/employee-service"
     build:
       - work-dir: "business-services/employee-service"
-        image-name: "bmc-service-v1"
+        image-name: "employee-service"
         dockerfile: "build/maven/Dockerfile"
       - work-dir: "business-services/employee-service/src/main/resources/db"
         image-name: "employee-service-db"    
