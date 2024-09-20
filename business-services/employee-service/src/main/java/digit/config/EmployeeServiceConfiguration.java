@@ -44,6 +44,9 @@ public class EmployeeServiceConfiguration {
     @Value("${egov.hrms.create.endpoint}")
     private String hrmsCreateEndpoint;
 
+    @Value("${egov.hrms.update.endpoint}")
+    private String hrmsUpdatePoint;
+
     @Value("${egov.SAP.UserName}")
     private String UserName;
 

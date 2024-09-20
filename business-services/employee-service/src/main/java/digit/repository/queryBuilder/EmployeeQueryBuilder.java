@@ -16,15 +16,23 @@ public class EmployeeQueryBuilder {
      """;
 
 
-    public String getEmployeeDetails(EmployeeCriteriaRequest searchCriteria, List<Object> preparedStmtList){
-
+    public String getEmployeeDetails(EmployeeCriteriaRequest searchCriteria, List<Object> preparedStmtList) {
         StringBuilder query = new StringBuilder(BASE_QUERY);
 
-            if (!ObjectUtils.isEmpty(searchCriteria.getEmpId())) {
-                addClauseIfRequired(query, preparedStmtList);
-                query.append("empCode = ? ");
-                preparedStmtList.add(searchCriteria.getEmpId());
+        if (!ObjectUtils.isEmpty(searchCriteria.getEmpCode())) {
+            addClauseIfRequired(query, preparedStmtList);
+            query.append("empCode IN (");
+
+
+            for (int i = 0; i < searchCriteria.getEmpCode().size(); i++) {
+                query.append("?");
+                preparedStmtList.add(searchCriteria.getEmpCode().get(i));
+                if (i < searchCriteria.getEmpCode().size() - 1) {
+                    query.append(", ");
+                }
             }
+            query.append(")");
+        }
 
         return query.toString();
     }

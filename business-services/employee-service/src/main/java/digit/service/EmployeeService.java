@@ -45,7 +45,7 @@ public class EmployeeService {
             String empCode = repository.getEmpCode(empId);
 
             EmployeeCriteriaRequest employeeCriteriaRequest = new EmployeeCriteriaRequest();
-            employeeCriteriaRequest.setEmpId(empId);
+            employeeCriteriaRequest.setEmpCode(request.getEmpId());
             employeeCriteriaRequest.setRequestInfo(request.getRequestInfo());
             employeeCriteriaRequest.setCreatedBy(request.getCreatedBy());
             employeeCriteriaRequest.setCreatedAt(request.getCreatedAt());
@@ -57,21 +57,20 @@ public class EmployeeService {
     }
 
 
-
     public EmployeeData getEmployeeFromSAP(EmployeeCriteriaRequest request) {
         RestTemplate restTemplate = new RestTemplate();
 
         HttpHeaders headers = new HttpHeaders();
         headers.set("Content-Type", "application/json; charset=UTF-8");
         headers.set("Authorization", "Basic " + encodeCredentials(configuration.getUserName(), configuration.getPassword()));
-     EmployeeData employeeData=new EmployeeData();
+        EmployeeData employeeData = new EmployeeData();
         for (String empId : request.getEmpCode()) {
             HttpEntity<String> reqEnt = new HttpEntity<>("{\"EMP_ID\": \"" + empId + "\"}", headers);
             System.out.println(" employee request: " + headers + " " + reqEnt);
 
             EmployeeResponse empRes = restTemplate.postForObject(configuration.getURL(), reqEnt, EmployeeResponse.class);
             EmpData empData = empRes.getEmpData();
-             employeeData = mapData(empData);
+            employeeData = mapData(empData);
             String empCode = repository.getEmpCode(empId);
             employeeData.setEmpCode(empId);
             employeeData.setCreatedAt(System.currentTimeMillis());
@@ -89,8 +88,8 @@ public class EmployeeService {
 
             }
         }
-            return employeeData;
-        }
+        return employeeData;
+    }
 
     private static String encodeCredentials(String username, String password) {
         String credentials = username + ":" + password;
@@ -114,7 +113,9 @@ public class EmployeeService {
 
     private void upsertEmployeeData(EmpData empData, EmployeeCriteriaRequest request, String empCode) {
         EmployeeData employeeData = mapData(empData);
-        employeeData.setEmpCode(request.getEmpId());
+        for (String empId : request.getEmpCode()) {
+            employeeData.setEmpCode(empId);
+        }
         employeeData.setCreatedAt(System.currentTimeMillis());
         employeeData.setCreatedBy(request.getCreatedBy());
         employeeData.setUpdatedAt(System.currentTimeMillis());
@@ -142,27 +143,24 @@ public class EmployeeService {
 
         for (String empId : request.getEmpId()) {
 
-            EmpData empData=  getEmpDataFromSAP(request.getEmpId());
-            EmployeeCriteriaRequest employeeCriteriaRequest = new EmployeeCriteriaRequest();
-            employeeCriteriaRequest.setEmpId(empId);
+            EmpData empData = getEmpDataFromSAP(request.getEmpId());
+
 
             //HRMS
             EmployeeCriteriaRequest searchCriteria = new EmployeeCriteriaRequest();
-            searchCriteria.setEmpId(empId);
+            searchCriteria.setEmpCode(request.getEmpId());
 
             Employees employees = mapEmployeesData(empData, empId, request);
-            List<Employees> employees1 = new ArrayList<>();
-            employees1.add(employees);
+            List<Employees> employeesList = new ArrayList<>();
+            employeesList.add(employees);
 
 
-            EmployeeRequest employeeRequest1 = new EmployeeRequest();
-            employeeRequest1.setRequestInfo(request.getRequestInfo());
-            employeeRequest1.setEmployees(employees1);
-
-
+            EmployeeRequest employeeRequest = new EmployeeRequest();
+            employeeRequest.setRequestInfo(request.getRequestInfo());
+            employeeRequest.setEmployees(employeesList);
             String hrmsSaveURL = getEmployeeSaveUrl() + "?tenantId=" + request.getTenantId();
 
-            setStatus(hrmsSaveURL, searchCriteria, employeeRequest1, employeeCriteriaRequest);
+            setStatus(hrmsSaveURL, searchCriteria, employeeRequest);
         }
     }
 
@@ -213,7 +211,8 @@ public class EmployeeService {
 
 
         employees.setUser(user);
-
+        employees.setId(request.getId());
+        employees.setUuid(request.getUuid());
 
         List<Jurisdictions> jurisdictions = new ArrayList<>();
         Jurisdictions jurisdiction = new Jurisdictions();
@@ -246,21 +245,35 @@ public class EmployeeService {
         return employees;
 
     }
-
-    private void setStatus(String URL, EmployeeCriteriaRequest searchCriteria, EmployeeRequest employeeRequest, EmployeeCriteriaRequest employeeCriteriaRequest) {
+    private void setStatus(String URL, EmployeeCriteriaRequest searchCriteria, EmployeeRequest employeeRequest) {
 
         List<EmployeeData> employeeDataList = repository.getEmployeeData(searchCriteria);
         if (!ObjectUtils.isEmpty(employeeDataList)) {
             for (EmployeeData employeeData : employeeDataList) {
-                if (employeeData.getEmpCode() != null && ("New Record".equalsIgnoreCase(employeeData.getStatus())) || ("Update".equalsIgnoreCase(employeeData.getStatus()))) {
-                    try {
-                        restTemplate.postForObject(URL.toString(), employeeRequest, Map.class);
-                        employeeData.setStatus("PROCESSED");
-                    } catch (HttpClientErrorException e) {
-                       throw new CustomException("Invalid request"," : Employee already processed");
+                if (employeeData.getEmpCode() != null) {
+                    if (("New Record".equalsIgnoreCase(employeeData.getStatus()))) {
+                        try {
+                            restTemplate.postForObject(URL.toString(), employeeRequest, Map.class);
+                            employeeData.setStatus("PROCESSED");
+                            searchCriteria.setEmployeeData(employeeData);
+                            producer.push("save-employee-data", searchCriteria);
+                        } catch (HttpClientErrorException e) {
+                            throw new CustomException("Invalid request", " : Employee not processed");
+                        }
+
+                    } else if (("Update".equalsIgnoreCase(employeeData.getStatus()))) {
+                        String url = updateHrmsEndpoint();
+                        try {
+                            restTemplate.postForObject(url.toString(), employeeRequest, Map.class);
+                            employeeData.setStatus("PROCESSED");
+                            searchCriteria.setEmployeeData(employeeData);
+                            producer.push("save-employee-data", searchCriteria);
+
+                        } catch (HttpClientErrorException e) {
+                            throw new CustomException("Invalid request", " : Employee not  processed");
+                        }
                     }
-                    employeeCriteriaRequest.setEmployeeData(employeeData);
-                    producer.push("save-employee-data", employeeCriteriaRequest);
+
                 }
             }
         }
@@ -292,6 +305,7 @@ public class EmployeeService {
         return employeeData;
 
     }
+
     private EmpData getEmpDataFromSAP(List<String> empIds) {
         RestTemplate restTemplate = new RestTemplate();
 
@@ -310,6 +324,18 @@ public class EmployeeService {
 
         return empData;
     }
+
+
+    public String updateHrmsEndpoint() {
+        String url = configuration.getHrmsHost() + configuration.getHrmsUpdatePoint();
+        return url;
+    }
+
+    private String getHrmsSearchEndpoint() {
+        String url = configuration.getHrmsHost() + configuration.getHrmsEndPoint();
+        return url;
+    }
+
 
 }
 

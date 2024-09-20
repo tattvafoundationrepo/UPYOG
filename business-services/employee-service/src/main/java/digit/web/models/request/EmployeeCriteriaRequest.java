@@ -21,8 +21,6 @@ public class EmployeeCriteriaRequest {
     @JsonProperty("EmployeeData")
     private EmployeeData employeeData;
 
-    @JsonProperty("EMP_ID")
-    private String empId;
     @JsonProperty("empCode")
     private List<String> empCode;
 

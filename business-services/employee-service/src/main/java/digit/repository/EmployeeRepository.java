@@ -24,13 +24,6 @@ public class EmployeeRepository {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-//    public EmployeeData getEmployeeData(EmployeeSearchCriteria searchCriteria) {
-//        List<Object> preparedStmtList = new ArrayList<>();
-//        String query = queryBuilder.getEmployeeDetails(searchCriteria, preparedStmtList);
-//        log.info(" query: " + query);
-//        return jdbcTemplate.query(query, rowMapper, preparedStmtList.toArray());
-//
-//    }
     public List<EmployeeData> getEmployeeData(EmployeeCriteriaRequest searchCriteria) {
         List<Object> preparedStmtList = new ArrayList<>();
         String query = queryBuilder.getEmployeeDetails(searchCriteria, preparedStmtList);

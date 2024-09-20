@@ -18,6 +18,8 @@ public class Employees {
     @JsonProperty("user")
     private EmployeeUser user;
     private String code;
+    private String uuid;
+    private int id;
     private String employeeType;
     private List<Jurisdictions> jurisdictions;
     private List<Assignments> assignments;
