@@ -35,8 +35,4 @@ public class EmployeeDataRequest {
     private String hierarchy;
     private String uuid;
     private int id;
-    private Long createdAt;
-    private Long updatedAt;
-    private String createdBy;
-    private String updatedBy;
 }

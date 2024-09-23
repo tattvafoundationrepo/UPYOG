@@ -18,8 +18,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 public class EmployeeServiceController {
@@ -35,7 +35,8 @@ public class EmployeeServiceController {
             service.saveEmployeeData(employeeRequest);
             return new ResponseEntity<>("employee request  details saved successfully.", HttpStatus.OK);
         } catch (Exception e) {
-            return new ResponseEntity<>("Failed to save employee request  details: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>("Failed to save employee request  details: " + e.getMessage(),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -48,14 +49,16 @@ public class EmployeeServiceController {
                 return new ResponseEntity<>(null, HttpStatus.OK);
             }
             List<EmployeeData> employeeDetails = service.getEmployeeData(request);
-            if(ObjectUtils.isEmpty(employeeDetails)){
-                EmployeeData empData=  service.getEmployeeFromSAP(request);
+            List<String> existingEmployess = employeeDetails.stream().map(EmployeeData::getEmpCode).collect(Collectors.toList());
+
+            if(ObjectUtils.isEmpty(employeeDetails) || request.getEmpCode().size()!=employeeDetails.size()){
+                EmployeeData empData=  service.getEmployeeFromSAP(request,existingEmployess);
                 if(empData!=null){
-                    employeeDetails=new ArrayList<>();
                     employeeDetails.add(empData);
                 }
             }
-            ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
+            ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(),
+                    true);
             EmployeeResponse response = EmployeeResponse.builder()
                     .employeeData(employeeDetails)
                     .responseInfo(responseInfo).message("Fetch successfully employee data")
@@ -67,20 +70,20 @@ public class EmployeeServiceController {
             e.printStackTrace();
             ResponseInfo responseInfo = responseInfoFactory
                     .createResponseInfoFromRequestInfo(request.getRequestInfo(), false);
-            return new ResponseEntity<>(new EmployeeResponse(responseInfo, null, "Invalid emp code"), HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(new EmployeeResponse(responseInfo, null, "Invalid emp code"),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @PostMapping("/employee/updateStatus")
-    public ResponseEntity<String> updateStatus(@RequestBody EmployeeDataRequest employeeDataRequest){
-      try
-      {
-          service.saveStatus(employeeDataRequest);
-          return new ResponseEntity<>("employee Processed  successfully.", HttpStatus.OK);
+    public ResponseEntity<String> updateStatus(@RequestBody EmployeeDataRequest employeeDataRequest) {
+        try {
+            service.saveStatus(employeeDataRequest);
+            return new ResponseEntity<>("employee Processed  successfully.", HttpStatus.OK);
 
-      }
-      catch (Exception e){
-          return new ResponseEntity<>("Failed to Processed employee " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-      }
+        } catch (Exception e) {
+            return new ResponseEntity<>("Failed to Processed employee " + e.getMessage(),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 }

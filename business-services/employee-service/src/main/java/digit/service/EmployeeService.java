@@ -8,6 +8,8 @@ import digit.web.models.request.EmployeeCriteriaRequest;
 import digit.web.models.request.EmployeeDataRequest;
 import digit.web.models.request.EmployeeRequest;
 import org.egov.tracer.model.CustomException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -22,10 +24,14 @@ import org.springframework.web.client.RestTemplate;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Service
 public class EmployeeService {
 
+    private static final Logger log = LoggerFactory.getLogger(EmployeeService.class);
     @Autowired
     private EmployeeServiceConfiguration configuration;
 
@@ -47,46 +53,45 @@ public class EmployeeService {
             EmployeeCriteriaRequest employeeCriteriaRequest = new EmployeeCriteriaRequest();
             employeeCriteriaRequest.setEmpCode(request.getEmpId());
             employeeCriteriaRequest.setRequestInfo(request.getRequestInfo());
-            employeeCriteriaRequest.setCreatedBy(request.getCreatedBy());
-            employeeCriteriaRequest.setCreatedAt(request.getCreatedAt());
-            employeeCriteriaRequest.setUpdatedBy(request.getUpdatedBy());
-            employeeCriteriaRequest.setUpdatedAt(request.getUpdatedAt());
+            employeeCriteriaRequest.setCreatedBy(String.valueOf(request.getRequestInfo().getUserInfo().getId()));
+            employeeCriteriaRequest.setCreatedAt(System.currentTimeMillis());
+            employeeCriteriaRequest.setUpdatedBy(String.valueOf(request.getRequestInfo().getUserInfo().getId()));
+            employeeCriteriaRequest.setUpdatedAt(System.currentTimeMillis());
             upsertEmployeeData(empData, employeeCriteriaRequest, empCode);
         }
 
     }
 
 
-    public EmployeeData getEmployeeFromSAP(EmployeeCriteriaRequest request) {
+    public EmployeeData getEmployeeFromSAP(EmployeeCriteriaRequest request, List<String> existingEmpCodes) {
         RestTemplate restTemplate = new RestTemplate();
 
         HttpHeaders headers = new HttpHeaders();
         headers.set("Content-Type", "application/json; charset=UTF-8");
-        headers.set("Authorization", "Basic " + encodeCredentials(configuration.getUserName(), configuration.getPassword()));
+        headers.set("Authorization",
+                "Basic " + encodeCredentials(configuration.getUserName(), configuration.getPassword()));
         EmployeeData employeeData = new EmployeeData();
-        for (String empId : request.getEmpCode()) {
+        List<String> empCodes = request.getEmpCode().stream().filter(empCode->!existingEmpCodes.contains(empCode)).collect(Collectors.toList());
+        for (String empId : empCodes) {
             HttpEntity<String> reqEnt = new HttpEntity<>("{\"EMP_ID\": \"" + empId + "\"}", headers);
             System.out.println(" employee request: " + headers + " " + reqEnt);
 
-            EmployeeResponse empRes = restTemplate.postForObject(configuration.getURL(), reqEnt, EmployeeResponse.class);
+            EmployeeResponse empRes = restTemplate.postForObject(configuration.getURL(), reqEnt,
+                    EmployeeResponse.class);
             EmpData empData = empRes.getEmpData();
             employeeData = mapData(empData);
-            String empCode = repository.getEmpCode(empId);
+
             employeeData.setEmpCode(empId);
             employeeData.setCreatedAt(System.currentTimeMillis());
-            employeeData.setCreatedBy(request.getCreatedBy());
+            employeeData.setCreatedBy(String.valueOf(request.getRequestInfo().getUserInfo().getId()));
             employeeData.setUpdatedAt(System.currentTimeMillis());
-            employeeData.setUpdatedBy(request.getUpdatedBy());
-            if (ObjectUtils.isEmpty(empCode)) {
-                if (empCode != null) {
-                    employeeData.setStatus("Update");
-                } else {
-                    employeeData.setStatus("New Record");
-                }
-                request.setEmployeeData(employeeData);
-                producer.push("save-employee-data", request);
+            employeeData.setUpdatedBy(String.valueOf(request.getRequestInfo().getUserInfo().getId()));
 
-            }
+            employeeData.setStatus("New Record");
+            request.setEmployeeData(employeeData);
+            producer.push("save-employee-data", request);
+
+
         }
         return employeeData;
     }
@@ -115,7 +120,7 @@ public class EmployeeService {
         EmployeeData employeeData = mapData(empData);
         for (String empId : request.getEmpCode()) {
             employeeData.setEmpCode(empId);
-        }
+
         employeeData.setCreatedAt(System.currentTimeMillis());
         employeeData.setCreatedBy(request.getCreatedBy());
         employeeData.setUpdatedAt(System.currentTimeMillis());
@@ -126,7 +131,7 @@ public class EmployeeService {
             employeeData.setStatus("New Record");
         }
         request.setEmployeeData(employeeData);
-        producer.push("save-employee-data", request);
+        producer.push("save-employee-data", request);}
     }
 
 
@@ -135,7 +140,6 @@ public class EmployeeService {
             throw new CustomException("Invalid request", "Request is null");
         }
         List<EmployeeData> employeeData = repository.getEmployeeData(request);
-        //epCode set
         return employeeData;
     }
 
@@ -145,8 +149,7 @@ public class EmployeeService {
 
             EmpData empData = getEmpDataFromSAP(request.getEmpId());
 
-
-            //HRMS
+            // HRMS
             EmployeeCriteriaRequest searchCriteria = new EmployeeCriteriaRequest();
             searchCriteria.setEmpCode(request.getEmpId());
 
@@ -174,35 +177,17 @@ public class EmployeeService {
 
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
-        String encodedName = Base64.getEncoder().encodeToString(
-                (empData.getEmpFname() + " " + empData.getEmpMname() + " " + empData.getEmpLname()).getBytes()
-        );
-        String encodedMobileNumber = Base64.getEncoder().encodeToString(empData.getEmpMob().getBytes());
-        String encodedDob = Base64.getEncoder().encodeToString(empData.getEmpDob().getBytes());
-        String encodedGender = Base64.getEncoder().encodeToString(
-                (getGender(empData.getEmpGender())).getBytes()
-        );
-        String encodedFatherOrHusbandName = Base64.getEncoder().encodeToString(
-                (empData.getEmpMname() + " " + empData.getEmpLname()).getBytes()
-        );
-        String encodedCorrespondenceAddress = Base64.getEncoder().encodeToString(
-                (empData.getEmpPlaceofpost() + " " + empData.getEmpStreet1() + " " + empData.getEmpStreet2() + " " + empData.getEmpCity() + " " + empData.getEmpPostal()).getBytes()
-        );
-
 
         try {
-            String decodedDob = new String(Base64.getDecoder().decode(encodedDob));
-            user.setDob(dateFormat.parse(decodedDob).getTime());
+            user.setDob(dateFormat.parse(empData.getEmpDob()).getTime());
         } catch (ParseException e) {
             e.printStackTrace();
         }
-
-
-        user.setName(new String(Base64.getDecoder().decode(encodedName)));
-        user.setMobileNumber(new String(Base64.getDecoder().decode(encodedMobileNumber)));
-        user.setGender(new String(Base64.getDecoder().decode(encodedGender)));
-        user.setFatherOrHusbandName(new String(Base64.getDecoder().decode(encodedFatherOrHusbandName)));
-        user.setCorrespondenceAddress(new String(Base64.getDecoder().decode(encodedCorrespondenceAddress)));
+        user.setName(empData.getEmpFname() + " " + empData.getEmpMname() + " " + empData.getEmpLname());
+        user.setMobileNumber(empData.getEmpMob());
+        user.setGender(getGender(empData.getEmpGender()));
+        user.setFatherOrHusbandName(empData.getEmpMname() + " " + empData.getEmpLname());
+        user.setCorrespondenceAddress(empData.getEmpPlaceofpost() + " " + empData.getEmpStreet1() + " " + empData.getEmpStreet2() + " " + empData.getEmpCity() + " " + empData.getEmpPostal());
         user.setTenantId(request.getTenantId());
 
 
@@ -245,19 +230,27 @@ public class EmployeeService {
         return employees;
 
     }
+
     private void setStatus(String URL, EmployeeCriteriaRequest searchCriteria, EmployeeRequest employeeRequest) {
 
-        List<EmployeeData> employeeDataList = repository.getEmployeeData(searchCriteria);
+        List<EmployeeData> employeeDataList = repository.getEmployeeDataByStatus(searchCriteria);
         if (!ObjectUtils.isEmpty(employeeDataList)) {
             for (EmployeeData employeeData : employeeDataList) {
                 if (employeeData.getEmpCode() != null) {
-                    if (("New Record".equalsIgnoreCase(employeeData.getStatus()))) {
+                    if (("New Record".equalsIgnoreCase(employeeData.getStatus())) || "FAILED".equalsIgnoreCase(employeeData.getStatus())) {
                         try {
+                            log.info("Receive status {} for emp code {}. Processing this record", employeeData.getStatus(), employeeData.getEmpCode());
                             restTemplate.postForObject(URL.toString(), employeeRequest, Map.class);
                             employeeData.setStatus("PROCESSED");
+                            employeeData.setRemark("Success");
                             searchCriteria.setEmployeeData(employeeData);
                             producer.push("save-employee-data", searchCriteria);
                         } catch (HttpClientErrorException e) {
+                            employeeData.setStatus("FAILED");
+                            employeeData.setRemark("Failed process due to: " +  getErrorMessage(e.getMessage()));
+                            searchCriteria.setEmployeeData(employeeData);
+                            producer.push("save-employee-data", searchCriteria);
+                            log.info("Failed to process for emp code {} reason {}.", employeeData.getEmpCode(), e.getMessage());
                             throw new CustomException("Invalid request", " : Employee not processed");
                         }
 
@@ -266,6 +259,7 @@ public class EmployeeService {
                         try {
                             restTemplate.postForObject(url.toString(), employeeRequest, Map.class);
                             employeeData.setStatus("PROCESSED");
+                            employeeData.setRemark("Success");
                             searchCriteria.setEmployeeData(employeeData);
                             producer.push("save-employee-data", searchCriteria);
 
@@ -311,13 +305,15 @@ public class EmployeeService {
 
         HttpHeaders headers = new HttpHeaders();
         headers.set("Content-Type", "application/json; charset=UTF-8");
-        headers.set("Authorization", "Basic " + encodeCredentials(configuration.getUserName(), configuration.getPassword()));
+        headers.set("Authorization",
+                "Basic " + encodeCredentials(configuration.getUserName(), configuration.getPassword()));
         EmpData empData = new EmpData();
         for (String empId : empIds) {
             HttpEntity<String> reqEnt = new HttpEntity<>("{\"EMP_ID\": \"" + empId + "\"}", headers);
             System.out.println("save employee request: " + headers + " " + reqEnt);
 
-            EmployeeResponse empRes = restTemplate.postForObject(configuration.getURL(), reqEnt, EmployeeResponse.class);
+            EmployeeResponse empRes = restTemplate.postForObject(configuration.getURL(), reqEnt,
+                    EmployeeResponse.class);
 
             empData = empRes.getEmpData();
         }
@@ -335,7 +331,22 @@ public class EmployeeService {
         String url = configuration.getHrmsHost() + configuration.getHrmsEndPoint();
         return url;
     }
+   private String getErrorMessage(String response){
 
+       String regex = "\"message\":\"([^\"]*)\"";
+       Pattern pattern = Pattern.compile(regex);
+       Matcher matcher = pattern.matcher(response);
+
+       if (matcher.find()) {
+           // Extracted message
+           String message = matcher.group(1);
+           log.info("Returning the error message"," ");
+          return message;
+       } else {
+           log.info("Could not find the error message ");
+           return response;
+       }
+   }
 
 }
 

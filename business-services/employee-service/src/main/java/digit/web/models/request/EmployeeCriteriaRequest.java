@@ -24,6 +24,9 @@ public class EmployeeCriteriaRequest {
     @JsonProperty("empCode")
     private List<String> empCode;
 
+    @JsonProperty("status")
+    private String status;
+
     private Long createdAt;
     private Long updatedAt;
     private String createdBy;

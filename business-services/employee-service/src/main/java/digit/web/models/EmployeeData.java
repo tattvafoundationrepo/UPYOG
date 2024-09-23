@@ -30,6 +30,7 @@ public class EmployeeData {
     private String empStreet1;
     private String empStreet2;
     private String status;
+    private String remark;
     private Long createdAt;
     private Long updatedAt;
     private String createdBy;

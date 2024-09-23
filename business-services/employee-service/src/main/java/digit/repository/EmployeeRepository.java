@@ -1,7 +1,8 @@
 package digit.repository;
 
+
 import digit.repository.queryBuilder.EmployeeQueryBuilder;
-import digit.repository.rowMapper.EmployeeRowMapper;
+import digit.repository.rowmapper.EmployeeRowMapper;
 import digit.web.models.EmployeeData;
 import digit.web.models.EmployeeSearchCriteria;
 import digit.web.models.request.EmployeeCriteriaRequest;
@@ -27,20 +28,23 @@ public class EmployeeRepository {
     public List<EmployeeData> getEmployeeData(EmployeeCriteriaRequest searchCriteria) {
         List<Object> preparedStmtList = new ArrayList<>();
         String query = queryBuilder.getEmployeeDetails(searchCriteria, preparedStmtList);
-        log.info(" query: " + query);
+        log.info(" query: {}" , query);
         return jdbcTemplate.query(query, rowMapper, preparedStmtList.toArray());
 
     }
 
     public String getEmpCode(String empCode) {
-        String query = "select e.empCode from eg_employee_data e where e.empCode = ? ";
-        try {
+        List<Object> preparedStmtList = new ArrayList<>();
+        String query = queryBuilder.getEmpCode(empCode, preparedStmtList);
+        log.info(" query: {}", query);
+        return jdbcTemplate.queryForObject(query, String.class, empCode);
+    }
 
-            return jdbcTemplate.queryForObject(query, String.class, empCode);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
+    public List<EmployeeData> getEmployeeDataByStatus(EmployeeCriteriaRequest searchCriteria) {
+        List<Object> preparedStmtList = new ArrayList<>();
+        String query = queryBuilder.getEmployeeByStatus(searchCriteria, preparedStmtList);
+        log.info(" query: {}" , query);
+        return jdbcTemplate.query(query, rowMapper, preparedStmtList.toArray());
 
     }
 

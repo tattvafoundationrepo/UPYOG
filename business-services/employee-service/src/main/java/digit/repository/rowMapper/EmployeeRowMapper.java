@@ -1,4 +1,4 @@
-package digit.repository.rowMapper;
+package digit.repository.rowmapper;
 
 import digit.web.models.EmployeeData;
 import org.springframework.dao.DataAccessException;

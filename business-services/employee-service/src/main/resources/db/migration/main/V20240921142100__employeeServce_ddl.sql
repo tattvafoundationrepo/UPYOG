@@ -1,0 +1,2 @@
+ALTER TABLE IF EXISTS eg_employee_data
+ADD COLUMN remark VARCHAR(255);
