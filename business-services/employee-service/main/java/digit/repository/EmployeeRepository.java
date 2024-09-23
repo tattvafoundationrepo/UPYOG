@@ -1,7 +1,7 @@
 package digit.repository;
 
 
-import digit.repository.queryBuilder.EmployeeQueryBuilder;
+import digit.repository.querybuilder.EmployeeQueryBuilder;
 import digit.repository.rowmapper.EmployeeRowMapper;
 import digit.web.models.EmployeeData;
 import digit.web.models.EmployeeSearchCriteria;
@@ -35,9 +35,15 @@ public class EmployeeRepository {
 
     public String getEmpCode(String empCode) {
         List<Object> preparedStmtList = new ArrayList<>();
-        String query = queryBuilder.getEmpCode(empCode, preparedStmtList);
-        log.info(" query: {}", query);
-        return jdbcTemplate.queryForObject(query, String.class, empCode);
+        try {
+            String query = queryBuilder.getEmpCode(empCode, preparedStmtList);
+            log.info(" query: {}", query);
+            return jdbcTemplate.queryForObject(query, String.class, empCode);
+        } catch (Exception e) {
+            log.error("Emp code not found");
+            return null;
+        }
+
     }
 
     public List<EmployeeData> getEmployeeDataByStatus(EmployeeCriteriaRequest searchCriteria) {

@@ -1,4 +1,4 @@
-package digit.repository.queryBuilder;
+package digit.repository.querybuilder;
 
 import digit.web.models.request.EmployeeCriteriaRequest;
 import lombok.extern.slf4j.Slf4j;
