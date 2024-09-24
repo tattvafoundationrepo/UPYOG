@@ -1,3 +1,0 @@
-ALTER TABLE IF EXISTS eg_pe_enquiry DROP CONSTRAINT IF EXISTS ceEmpCode;
-ALTER TABLE IF EXISTS eg_pe_enquiry
-    ADD CONSTRAINT ceEmpCode UNIQUE (ceEmpCode);
