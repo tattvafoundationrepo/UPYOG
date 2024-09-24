@@ -25,8 +25,6 @@ config:
         dockerfile: "build/maven/Dockerfile"
       - work-dir: "business-services/billing-service/src/main/resources/db"
         image-name: "billing-service-db"
-
-
   - name: "builds/upyog/business-services/bmc-service-v1"
     build:
       - work-dir: "business-services/bmc-service-v1"
@@ -34,7 +32,6 @@ config:
         dockerfile: "build/maven/Dockerfile"
       - work-dir: "business-services/bmc-service-v1/src/main/resources/db"
         image-name: "bmc-service-v1-db"
-
   - name: "builds/upyog/business-services/employee-service"
     build:
       - work-dir: "business-services/employee-service"
