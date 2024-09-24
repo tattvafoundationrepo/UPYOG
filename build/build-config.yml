@@ -41,11 +41,11 @@ config:
         image-name: "employee-service-db"    
   - name: "builds/upyog/business-services/ebinder-v1"
     build:
-      - work-dir: "business-services/eBinder-v1"
-        image-name: "eBinder-v1"
+      - work-dir: "business-services/ebinder-v1"
+        image-name: "ebinder-v1"
         dockerfile: "build/maven/Dockerfile"
-      - work-dir: "business-services/eBinder-v1/src/main/resources/db"
-        image-name: "eBinder-v1-db"
+      - work-dir: "business-services/ebinder-v1/src/main/resources/db"
+        image-name: "ebinder-v1-db"
   - name: "builds/upyog/business-services/collection-services"
     build:
       - work-dir: "business-services/collection-services"
