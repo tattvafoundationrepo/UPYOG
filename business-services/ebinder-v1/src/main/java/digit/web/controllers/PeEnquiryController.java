@@ -41,14 +41,17 @@ public class PeEnquiryController {
     }
 
     @PostMapping("/ceList/_save")
-    public ResponseEntity<String> saveCeList(@RequestBody CeRequest ceRequest) {
-
+    public ResponseInfo saveCeList(@RequestBody CeRequest ceRequest) {
+       
         try {
             service.saveCeList(ceRequest);
-            return new ResponseEntity<>("Culprit Employee  saved successfully.", HttpStatus.OK);
+            ResponseInfo responseInfo = responseInfoFactory
+            .createResponseInfoFromRequestInfo(ceRequest.getRequestInfo(), true);
+            return responseInfo;
         } catch (Exception e) {
-            return new ResponseEntity<>("Failed to save culprit employee  details: " + e.getMessage(),
-                    HttpStatus.INTERNAL_SERVER_ERROR);
+            ResponseInfo responseInfo = responseInfoFactory
+            .createResponseInfoFromRequestInfo(ceRequest.getRequestInfo(),false);
+            return responseInfo;
         }
 
     }
