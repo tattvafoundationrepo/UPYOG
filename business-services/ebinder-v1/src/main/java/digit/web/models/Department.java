@@ -20,4 +20,8 @@ public class Department {
     private boolean active;
     private String i18key;
 
+    public Department(String i18key){
+        this.i18key = i18key;
+    }
+
 }
