@@ -2,6 +2,8 @@ package digit.web.models;
 
 import org.springframework.stereotype.Component;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -19,7 +21,9 @@ public class EmployeeData {
     private String employeeCode;
     private Designation designation; 
     private String mobileNumber;
-    private Boolean cesuspended;
+    @JsonProperty("suspended")
+    private SuspensionStatus ceSuspended;
+    @JsonProperty("susOrderNumber")
     private String cesuspensionorder;
     private Boolean cestatus;
     private String enqordertype;
@@ -29,6 +33,8 @@ public class EmployeeData {
 	private Long updatedAt ;
 	private String createdBy ;
 	private String updatedBy ;
+    private Boolean isSuspended;
+
 
 
 }
