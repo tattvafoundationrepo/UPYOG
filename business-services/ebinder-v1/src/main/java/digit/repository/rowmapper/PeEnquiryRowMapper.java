@@ -19,6 +19,7 @@ import digit.web.models.Designation;
 import digit.web.models.EmployeeData;
 import digit.web.models.PeEnquiry;
 import digit.web.models.PeEnquiryResponse;
+import digit.web.models.SuspensionStatus;
 @Component
 public class PeEnquiryRowMapper implements ResultSetExtractor<List<PeEnquiryResponse>> {
 
@@ -54,7 +55,11 @@ public class PeEnquiryRowMapper implements ResultSetExtractor<List<PeEnquiryResp
                 EmployeeData empData = new EmployeeData();
                 empData.setCasetype(rs.getString("casetype"));
                 empData.setCestatus(rs.getBoolean("cestatus"));
-                empData.setCesuspended(rs.getBoolean("cesuspended"));
+                if(rs.getBoolean("cesuspended") ==true){
+                    empData.setCeSuspended(new SuspensionStatus(1,"Yes"));
+                }else
+                    empData.setCeSuspended(new SuspensionStatus(0,"No"));
+               // empData.setCesuspended(rs.getBoolean("cesuspended"));
                 empData.setCesuspensionorder(rs.getString("cesuspensionorder"));
                 empData.setDepartment(new Department(rs.getString("cedept")));
                 empData.setDesignation(new Designation(rs.getString("cedept")));
