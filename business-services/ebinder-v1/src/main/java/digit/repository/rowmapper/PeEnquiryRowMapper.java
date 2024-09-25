@@ -41,7 +41,9 @@ public class PeEnquiryRowMapper implements ResultSetExtractor<List<PeEnquiryResp
                 PeEnquiry peEnquiry = new PeEnquiry();
                 peEnquiry.setEnquiryCode(rs.getString("newcode"));
                 peEnquiry.setOldenquiryCode(rs.getString("oldcode"));
-               // peEnquiry.setOrderDate(rs.getDate("orderdate"));
+                peEnquiry.setOrderDate(rs.getDate("orderdate"));
+                peEnquiry.setDepartment(new Department(rs.getString("empDept")));
+                peEnquiry.setDesignation(new Designation(rs.getString("empDesig")));
                 peEnquiry.setOrderNo(rs.getString("orderno"));
                 peEnquiry.setEmployee(rs.getString("ceempcode"));
                 peEnquiry.setEnquirySubject(rs.getString("enqsubject"));
@@ -54,8 +56,8 @@ public class PeEnquiryRowMapper implements ResultSetExtractor<List<PeEnquiryResp
                 empData.setCestatus(rs.getBoolean("cestatus"));
                 empData.setCesuspended(rs.getBoolean("cesuspended"));
                 empData.setCesuspensionorder(rs.getString("cesuspensionorder"));
-                empData.setDepartment(new Department());
-                empData.setDesignation(new Designation());
+                empData.setDepartment(new Department(rs.getString("cedept")));
+                empData.setDesignation(new Designation(rs.getString("cedept")));
                 empData.setEmployeeCode(rs.getString("cecode"));
                 empData.setEmployeename(rs.getString("cename"));
                 empData.setEnqordertype(rs.getString("enqordertype"));
