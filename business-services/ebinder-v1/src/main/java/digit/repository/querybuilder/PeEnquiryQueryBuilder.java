@@ -13,8 +13,8 @@ public class PeEnquiryQueryBuilder {
 
     private static final String BASE_QUERY = """
 
-            select  epe.newcode, epe.oldcode, epe.orderdate, epe.orderno, epe.cedesig, epe.cedept, epe.ceempcode, epe.enqsubject
-
+            select  epe.newcode, epe.oldcode,to_timestamp(epe.orderdate/1000)::date as orderdate, epe.orderno, epe.cedesig as empDesig, epe.cedept as empDept, epe.ceempcode, epe.enqsubject
+            
                  """;
     private static final String ECL_query = """
              ,ecl.cecode, ecl.cename, ecl.cedept, ecl.cedesig, ecl.cesuspended, ecl.cesuspensionorder, ecl.cestatus, ecl.enqordertype, 
