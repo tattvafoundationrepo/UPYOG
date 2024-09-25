@@ -30,13 +30,16 @@ public class PeEnquiryController {
     private ResponseInfoFactory responseInfoFactory;
 
     @PostMapping("/peEnquiry/_save")
-    public ResponseEntity<?> savePeEnquiry(@RequestBody PeEnquiryRequest peEnquiryRequest) {
+    public ResponseInfo savePeEnquiry(@RequestBody PeEnquiryRequest peEnquiryRequest) {
         try {
             service.savePeDetails(peEnquiryRequest);
-            return new ResponseEntity<>("PeEnquiry  details saved successfully.", HttpStatus.OK);
+            ResponseInfo responseInfo = responseInfoFactory
+            .createResponseInfoFromRequestInfo(peEnquiryRequest.getRequestInfo(), true);
+            return responseInfo;
         } catch (Exception e) {
-            return new ResponseEntity<>("Failed to save peEnquiry details: " + e.getMessage(),
-                    HttpStatus.INTERNAL_SERVER_ERROR);
+            ResponseInfo responseInfo = responseInfoFactory
+            .createResponseInfoFromRequestInfo(peEnquiryRequest.getRequestInfo(),false);
+            return responseInfo;
         }
     }
 
