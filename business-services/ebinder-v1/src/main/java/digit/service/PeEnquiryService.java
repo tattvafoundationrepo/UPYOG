@@ -43,8 +43,16 @@ public class PeEnquiryService {
         request.getPeEnquiry().setCreatedAt(time);
         request.getPeEnquiry().setUpdatedAt(time);
         request.getPeEnquiry().setUpdatedBy(request.getRequestInfo().getUserInfo().getUserName());
+       // request.getPeEnquiry().getDepartment().setI18key(getDeptAndDesigCodeFromName(request.getPeEnquiry().getDepartment().getI18key()));
+       // request.getPeEnquiry().getDesignation().setI18key(getDeptAndDesigCodeFromName(request.getPeEnquiry().getDesignation().getI18key()));
 
         for(EmployeeData ed : request.getEmpData()){
+            // if(ed.getDepartment()!= null && ed.getDesignation()!=null){
+            //     String dept = ed.getDepartment().getI18key();
+            //     String desig = ed.getDesignation().getI18key();
+            //     ed.getDepartment().setI18key(getDeptAndDesigCodeFromName(dept));
+            //     ed.getDesignation().setI18key(getDeptAndDesigCodeFromName(desig));
+            // }
             ed.setCasetype("");
             ed.setCestatus(false);
             ed.setCesuspended(false);
@@ -86,6 +94,15 @@ public class PeEnquiryService {
             request.setCeList(ceList);
             producer.push("save-eBinder-ceList", request);
         }
+
+    }
+
+
+    public String getDeptAndDesigCodeFromName(String input) {
+           
+        String[] parts = input.split("_");
+        String code = parts[parts.length - 1];
+        return code;
 
     }
 
