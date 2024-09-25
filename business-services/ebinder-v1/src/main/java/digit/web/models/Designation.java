@@ -20,4 +20,8 @@ public class Designation {
     private boolean active;
     private String i18key;
 
+    public Designation(String i18key){
+        this.i18key = i18key;
+    }
+
 }
