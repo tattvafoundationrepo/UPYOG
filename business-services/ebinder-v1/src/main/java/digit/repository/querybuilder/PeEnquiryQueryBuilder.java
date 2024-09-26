@@ -14,7 +14,8 @@ public class PeEnquiryQueryBuilder {
     private static final String BASE_QUERY = """
 
             select  epe.newcode, epe.oldcode,to_timestamp(epe.orderdate/1000)::date as orderdate, epe.orderno, 
-            epe.cedesig as empDesig, epe.cedept as empDept, epe.ceempcode, epe.enqsubject,eed.emplname
+            epe.cedesig as empDesig, epe.cedept as empDept, epe.ceempcode, epe.enqsubject
+            , CONCAT(eed.empfname, ' ', eed.empmname, ' ', eed.emplname) AS emplname
             
                  """;
     private static final String ECL_query = """
