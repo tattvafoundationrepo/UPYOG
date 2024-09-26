@@ -48,6 +48,7 @@ public class PeEnquiryRowMapper implements ResultSetExtractor<List<PeEnquiryResp
                 peEnquiry.setOrderNo(rs.getString("orderno"));
                 peEnquiry.setEmployee(rs.getString("ceempcode"));
                 peEnquiry.setEnquirySubject(rs.getString("enqsubject"));
+                peEnquiry.setEmployeeName(rs.getString("emplname"));
                 peEnquiryResponse.setPeEnquiry(peEnquiry);
 
             }
