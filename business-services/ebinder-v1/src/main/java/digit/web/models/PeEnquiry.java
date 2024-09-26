@@ -22,6 +22,7 @@ public class PeEnquiry {
         private String orderNo;
         private String enquirySubject; 
         private String employee; 
+        private String employeeName;
         private Department department; 
         private Designation designation; 
         private String tenantId;
@@ -29,6 +30,7 @@ public class PeEnquiry {
         private Long updatedAt;
         private String createdBy;
         private String updatedBy;
+     
         //private Long ordDate;
     
   
