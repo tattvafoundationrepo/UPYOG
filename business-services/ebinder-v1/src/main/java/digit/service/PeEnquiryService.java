@@ -7,13 +7,18 @@ import digit.web.models.CeList;
 import digit.web.models.EmployeeData;
 import digit.web.models.GetPeRequest;
 import digit.web.models.PeEnquiryResponse;
+import digit.web.models.peprocess.PeEnquiryRecord;
+import digit.web.models.peprocess.ProcessApplicationInfo;
 import digit.web.models.request.CeRequest;
 import digit.web.models.request.PeEnquiryRequest;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.egov.common.contract.models.RequestInfoWrapper;
+import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -32,14 +37,15 @@ public class PeEnquiryService {
 
     @Autowired
     private PeEnquiryRepository repository;
-
+     
+    Long time = System.currentTimeMillis();
     public void savePeDetails(PeEnquiryRequest request) {
 
         if (request == null || request.getPeEnquiry() == null) {
             throw new CustomException("Invalid request", "PeEnquiry can not be null or empty");
 
         }
-        Long time = System.currentTimeMillis();
+     
         request.getPeEnquiry().setCreatedAt(time);
         request.getPeEnquiry().setUpdatedAt(time);
         request.getPeEnquiry().setUpdatedBy(request.getRequestInfo().getUserInfo().getUserName());
@@ -91,14 +97,23 @@ public class PeEnquiryService {
         }
 
     }
+ 
 
+    public String savePeEnqRecords(ProcessApplicationInfo application,List<PeEnquiryRecord> records,RequestInfo info){
+    for(PeEnquiryRecord record : records ){
 
-    public String getDeptAndDesigCodeFromName(String input) {
-           
-        String[] parts = input.split("_");
-        String code = parts[parts.length - 1];
-        return code;
+        record.setActions(application.getAction());
+        record.setPeEnquiryId(application.getBusinessId());
+        record.setCreatedAt(time);
+        record.setCreatedBy(info.getUserInfo().getId().toString());
+        record.setUpdatedAt(time);
+        record.setUpdatedBy(info.getUserInfo().getId().toString());
+         Map<String, Object> message = new HashMap<>();
+         message.put("record", record);
+         producer.push("upsert-pe-enq-records", message);
 
+    }
+        return "";
     }
 
 }
