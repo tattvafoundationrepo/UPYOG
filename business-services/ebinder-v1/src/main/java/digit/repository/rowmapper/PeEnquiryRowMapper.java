@@ -20,6 +20,7 @@ import digit.web.models.EmployeeData;
 import digit.web.models.PeEnquiry;
 import digit.web.models.PeEnquiryResponse;
 import digit.web.models.SuspensionStatus;
+import digit.web.models.report.PeSubmissionReport;
 @Component
 public class PeEnquiryRowMapper implements ResultSetExtractor<List<PeEnquiryResponse>> {
 
@@ -49,6 +50,16 @@ public class PeEnquiryRowMapper implements ResultSetExtractor<List<PeEnquiryResp
                 peEnquiry.setEmployee(rs.getString("ceempcode"));
                 peEnquiry.setEnquirySubject(rs.getString("enqsubject"));
                 peEnquiry.setEmployeeName(rs.getString("emplname"));
+                if(columns.contains("submissiondate")){
+                    PeSubmissionReport report = new PeSubmissionReport();
+                    report.setCaseType(rs.getString("casetype"));
+                    report.setComment(rs.getString("comment"));
+                    report.setOrderType(rs.getString("ordertype"));
+                    report.setReportNo(rs.getInt("reportnumber"));
+                    report.setReportSubmissionDate(rs.getDate("submissiondate"));
+                    peEnquiry.setDeReport(report);
+
+                }
                 peEnquiryResponse.setPeEnquiry(peEnquiry);
 
             }

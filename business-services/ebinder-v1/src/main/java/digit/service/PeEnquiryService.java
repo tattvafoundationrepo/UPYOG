@@ -9,6 +9,7 @@ import digit.web.models.GetPeRequest;
 import digit.web.models.PeEnquiryResponse;
 import digit.web.models.peprocess.PeEnquiryRecord;
 import digit.web.models.peprocess.ProcessApplicationInfo;
+import digit.web.models.report.PeSubmissionReport;
 import digit.web.models.request.CeRequest;
 import digit.web.models.request.PeEnquiryRequest;
 
@@ -114,6 +115,18 @@ public class PeEnquiryService {
 
     }
         return "";
+    }
+
+    public void savePeSubmission(PeSubmissionReport report,RequestInfo info){
+      
+        report.setCreatedAt(time);
+        report.setCreatedBy(info.getUserInfo().getId());
+        report.setUpdatedAt(time);
+        report.setUpdatedBy(info.getUserInfo().getId());
+        
+        Map<String, Object> message = new HashMap<>();
+        message.put("report", report);
+        producer.push("save-pe-submission-report", message);
     }
 
 }

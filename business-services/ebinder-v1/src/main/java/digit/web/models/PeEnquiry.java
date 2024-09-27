@@ -2,6 +2,7 @@ package digit.web.models;
 
 import java.sql.Date;
 
+import digit.web.models.report.PeSubmissionReport;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -30,9 +31,7 @@ public class PeEnquiry {
         private Long updatedAt;
         private String createdBy;
         private String updatedBy;
-     
-        //private Long ordDate;
-    
+        private PeSubmissionReport deReport;
   
     
 }

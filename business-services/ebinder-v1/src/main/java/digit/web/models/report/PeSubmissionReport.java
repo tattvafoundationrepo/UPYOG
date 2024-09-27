@@ -1,5 +1,7 @@
 package digit.web.models.report;
 
+import java.sql.Date;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -11,15 +13,19 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class PeSubmissionReport {
     private int id;
-    private Long reportSubmissionDate;
-    private String competentAuthDes;
-    private String orderPassedDes;
-    private String peNumberId;
-    private int typeId;
-    private int orderId;
-    private int reportNumber;
+    private String peNumber;
+    private Date reportNumber;
+    private String comment;
+    private Date reportSubmissionDate;
+    private String designationname;
+    private String competentauthname;
+    private String orderType;
+    private String caseType;
     private Long createdAt;
-    private Long upDatedAt;
-    private Integer createdBy;
-    private Integer updatedBy;
+    private Long updatedAt;
+    private Long createdBy;
+    private Long updatedBy;
+    private Integer reportNo;
+
 }
+

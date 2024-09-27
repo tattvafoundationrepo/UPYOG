@@ -9,8 +9,10 @@ import digit.web.models.peprocess.ActionComment;
 import digit.web.models.peprocess.ActionComment1;
 import digit.web.models.peprocess.PeEnquiryRecord;
 import digit.web.models.peprocess.PeProcessRequest;
+import digit.web.models.peprocess.PeReportSubmissionRequest;
 import digit.web.models.peprocess.ProcessApplicationInfo;
 import digit.web.models.peprocess.TestCard;
+import digit.web.models.report.PeSubmissionReport;
 import digit.web.models.request.CeRequest;
 import digit.web.models.request.PeEnquiryRequest;
 
@@ -107,6 +109,17 @@ public class PeEnquiryController {
             .dates(actionComment1.getValue())
             .build();
             records.add(record);
+        }  if (data.containsKey("ReportSubmission")) {
+        
+            PeReportSubmissionRequest submit = objectMapper.convertValue(data.get("ReportSubmission"), PeReportSubmissionRequest.class);
+            PeSubmissionReport report = PeSubmissionReport.builder()
+            .caseType(submit.getCasetype().get("value"))
+            .orderType(submit.getOrdertype().get("value"))
+            .reportSubmissionDate(submit.getSubmissiondate())
+            .comment(submit.getSubmissionComment())
+            .peNumber(applicationInfo.getBusinessId())
+            .build();
+            service.savePeSubmission(report,request.getRequestInfo());
         }
         if( records.size()!= 0 && applicationInfo != null ){
             service.savePeEnqRecords(applicationInfo,records,request.getRequestInfo());

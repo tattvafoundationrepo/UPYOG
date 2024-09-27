@@ -18,5 +18,6 @@ public class GetPeRequest {
     RequestInfo requestInfo;
 
     private String enqId;
+    private Integer type; 
 
 }
