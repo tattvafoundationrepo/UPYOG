@@ -46,6 +46,13 @@ config:
         dockerfile: "build/maven/Dockerfile"
       - work-dir: "business-services/ebinder-v1/src/main/resources/db"
         image-name: "ebinder-v1-db"
+  - name: "builds/upyog/business-services/deonar-v1"
+    build:
+      - work-dir: "business-services/deonar-v1"
+        image-name: "deonar-v1"
+        dockerfile: "build/maven/Dockerfile"
+      - work-dir: "business-services/deonar-v1/src/main/resources/db"
+        image-name: "deonar-v1-db"      
   - name: "builds/upyog/business-services/collection-services"
     build:
       - work-dir: "business-services/collection-services"
