@@ -28,7 +28,6 @@ public class InspectionController {
     private ResponseInfoFactory responseInfoFactory;
 
     @PostMapping("/inspection/ _search")
-    @CrossOrigin(origins = "http://localhost:3000")
     public ResponseEntity<InspectionResponse> getInspectionOnArrival(
             @ApiParam(value = "Details for inspection ", required = true)
             @Valid @RequestBody InspectionCheckRequest inspectionCheckRequest) {
