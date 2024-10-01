@@ -44,7 +44,6 @@ public class InspectionController {
     }
 
     @PostMapping("/arrival/_search")
-    @CrossOrigin(origins = "http://localhost:3000")
     public ResponseEntity<ArrivalResponse> getArrivalResponseOnArrival(
             @ApiParam(value = "Details for inspection ", required = true)
             @Valid @RequestBody SecurityCheckRequest request
@@ -57,7 +56,6 @@ public class InspectionController {
 
 
     @PostMapping("/inspection/save")
-    @CrossOrigin(origins = "http://localhost:3000")
     public ResponseEntity<String> saveInspectionOnArrival(@RequestBody InspectionRequest inspectionRequest){
         try {
             inspectionService.saveInspectionDetails(inspectionRequest);
