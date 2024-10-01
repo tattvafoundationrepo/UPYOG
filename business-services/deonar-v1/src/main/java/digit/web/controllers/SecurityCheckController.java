@@ -30,7 +30,6 @@ public class SecurityCheckController {
     private ResponseInfoFactory responseInfoFactory;
 
     @PostMapping("/securityCheck/_search")
-    @CrossOrigin(origins = "http://localhost:3000")
     public ResponseEntity<SecurityCheckResponse> searchSecurityCheck(
             @ApiParam(value = "Details for Security Check", required = true)
             @Valid @RequestBody SecurityCheckRequest securityCheckRequest) {
@@ -46,7 +45,6 @@ public class SecurityCheckController {
     }
 
     @PostMapping("/securityCheck/_save")
-    @CrossOrigin(origins = "http://localhost:3000")
     public ResponseEntity<String> saveSecurityCheckDetails(@RequestBody ArrivalRequest arrivalRequest) {
         try {
             securityCheckService.saveArrivalDetails(arrivalRequest);
