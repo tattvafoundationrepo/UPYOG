@@ -19,4 +19,7 @@ public class CommonDetails {
     private String name;
     private String licenceNumber;
     private List<AnimalType> animalType;
+    private String mobileNumber;
+    private String tradertype;
+    private String registrationnumber;
 }
