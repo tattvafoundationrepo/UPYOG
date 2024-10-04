@@ -45,7 +45,7 @@ public class CommonQueryBuilder {
               """;
 
     private static final String STAKEHOLDER_VIEW_QUERY = """
-            select stakeholdername as name , stakeholderid as id, licencenumber, animalid as animalId , animaltype as animalType
+            select stakeholdername as name , stakeholderid as id, licencenumber, animalid , animaltype 
             , mobilenumber , tradertype , registrationnumber
             """;
 
