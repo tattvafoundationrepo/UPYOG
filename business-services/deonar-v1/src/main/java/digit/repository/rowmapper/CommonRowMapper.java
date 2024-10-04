@@ -23,15 +23,18 @@ public class CommonRowMapper implements ResultSetExtractor<List<CommonDetails>>{
             CommonDetails commonDetails = commonDetailsMap.get(commonID);
             if (commonDetails == null) {
                 commonDetails = CommonDetails.builder()
-                        .name(rs.getString("name")) //stakeholdername
-                        .id(rs.getLong("id")) //        
-                        .licenceNumber(rs.getString("licencenumber")) //licencenumber
+                        .name(rs.getString("name"))
+                        .id(rs.getLong("id"))         
+                        .licenceNumber(rs.getString("licencenumber")) 
                         .animalType(new ArrayList<>())
+                        .mobileNumber(rs.getString("mobilenumber"))
+                        .tradertype(rs.getString("tradertype"))
+                        .registrationnumber(rs.getString("registrationnumber"))
                         .build();
                     }
                 commonDetailsMap.put(commonID, commonDetails);
-                AnimalType animalType = AnimalType.builder().id(rs.getInt("animalId"))  //animalid
-                        .name(rs.getString("animalType")).build(); //animaltype
+                AnimalType animalType = AnimalType.builder().id(rs.getInt("animalId"))  
+                        .name(rs.getString("animalType")).build(); 
                 commonDetails.getAnimalType().add(animalType);
            
         }
