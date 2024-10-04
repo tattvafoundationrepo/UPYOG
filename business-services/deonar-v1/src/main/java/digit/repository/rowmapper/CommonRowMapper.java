@@ -53,10 +53,9 @@ public class CommonRowMapper implements ResultSetExtractor<List<CommonDetails>>{
                 commonDetails.setRegistrationnumber(rs.getString("registrationnumber"));
             }
             commonDetailsMap.put(commonID, commonDetails);
-            if(columns.contains("animalId")){
-
-                AnimalType animalType = AnimalType.builder().id(rs.getInt("animalId"))  
-                        .name(rs.getString("animalType")).build(); 
+            if(columns.contains("animalid")){
+                AnimalType animalType = AnimalType.builder().id(rs.getInt("animalid"))  
+                        .name(rs.getString("animaltype")).build(); 
                 commonDetails.getAnimalType().add(animalType);
             }
         }
