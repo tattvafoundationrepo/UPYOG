@@ -19,21 +19,61 @@ public class InspectionRequest {
     @Valid
     private RequestInfo requestInfo;
 
-    @JsonProperty("Animal")
-    private Animal animal;
+    @JsonProperty("animalTokenNumber")
+    private Properties animalTokenNumber;
 
-    @JsonProperty("InspectionUnit")
-    private InspectionUnit inspectionUnit;
+    @JsonProperty("arrivalId")
+    private String arrivalId;
 
-    @JsonProperty("Inspection")
-    private Inspection inspection;
+    @JsonProperty("eyes")
+    private Properties eyes;
 
+    @JsonProperty("pulseRate")
+    private Properties pulseRate;
 
-    @JsonProperty("InspectionIndicators")
-    private InspectionIndicators  inspectionIndicators;
+    @JsonProperty("species")
+    private Properties species;
 
-    @JsonProperty("InspectionDetail")
-    private InspectionDetail inspectionDetail;
+    @JsonProperty("breed")
+    private Properties breed;
+
+    @JsonProperty("sex")
+    private Properties sex;
+
+    @JsonProperty("bodyColor")
+    private Properties bodyColor;
+
+    @JsonProperty("pregnancy")
+    private Properties pregnancy;
+
+    @JsonProperty("approximateAge")
+    private Properties approximateAge;
+
+    @JsonProperty("gait")
+    private Properties gait;
+    @JsonProperty("posture")
+    private Properties posture;
+
+    @JsonProperty("bodyTemperature")
+    private Properties bodyTemperature;
+
+    @JsonProperty("appetite")
+    private Properties appetite;
+
+    @JsonProperty("nostrils")
+    private Properties nostrils;
+
+    @JsonProperty("muzzle")
+    private Properties muzzle;
+
+    @JsonProperty("opinion")
+    private Properties opinion;
+
+    @JsonProperty("other")
+    private String other;
+
+    @JsonProperty("remark")
+    private String remark;
 
     @JsonProperty("InspectionType")
     private String inspectionType;

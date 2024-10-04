@@ -8,6 +8,8 @@ import org.springframework.stereotype.Component;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 @Component
 public class ArrivalDetailsRowMapper implements ResultSetExtractor <ArrivalDetailsResponse> {
@@ -16,9 +18,13 @@ public class ArrivalDetailsRowMapper implements ResultSetExtractor <ArrivalDetai
     {   ArrivalDetailsResponse arrivalDetailsResponse=new ArrivalDetailsResponse();
         while (rs.next()){
          arrivalDetailsResponse= ArrivalDetailsResponse.builder()
-                .arrivalId(rs.getString("arrivalId"))
-                .aliveAnimalCount(rs.getInt("count"))
-                .traderName(rs.getString("stakeholdername")).build();}
+                 .aId(rs.getInt("aId"))
+                 .build();
+            List<Integer> list=new ArrayList<>();
+            list.add(rs.getInt("animalTypeId"));
+            arrivalDetailsResponse.setAnimalTyeId(list);
+
+        }
 
         return arrivalDetailsResponse;
     }

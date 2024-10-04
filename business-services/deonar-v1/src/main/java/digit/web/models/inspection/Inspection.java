@@ -14,8 +14,6 @@ public class Inspection {
     private Long inspectionDate;
     private String inspectionTime;
     private int arrivalId;
-    private int stakeHolderId;
-    private Integer inspectionUnitId;
     private String employeeId;
     private Integer animalId;
     private Long createdAt;

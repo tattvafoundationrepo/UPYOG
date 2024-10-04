@@ -28,6 +28,7 @@ public class InspectionController {
     private ResponseInfoFactory responseInfoFactory;
 
     @PostMapping("/inspection/ _search")
+    @CrossOrigin(origins = "http://localhost:3000")
     public ResponseEntity<InspectionResponse> getInspectionOnArrival(
             @ApiParam(value = "Details for inspection ", required = true)
             @Valid @RequestBody InspectionCheckRequest inspectionCheckRequest) {
@@ -43,11 +44,12 @@ public class InspectionController {
     }
 
     @PostMapping("/arrival/_search")
+    @CrossOrigin(origins = "http://localhost:3000")
     public ResponseEntity<ArrivalResponse> getArrivalResponseOnArrival(
             @ApiParam(value = "Details for inspection ", required = true)
             @Valid @RequestBody SecurityCheckRequest request
             ){
-      ArrivalDetailsResponse response=  inspectionService.getArrivalResponse(request.getSecurityCheckCriteria());
+      ArrivalDetailsResponse response=  inspectionService.getArrivalResponse(request.getSecurityCheckCriteria().getArrivalUuid());
         ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
       ArrivalResponse arrivalResponse=    ArrivalResponse.builder().arrivalDetailsResponse(response).responseInfo(responseInfo).message("fetch arrival details successfully").build();
          return  new ResponseEntity<>(arrivalResponse, HttpStatus.OK);
@@ -55,6 +57,7 @@ public class InspectionController {
 
 
     @PostMapping("/inspection/save")
+    @CrossOrigin(origins = "http://localhost:3000")
     public ResponseEntity<String> saveInspectionOnArrival(@RequestBody InspectionRequest inspectionRequest){
         try {
             inspectionService.saveInspectionDetails(inspectionRequest);

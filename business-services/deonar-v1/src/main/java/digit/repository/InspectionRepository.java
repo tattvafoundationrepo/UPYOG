@@ -36,9 +36,9 @@ public class InspectionRepository {
         return jdbcTemplate.query(query, preparedStmtList.toArray(), rowMapper);
     }
 
-    public ArrivalDetailsResponse getArrivalDetails(SecurityCheckCriteria securityCheckCriteria){
+    public ArrivalDetailsResponse getArrivalDetails(String arrivalId){
         List<Object> preparedStmtList = new ArrayList<>();
-        String query = queryBuilder.getSearchBaseQuery(securityCheckCriteria, preparedStmtList);
+        String query = queryBuilder.getSearchBaseQuery(arrivalId, preparedStmtList);
         log.info("Executing Arrival  search with query: {}", query);
         return jdbcTemplate.query(query, preparedStmtList.toArray(), arrivalDetailsRowMapper);
     }

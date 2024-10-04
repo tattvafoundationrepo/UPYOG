@@ -2,15 +2,14 @@ package digit.service;
 
 import digit.kafka.Producer;
 import digit.repository.InspectionRepository;
-import digit.web.models.inspection.InspectionRequest;
-import digit.web.models.inspection.ArrivalDetailsResponse;
-import digit.web.models.inspection.InspectionDetails;
-
-import digit.web.models.security.SecurityCheckCriteria;
+import digit.web.models.inspection.*;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -28,50 +27,84 @@ public class InspectionService {
         return repository.getInspectionDetails(arrivalId);
     }
 
-    public ArrivalDetailsResponse getArrivalResponse(SecurityCheckCriteria securityCheckCriteria) {
-        if (securityCheckCriteria.getArrivalUuid() == null) {
+    public ArrivalDetailsResponse getArrivalResponse(String  arrivalId) {
+        if (arrivalId == null) {
             throw new CustomException("INVALID_ARRIVAL_ID", "Search Arrival Id is empty");
         }
-        return repository.getArrivalDetails(securityCheckCriteria);
+        return repository.getArrivalDetails(arrivalId);
     }
 
 
     public void saveInspectionDetails(InspectionRequest inspectionRequest) {
-        if (inspectionRequest == null || inspectionRequest.getInspection() == null || inspectionRequest.getInspectionIndicators() == null || inspectionRequest.getInspectionDetail() == null) {
+        if (inspectionRequest == null) {
             throw new CustomException("INVALID_DATA", "Inspection request data is null or incomplete.");
         }
         Long time = System.currentTimeMillis();
-        inspectionRequest.getAnimal().setCreatedAt(time);
-        inspectionRequest.getAnimal().setUpdatedAt(time);
-        inspectionRequest.getAnimal().setCreatedBy(inspectionRequest.getRequestInfo().getUserInfo().getUserName());
-        inspectionRequest.getAnimal().setUpdatedBy(inspectionRequest.getRequestInfo().getUserInfo().getUserName());
+        LocalTime currentTime = LocalTime.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("H:mm:ss");
+        String username = inspectionRequest.getRequestInfo().getUserInfo().getUserName();
 
-        inspectionRequest.getInspectionUnit().setCreatedAt(time);
-        inspectionRequest.getInspectionUnit().setUpdatedAt(time);
-        inspectionRequest.getInspectionUnit().setCreatedBy(inspectionRequest.getRequestInfo().getUserInfo().getUserName());
-        inspectionRequest.getInspectionUnit().setUpdatedBy(inspectionRequest.getRequestInfo().getUserInfo().getUserName());
+        InspectionSearchRequest request = new InspectionSearchRequest();
+        ArrivalDetailsResponse ere= repository.getArrivalDetails(inspectionRequest.getArrivalId());
 
-        inspectionRequest.getInspection().setCreatedAt(time);
-        inspectionRequest.getInspection().setUpdatedAt(time);
-        inspectionRequest.getInspection().setCreatedBy(inspectionRequest.getRequestInfo().getUserInfo().getUserName());
-        inspectionRequest.getInspection().setUpdatedBy(inspectionRequest.getRequestInfo().getUserInfo().getUserName());
+        Animal animal=new Animal();
+        for (int animalTypeId: ere.getAnimalTyeId())
+        {
+            animal.setArrivalId(ere.getAId());
+            animal.setAnimalType(animalTypeId);
+            animal.setUpdatedBy(username);
+            animal.setCreatedBy(username);
+            animal.setAnimalTokenNum(inspectionRequest.getAnimalTokenNumber().getName());
+            animal.setCreatedAt(time);
+            animal.setUpdatedAt(time);
 
+        }
 
-        inspectionRequest.getInspectionIndicators().setCreatedAt(time);
-        inspectionRequest.getInspectionIndicators().setUpdatedAt(time);
-        inspectionRequest.getInspectionIndicators().setCreatedBy(inspectionRequest.getRequestInfo().getUserInfo().getUserName());
-        inspectionRequest.getInspectionIndicators().setUpdatedBy(inspectionRequest.getRequestInfo().getUserInfo().getUserName());
+        Inspection inspection=new Inspection();
+        inspection.setArrivalId(ere.getAId());
+//        inspection.setEmployeeId(inspectionRequest.getRequestInfo().getUserInfo().getUuid());
+        inspection.setInspectionDate(time);
+        inspection.setInspectionTime(currentTime.format(formatter));
+        inspection.setCreatedAt(time);
+        inspection.setUpdatedAt(time);
+        inspection.setCreatedBy(username);
+        inspection.setUpdatedBy(username);
 
-        inspectionRequest.getInspectionDetail().setCreatedAt(time);
-        inspectionRequest.getInspectionDetail().setUpdatedAt(time);
-        inspectionRequest.getInspectionDetail().setCreatedBy(inspectionRequest.getRequestInfo().getUserInfo().getUserName());
-        inspectionRequest.getInspectionDetail().setUpdatedBy(inspectionRequest.getRequestInfo().getUserInfo().getUserName());
-
-
+        List<InspectionDetail> list = populateListOfInspectionDetail(inspectionRequest);
+        request.setInspectionRequest(inspectionRequest);
+        request.setInspectionDetail(list);
+        request.setAnimal(animal);
+        request.setInspection(inspection);
 
         if (inspectionRequest.getInspectionType().equalsIgnoreCase("Ante Mortem Inspection") || inspectionRequest.getInspectionType().equalsIgnoreCase("Re-Ante Mortem Inspection")) {
-            producer.push("save-inspection-details", inspectionRequest);
+            producer.push("save-inspection-details", request);
 
         }
     }
+
+    private List<InspectionDetail> populateListOfInspectionDetail(InspectionRequest inspectionRequest) {
+        List<InspectionDetail> list = new ArrayList<>();
+        Long time = System.currentTimeMillis();
+        String username = inspectionRequest.getRequestInfo().getUserInfo().getUserName();
+        list.add(new InspectionDetail(IndicatorName.PULSE_RATE.getId(), inspectionRequest.getPulseRate().getName(), time, time, username, username));
+        list.add(new InspectionDetail(IndicatorName.EYES.getId(), inspectionRequest.getEyes().getName(), time, time, username, username));
+        list.add(new InspectionDetail(IndicatorName.SPECIES.getId(), inspectionRequest.getSpecies().getName(), time, time, username, username));
+        list.add(new InspectionDetail(IndicatorName.BREED.getId(), inspectionRequest.getBreed().getName(), time, time, username, username));
+        list.add(new InspectionDetail(IndicatorName.PREGNANCY.getId(), inspectionRequest.getPregnancy().getName(), time, time, username, username));
+        list.add(new InspectionDetail(IndicatorName.POSTURE.getId(), inspectionRequest.getPosture().getName(), time, time, username, username));
+        list.add(new InspectionDetail(IndicatorName.BODY_TEMPERATURE.getId(), inspectionRequest.getBodyTemperature().getName(), time, time, username, username));
+        list.add(new InspectionDetail(IndicatorName.BODY_COLOR.getId(), inspectionRequest.getBodyColor().getName(), time, time, username, username));
+        list.add(new InspectionDetail(IndicatorName.APPROXIMATE_AGE.getId(), inspectionRequest.getApproximateAge().getName(), time, time, username, username));
+        list.add(new InspectionDetail(IndicatorName.APPETITE.getId(), inspectionRequest.getAppetite().getName(), time, time, username, username));
+        list.add(new InspectionDetail(IndicatorName.OPINION.getId(), inspectionRequest.getOpinion().getName(), time, time, username, username));
+        list.add(new InspectionDetail(IndicatorName.GAIT.getId(), inspectionRequest.getGait().getName(), time, time, username, username));
+        list.add(new InspectionDetail(IndicatorName.NOSTRILS.getId(), inspectionRequest.getNostrils().getName(), time, time, username, username));
+        list.add(new InspectionDetail(IndicatorName.MUZZLE.getId(), inspectionRequest.getMuzzle().getName(), time, time, username, username));
+        list.add(new InspectionDetail(IndicatorName.SEX.getId(), inspectionRequest.getSex().getName(), time, time, username, username));
+        list.add(new InspectionDetail(IndicatorName.OTHER.getId(), inspectionRequest.getOther(), time, time, username, username));
+        list.add(new InspectionDetail(IndicatorName.REMARK.getId(), inspectionRequest.getRemark(), time, time, username, username));
+
+        return list;
+    }
+
 }

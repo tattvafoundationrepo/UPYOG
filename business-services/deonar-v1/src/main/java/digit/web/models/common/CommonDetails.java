@@ -1,10 +1,13 @@
 package digit.web.models.common;
 
+import digit.web.models.security.AnimalType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+
+import java.util.List;
 
 @Getter
 @AllArgsConstructor
@@ -14,4 +17,6 @@ import lombok.ToString;
 public class CommonDetails {
     private long id;
     private String name;
+    private String licenceNumber;
+    private List<AnimalType> animalType;
 }

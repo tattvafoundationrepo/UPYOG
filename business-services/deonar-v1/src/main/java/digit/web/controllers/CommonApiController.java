@@ -45,6 +45,7 @@ public class CommonApiController {
     }
 
     @PostMapping("/common/_get")
+    @CrossOrigin(origins = "http://localhost:3000")
     public ResponseEntity<CommonResponse>registrationSearchPost(
             @ApiParam(value = "Common Details", required = true) 
             @Valid @RequestBody CommonRequest commonSearchRequest) {
@@ -59,6 +60,7 @@ public class CommonApiController {
     }
 
     @PostMapping("/stakeholder/_get")
+    @CrossOrigin(origins = "http://localhost:3000")
     public ResponseEntity<CommonResponse>stakeholderList(
             @ApiParam(value = "List of Stakeholder", required = true) 
             @Valid @RequestBody CommonRequest commonSearchRequest) {

@@ -5,14 +5,12 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class ArrivalDetailsResponse {
-    private int aId;
-    private List<Integer> animalTyeId;
-
+public class Properties {
+    private String code;
+    private String name;
 }
