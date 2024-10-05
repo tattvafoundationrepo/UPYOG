@@ -27,7 +27,7 @@ public class InspectionSearchRequest{
     private Animal animal;
 
     @JsonProperty("InspectionDetail")
-    private List<InspectionDetail> inspectionDetail;
+    private InspectionDetail inspectionDetail;
 
 
     @JsonProperty("Inspection")
