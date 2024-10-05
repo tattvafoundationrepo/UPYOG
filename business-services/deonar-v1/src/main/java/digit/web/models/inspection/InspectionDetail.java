@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+
 @Data
 @Builder
 @AllArgsConstructor
@@ -14,6 +15,9 @@ public class InspectionDetail {
     private Long inspectionId;
     private Long inspectionIndicatorId;
     private String inspectionIndicatorValue;
+    private  String report;
+    private String tokenNo;
+    private String resultRemark;
     private Long createdAt;
     private Long updatedAt;
     private String createdBy;
