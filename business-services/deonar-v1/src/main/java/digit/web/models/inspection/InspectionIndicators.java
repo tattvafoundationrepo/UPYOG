@@ -10,10 +10,13 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 public class InspectionIndicators {
-    private int id;
-    private String name;
-    private Long createdAt;
-    private Long updatedAt;
-    private String createdBy;
-    private String updatedBy;
+    // private int id;
+    // private String name;
+    // private Long createdAt;
+    // private Long updatedAt;
+    // private String createdBy;
+    // private String updatedBy;
+
+    private Long inspectionIndicatorId;
+    private String inspectionIndicatorValue;
 }
