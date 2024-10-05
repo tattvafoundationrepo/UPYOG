@@ -7,6 +7,8 @@ import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.google.gson.Gson;
+
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -62,17 +64,31 @@ public class InspectionService {
 
         Inspection inspection=new Inspection();
         inspection.setArrivalId(ere.getAId());
-//        inspection.setEmployeeId(inspectionRequest.getRequestInfo().getUserInfo().getUuid());
+        inspection.setEmployeeId(inspectionRequest.getRequestInfo().getUserInfo().getUuid());
         inspection.setInspectionDate(time);
         inspection.setInspectionTime(currentTime.format(formatter));
+        inspection.setInspectionUnitId(1);
         inspection.setCreatedAt(time);
         inspection.setUpdatedAt(time);
         inspection.setCreatedBy(username);
         inspection.setUpdatedBy(username);
+        inspection.setInspectionType(1);
 
-        List<InspectionDetail> list = populateListOfInspectionDetail(inspectionRequest);
+      //  List<InspectionDetail> list = populateListOfInspectionDetail(inspectionRequest);
+
+        List<InspectionIndicators> details = populateListOfInspectionDetails(inspectionRequest);
+        Gson gson = new Gson();
+        InspectionDetail inspectionDetail = new InspectionDetail();
+        inspectionDetail.setCreatedAt(time);
+        inspectionDetail.setCreatedBy(username);
+        inspectionDetail.setReport(gson.toJson(details));
+        inspectionDetail.setTokenNo(inspectionRequest.getAnimalTokenNumber().getName());
+        inspectionDetail.setUpdatedAt(time);
+        inspectionDetail.setUpdatedBy(username);
+        inspectionDetail.setResultRemark(inspectionRequest.getRemark());
+
         request.setInspectionRequest(inspectionRequest);
-        request.setInspectionDetail(list);
+        request.setInspectionDetail(inspectionDetail);
         request.setAnimal(animal);
         request.setInspection(inspection);
 
@@ -82,29 +98,53 @@ public class InspectionService {
         }
     }
 
-    private List<InspectionDetail> populateListOfInspectionDetail(InspectionRequest inspectionRequest) {
-        List<InspectionDetail> list = new ArrayList<>();
-        Long time = System.currentTimeMillis();
-        String username = inspectionRequest.getRequestInfo().getUserInfo().getUserName();
-        list.add(new InspectionDetail(IndicatorName.PULSE_RATE.getId(), inspectionRequest.getPulseRate().getName(), time, time, username, username));
-        list.add(new InspectionDetail(IndicatorName.EYES.getId(), inspectionRequest.getEyes().getName(), time, time, username, username));
-        list.add(new InspectionDetail(IndicatorName.SPECIES.getId(), inspectionRequest.getSpecies().getName(), time, time, username, username));
-        list.add(new InspectionDetail(IndicatorName.BREED.getId(), inspectionRequest.getBreed().getName(), time, time, username, username));
-        list.add(new InspectionDetail(IndicatorName.PREGNANCY.getId(), inspectionRequest.getPregnancy().getName(), time, time, username, username));
-        list.add(new InspectionDetail(IndicatorName.POSTURE.getId(), inspectionRequest.getPosture().getName(), time, time, username, username));
-        list.add(new InspectionDetail(IndicatorName.BODY_TEMPERATURE.getId(), inspectionRequest.getBodyTemperature().getName(), time, time, username, username));
-        list.add(new InspectionDetail(IndicatorName.BODY_COLOR.getId(), inspectionRequest.getBodyColor().getName(), time, time, username, username));
-        list.add(new InspectionDetail(IndicatorName.APPROXIMATE_AGE.getId(), inspectionRequest.getApproximateAge().getName(), time, time, username, username));
-        list.add(new InspectionDetail(IndicatorName.APPETITE.getId(), inspectionRequest.getAppetite().getName(), time, time, username, username));
-        list.add(new InspectionDetail(IndicatorName.OPINION.getId(), inspectionRequest.getOpinion().getName(), time, time, username, username));
-        list.add(new InspectionDetail(IndicatorName.GAIT.getId(), inspectionRequest.getGait().getName(), time, time, username, username));
-        list.add(new InspectionDetail(IndicatorName.NOSTRILS.getId(), inspectionRequest.getNostrils().getName(), time, time, username, username));
-        list.add(new InspectionDetail(IndicatorName.MUZZLE.getId(), inspectionRequest.getMuzzle().getName(), time, time, username, username));
-        list.add(new InspectionDetail(IndicatorName.SEX.getId(), inspectionRequest.getSex().getName(), time, time, username, username));
-        list.add(new InspectionDetail(IndicatorName.OTHER.getId(), inspectionRequest.getOther(), time, time, username, username));
-        list.add(new InspectionDetail(IndicatorName.REMARK.getId(), inspectionRequest.getRemark(), time, time, username, username));
+    // private List<InspectionDetail> populateListOfInspectionDetail(InspectionRequest inspectionRequest) {
+    //     List<InspectionDetail> list = new ArrayList<>();
+    //     Long time = System.currentTimeMillis();
+    //     String username = inspectionRequest.getRequestInfo().getUserInfo().getUserName();
+    //     list.add(new InspectionDetail(IndicatorName.PULSE_RATE.getId(), inspectionRequest.getPulseRate().getName(), time, time, username, username));
+    //     list.add(new InspectionDetail(IndicatorName.EYES.getId(), inspectionRequest.getEyes().getName(), time, time, username, username));
+    //     list.add(new InspectionDetail(IndicatorName.SPECIES.getId(), inspectionRequest.getSpecies().getName(), time, time, username, username));
+    //     list.add(new InspectionDetail(IndicatorName.BREED.getId(), inspectionRequest.getBreed().getName(), time, time, username, username));
+    //     list.add(new InspectionDetail(IndicatorName.PREGNANCY.getId(), inspectionRequest.getPregnancy().getName(), time, time, username, username));
+    //     list.add(new InspectionDetail(IndicatorName.POSTURE.getId(), inspectionRequest.getPosture().getName(), time, time, username, username));
+    //     list.add(new InspectionDetail(IndicatorName.BODY_TEMPERATURE.getId(), inspectionRequest.getBodyTemperature().getName(), time, time, username, username));
+    //     list.add(new InspectionDetail(IndicatorName.BODY_COLOR.getId(), inspectionRequest.getBodyColor().getName(), time, time, username, username));
+    //     list.add(new InspectionDetail(IndicatorName.APPROXIMATE_AGE.getId(), inspectionRequest.getApproximateAge().getName(), time, time, username, username));
+    //     list.add(new InspectionDetail(IndicatorName.APPETITE.getId(), inspectionRequest.getAppetite().getName(), time, time, username, username));
+    //     list.add(new InspectionDetail(IndicatorName.OPINION.getId(), inspectionRequest.getOpinion().getName(), time, time, username, username));
+    //     list.add(new InspectionDetail(IndicatorName.GAIT.getId(), inspectionRequest.getGait().getName(), time, time, username, username));
+    //     list.add(new InspectionDetail(IndicatorName.NOSTRILS.getId(), inspectionRequest.getNostrils().getName(), time, time, username, username));
+    //     list.add(new InspectionDetail(IndicatorName.MUZZLE.getId(), inspectionRequest.getMuzzle().getName(), time, time, username, username));
+    //     list.add(new InspectionDetail(IndicatorName.SEX.getId(), inspectionRequest.getSex().getName(), time, time, username, username));
+    //     list.add(new InspectionDetail(IndicatorName.OTHER.getId(), inspectionRequest.getOther(), time, time, username, username));
+    //     list.add(new InspectionDetail(IndicatorName.REMARK.getId(), inspectionRequest.getRemark(), time, time, username, username));
+
+    //     return list;
+    // }
+
+    private List<InspectionIndicators> populateListOfInspectionDetails(InspectionRequest inspectionRequest) {
+        List<InspectionIndicators> list = new ArrayList<>();
+        list.add(new InspectionIndicators(IndicatorName.PULSE_RATE.getId(), inspectionRequest.getPulseRate().getName()));
+        list.add(new InspectionIndicators(IndicatorName.EYES.getId(), inspectionRequest.getEyes().getName()));
+        list.add(new InspectionIndicators(IndicatorName.SPECIES.getId(), inspectionRequest.getSpecies().getName()));
+        list.add(new InspectionIndicators(IndicatorName.BREED.getId(), inspectionRequest.getBreed().getName()));
+        list.add(new InspectionIndicators(IndicatorName.PREGNANCY.getId(), inspectionRequest.getPregnancy().getName()));
+        list.add(new InspectionIndicators(IndicatorName.POSTURE.getId(), inspectionRequest.getPosture().getName()));
+        list.add(new InspectionIndicators(IndicatorName.BODY_TEMPERATURE.getId(), inspectionRequest.getBodyTemperature().getName()));
+        list.add(new InspectionIndicators(IndicatorName.BODY_COLOR.getId(), inspectionRequest.getBodyColor().getName()));
+        list.add(new InspectionIndicators(IndicatorName.APPROXIMATE_AGE.getId(), inspectionRequest.getApproximateAge().getName()));
+        list.add(new InspectionIndicators(IndicatorName.APPETITE.getId(), inspectionRequest.getAppetite().getName()));
+        list.add(new InspectionIndicators(IndicatorName.OPINION.getId(), inspectionRequest.getOpinion().getName()));
+        list.add(new InspectionIndicators(IndicatorName.GAIT.getId(), inspectionRequest.getGait().getName()));
+        list.add(new InspectionIndicators(IndicatorName.NOSTRILS.getId(), inspectionRequest.getNostrils().getName()));
+        list.add(new InspectionIndicators(IndicatorName.MUZZLE.getId(), inspectionRequest.getMuzzle().getName()));
+        list.add(new InspectionIndicators(IndicatorName.SEX.getId(), inspectionRequest.getSex().getName()));
+        list.add(new InspectionIndicators(IndicatorName.OTHER.getId(), inspectionRequest.getOther()));
+        list.add(new InspectionIndicators(IndicatorName.REMARK.getId(), inspectionRequest.getRemark()));
 
         return list;
     }
+
 
 }
