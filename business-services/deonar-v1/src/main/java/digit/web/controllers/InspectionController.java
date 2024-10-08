@@ -2,8 +2,6 @@ package digit.web.controllers;
 
 import digit.service.InspectionService;
 import digit.util.ResponseInfoFactory;
-import digit.web.models.inspection.ArrivalResponse;
-import digit.web.models.inspection.InspectionRequest;
 import digit.web.models.inspection.*;
 import digit.web.models.security.SecurityCheckRequest;
 import io.swagger.annotations.ApiParam;
@@ -28,6 +26,7 @@ public class InspectionController {
     private ResponseInfoFactory responseInfoFactory;
 
     @PostMapping("/inspection/ _search")
+
     public ResponseEntity<InspectionResponse> getInspectionOnArrival(
             @ApiParam(value = "Details for inspection ", required = true)
             @Valid @RequestBody InspectionCheckRequest inspectionCheckRequest) {
@@ -43,6 +42,7 @@ public class InspectionController {
     }
 
     @PostMapping("/arrival/_search")
+
     public ResponseEntity<ArrivalResponse> getArrivalResponseOnArrival(
             @ApiParam(value = "Details for inspection ", required = true)
             @Valid @RequestBody SecurityCheckRequest request
@@ -55,6 +55,7 @@ public class InspectionController {
 
 
     @PostMapping("/inspection/save")
+
     public ResponseEntity<InspectionRequest> saveInspectionOnArrival(@RequestBody InspectionRequest inspectionRequest){
         try {
             InspectionRequest request= inspectionService.saveInspectionDetails(inspectionRequest);
