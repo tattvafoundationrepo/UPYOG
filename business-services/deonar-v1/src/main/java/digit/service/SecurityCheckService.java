@@ -1,12 +1,15 @@
 package digit.service;
 
 import java.util.List;
+import java.util.ArrayList;
 import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.stereotype.Service;
 
 import org.egov.tracer.model.CustomException;
 import digit.repository.SecurityCheckRepository;
 import digit.web.models.security.SecurityCheckDetails;
+import digit.web.models.security.AnimalAtArrival;
 import digit.web.models.security.ArrivalRequest;
 import digit.web.models.security.SecurityCheckCriteria;
 import digit.kafka.Producer;
@@ -41,10 +44,25 @@ public class SecurityCheckService {
         if (arrivalRequest == null || arrivalRequest.getArrivalDetails() == null || arrivalRequest.getAnimalDetails() == null) {
             throw new CustomException("INVALID_DATA", "Arrival request data is null or incomplete.");
         }
-
+        
+        Long time = System.currentTimeMillis();
         // Serialize the entire ArrivalRequest which includes both arrival and animal details.
         //String arrivalData = serializeArrivalRequest(arrivalRequest);  // Assume serializeArrivalRequest handles JSON conversion.
-
+        arrivalRequest.setSaveAnimalDetails(new ArrayList<AnimalAtArrival>());
+        for(AnimalAtArrival aa : arrivalRequest.getAnimalDetails())
+        {
+            AnimalAtArrival animal = AnimalAtArrival.builder().build();
+            for(Integer token : aa.getCount()){
+                animal.setAnimalTypeId(aa.getAnimalTypeId());
+                animal.setTokenNum(token);
+                animal.setCreatedAt(time);
+                animal.setCreatedBy(arrivalRequest.getRequestInfo().getUserInfo().getId().intValue());
+                animal.setUpdatedAt(time);
+                animal.setUpdatedBy(arrivalRequest.getRequestInfo().getUserInfo().getId().intValue());
+                arrivalRequest.getSaveAnimalDetails().add(animal); 
+            }
+           
+        }
         // Push serialized data to a single Kafka topic.
         producer.push("topic_deonar_arrival", arrivalRequest);
 
