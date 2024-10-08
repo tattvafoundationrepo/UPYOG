@@ -39,4 +39,6 @@ public class ArrivalRequest {
     @JsonProperty("AnimalDetails")
     @Valid
     private List<AnimalAtArrival> animalDetails;
+
+    private List<AnimalAtArrival> saveAnimalDetails;
 }
