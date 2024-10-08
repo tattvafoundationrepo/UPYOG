@@ -37,7 +37,7 @@ public class InspectionService {
     }
 
 
-    public void saveInspectionDetails(InspectionRequest inspectionRequest) {
+    public InspectionRequest saveInspectionDetails(InspectionRequest inspectionRequest) {
         if (inspectionRequest == null) {
             throw new CustomException("INVALID_DATA", "Inspection request data is null or incomplete.");
         }
@@ -49,18 +49,18 @@ public class InspectionService {
         InspectionSearchRequest request = new InspectionSearchRequest();
         ArrivalDetailsResponse ere= repository.getArrivalDetails(inspectionRequest.getArrivalId());
 
-        Animal animal=new Animal();
-        for (int animalTypeId: ere.getAnimalTyeId())
-        {
-            animal.setArrivalId(ere.getAId());
-            animal.setAnimalType(animalTypeId);
-            animal.setUpdatedBy(username);
-            animal.setCreatedBy(username);
-            animal.setAnimalTokenNum(inspectionRequest.getAnimalTokenNumber().getName());
-            animal.setCreatedAt(time);
-            animal.setUpdatedAt(time);
+        // Animal animal=new Animal();
+        // for (int animalTypeId: ere.getAnimalTyeId())
+        // {
+        //     animal.setArrivalId(ere.getAId());
+        //     animal.setAnimalType(animalTypeId);
+        //     animal.setUpdatedBy(username);
+        //     animal.setCreatedBy(username);
+        //     animal.setAnimalTokenNum(inspectionRequest.getAnimalTokenNumber().getName());
+        //     animal.setCreatedAt(time);
+        //     animal.setUpdatedAt(time);
 
-        }
+        // }
 
         Inspection inspection=new Inspection();
         inspection.setArrivalId(ere.getAId());
@@ -89,13 +89,15 @@ public class InspectionService {
 
         request.setInspectionRequest(inspectionRequest);
         request.setInspectionDetail(inspectionDetail);
-        request.setAnimal(animal);
+      //  request.setAnimal(animal);
         request.setInspection(inspection);
 
         if (inspectionRequest.getInspectionType().equalsIgnoreCase("Ante Mortem Inspection") || inspectionRequest.getInspectionType().equalsIgnoreCase("Re-Ante Mortem Inspection")) {
             producer.push("save-inspection-details", request);
-
+          
         }
+        return inspectionRequest;
+
     }
 
     // private List<InspectionDetail> populateListOfInspectionDetail(InspectionRequest inspectionRequest) {
