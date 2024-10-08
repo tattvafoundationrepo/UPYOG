@@ -45,13 +45,12 @@ public class SecurityCheckController {
     }
 
     @PostMapping("/securityCheck/_save")
-    public ResponseEntity<InspectionRequest> saveInspectionOnArrival(@RequestBody InspectionRequest inspectionRequest){
+    public ResponseEntity<String> saveSecurityCheckDetails(@RequestBody ArrivalRequest arrivalRequest) {
         try {
-            InspectionRequest request= inspectionService.saveInspectionDetails(inspectionRequest);
-            return new ResponseEntity<>(request, HttpStatus.OK);
+            securityCheckService.saveArrivalDetails(arrivalRequest);
+            return new ResponseEntity<>("Security check details saved successfully.", HttpStatus.OK);
         } catch (Exception e) {
-            return new ResponseEntity<>(new InspectionRequest(), HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>("Failed to save security check details: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
 }

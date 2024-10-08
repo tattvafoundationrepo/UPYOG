@@ -42,7 +42,6 @@ public class InspectionController {
     }
 
     @PostMapping("/arrival/_search")
-
     public ResponseEntity<ArrivalResponse> getArrivalResponseOnArrival(
             @ApiParam(value = "Details for inspection ", required = true)
             @Valid @RequestBody SecurityCheckRequest request
@@ -55,7 +54,6 @@ public class InspectionController {
 
 
     @PostMapping("/inspection/save")
-
     public ResponseEntity<InspectionRequest> saveInspectionOnArrival(@RequestBody InspectionRequest inspectionRequest){
         try {
             InspectionRequest request= inspectionService.saveInspectionDetails(inspectionRequest);
