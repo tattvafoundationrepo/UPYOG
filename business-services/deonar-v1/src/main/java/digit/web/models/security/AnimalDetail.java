@@ -9,6 +9,9 @@ import lombok.*;
 @NoArgsConstructor
 @Builder
 public class AnimalDetail{
+    
+    @JsonProperty("animalTypeId")
+    private Long animalTypeId;
 
     @JsonProperty("animalType")
     private String animalType;
