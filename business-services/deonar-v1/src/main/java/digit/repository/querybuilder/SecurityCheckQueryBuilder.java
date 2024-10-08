@@ -37,7 +37,7 @@ public class SecurityCheckQueryBuilder {
                                 select   i.arrivalid      ,i.importpermission      ,a.stakeholdername      ,TO_TIMESTAMP(i.dateofarrival / 1000)::date as dateofarrival
              ,i.timeofarrival::time as timeofarrival      ,i.vehiclenumber      ,a.mobilenumber      ,a.email      ,c.name as stakeholdertypename
              ,e.licencenumber      ,e.registrationnumber      ,TO_TIMESTAMP(dateofarrival / 1000)::date as validtodate      , h.name as animaltype
-             ,j.count
+             ,j.animaltypeid ,j.count
             from public.eg_deonar_arrival i
              left join public.eg_deonar_stakeholder a on  a.id = i.stakeholderid
              left join public.eg_deonar_stakeholder_type_mapping b on a.id = b.stakeholderid
