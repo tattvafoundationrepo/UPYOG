@@ -51,8 +51,9 @@ public class SecurityCheckService {
         arrivalRequest.setSaveAnimalDetails(new ArrayList<AnimalAtArrival>());
         for(AnimalAtArrival aa : arrivalRequest.getAnimalDetails())
         {
-            AnimalAtArrival animal = AnimalAtArrival.builder().build();
+
             for(Integer token : aa.getCount()){
+                AnimalAtArrival animal = AnimalAtArrival.builder().build();
                 animal.setAnimalTypeId(aa.getAnimalTypeId());
                 animal.setTokenNum(token);
                 animal.setCreatedAt(time);
