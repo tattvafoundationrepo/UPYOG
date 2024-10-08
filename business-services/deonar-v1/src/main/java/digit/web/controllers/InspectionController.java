@@ -58,12 +58,12 @@ public class InspectionController {
 
     @PostMapping("/inspection/save")
     @CrossOrigin(origins = "http://localhost:3000")
-    public ResponseEntity<String> saveInspectionOnArrival(@RequestBody InspectionRequest inspectionRequest){
+    public ResponseEntity<InspectionRequest> saveInspectionOnArrival(@RequestBody InspectionRequest inspectionRequest){
         try {
-            inspectionService.saveInspectionDetails(inspectionRequest);
-            return new ResponseEntity<>("Inspection  details saved successfully.", HttpStatus.OK);
+            InspectionRequest request= inspectionService.saveInspectionDetails(inspectionRequest);
+            return new ResponseEntity<>(request, HttpStatus.OK);
         } catch (Exception e) {
-            return new ResponseEntity<>("Failed to save inspection details: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(new InspectionRequest(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
