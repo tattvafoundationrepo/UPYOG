@@ -19,8 +19,8 @@ public class InspectionRequest {
     @Valid
     private RequestInfo requestInfo;
 
-    @JsonProperty("animalTokenNumber")
-    private Properties animalTokenNumber;
+    @JsonProperty("tokenNumber")
+    private String animalTokenNumber;
 
     @JsonProperty("arrivalId")
     private String arrivalId;
