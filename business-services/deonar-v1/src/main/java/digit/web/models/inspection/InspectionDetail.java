@@ -22,6 +22,7 @@ public class InspectionDetail {
     private Long updatedAt;
     private String createdBy;
     private String updatedBy;
+    private Long animalTypeId;
 
     public InspectionDetail(Long inspectionIndicatorId, String inspectionIndicatorValue, Long createdAt, Long updatedAt, String createdBy, String updatedBy) {
         this.inspectionIndicatorId = inspectionIndicatorId;
