@@ -72,6 +72,10 @@ public class CommonQueryBuilder {
                 query.append(" from eg_deonar_vhelkari ");
 
                 break;
+            case "broker" :
+            query.append(" from eg_deonar_vbroker ");
+
+            break;   
 
             default:
                 break;
