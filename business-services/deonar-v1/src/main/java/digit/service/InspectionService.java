@@ -82,7 +82,7 @@ public class InspectionService {
         inspectionDetail.setCreatedAt(time);
         inspectionDetail.setCreatedBy(username);
         inspectionDetail.setReport(gson.toJson(details));
-        inspectionDetail.setTokenNo(inspectionRequest.getAnimalTokenNumber().getName());
+        inspectionDetail.setTokenNo(inspectionRequest.getAnimalTokenNumber());
         inspectionDetail.setUpdatedAt(time);
         inspectionDetail.setUpdatedBy(username);
         inspectionDetail.setResultRemark(inspectionRequest.getRemark());
