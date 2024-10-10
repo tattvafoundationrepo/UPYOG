@@ -20,7 +20,7 @@ public class InspectionRequest {
     private RequestInfo requestInfo;
 
     @JsonProperty("tokenNumber")
-    private String animalTokenNumber;
+    private Long animalTokenNumber;
 
     @JsonProperty("arrivalId")
     private String arrivalId;
