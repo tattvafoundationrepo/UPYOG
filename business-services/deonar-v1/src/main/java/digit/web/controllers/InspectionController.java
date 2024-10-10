@@ -26,13 +26,12 @@ public class InspectionController {
     private ResponseInfoFactory responseInfoFactory;
 
     @PostMapping("/inspection/ _search")
-
     public ResponseEntity<InspectionResponse> getInspectionOnArrival(
             @ApiParam(value = "Details for inspection ", required = true)
-            @Valid @RequestBody InspectionCheckRequest inspectionCheckRequest) {
+            @Valid @RequestBody InspectionSearchCriteria criteria) {
 
-        List<InspectionDetails> details = inspectionService.getInspectionDetails(inspectionCheckRequest.getArrivalId());
-        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(inspectionCheckRequest.getRequestInfo(), true);
+        List<InspectionDetails> details = inspectionService.getInspectionDetails(criteria);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(criteria.getRequestInfo(), true);
         InspectionResponse response = InspectionResponse.builder()
                 .inspectionDetails(details)
                 .responseInfo(responseInfo)
@@ -63,5 +62,6 @@ public class InspectionController {
         }
     }
 
+  
 
 }
