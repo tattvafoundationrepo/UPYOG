@@ -29,9 +29,9 @@ public class InspectionRepository {
     @Autowired
     private ArrivalDetailsRowMapper arrivalDetailsRowMapper;
 
-    public List<InspectionDetails> getInspectionDetails(String arrivalId) {
+    public List<InspectionDetails> getInspectionDetails(String arrivalId,Long inspectionType) {
         List<Object> preparedStmtList = new ArrayList<>();
-        String query = queryBuilder.getSearchQuery(arrivalId, preparedStmtList);
+        String query = queryBuilder.getSearchQuery(arrivalId,inspectionType, preparedStmtList);
         log.info("Executing security check search with query: {}", query);
         return jdbcTemplate.query(query, preparedStmtList.toArray(), rowMapper);
     }
