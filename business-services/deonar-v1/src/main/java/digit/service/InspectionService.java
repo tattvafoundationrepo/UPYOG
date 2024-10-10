@@ -22,13 +22,6 @@ public class InspectionService {
     @Autowired
     private Producer producer;
 
-    public List<InspectionDetails> getInspectionDetails(String arrivalId) {
-        if (arrivalId == null) {
-            throw new CustomException("INVALID_ARRIVAL_ID", "Search Arrival Id is empty");
-        }
-        return repository.getInspectionDetails(arrivalId);
-    }
-
     public ArrivalDetailsResponse getArrivalResponse(String  arrivalId) {
         if (arrivalId == null) {
             throw new CustomException("INVALID_ARRIVAL_ID", "Search Arrival Id is empty");
@@ -88,25 +81,31 @@ public class InspectionService {
 
     private List<InspectionIndicators> populateListOfInspectionDetails(InspectionRequest inspectionRequest) {
         List<InspectionIndicators> list = new ArrayList<>();
-        list.add(new InspectionIndicators(IndicatorName.PULSE_RATE.getId(), inspectionRequest.getPulseRate().getName()));
-        list.add(new InspectionIndicators(IndicatorName.EYES.getId(), inspectionRequest.getEyes().getName()));
-        list.add(new InspectionIndicators(IndicatorName.SPECIES.getId(), inspectionRequest.getSpecies().getName()));
-        list.add(new InspectionIndicators(IndicatorName.BREED.getId(), inspectionRequest.getBreed().getName()));
-        list.add(new InspectionIndicators(IndicatorName.PREGNANCY.getId(), inspectionRequest.getPregnancy().getName()));
-        list.add(new InspectionIndicators(IndicatorName.POSTURE.getId(), inspectionRequest.getPosture().getName()));
-        list.add(new InspectionIndicators(IndicatorName.BODY_TEMPERATURE.getId(), inspectionRequest.getBodyTemperature().getName()));
-        list.add(new InspectionIndicators(IndicatorName.BODY_COLOR.getId(), inspectionRequest.getBodyColor().getName()));
-        list.add(new InspectionIndicators(IndicatorName.APPROXIMATE_AGE.getId(), inspectionRequest.getApproximateAge().getName()));
-        list.add(new InspectionIndicators(IndicatorName.APPETITE.getId(), inspectionRequest.getAppetite().getName()));
-        list.add(new InspectionIndicators(IndicatorName.OPINION.getId(), inspectionRequest.getOpinion().getName()));
-        list.add(new InspectionIndicators(IndicatorName.GAIT.getId(), inspectionRequest.getGait().getName()));
-        list.add(new InspectionIndicators(IndicatorName.NOSTRILS.getId(), inspectionRequest.getNostrils().getName()));
-        list.add(new InspectionIndicators(IndicatorName.MUZZLE.getId(), inspectionRequest.getMuzzle().getName()));
-        list.add(new InspectionIndicators(IndicatorName.SEX.getId(), inspectionRequest.getSex().getName()));
-        list.add(new InspectionIndicators(IndicatorName.OTHER.getId(), inspectionRequest.getOther()));
-        list.add(new InspectionIndicators(IndicatorName.REMARK.getId(), inspectionRequest.getRemark()));
+        list.add(new InspectionIndicators(IndicatorName.PULSE_RATE.getValue(), inspectionRequest.getPulseRate().getName()));
+        list.add(new InspectionIndicators(IndicatorName.EYES.getValue(), inspectionRequest.getEyes().getName()));
+        list.add(new InspectionIndicators(IndicatorName.SPECIES.getValue(), inspectionRequest.getSpecies().getName()));
+        list.add(new InspectionIndicators(IndicatorName.BREED.getValue(), inspectionRequest.getBreed().getName()));
+        list.add(new InspectionIndicators(IndicatorName.PREGNANCY.getValue(), inspectionRequest.getPregnancy().getName()));
+        list.add(new InspectionIndicators(IndicatorName.POSTURE.getValue(), inspectionRequest.getPosture().getName()));
+        list.add(new InspectionIndicators(IndicatorName.BODY_TEMPERATURE.getValue(), inspectionRequest.getBodyTemperature().getName()));
+        list.add(new InspectionIndicators(IndicatorName.BODY_COLOR.getValue(), inspectionRequest.getBodyColor().getName()));
+        list.add(new InspectionIndicators(IndicatorName.APPROXIMATE_AGE.getValue(), inspectionRequest.getApproximateAge().getName()));
+        list.add(new InspectionIndicators(IndicatorName.APPETITE.getValue(), inspectionRequest.getAppetite().getName()));
+        list.add(new InspectionIndicators(IndicatorName.OPINION.getValue(), inspectionRequest.getOpinion().getName()));
+        list.add(new InspectionIndicators(IndicatorName.GAIT.getValue(), inspectionRequest.getGait().getName()));
+        list.add(new InspectionIndicators(IndicatorName.NOSTRILS.getValue(), inspectionRequest.getNostrils().getName()));
+        list.add(new InspectionIndicators(IndicatorName.MUZZLE.getValue(), inspectionRequest.getMuzzle().getName()));
+        list.add(new InspectionIndicators(IndicatorName.SEX.getValue(), inspectionRequest.getSex().getName()));
+        list.add(new InspectionIndicators(IndicatorName.OTHER.getValue(), inspectionRequest.getOther()));
+        list.add(new InspectionIndicators(IndicatorName.REMARK.getValue(), inspectionRequest.getRemark()));
 
         return list;
+    }
+
+    public  List<InspectionDetails> getInspectionDetails(InspectionSearchCriteria criteria){
+
+       List<InspectionDetails> details = repository.getInspectionDetails(criteria.getEntryUnitId(),criteria.getInspectionType());
+       return details;
     }
 
 
