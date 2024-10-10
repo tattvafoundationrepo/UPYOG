@@ -35,6 +35,10 @@ public class InspectionQueryBuilder {
 		   
 		   """;
 
+		   private static final String BASE_QUERY2 = """
+				select * from eg_deonar_vinspection
+				""";    
+
 	private static final String SEARCH_BASE_QUERY= """
 			SELECT  \
 			   
@@ -60,12 +64,17 @@ public class InspectionQueryBuilder {
 		return query.toString();
 	}
 
-    public String getSearchQuery(String arrivalId, List<Object> preparedStmtList) {
-        StringBuilder query = new StringBuilder(BASE_QUERY);
+    public String getSearchQuery(String arrivalId,Long inspectionType, List<Object> preparedStmtList) {
+        StringBuilder query = new StringBuilder(BASE_QUERY2);
         if (arrivalId!= null) {
             addClauseIfRequired(query, preparedStmtList);
-            query.append(" i.arrivalid = ? ");
+            query.append(" arrivalid = ? ");
             preparedStmtList.add(arrivalId);
+        }
+		if (inspectionType!= null) {
+            addClauseIfRequired(query, preparedStmtList);
+            query.append(" inspectiontype = ? ");
+            preparedStmtList.add(inspectionType);
         }
         return query.toString();
     }
@@ -76,4 +85,5 @@ public class InspectionQueryBuilder {
             query.append(" AND ");
         }
     }
+
 }
