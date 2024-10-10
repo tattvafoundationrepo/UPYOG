@@ -25,7 +25,7 @@ public class InspectionController {
     @Autowired
     private ResponseInfoFactory responseInfoFactory;
 
-    @PostMapping("/inspection/ _search")
+    @PostMapping("/inspection/_search")
     public ResponseEntity<InspectionResponse> getInspectionOnArrival(
             @ApiParam(value = "Details for inspection ", required = true)
             @Valid @RequestBody InspectionSearchCriteria criteria) {
