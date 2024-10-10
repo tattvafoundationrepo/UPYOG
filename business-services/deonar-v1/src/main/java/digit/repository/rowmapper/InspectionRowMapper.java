@@ -1,10 +1,13 @@
 package digit.repository.rowmapper;
 
 import digit.web.models.inspection.InspectionDetails;
+import digit.web.models.inspection.InspectionIndicators;
 import digit.web.models.security.AnimalDetail;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.stereotype.Component;
+
+import com.google.gson.reflect.TypeToken;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -12,42 +15,40 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import java.lang.reflect.Type;
 @Component
 public class InspectionRowMapper implements ResultSetExtractor<List<InspectionDetails>> {
 
     @Override
     public List<InspectionDetails> extractData(ResultSet rs) throws SQLException, DataAccessException {
-        Map<String, InspectionDetails> map = new LinkedHashMap<>();
+        List<InspectionDetails> detailsList = new ArrayList<>();
         while (rs.next()) {
-            String arrivalId = rs.getString("arrivalid");
-            if (arrivalId == null) continue;  // Skip if arrivalId is null
-
-            InspectionDetails details = map.get(arrivalId);
-
-            if (details == null) {
-                details = InspectionDetails.builder()
-                        .arrivalId(arrivalId)
-                        .importPermission(rs.getString("importpermission"))
-                        .traderName(rs.getString("stakeholdername"))
-                        .licenceNumber(rs.getString("licencenumber"))
-                        .animalStabling(rs.getString("animalStabling"))
-                        .animalTokenNumber(rs.getString("animaltokenumber"))
-                        .indicatorValue(rs.getString("inspectionindicatorvalue"))
-                        .inspectionDay(rs.getString("day"))
-                        .veterinaryOfficerName(rs.getString(""))
+            InspectionDetails details = InspectionDetails.builder()
+                        .arrivalId(rs.getString("arrivalid"))
                         .inspectionDate(rs.getString("inspectiondate"))
-                        .animalDetails(new ArrayList<>())
+                        .inspectiontime(rs.getString("inspectiontime"))
+                        .inspectionid(rs.getLong("inspectionid"))
+                        .animalDetails(null)
+                        .resultmark(rs.getString("resultremark"))
+                        .id(rs.getLong("id"))
+                        .report(new ArrayList<>())
                         .build();
-                map.put(arrivalId, details);
-            }
+            Gson gson  = new Gson();
+            List<InspectionIndicators> indicators = new  ArrayList<>();
+            Type listType = new TypeToken<List<InspectionIndicators>>() {}.getType();
+            indicators = gson.fromJson(rs.getString("report"), listType);
+            details.setReport(indicators);
 
             AnimalDetail animalDetail = AnimalDetail.builder()
-                    .animalType(rs.getString("animaltype"))
-                    .count(rs.getInt("count"))
+                    .animalType(rs.getString("animal"))
+                    .count(rs.getInt("tokenno"))
+                    .animalTypeId(rs.getLong("animaltypeid"))
                     .build();
-            details.getAnimalDetails().add(animalDetail);
+            details.setAnimalDetails(animalDetail);;
+            detailsList.add(details);
         }
-        return new ArrayList<>(map.values());
+        return detailsList;
     }
 }
