@@ -16,7 +16,7 @@ public class InspectionDetail {
     private Long inspectionIndicatorId;
     private String inspectionIndicatorValue;
     private  String report;
-    private String tokenNo;
+    private Long tokenNo;
     private String resultRemark;
     private Long createdAt;
     private Long updatedAt;
