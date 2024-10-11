@@ -51,5 +51,7 @@ public class SecurityCheckDetails {
 
     @JsonProperty("animalDetails")
     private List<AnimalDetail> animalDetails;
+
+    private String permissionDate; 
 }
 
