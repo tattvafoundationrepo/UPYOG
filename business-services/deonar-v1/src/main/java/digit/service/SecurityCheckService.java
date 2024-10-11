@@ -46,6 +46,8 @@ public class SecurityCheckService {
         }
         
         Long time = System.currentTimeMillis();
+        arrivalRequest.getArrivalDetails().setCreatedAt( arrivalRequest.getArrivalDetails().getCreatedAt()*1000);
+        arrivalRequest.getArrivalDetails().setUpdatedAt(arrivalRequest.getArrivalDetails().getUpdatedAt()*1000);
         // Serialize the entire ArrivalRequest which includes both arrival and animal details.
         //String arrivalData = serializeArrivalRequest(arrivalRequest);  // Assume serializeArrivalRequest handles JSON conversion.
         arrivalRequest.setSaveAnimalDetails(new ArrayList<AnimalAtArrival>());
