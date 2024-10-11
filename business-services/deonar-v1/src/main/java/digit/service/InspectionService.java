@@ -6,6 +6,7 @@ import digit.web.models.inspection.*;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
 
 import com.google.gson.Gson;
 
@@ -13,6 +14,8 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+
 
 @Service
 public class InspectionService {
@@ -52,15 +55,19 @@ public class InspectionService {
         inspection.setUpdatedAt(time);
         inspection.setCreatedBy(username);
         inspection.setUpdatedBy(username);
-        inspection.setInspectionType(1);
+        inspection.setInspectionType(inspectionRequest.getInspectionType().intValue());
 
-
-        List<InspectionIndicators> details = populateListOfInspectionDetails(inspectionRequest);
         Gson gson = new Gson();
         InspectionDetail inspectionDetail = new InspectionDetail();
         inspectionDetail.setCreatedAt(time);
         inspectionDetail.setCreatedBy(username);
-        inspectionDetail.setReport(gson.toJson(details));
+        if(ObjectUtils.isEmpty(inspectionRequest.getInspectionDetailsJson()) || inspectionRequest.getInspectionDetailsJson() == null){
+            List<InspectionIndicators> details = populateListOfInspectionDetails(inspectionRequest);
+            inspectionDetail.setReport(gson.toJson(details));
+        }
+        else{
+            inspectionDetail.setReport(inspectionRequest.getInspectionDetailsJson());
+        }
         inspectionDetail.setTokenNo(inspectionRequest.getAnimalTokenNumber());
         inspectionDetail.setUpdatedAt(time);
         inspectionDetail.setUpdatedBy(username);
@@ -71,10 +78,8 @@ public class InspectionService {
         request.setInspectionDetail(inspectionDetail);
         request.setInspection(inspection);
 
-        if (inspectionRequest.getInspectionType().equalsIgnoreCase("Ante Mortem Inspection") || inspectionRequest.getInspectionType().equalsIgnoreCase("Re-Ante Mortem Inspection")) {
-            producer.push("save-inspection-details", request);
-          
-        }
+         producer.push("save-inspection-details", request);
+        
         return inspectionRequest;
 
     }
@@ -103,10 +108,29 @@ public class InspectionService {
     }
 
     public  List<InspectionDetails> getInspectionDetails(InspectionSearchCriteria criteria){
-
+       
+       Long id  = repository.getArrivalId(criteria.getEntryUnitId());
+       if (id!=null){
+        List<InspectionDetails> details = repository.getInspectionDetails(criteria.getEntryUnitId(),criteria.getInspectionType());
+        return details;
+       }
+       List<InspectionIndicators> list = repository.getInspectionIndicatorsByType(criteria.getInspectionType());
+       List<Map<String,Long>> tokens = repository.getAnimalTypeCounts(criteria.getEntryUnitId());
+       Gson gson = new Gson();
+       for(Map<String,Long> animal : tokens){
+       InspectionRequest request = new InspectionRequest();
+       request.setRequestInfo(criteria.getRequestInfo());
+       request.setArrivalId(criteria.getEntryUnitId());
+       request.setInspectionDetailsJson(gson.toJson(list));
+       request.setInspectionType(criteria.getInspectionType());
+       request.setAnimalTokenNumber(animal.get("count"));
+       request.setAnimalTypeId(animal.get("animalTypeId"));
+       request.setRemark("ok");
+       saveInspectionDetails(request);
+       }
        List<InspectionDetails> details = repository.getInspectionDetails(criteria.getEntryUnitId(),criteria.getInspectionType());
-       return details;
+        return details;
     }
 
 
-}
+}       
