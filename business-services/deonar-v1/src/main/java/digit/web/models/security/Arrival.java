@@ -15,7 +15,7 @@ public class Arrival {
     private String arrivalId;
     private String importPermission;
     private Integer stakeholderId;
-    private Date dateOfArrival;
+    private Date permissionDate;
     private Time timeOfArrival;
     private String vehicleNumber;
     private Long createdAt;
