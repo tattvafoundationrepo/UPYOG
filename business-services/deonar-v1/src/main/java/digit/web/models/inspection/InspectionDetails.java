@@ -21,7 +21,7 @@ public class InspectionDetails {
     private String arrivalId;
 
     @JsonProperty("inspectionType")
-    private String inspectionType;
+    private Long inspectionType;
 
     @JsonProperty("inspectionDate")
     private String inspectionDate;
@@ -29,9 +29,9 @@ public class InspectionDetails {
     @JsonProperty("animalDetails")
     private AnimalDetail animalDetails;
 
-    @JsonProperty("animalTokenNumber")
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private String animalTokenNumber;
+    // @JsonProperty("animalTokenNumber")
+    // @GeneratedValue(strategy = GenerationType.AUTO)
+    // private String animalTokenNumber;
 
     private String resultmark;
 
