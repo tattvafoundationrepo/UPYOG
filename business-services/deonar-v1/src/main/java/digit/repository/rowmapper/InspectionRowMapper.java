@@ -34,6 +34,7 @@ public class InspectionRowMapper implements ResultSetExtractor<List<InspectionDe
                         .resultmark(rs.getString("resultremark"))
                         .id(rs.getLong("id"))
                         .report(new ArrayList<>())
+                        .inspectionType(rs.getLong("inspectiontype"))
                         .build();
             Gson gson  = new Gson();
             List<InspectionIndicators> indicators = new  ArrayList<>();
