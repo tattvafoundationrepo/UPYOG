@@ -76,7 +76,9 @@ public class InspectionRequest {
     private String remark;
 
     @JsonProperty("InspectionType")
-    private String inspectionType;
+    private Long inspectionType;
 
     private Long animalTypeId;
+
+    private String inspectionDetailsJson;
 }
