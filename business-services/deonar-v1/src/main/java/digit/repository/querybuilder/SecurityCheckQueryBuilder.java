@@ -34,9 +34,9 @@ public class SecurityCheckQueryBuilder {
                 left join public.eg_deonar_animal_type h on h.id = j.animaltypeid  \
             """;
     private static final String BASE_QUERY2 = """
-                                select   i.arrivalid      ,i.importpermission      ,a.stakeholdername      ,TO_TIMESTAMP(i.dateofarrival / 1000)::date as dateofarrival
-             ,i.timeofarrival::time as timeofarrival      ,i.vehiclenumber      ,a.mobilenumber      ,a.email      ,c.name as stakeholdertypename
-             ,e.licencenumber      ,e.registrationnumber      ,TO_TIMESTAMP(dateofarrival / 1000)::date as validtodate      , h.name as animaltype
+                                select   i.arrivalid      ,i.importpermission      ,a.stakeholdername      ,TO_TIMESTAMP(i.updatedat / 1000)::date as dateofarrival,
+             i.timeofarrival::time as timeofarrival      ,i.vehiclenumber      ,a.mobilenumber      ,a.email      ,c.name as stakeholdertypename,
+             TO_TIMESTAMP(i.permissiondate / 1000)::date as permissiondate,e.licencenumber      ,e.registrationnumber      ,TO_TIMESTAMP(i.updatedat / 1000)::date as validtodate      , h.name as animaltype
              ,j.animaltypeid ,j.count
             from public.eg_deonar_arrival i
              left join public.eg_deonar_stakeholder a on  a.id = i.stakeholderid
