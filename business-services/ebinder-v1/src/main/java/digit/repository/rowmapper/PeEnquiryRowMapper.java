@@ -41,6 +41,7 @@ public class PeEnquiryRowMapper implements ResultSetExtractor<List<PeEnquiryResp
             if (peEnquiryResponse == null) {
                 peEnquiryResponse = new PeEnquiryResponse();
                 PeEnquiry peEnquiry = new PeEnquiry();
+                peEnquiry.setCurrentState(rs.getString("action"));
                 peEnquiry.setEnquiryCode(rs.getString("newcode"));
                 peEnquiry.setOldenquiryCode(rs.getString("oldcode"));
                 peEnquiry.setOrderDate(rs.getDate("orderdate"));
