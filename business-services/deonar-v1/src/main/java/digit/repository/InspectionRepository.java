@@ -45,25 +45,50 @@ public class InspectionRepository {
     @Autowired
     private ArrivalDetailsRowMapper arrivalDetailsRowMapper;
 
+
     public List<InspectionDetails> getInspectionDetails(String arrivalId, Long inspectionType) {
         List<Object> preparedStmtList = new ArrayList<>();
         String query = queryBuilder.getSearchQuery(arrivalId, inspectionType, preparedStmtList);
         log.info("Executing security check search with query: {}", query);
-        return jdbcTemplate.query(query, preparedStmtList.toArray(), rowMapper);
+        return jdbcTemplate.query(query, rowMapper, preparedStmtList.toArray());
     }
 
     public ArrivalDetailsResponse getArrivalDetails(String arrivalId) {
         List<Object> preparedStmtList = new ArrayList<>();
         String query = queryBuilder.getSearchBaseQuery(arrivalId, preparedStmtList);
-        log.info("Executing Arrival  search with query: {}", query);
-        return jdbcTemplate.query(query, preparedStmtList.toArray(), arrivalDetailsRowMapper);
+        log.info("Executing Arrival search with query: {}", query);
+        return jdbcTemplate.query(query, arrivalDetailsRowMapper, preparedStmtList.toArray());
     }
 
     public List<InspectionIndicators> getInspectionIndicatorsByType(Long type) {
-        List<Object> preparedStmtList = new ArrayList<>();
-        preparedStmtList.add(type);
         String sql = "SELECT result FROM eg_deonar_default_inspection_record WHERE type = ?";
-        return jdbcTemplate.query(sql, preparedStmtList.toArray(), new InspectionIndicatorsRowMapper());
+        return jdbcTemplate.query(sql, new InspectionIndicatorsRowMapper(), type);
+    }
+
+    public Long getArrivalId(String arrivalId) {
+        String sql = "SELECT edi.arrivalid " +
+                "FROM eg_deonar_inspection edi " +
+                "LEFT JOIN eg_deonar_arrival eda ON edi.arrivalid = eda.id " +
+                "WHERE eda.arrivalid = ?";
+        try {
+            return jdbcTemplate.queryForObject(sql, Long.class, arrivalId);
+        } catch (EmptyResultDataAccessException e) {
+            return null; 
+        }
+    }
+
+    public List<Map<String, Long>> getAnimalTypeCounts(String arrivalId) {
+        String sql = "SELECT edaaa.animaltypeid, edaaa.count " +
+                "FROM eg_deonar_animal_at_arrival edaaa " +
+                "LEFT JOIN eg_deonar_arrival eda ON edaaa.arrivalid = eda.id " +
+                "WHERE eda.arrivalid = ?";
+
+        return jdbcTemplate.query(sql, (rs, rowNum) -> {
+            Map<String, Long> result = new HashMap<>();
+            result.put("animalTypeId", rs.getLong("animaltypeid"));
+            result.put("count", rs.getLong("count"));
+            return result;
+        }, arrivalId);
     }
 
     private class InspectionIndicatorsRowMapper implements ResultSetExtractor<List<InspectionIndicators>> {
@@ -82,32 +107,6 @@ public class InspectionRepository {
             }
             return detailsList;
         }
-    }
-
-    public Long getArrivalId(String arrivalId) {
-        String sql = "SELECT edi.arrivalid " +
-                "FROM eg_deonar_inspection edi " +
-                "LEFT JOIN eg_deonar_arrival eda ON edi.arrivalid = eda.id " +
-                "WHERE eda.arrivalid = ?";
-       try {
-        return jdbcTemplate.queryForObject(sql, new Object[]{arrivalId}, Long.class);
-    } catch (EmptyResultDataAccessException e) {
-        return null; 
-    }
-    }
-
-    public List<Map<String, Long>> getAnimalTypeCounts(String arrivalId) {
-        String sql = "SELECT edaaa.animaltypeid, edaaa.count " +
-                "FROM eg_deonar_animal_at_arrival edaaa " +
-                "LEFT JOIN eg_deonar_arrival eda ON edaaa.arrivalid = eda.id " +
-                "WHERE eda.arrivalid = ?";
-
-        return jdbcTemplate.query(sql, new Object[] { arrivalId }, (rs, rowNum) -> {
-            Map<String, Long> result = new HashMap<>();
-            result.put("animalTypeId", rs.getLong("animaltypeid"));
-            result.put("count", rs.getLong("count"));
-            return result;
-        });
     }
 
 }
