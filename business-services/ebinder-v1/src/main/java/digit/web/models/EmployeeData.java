@@ -35,6 +35,8 @@ public class EmployeeData {
 	private String updatedBy ;
     private Boolean isSuspended;
 
+    private String enquiryCode;
+
 
 
 }

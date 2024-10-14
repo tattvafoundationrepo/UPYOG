@@ -5,22 +5,25 @@ import digit.kafka.Producer;
 import digit.repository.PeEnquiryRepository;
 import digit.web.models.CeList;
 import digit.web.models.EmployeeData;
+import digit.web.models.EnquiryCountRequest;
 import digit.web.models.GetPeRequest;
 import digit.web.models.PeEnquiryResponse;
+import digit.web.models.UpdateCeListRequest;
 import digit.web.models.peprocess.PeEnquiryRecord;
 import digit.web.models.peprocess.ProcessApplicationInfo;
 import digit.web.models.report.PeSubmissionReport;
 import digit.web.models.request.CeRequest;
 import digit.web.models.request.PeEnquiryRequest;
+import jakarta.validation.Valid;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.egov.common.contract.models.RequestInfoWrapper;
+import org.apache.commons.lang3.ObjectUtils;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
+import java.util.Collections;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -52,6 +55,7 @@ public class PeEnquiryService {
         request.getPeEnquiry().setUpdatedBy(request.getRequestInfo().getUserInfo().getUserName());
       
         for(EmployeeData ed : request.getEmpData()){
+            ed.setCestatus(true);
             ed.setCreatedAt(time);
             ed.setUpdatedAt(time);
             ed.setCreatedBy(request.getRequestInfo().getUserInfo().getUserName());
@@ -127,6 +131,46 @@ public class PeEnquiryService {
         Map<String, Object> message = new HashMap<>();
         message.put("report", report);
         producer.push("save-pe-submission-report", message);
+    }
+
+
+
+
+    public Map<String, Long> countSchemeApplications(EnquiryCountRequest request){
+        Map<String, Long> countMap = new HashMap<String,Long>();
+        String tenantId = request.getRequestInfo().getUserInfo().getTenantId();
+
+
+        if (request.getAction() == null) {
+        List<String> actionList = repository.getDistinctActionsByTenant(tenantId);
+        countMap = repository.getApplicationCounts(tenantId, actionList);
+    } else {
+        List<String> actions = Collections.singletonList(request.getAction().toUpperCase());
+        countMap = repository.getApplicationCounts(tenantId, actions);
+    }
+        return countMap;
+    }
+
+    public void updateCemployee(UpdateCeListRequest request) {
+        if(!ObjectUtils.isEmpty(request.getEmpData())){
+            request.getEmpData().setEnquiryCode(request.getEnqId());
+            request.getEmpData().setCestatus(true);
+            request.getEmpData().setCreatedAt(time);
+            request.getEmpData().setUpdatedAt(time);
+            request.getEmpData().setCreatedBy(request.getRequestInfo().getUserInfo().getUserName());
+            request.getEmpData().setUpdatedBy(request.getRequestInfo().getUserInfo().getUserName());
+            if(request.getEmpData().getCeSuspended()!= null){
+                if (request.getEmpData().getCeSuspended().getLabel() == 1)
+                request.getEmpData().setIsSuspended(true);
+                else
+                request.getEmpData().setIsSuspended(false);
+            }
+            producer.push("add-ce-employee",request);
+
+        }
+        // if(request.getAction().equalsIgnoreCase("remove")){
+        //    repository.removeCe(request);
+        // }
     }
 
 }

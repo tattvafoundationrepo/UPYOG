@@ -10,9 +10,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.Builder;
 import lombok.Data;
-
-import com.fasterxml.jackson.annotation.JsonAnySetter;
-import java.util.HashMap;
 import java.util.Map;
 
 
@@ -33,5 +30,4 @@ public class PeProcessRequest {
     public void setData(String key, Object value) {
         data.put(key, value);
     }
-
 }
