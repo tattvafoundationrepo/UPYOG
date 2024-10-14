@@ -32,6 +32,7 @@ public class PeEnquiry {
         private String createdBy;
         private String updatedBy;
         private PeSubmissionReport deReport;
+        private String currentState;
   
     
 }
