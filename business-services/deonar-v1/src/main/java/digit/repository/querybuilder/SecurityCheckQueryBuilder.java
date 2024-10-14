@@ -47,7 +47,7 @@ public class SecurityCheckQueryBuilder {
              left join public.eg_deonar_stakeholder_animal_type_mapping f on c.id = f.stakeholdertypeid
              left join public.eg_deonar_animal_type h on h.id = f.animaltypeid
              left join public.eg_deonar_animal_at_arrival j on i.id = j.arrivalid and j.animaltypeid = f.animaltypeid
-             where count is not null
+             where count is not null order by i.arrivalid
 
                                 """;
 
