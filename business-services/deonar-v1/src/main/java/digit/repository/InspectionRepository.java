@@ -65,13 +65,13 @@ public class InspectionRepository {
         return jdbcTemplate.query(sql, new InspectionIndicatorsRowMapper(), type);
     }
 
-    public Long getArrivalId(String arrivalId) {
+    public Long getArrivalId(String arrivalId,Long type) {
         String sql = "SELECT edi.arrivalid " +
                 "FROM eg_deonar_inspection edi " +
                 "LEFT JOIN eg_deonar_arrival eda ON edi.arrivalid = eda.id " +
-                "WHERE eda.arrivalid = ?";
+                "WHERE eda.arrivalid = ? and edi.inspectiontype = ?";
         try {
-            return jdbcTemplate.queryForObject(sql, Long.class, arrivalId);
+            return jdbcTemplate.queryForObject(sql, Long.class, arrivalId,type);
         } catch (EmptyResultDataAccessException e) {
             return null; 
         }
