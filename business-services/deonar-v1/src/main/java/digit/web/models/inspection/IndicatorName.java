@@ -11,23 +11,23 @@ import java.util.Objects;
 
 
 public enum IndicatorName {
-    PULSE_RATE("Pulse Rate"),
-    EYES("Eyes"),
-    SPECIES("Species"),
-    BREED("Breed"),
-    SEX("Sex"),
-    BODY_COLOR("Body Color"),
-    PREGNANCY("Pregnancy"),
-    APPROXIMATE_AGE("Approximate Age"),
-    GAIT("Gait"),
-    POSTURE("Posture"),
-    BODY_TEMPERATURE("Body Temperature"),
-    APPETITE("Appetite"),
-    NOSTRILS("Nostrils"),
-    MUZZLE("Muzzle"),
-    OPINION("Opinion"),
-    OTHER("Other"),
-    REMARK("Remark");
+    PULSE_RATE("pulseRate"),
+    EYES("eyes"),
+    SPECIES("species"),
+    BREED("breed"),
+    SEX("sex"),
+    BODY_COLOR("bodyColor"),
+    PREGNANCY("pregnancy"),
+    APPROXIMATE_AGE("approximateAge"),
+    GAIT("gait"),
+    POSTURE("posture"),
+    BODY_TEMPERATURE("bodyTemperature"),
+    APPETITE("appetite"),
+    NOSTRILS("nostrils"),
+    MUZZLE("muzzle"),
+    OPINION("opinion"),
+    OTHER("other"),
+    REMARK("remark");
 
     private final String value;
 
