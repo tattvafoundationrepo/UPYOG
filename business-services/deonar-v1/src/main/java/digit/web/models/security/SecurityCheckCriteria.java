@@ -25,4 +25,7 @@ public class SecurityCheckCriteria {
 
     @JsonProperty("VehicleNumber")
     private String vehicleNumber;
+    
+    @JsonProperty("Tradable")
+    public Boolean tradable;
 }
