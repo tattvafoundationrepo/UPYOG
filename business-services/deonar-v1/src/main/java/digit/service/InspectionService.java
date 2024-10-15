@@ -109,7 +109,7 @@ public class InspectionService {
 
     public  List<InspectionDetails> getInspectionDetails(InspectionSearchCriteria criteria){
        
-       Long id  = repository.getArrivalId(criteria.getEntryUnitId());
+       Long id  = repository.getArrivalId(criteria.getEntryUnitId(),criteria.getInspectionType());
        if (id!=null){
         List<InspectionDetails> details = repository.getInspectionDetails(criteria.getEntryUnitId(),criteria.getInspectionType());
         return details;
@@ -129,7 +129,7 @@ public class InspectionService {
        saveInspectionDetails(request);
        }
        List<InspectionDetails> details = repository.getInspectionDetails(criteria.getEntryUnitId(),criteria.getInspectionType());
-        return details;
+       return details;
     }
 
 
