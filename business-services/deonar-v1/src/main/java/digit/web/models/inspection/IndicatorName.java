@@ -18,16 +18,23 @@ public enum IndicatorName {
     SEX("sex"),
     BODY_COLOR("bodyColor"),
     PREGNANCY("pregnancy"),
-    APPROXIMATE_AGE("approximateAge"),
+    APPROXIMATE_AGE("approxAge"),
     GAIT("gait"),
     POSTURE("posture"),
-    BODY_TEMPERATURE("bodyTemperature"),
+    BODY_TEMPERATURE("bodyTemp"),
     APPETITE("appetite"),
     NOSTRILS("nostrils"),
     MUZZLE("muzzle"),
     OPINION("opinion"),
     OTHER("other"),
-    REMARK("remark");
+    REMARK("remark"),
+    SLAUGHTER_RECEIPT_NUMBER("slaughterReceiptNumber"),
+    VISIBLE_MUCUS_MEMBRANE("visibleMucusMembrane"),
+    THORACIC_CAVITY("thoracicCavity"),
+    ABDOMINAL_CAVITY("abdominalCavity"),
+    PELVIC_CAVITY("pelvicCavity"),
+    SPECIMEN_COLLECTION("specimenCollection"),
+    SPECIAL_OBSERVATION("specialObservation");
 
     private final String value;
 
