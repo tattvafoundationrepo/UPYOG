@@ -19,55 +19,55 @@ public class InspectionRequest {
     @Valid
     private RequestInfo requestInfo;
 
-    @JsonProperty("tokenNumber")
+    @JsonProperty("animalTokenNumber")
     private Long animalTokenNumber;
 
-    @JsonProperty("arrivalId")
+    @JsonProperty("entryUnitId")
     private String arrivalId;
 
     @JsonProperty("eyes")
-    private Properties eyes;
+    private String eyes;
 
     @JsonProperty("pulseRate")
-    private Properties pulseRate;
+    private String pulseRate;
 
     @JsonProperty("species")
-    private Properties species;
+    private String species;
 
     @JsonProperty("breed")
-    private Properties breed;
+    private String breed;
 
     @JsonProperty("sex")
-    private Properties sex;
+    private String sex;
 
     @JsonProperty("bodyColor")
-    private Properties bodyColor;
+    private String bodyColor;
 
     @JsonProperty("pregnancy")
-    private Properties pregnancy;
+    private String pregnancy;
 
-    @JsonProperty("approximateAge")
-    private Properties approximateAge;
+    @JsonProperty("approxAge")
+    private String approximateAge;
 
     @JsonProperty("gait")
-    private Properties gait;
+    private String gait;
     @JsonProperty("posture")
-    private Properties posture;
+    private String posture;
 
-    @JsonProperty("bodyTemperature")
-    private Properties bodyTemperature;
+    @JsonProperty("bodyTemp")
+    private String bodyTemperature;
 
     @JsonProperty("appetite")
-    private Properties appetite;
+    private String appetite;
 
     @JsonProperty("nostrils")
-    private Properties nostrils;
+    private String nostrils;
 
     @JsonProperty("muzzle")
-    private Properties muzzle;
+    private String muzzle;
 
     @JsonProperty("opinion")
-    private Properties opinion;
+    private String opinion;
 
     @JsonProperty("other")
     private String other;
@@ -75,10 +75,21 @@ public class InspectionRequest {
     @JsonProperty("remark")
     private String remark;
 
-    @JsonProperty("InspectionType")
+    @JsonProperty("inspectionId")
     private Long inspectionType;
 
     private Long animalTypeId;
 
     private String inspectionDetailsJson;
+
+    private String slaughterReceiptNumber;
+    private String visibleMucusMembrane;
+    private String thoracicCavity;
+    private String abdominalCavity;
+    private String pelvicCavity;
+    private String specimenCollection;
+    private String specialObservation;
+
+
+
 }
