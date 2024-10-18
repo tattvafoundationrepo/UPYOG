@@ -25,6 +25,7 @@ public class AnimalAssignmentService {
             animal.setUpdatedAt(time);
             animal.setUpdatedBy(request.getRequestInfo().getUserInfo().getId());
         }
+          System.out.println("eeeeeeeeeeeeerrrrrrrrrrrrrrrrrrreeeeeeeeeee"+request.toString());
         producer.push("save-animal-assignment", request);
 
     }
