@@ -28,4 +28,10 @@ public class SecurityCheckCriteria {
     
     @JsonProperty("Tradable")
     public Boolean tradable;
+
+    @JsonProperty("Stable")
+    public Boolean stable;
+
+
+
 }
