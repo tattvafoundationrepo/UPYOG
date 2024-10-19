@@ -60,9 +60,9 @@ public class InspectionRepository {
         return jdbcTemplate.query(query, arrivalDetailsRowMapper, preparedStmtList.toArray());
     }
 
-    public List<InspectionIndicators> getInspectionIndicatorsByType(Long type) {
-        String sql = "SELECT result FROM eg_deonar_default_inspection_record WHERE type = ?";
-        return jdbcTemplate.query(sql, new InspectionIndicatorsRowMapper(), type);
+    public List<InspectionIndicators> getInspectionIndicatorsByType(Long type,Long animaltypeid) {
+        String sql = "SELECT result FROM eg_deonar_default_inspection_record WHERE type = ? and animaltypeid = ?";
+        return jdbcTemplate.query(sql, new InspectionIndicatorsRowMapper(), type,animaltypeid);
     }
 
     public Long getArrivalId(String arrivalId,Long type) {
@@ -78,7 +78,7 @@ public class InspectionRepository {
     }
 
     public List<Map<String, Long>> getAnimalTypeCounts(String arrivalId) {
-        String sql = "SELECT edaaa.animaltypeid, edaaa.count " +
+        String sql = "SELECT edaaa.animaltypeid, edaaa.token " +
                 "FROM eg_deonar_animal_at_arrival edaaa " +
                 "LEFT JOIN eg_deonar_arrival eda ON edaaa.arrivalid = eda.id " +
                 "WHERE eda.arrivalid = ?";
@@ -86,7 +86,7 @@ public class InspectionRepository {
         return jdbcTemplate.query(sql, (rs, rowNum) -> {
             Map<String, Long> result = new HashMap<>();
             result.put("animalTypeId", rs.getLong("animaltypeid"));
-            result.put("count", rs.getLong("count"));
+            result.put("count", rs.getLong("token"));
             return result;
         }, arrivalId);
     }
