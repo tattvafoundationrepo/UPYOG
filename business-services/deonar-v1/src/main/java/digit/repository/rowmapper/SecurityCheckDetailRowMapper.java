@@ -40,7 +40,7 @@ public class SecurityCheckDetailRowMapper implements ResultSetExtractor<List<Sec
                     .stakeholderTypeName(rs.getString("stakeholdertypename"))
                     .licenceNumber(rs.getString("licencenumber"))
                     .registrationNumber(rs.getString("registrationnumber"))
-                    .validToDate(rs.getDate("validtodate").toLocalDate().toString())  // Correct date handling
+                    .validToDate(rs.getDate("validtodate").toLocalDate().toString())  // Correct date handling  
                     .animalDetails(new ArrayList<>())
                     .build();
                 map.put(arrivalId, details);
@@ -50,6 +50,8 @@ public class SecurityCheckDetailRowMapper implements ResultSetExtractor<List<Sec
                 .animalTypeId(rs.getLong("animaltypeid"))
                 .animalType(rs.getString("animaltype"))
                 .count(rs.getInt("token"))
+                .tradable(rs.getBoolean("tradable"))
+                .stable(rs.getBoolean("stable"))
                 .build();
             details.getAnimalDetails().add(animalDetail);
         }
