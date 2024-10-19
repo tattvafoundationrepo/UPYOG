@@ -76,6 +76,11 @@ public class SecurityCheckQueryBuilder {
             query.append(" tradable = ? ");
             preparedStmtList.add(criteria.getTradable());
         }
+        if(criteria.getStable() != null){
+            addClauseIfRequired(query, preparedStmtList);
+            query.append(" stable = ? ");
+            preparedStmtList.add(criteria.getStable());
+        }
         addClauseIfRequired(query, preparedStmtList);
         query.append(" token is not null ");
         query.append(" order by arrivalid ");
