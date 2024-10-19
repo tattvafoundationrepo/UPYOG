@@ -49,7 +49,7 @@ public class SecurityCheckDetailRowMapper implements ResultSetExtractor<List<Sec
             AnimalDetail animalDetail = AnimalDetail.builder()
                 .animalTypeId(rs.getLong("animaltypeid"))
                 .animalType(rs.getString("animaltype"))
-                .count(rs.getInt("count"))
+                .count(rs.getInt("token"))
                 .build();
             details.getAnimalDetails().add(animalDetail);
         }
