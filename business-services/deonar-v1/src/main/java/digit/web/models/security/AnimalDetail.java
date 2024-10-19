@@ -18,4 +18,8 @@ public class AnimalDetail{
 
     @JsonProperty("count")
     private Integer count;
+
+    private Boolean tradable;
+
+    private Boolean stable;
 }
