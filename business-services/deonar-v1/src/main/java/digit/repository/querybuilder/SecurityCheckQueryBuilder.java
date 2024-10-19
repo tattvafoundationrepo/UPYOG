@@ -11,7 +11,7 @@ public class SecurityCheckQueryBuilder {
             select   arrivalid ,importpermission  ,stakeholdername ,dateofarrival,
               timeofarrival      ,vehiclenumber      ,mobilenumber      ,email      , stakeholdertypename,
               permissiondate,licencenumber      ,registrationnumber      , validtodate      ,  animaltype
-             ,animaltypeid ,token
+             ,animaltypeid ,token,tradable,stable
               from eg_deonar_vmain
 
                                 """;
