@@ -143,13 +143,14 @@ public class InspectionService {
                     criteria.getInspectionType());
             return details;
         }
-        List<InspectionIndicators> list = repository.getInspectionIndicatorsByType(criteria.getInspectionType());
+
         List<Map<String, Long>> tokens = repository.getAnimalTypeCounts(criteria.getEntryUnitId());
         Gson gson = new Gson();
         for (Map<String, Long> animal : tokens) {
             InspectionRequest request = new InspectionRequest();
             request.setRequestInfo(criteria.getRequestInfo());
             request.setArrivalId(criteria.getEntryUnitId());
+            List<InspectionIndicators> list = repository.getInspectionIndicatorsByType(criteria.getInspectionType(),animal.get("animalTypeId"));
             request.setInspectionDetailsJson(gson.toJson(list));
             request.setInspectionType(criteria.getInspectionType());
             request.setAnimalTokenNumber(animal.get("count"));
