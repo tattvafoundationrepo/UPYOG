@@ -112,7 +112,7 @@ public class SecurityCheckQueryBuilder {
             preparedStmtList.add(criteria.getTradable());
         }
         addClauseIfRequired(query, preparedStmtList);
-        query.append(" count is not null ");
+        query.append(" token is not null ");
         query.append(" order by i.arrivalid ");
 
         return query.toString();
