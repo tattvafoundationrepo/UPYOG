@@ -16,6 +16,6 @@ public class AnimalAssignment {
     private Long updatedAt;
     private Long createdBy;
     private Long updatedBy;
-
+    private Long deonarRemovalType;
 
 }
