@@ -29,5 +29,18 @@ public class AnimalAssignmentService {
 
     }
 
+    public void saveAnimalRemoval(AnimalAssignmentRequest request){
+
+        for(AnimalAssignment animal:request.getAnimalAssignments()){
+            Long time = System.currentTimeMillis();
+            animal.setCreatedAt(time);
+            animal.setCreatedBy(request.getRequestInfo().getUserInfo().getId());
+            animal.setUpdatedAt(time);
+            animal.setUpdatedBy(request.getRequestInfo().getUserInfo().getId());
+        }
+        producer.push("save-animal-removal", request);
+
+    }
+
 
 }
