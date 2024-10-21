@@ -16,6 +16,11 @@ public class SecurityCheckQueryBuilder {
 
                                 """;
 
+    private static final String BASE_QUERY_INSPECTION = """
+            SELECT * FROM public.eg_deonar_vmain b
+            where Not Exists (Select * from public.eg_deonar_vinspection where inspectiontype = ? and b.arrivalid= arrivalid)
+            """;                    
+
     private void addClauseIfRequired(StringBuilder query, List<Object> preparedStmtList) {
         if (preparedStmtList.isEmpty()) {
             query.append(" WHERE ");
@@ -39,9 +44,18 @@ public class SecurityCheckQueryBuilder {
         ids.forEach(preparedStmtList::add);
     }
 
-    public String getSearchQuery(SecurityCheckCriteria criteria, List<Object> preparedStmtList) {
-        StringBuilder query = new StringBuilder(BASE_QUERY2);
+    public String getSearchQueryForInspection(SecurityCheckCriteria criteria, List<Object> preparedStmtList) {
+        StringBuilder query = new StringBuilder(BASE_QUERY_INSPECTION);
+        preparedStmtList.add(criteria.getInspectionId());
+        return query.toString();
+    }
 
+    public String getSearchQuery(SecurityCheckCriteria criteria, List<Object> preparedStmtList) {
+        if(criteria.getInspectionId() != null){
+            String inspectionQuery = getSearchQueryForInspection(criteria,preparedStmtList); 
+            return inspectionQuery;
+        }
+        StringBuilder query = new StringBuilder(BASE_QUERY2);
         if (criteria.getArrivalUuid() != null) {
             addClauseIfRequired(query, preparedStmtList);
             query.append(" arrivalid = ? ");
@@ -81,6 +95,7 @@ public class SecurityCheckQueryBuilder {
             query.append(" stable = ? ");
             preparedStmtList.add(criteria.getStable());
         }
+            
         addClauseIfRequired(query, preparedStmtList);
         query.append(" token is not null ");
         query.append(" order by arrivalid ");

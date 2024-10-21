@@ -32,6 +32,7 @@ public class SecurityCheckCriteria {
     @JsonProperty("Stable")
     public Boolean stable;
 
-
+    @JsonProperty("inspectionid")
+    private Long inspectionId;
 
 }

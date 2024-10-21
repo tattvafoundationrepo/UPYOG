@@ -1,11 +1,11 @@
-package digit.web.models.security;
-
-import java.util.List;
+package digit.web.models.collection;
 
 import org.egov.common.contract.request.RequestInfo;
 import org.springframework.validation.annotation.Validated;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+
+import digit.repository.CollectionSearchCriteria;
 
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -15,9 +15,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/**
- * ArrivalRequest
- */
 @Validated
 @Data
 @AllArgsConstructor
@@ -25,20 +22,14 @@ import lombok.Setter;
 @Builder
 @Setter
 @Getter
-public class ArrivalRequest {
-
+public class CollectionRequest {
     @JsonProperty("RequestInfo")
     @Valid
     @Builder.Default
     private RequestInfo requestInfo = null;
 
-    @JsonProperty("ArrivalDetails")
+    @JsonProperty("Search")
     @Valid
-    private Arrival arrivalDetails;
-
-    @JsonProperty("AnimalDetails")
-    @Valid
-    private List<AnimalAtArrival> animalDetails;
-
-    private List<AnimalAtArrival> saveAnimalDetails;
+    @Builder.Default
+    private CollectionSearchCriteria criteria = null;
 }
