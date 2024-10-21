@@ -9,6 +9,7 @@ import java.util.Map;
 
 import org.springframework.jdbc.core.ResultSetExtractor;
 import digit.web.models.collection.EntryFee;
+import digit.web.models.collection.ParkingFee;
 import digit.web.models.collection.StableFee;
 import lombok.extern.slf4j.Slf4j;
 
@@ -30,6 +31,9 @@ public class CollectionRowMapper<T> implements ResultSetExtractor<List<T>> {
         }
         if (type.equals(StableFee.class)) {
             return (List<T>) extractStableFee(rs);
+        }
+        if (type.equals(ParkingFee.class)) {
+            return (List<T>) extractParkingFee(rs);
         }
         throw new UnsupportedOperationException("Type " + type.getName() + " is not supported.");
     }
@@ -100,6 +104,31 @@ public class CollectionRowMapper<T> implements ResultSetExtractor<List<T>> {
             stableFee.getDetails().add(details);
         }
         return new ArrayList<>(stableFeeMap.values());
+    }
+
+    private List<ParkingFee> extractParkingFee(ResultSet rs) throws SQLException {
+        // Use a map to store ParkingFee objects by vehiclenumber
+        Map<String, ParkingFee> parkingFeeMap = new LinkedHashMap<>();
+        while (rs.next()) {
+            String vehiclenumber = rs.getString("vehiclenumber");
+            // Check if an parkingFee object already exists for this arrivalId
+            ParkingFee parkingFee = parkingFeeMap.get(vehiclenumber);
+            if (parkingFee == null) {
+                // If not, create a new parkingFee object and add it to the map
+                parkingFee = ParkingFee.builder()
+                        .vehiclenumber(rs.getString("vehiclenumber"))
+                        .vehicletype(rs.getString("vehicletype"))
+                        .parkingdate(rs.getString("parkingdate"))
+                        .parkingtime(rs.getString("parkingtime"))
+                        .departuredate(rs.getString("departuredate"))
+                        .departuretime(rs.getString("departuretime"))
+                        .totalhours(rs.getInt("parking_hours"))
+                        .total(rs.getFloat("totalparkingfee"))
+                        .build();
+                        parkingFeeMap.put(vehiclenumber, parkingFee);
+            }
+        }
+        return new ArrayList<>(parkingFeeMap.values());
     }
 
 }

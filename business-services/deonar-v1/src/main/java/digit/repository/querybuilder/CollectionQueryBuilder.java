@@ -6,14 +6,13 @@ import org.springframework.stereotype.Component;
 
 import digit.repository.CollectionSearchCriteria;
 
-
 @Component
 public class CollectionQueryBuilder {
     public String getEntryFee(CollectionSearchCriteria criteria, List<Object> preparedStmtList) {
         final String ENTRYFEE_QUERY = """
-            SELECT arrivalid,animal,animalcount,feevalue,totalentryfee 
-            FROM eg_deonar_ventryfee 
-            """;
+                SELECT arrivalid,animal,animalcount,feevalue,totalentryfee
+                FROM eg_deonar_ventryfee
+                """;
         StringBuilder query = new StringBuilder(ENTRYFEE_QUERY);
         if (criteria.getSearch() != null) {
             addClauseIfRequired(query, preparedStmtList);
@@ -33,13 +32,35 @@ public class CollectionQueryBuilder {
 
     public String getStableFee(CollectionSearchCriteria criteria, List<Object> preparedStmtList) {
         final String STABLEFEE_QUERY = """
-            SELECT arrivalid,animal,animalcount,feevalue,totalstablefee 
-            FROM eg_deonar_vstablefee 
-            """;
+                SELECT arrivalid,animal,animalcount,feevalue,totalstablefee
+                FROM eg_deonar_vstablefee
+                """;
         StringBuilder query = new StringBuilder(STABLEFEE_QUERY);
         if (criteria.getSearch() != null) {
             addClauseIfRequired(query, preparedStmtList);
             query.append(" arrivalid = ? ");
+            preparedStmtList.add(criteria.getSearch());
+        }
+        return query.toString();
+    }
+
+    public String getParkingFee(CollectionSearchCriteria criteria, List<Object> preparedStmtList) {
+        final String PARKINGFEE_QUERY = """
+                SELECT
+                vehicletype,
+                vehiclenumber,
+                parkingdate,
+                parkingtime,
+                departuredate,
+                departuretime,
+                parking_hours,
+                totalparkingfee
+                FROM public.eg_deonar_vparkingfee
+                """;
+        StringBuilder query = new StringBuilder(PARKINGFEE_QUERY);
+        if (criteria.getSearch() != null) {
+            addClauseIfRequired(query, preparedStmtList);
+            query.append(" vehiclenumber = ? ");
             preparedStmtList.add(criteria.getSearch());
         }
         return query.toString();

@@ -11,6 +11,7 @@ import org.springframework.util.CollectionUtils;
 import digit.repository.CollectionRepository;
 import digit.repository.CollectionSearchCriteria;
 import digit.web.models.collection.EntryFee;
+import digit.web.models.collection.ParkingFee;
 import digit.web.models.collection.StableFee;
 
 
@@ -34,5 +35,13 @@ public class CollectionService {
         if (CollectionUtils.isEmpty(common))
             return new ArrayList<>();
         return common;
+    }
+    public List<ParkingFee> getParkingFee(RequestInfo requestInfo, CollectionSearchCriteria criteria) {
+         // Fetch applications from database according to the given search criteria
+         List<ParkingFee> common = commonRepository.getParkingFee(criteria);
+         // If no applications are found matching the given criteria, return an empty list
+         if (CollectionUtils.isEmpty(common))
+             return new ArrayList<>();
+         return common;
     }
 }
