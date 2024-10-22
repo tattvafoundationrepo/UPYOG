@@ -18,7 +18,7 @@ public class SecurityCheckQueryBuilder {
 
     private static final String BASE_QUERY_INSPECTION = """
             SELECT * FROM public.eg_deonar_vmain b
-            where Not Exists (Select * from public.eg_deonar_vinspection where inspectiontype = ? and b.arrivalid= arrivalid)
+            where Not Exists (Select * from public.eg_deonar_vinspection where  b.arrivalid= arrivalid
             """;                    
 
     private void addClauseIfRequired(StringBuilder query, List<Object> preparedStmtList) {
@@ -46,7 +46,19 @@ public class SecurityCheckQueryBuilder {
 
     public String getSearchQueryForInspection(SecurityCheckCriteria criteria, List<Object> preparedStmtList) {
         StringBuilder query = new StringBuilder(BASE_QUERY_INSPECTION);
-        preparedStmtList.add(criteria.getInspectionId());
+       // preparedStmtList.add(criteria.getInspectionId());
+        if(criteria.getInspectionId() == 1){
+            query.append(" and inspectiontype = 2 ) ");
+        }
+        if(criteria.getInspectionId() == 2){
+            query.append(" and inspectiontype = 3 ) ");
+        }
+        if(criteria.getInspectionId() == 3){
+            query.append(" and inspectiontype = 4 ) ");
+        }
+        if(criteria.getInspectionId() == 4){
+            query.append(" and inspectiontype = 4 ) ");
+        }
         return query.toString();
     }
 
