@@ -10,7 +10,9 @@ import java.util.Map;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import digit.web.models.collection.EntryFee;
 import digit.web.models.collection.ParkingFee;
+import digit.web.models.collection.SlaughterFee;
 import digit.web.models.collection.StableFee;
+import digit.web.models.collection.WashFee;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -34,6 +36,12 @@ public class CollectionRowMapper<T> implements ResultSetExtractor<List<T>> {
         }
         if (type.equals(ParkingFee.class)) {
             return (List<T>) extractParkingFee(rs);
+        }
+        if (type.equals(WashFee.class)) {
+            return (List<T>) extractWashFee(rs);
+        }
+        if (type.equals(SlaughterFee.class)) {
+            return (List<T>) extractSlaughterFee(rs);
         }
         throw new UnsupportedOperationException("Type " + type.getName() + " is not supported.");
     }
@@ -129,6 +137,60 @@ public class CollectionRowMapper<T> implements ResultSetExtractor<List<T>> {
             }
         }
         return new ArrayList<>(parkingFeeMap.values());
+    }
+
+    private List<WashFee> extractWashFee(ResultSet rs) throws SQLException {
+        // Use a map to store WashFee objects by vehiclenumber
+        Map<String, WashFee> washFeeMap = new LinkedHashMap<>();
+        while (rs.next()) {
+            String vehiclenumber = rs.getString("vehiclenumber");
+            // Check if an WashFee object already exists for this arrivalId
+            WashFee washFee = washFeeMap.get(vehiclenumber);
+            if (washFee == null) {
+                // If not, create a new WashFee object and add it to the map
+                washFee = WashFee.builder()
+                        .vehiclenumber(rs.getString("vehiclenumber"))
+                        .vehicletype(rs.getString("vehicletype"))
+                        .total(rs.getFloat("totalwashingfee"))
+                        .build();
+                        washFeeMap.put(vehiclenumber, washFee);
+            }
+        }
+        return new ArrayList<>(washFeeMap.values());
+    }
+
+    private List<SlaughterFee> extractSlaughterFee(ResultSet rs) throws SQLException {
+        // Use a map to store slaughterFee objects by arrivalid
+        Map<String, SlaughterFee> slaughterFeeMap = new LinkedHashMap<>();
+        while (rs.next()) {
+            String assigneeid = rs.getString("assigneeid");
+            float total = rs.getFloat("totalslaughterFee");
+
+            // Check if an slaughterFee object already exists for this arrivalId
+            SlaughterFee slaughterFee = slaughterFeeMap.get(assigneeid);
+
+            if (slaughterFee == null) {
+                // If not, create a new slaughterFee object and add it to the map
+                slaughterFee = SlaughterFee.builder()
+                        .assigneeid(assigneeid)
+                        .details(new ArrayList<>()) // Initialize the list of details
+                        .total(total)
+                        .build();
+                slaughterFeeMap.put(assigneeid, slaughterFee);
+            }
+
+            // Create and add Details object for each row
+            SlaughterFee.Details details = SlaughterFee.Details.builder()
+                    .animal(rs.getString("animal"))
+                    .count(rs.getInt("animalcount"))
+                    .fee(rs.getFloat("feevalue"))
+                    .build();
+            details.setTotalFee(details.getCount() * details.getFee());
+
+            // Add the Details to the slaughterFee's list
+            slaughterFee.getDetails().add(details);
+        }
+        return new ArrayList<>(slaughterFeeMap.values());
     }
 
 }

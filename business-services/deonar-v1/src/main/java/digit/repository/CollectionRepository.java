@@ -12,7 +12,9 @@ import digit.repository.querybuilder.CollectionQueryBuilder;
 import digit.repository.rowmapper.CollectionRowMapper;
 import digit.web.models.collection.EntryFee;
 import digit.web.models.collection.ParkingFee;
+import digit.web.models.collection.SlaughterFee;
 import digit.web.models.collection.StableFee;
+import digit.web.models.collection.WashFee;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
@@ -54,6 +56,24 @@ public class CollectionRepository {
         log.info("Final query: " + query);
         // Create a new instance of the row mapper with the correct type
         CollectionRowMapper<ParkingFee> entryfeerowMapper = new CollectionRowMapper<>(ParkingFee.class);
+        return jdbcTemplate.query(query, entryfeerowMapper, preparedStmtList.toArray());
+    }
+
+    public List<WashFee> getWashingFee(CollectionSearchCriteria criteria) {
+        List<Object> preparedStmtList = new ArrayList<>();
+        String query = queryBuilder.getWashingFee(criteria, preparedStmtList);
+        log.info("Final query: " + query);
+        // Create a new instance of the row mapper with the correct type
+        CollectionRowMapper<WashFee> entryfeerowMapper = new CollectionRowMapper<>(WashFee.class);
+        return jdbcTemplate.query(query, entryfeerowMapper, preparedStmtList.toArray());
+    }
+
+    public List<SlaughterFee> getSlaughterFee(CollectionSearchCriteria criteria) {
+        List<Object> preparedStmtList = new ArrayList<>();
+        String query = queryBuilder.getSlaughterFee(criteria, preparedStmtList);
+        log.info("Final query: " + query);
+        // Create a new instance of the row mapper with the correct type
+        CollectionRowMapper<SlaughterFee> entryfeerowMapper = new CollectionRowMapper<>(SlaughterFee.class);
         return jdbcTemplate.query(query, entryfeerowMapper, preparedStmtList.toArray());
     }
 }

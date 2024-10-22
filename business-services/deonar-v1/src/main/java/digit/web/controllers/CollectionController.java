@@ -18,8 +18,12 @@ import digit.web.models.collection.EntryFee;
 import digit.web.models.collection.StableFee;
 import digit.web.models.collection.ParkingFee;
 import digit.web.models.collection.ParkingFeeResponse;
+import digit.web.models.collection.SlaughterFee;
+import digit.web.models.collection.SlaughterFeeResponse;
 import digit.web.models.collection.EntryFeeResponse;
 import digit.web.models.collection.StableFeeResponse;
+import digit.web.models.collection.WashFee;
+import digit.web.models.collection.WashingFeeResponse;
 import io.swagger.annotations.ApiParam;
 import jakarta.validation.Valid;
 
@@ -70,33 +74,57 @@ public class CollectionController {
 
     @PostMapping("/parking/_get")
     public ResponseEntity<Object> getParkingFee(
-        @ApiParam(value = "Get Parking Fee Details", required = true) @Valid @RequestBody CollectionRequest request) {
-    try {
-        List<ParkingFee> common = service.getParkingFee(request.getRequestInfo(), request.getCriteria());
-        ResponseInfo responseInfo = responseInfoFactory
-                .createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
-        ParkingFeeResponse res = ParkingFeeResponse.builder()
-                .details(common)
-                .responseInfo(responseInfo)
-                .build();
-        return new ResponseEntity<>(res, HttpStatus.OK);
-    } catch (Exception e) {
-        e.printStackTrace();
-        return new ResponseEntity<>(ERR_MSG, HttpStatus.INTERNAL_SERVER_ERROR);
+            @ApiParam(value = "Get Parking Fee Details", required = true) @Valid @RequestBody CollectionRequest request) {
+        try {
+            List<ParkingFee> common = service.getParkingFee(request.getRequestInfo(), request.getCriteria());
+            ResponseInfo responseInfo = responseInfoFactory
+                    .createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
+            ParkingFeeResponse res = ParkingFeeResponse.builder()
+                    .details(common)
+                    .responseInfo(responseInfo)
+                    .build();
+            return new ResponseEntity<>(res, HttpStatus.OK);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(ERR_MSG, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
-}
 
-    // @PostMapping("/slaughter/_get")
-    // public ResponseEntity<String> aaaignAnimal(@RequestBody
-    // AnimalAssignmentRequest request) {
-    // try {
-    // // TODO : service.assignAnimalsToStakeholder(request);
-    // return new ResponseEntity<>("Animal assigned Successfully", HttpStatus.OK);
-    // } catch (Exception e) {
-    // e.printStackTrace();
-    // return new ResponseEntity<>(ERR_MSG,HttpStatus.INTERNAL_SERVER_ERROR);
-    // }
-    // }
+    @PostMapping("/washing/_get")
+    public ResponseEntity<Object> getWashingFee(
+            @ApiParam(value = "Get Washing Fee Details", required = true) @Valid @RequestBody CollectionRequest request) {
+        try {
+            List<WashFee> common = service.getWashingFee(request.getRequestInfo(), request.getCriteria());
+            ResponseInfo responseInfo = responseInfoFactory
+                    .createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
+            WashingFeeResponse res = WashingFeeResponse.builder()
+                    .details(common)
+                    .responseInfo(responseInfo)
+                    .build();
+            return new ResponseEntity<>(res, HttpStatus.OK);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(ERR_MSG, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @PostMapping("/slaughter/_get")
+    public ResponseEntity<Object> getSlaughterFee(
+            @ApiParam(value = "Get Slaughtering Fee Details", required = true) @Valid @RequestBody CollectionRequest request) {
+        try {
+            List<SlaughterFee> common = service.getSlaughterFee(request.getRequestInfo(), request.getCriteria());
+            ResponseInfo responseInfo = responseInfoFactory
+                    .createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
+            SlaughterFeeResponse res = SlaughterFeeResponse.builder()
+                    .details(common)
+                    .responseInfo(responseInfo)
+                    .build();
+            return new ResponseEntity<>(res, HttpStatus.OK);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(ERR_MSG, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
     // @PostMapping("/entry/_save")
     // public ResponseEntity<String> saveEntryFee(@RequestBody
@@ -133,8 +161,6 @@ public class CollectionController {
     // return new ResponseEntity<>(ERR_MSG,HttpStatus.INTERNAL_SERVER_ERROR);
     // }
     // }
-
-
 
     // @PostMapping("/slaughter/_save")
     // public ResponseEntity<String> aaaignAnimal(

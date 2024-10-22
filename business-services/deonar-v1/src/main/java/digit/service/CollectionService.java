@@ -12,7 +12,9 @@ import digit.repository.CollectionRepository;
 import digit.repository.CollectionSearchCriteria;
 import digit.web.models.collection.EntryFee;
 import digit.web.models.collection.ParkingFee;
+import digit.web.models.collection.SlaughterFee;
 import digit.web.models.collection.StableFee;
+import digit.web.models.collection.WashFee;
 
 
 @Service
@@ -43,5 +45,21 @@ public class CollectionService {
          if (CollectionUtils.isEmpty(common))
              return new ArrayList<>();
          return common;
+    }
+    public List<WashFee> getWashingFee(RequestInfo requestInfo, CollectionSearchCriteria criteria) {
+        // Fetch applications from database according to the given search criteria
+        List<WashFee> common = commonRepository.getWashingFee(criteria);
+        // If no applications are found matching the given criteria, return an empty list
+        if (CollectionUtils.isEmpty(common))
+            return new ArrayList<>();
+        return common;
+    }
+    public List<SlaughterFee> getSlaughterFee(RequestInfo requestInfo, CollectionSearchCriteria criteria) {
+        // Fetch applications from database according to the given search criteria
+        List<SlaughterFee> common = commonRepository.getSlaughterFee(criteria);
+        // If no applications are found matching the given criteria, return an empty list
+        if (CollectionUtils.isEmpty(common))
+            return new ArrayList<>();
+        return common;
     }
 }
