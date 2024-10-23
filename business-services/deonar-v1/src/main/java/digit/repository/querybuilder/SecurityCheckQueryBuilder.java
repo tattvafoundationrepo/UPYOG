@@ -8,7 +8,7 @@ import digit.web.models.security.SecurityCheckCriteria;
 public class SecurityCheckQueryBuilder {
 
     private static final String BASE_QUERY2 = """
-            select   arrivalid ,importpermission  ,stakeholdername ,dateofarrival,
+            select   arrivalid ,importpermission  ,stakeholdername ,stakeholderid ,dateofarrival,
               timeofarrival      ,vehiclenumber      ,mobilenumber      ,email      , stakeholdertypename,
               permissiondate,licencenumber      ,registrationnumber      , validtodate      ,  animaltype
              ,animaltypeid ,token,tradable,stable
