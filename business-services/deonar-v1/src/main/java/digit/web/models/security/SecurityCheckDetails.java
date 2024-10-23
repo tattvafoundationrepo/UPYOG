@@ -53,5 +53,7 @@ public class SecurityCheckDetails {
     private List<AnimalDetail> animalDetails;
 
     private String permissionDate; 
+
+    private Long stakeholderId;
 }
 
