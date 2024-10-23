@@ -28,7 +28,6 @@ public class VehicleParkingController {
 
 
     @PostMapping("/vehicleParkingDetails/_save")
-    @CrossOrigin("*")
     public ResponseEntity<String> vehicleParkingDetails(@RequestBody VehicleParkingRequest vehicleParkingRequest) {
         try {
             vehicleParkingService.saveParkedVehicleDetails(vehicleParkingRequest);
@@ -39,7 +38,6 @@ public class VehicleParkingController {
     }
 
     @PostMapping("/vehicleParkingDetails/_search")
-    @CrossOrigin("*")
     public ResponseEntity<VehicleParkedCheckResponse> getVehicleParkingDetails(@RequestBody VehicleParkedCheckRequest vehicleParkedCheckRequest) {
 
         try {
