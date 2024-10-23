@@ -30,6 +30,7 @@ public class SecurityCheckDetailRowMapper implements ResultSetExtractor<List<Sec
                 details = SecurityCheckDetails.builder()
                     .entryUnitId(arrivalId)
                     .importPermission(rs.getString("importpermission"))
+                    .stakeholderId(rs.getLong("stakeholderid"))
                     .traderName(rs.getString("stakeholdername"))
                     .dateOfArrival(rs.getDate("dateofarrival").toLocalDate().toString())  // Correct date handling
                     .timeOfArrival(rs.getTime("timeofarrival").toLocalTime().toString())  // Correct time handling
