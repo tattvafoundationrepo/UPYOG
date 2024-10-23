@@ -12,10 +12,6 @@ public class AnimalAssignment {
     private Long animalTypeId;
     private Long token;
     private Long assignedStakeholder;
-    private Long createdAt;
-    private Long updatedAt;
-    private Long createdBy;
-    private Long updatedBy;
     private Long deonarRemovalType;
 
 }

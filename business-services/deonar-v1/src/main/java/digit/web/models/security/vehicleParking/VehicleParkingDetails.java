@@ -12,7 +12,7 @@ import lombok.*;
 public class VehicleParkingDetails {
 
     @JsonProperty("vehicleType")
-    private String vehicleType;
+    private int vehicleType;
 
     @JsonProperty("vehicleNumber")
     private String vehicleNumber;

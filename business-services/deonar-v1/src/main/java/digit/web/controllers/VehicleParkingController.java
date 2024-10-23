@@ -28,7 +28,6 @@ public class VehicleParkingController {
 
 
     @PostMapping("/vehicleParkingDetails/_save")
-    @CrossOrigin("*")
     public ResponseEntity<String> vehicleParkingDetails(@RequestBody VehicleParkingRequest vehicleParkingRequest) {
         try {
             vehicleParkingService.saveParkedVehicleDetails(vehicleParkingRequest);
@@ -39,14 +38,13 @@ public class VehicleParkingController {
     }
 
     @PostMapping("/vehicleParkingDetails/_search")
-    @CrossOrigin("*")
     public ResponseEntity<VehicleParkedCheckResponse> getVehicleParkingDetails(@RequestBody VehicleParkedCheckRequest vehicleParkedCheckRequest) {
 
         try {
             List<VehicleParkedCheckDetails> vehicleDetails = vehicleParkingService.getVehicleDetails(vehicleParkedCheckRequest.getVehicleParkedCheckCriteria());
             ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(vehicleParkedCheckRequest.getRequestInfo(), true);
             VehicleParkedCheckResponse response;
-            if(!(vehicleDetails.size() == 0)) {
+            if (!(vehicleDetails.size() == 0)) {
                 response = VehicleParkedCheckResponse.builder()
                         .vehicleParkedCheckDetails(vehicleDetails)
                         .responseInfo(responseInfo)
@@ -58,7 +56,7 @@ public class VehicleParkingController {
                         .build();
             }
             return new ResponseEntity<>(response, HttpStatus.OK);
-        }catch (Exception e) {
+        } catch (Exception e) {
             ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(vehicleParkedCheckRequest.getRequestInfo(), true);
             VehicleParkedCheckResponse response = VehicleParkedCheckResponse.builder()
                     .message("Error occurred while trying to retrieve parked vehicle details: " + e.getMessage())

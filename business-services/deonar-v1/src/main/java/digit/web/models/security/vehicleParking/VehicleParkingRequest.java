@@ -24,11 +24,7 @@ public class VehicleParkingRequest {
 
     private Long parkingTime;
 
-    private Long parkingDate;
-
     private Long departureTime;
-
-    private Long departureDate;
 
     private Long createdAt;
 

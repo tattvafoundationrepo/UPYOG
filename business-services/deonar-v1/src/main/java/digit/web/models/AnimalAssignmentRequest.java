@@ -18,7 +18,12 @@ public class AnimalAssignmentRequest {
 
     @JsonProperty("animalAssignments")
     private List<AnimalAssignment> animalAssignments;
-
+   
+    private List<Assignments> assignments;
+    private Long createdAt;
+    private Long updatedAt;
+    private Long createdBy;
+    private Long updatedBy;
     private String arrivalId;
 
 

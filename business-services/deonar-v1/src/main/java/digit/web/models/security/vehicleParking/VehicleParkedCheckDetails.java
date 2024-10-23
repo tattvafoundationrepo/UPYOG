@@ -15,7 +15,7 @@ import java.time.LocalTime;
 public class VehicleParkedCheckDetails {
 
         @JsonProperty("vehicleType")
-        private String vehicleType;
+        private Long vehicleType;
 
         @JsonProperty("vehicleNumber")
         private String vehicleNumber;

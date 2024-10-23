@@ -12,14 +12,12 @@ public class VehicleParkingQueryBuilder {
 
     public static String BASE_QUERY_VEHICLE_PARKING = """
                     SELECT v.vehicletype AS vehicleType,
-                              v.vehiclenumber AS vehicleNumber,
-                              v.createdby AS createdBy,
-                              v.updatedby AS updatedBy,
-                              TO_TIMESTAMP(v.parkingdate / 1000)::date AS parkingDate,
-                              TO_CHAR(TO_TIMESTAMP(v.parkingtime / 1000), 'HH24:MI:SS')::time AS parkingTime,
-                              TO_TIMESTAMP(v.departuredate / 1000)::date AS departureDate,
-                              TO_CHAR(TO_TIMESTAMP(v.departuretime / 1000), 'HH24:MI:SS')::time AS departureTime
-                       FROM public.eg_deonar_vehicle_parking v
+                           v.vehiclenumber AS vehicleNumber,
+                           v.createdby AS createdBy,
+                           v.updatedby AS updatedBy,
+                           v.parkingtime AS parkingTime,
+                           v.departuretime AS departureTime
+                    FROM public.eg_deonar_vehicle_parking v
             """;
 
     public String getVehicleParkingSearchQuery(VehicleParkedCheckCriteria criteria, List<Object> preparedStmtList) {
