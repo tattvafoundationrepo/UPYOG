@@ -73,9 +73,9 @@ public class CommonQueryBuilder {
 
                 break;
             case "broker" :
-            query.append(" from eg_deonar_vbroker ");
+                query.append(" from eg_deonar_vbroker ");
 
-            break;   
+                break;   
 
             default:
                 break;
@@ -102,11 +102,21 @@ public class CommonQueryBuilder {
             case "document":
                 query.append("eg_bmc_document as tbl");
                 break;
+            case "feetype":
+                query.append("eg_deonar_fee_type as tbl "); 
+                
+                break;
+            case "vehicletype":
+                query.append("eg_deonar_vehicle_type as tbl "); 
+                break;       
             default:
                 query.append("(Select 0 as id, 'No Record found'  as name) as tbl ");
                 break;
         }
-        query.append(ORDERBY_NAME);
+        if(criteria.getOption().equalsIgnoreCase("feetype") )
+            query.append(" order by id ");
+        else
+           query.append(ORDERBY_NAME);
         return query.toString();
     }
 
