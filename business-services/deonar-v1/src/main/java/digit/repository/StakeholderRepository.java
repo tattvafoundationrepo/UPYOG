@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import digit.repository.querybuilder.ShopkeeperQueryBuilder;
 import digit.repository.rowmapper.ShopkeeperRowMapper;
+import digit.repository.rowmapper.SlaughterListRowMapper;
 import digit.web.models.shopkeeper.ShopkeeperDetails;
 import digit.web.models.shopkeeper.ShopkeeperRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +27,9 @@ public class StakeholderRepository {
     @Autowired
     ShopkeeperQueryBuilder shopkeeperQueryBuilder;
 
+    @Autowired
+    SlaughterListRowMapper slaughterListRowMapper;
+
 
     public List<ShopkeeperDetails>getShopKeeperDetails(ShopkeeperRequest request){
         List<Object> preparedStmtList = new ArrayList<>();
@@ -33,6 +37,16 @@ public class StakeholderRepository {
         log.info("Final query: " + query);
         return jdbcTemplate.query(query, shopkeeperRowMapper, preparedStmtList.toArray());
     }
+
+    public List<ShopkeeperDetails>getSlaughterListDetails(ShopkeeperRequest request){
+        List<Object> preparedStmtList = new ArrayList<>();
+        String query = " select * from eg_deonar_vslaughterlist ";
+        log.info("Final query: " + query);
+        return jdbcTemplate.query(query, slaughterListRowMapper, preparedStmtList.toArray());
+    }
+
+
+
 
 
 }

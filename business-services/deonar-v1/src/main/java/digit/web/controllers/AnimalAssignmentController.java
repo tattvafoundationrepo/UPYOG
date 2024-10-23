@@ -15,9 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import digit.service.AnimalAssignmentService;
 import digit.util.ResponseInfoFactory;
 import digit.web.models.AnimalAssignmentRequest;
-import digit.web.models.inspection.ArrivalDetailsResponse;
-import digit.web.models.inspection.ArrivalResponse;
-import digit.web.models.security.SecurityCheckRequest;
+
 import digit.web.models.shopkeeper.ShopkeeperDetails;
 import digit.web.models.shopkeeper.ShopkeeperRequest;
 import digit.web.models.shopkeeper.ShopkeeperResponse;
@@ -64,5 +62,17 @@ public class AnimalAssignmentController {
                 .responseInfo(responseInfo).build();
         return new ResponseEntity<>(shopkeeperResponse, HttpStatus.OK);
     }
+
+    @PostMapping("/get/slaughter/_list")
+    public ResponseEntity<ShopkeeperResponse> getSlaughterList(
+            @ApiParam(value = "Details for inspection ", required = true) @Valid @RequestBody ShopkeeperRequest request) {
+        List<ShopkeeperDetails> ShopkeeperDetails = service.getListForSlaughter(request);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(),
+                true);
+        ShopkeeperResponse shopkeeperResponse = ShopkeeperResponse.builder().ShopkeeperDetails(ShopkeeperDetails)
+                .responseInfo(responseInfo).build();
+        return new ResponseEntity<>(shopkeeperResponse, HttpStatus.OK);
+    }
+
 
 }

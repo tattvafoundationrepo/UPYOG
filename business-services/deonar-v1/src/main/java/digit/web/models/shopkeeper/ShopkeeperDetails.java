@@ -31,6 +31,8 @@ public class ShopkeeperDetails {
     private String licenceNumber;
     private String registrationNumber;
     private Date validToDate;
+    private String assigneeId;
+    private String shopkeeperName;
     private List<AnimalAssignmentDetails> animalAssignmentDetailsList;
 
 }

@@ -53,8 +53,14 @@ public class AnimalAssignmentService {
 
         List<ShopkeeperDetails> details = stakeholderRepository.getShopKeeperDetails(request);
         return details;
-
     }
+
+    public List<ShopkeeperDetails> getListForSlaughter(ShopkeeperRequest request) {
+
+        List<ShopkeeperDetails> details = stakeholderRepository.getSlaughterListDetails(request);
+        return details;
+    }
+
 
 
 }

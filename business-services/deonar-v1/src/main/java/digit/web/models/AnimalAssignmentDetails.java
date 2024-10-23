@@ -14,6 +14,7 @@ public class AnimalAssignmentDetails {
     private Long animalTypeId;
     private Integer tokenNum;
     private Long removalId;
+    private String animalName;
     private Long assigneeId;
     private String assigneeMobile;
     private String assigneeLicenceNumber;

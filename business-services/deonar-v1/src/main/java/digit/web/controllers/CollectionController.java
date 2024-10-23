@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 import digit.service.CollectionService;
 import digit.util.ResponseInfoFactory;
+import digit.web.models.collection.CollectFeeRequest;
+import digit.web.models.collection.CollectedFeeResponse;
 import digit.web.models.collection.CollectionRequest;
 import digit.web.models.collection.EntryFee;
 import digit.web.models.collection.StableFee;
@@ -21,6 +23,7 @@ import digit.web.models.collection.ParkingFeeResponse;
 import digit.web.models.collection.SlaughterFee;
 import digit.web.models.collection.SlaughterFeeResponse;
 import digit.web.models.collection.EntryFeeResponse;
+import digit.web.models.collection.FeeDetail;
 import digit.web.models.collection.StableFeeResponse;
 import digit.web.models.collection.WashFee;
 import digit.web.models.collection.WashingFeeResponse;
@@ -126,53 +129,20 @@ public class CollectionController {
         }
     }
 
-    // @PostMapping("/entry/_save")
-    // public ResponseEntity<String> saveEntryFee(@RequestBody
-    // AnimalAssignmentRequest request) {
-    // try {
-    // // TODO : service.assignAnimalsToStakeholder(request);
-    // return new ResponseEntity<>("Animal assigned Successfully", HttpStatus.OK);
-    // } catch (Exception e) {
-    // e.printStackTrace();
-    // return new ResponseEntity<>(ERR_MSG,HttpStatus.INTERNAL_SERVER_ERROR);
-    // }
-    // }
-
-    // @PostMapping("/stable/_save")
-    // public ResponseEntity<String> aaaignAnimal(@RequestBody
-    // AnimalAssignmentRequest request) {
-    // try {
-    // // TODO : service.assignAnimalsToStakeholder(request);
-    // return new ResponseEntity<>("Animal assigned Successfully", HttpStatus.OK);
-    // } catch (Exception e) {
-    // e.printStackTrace();
-    // return new ResponseEntity<>(ERR_MSG,HttpStatus.INTERNAL_SERVER_ERROR);
-    // }
-    // }
-
-    // @PostMapping("/parking/_save")
-    // public ResponseEntity<String> aaaignAnimal(@RequestBody
-    // AnimalAssignmentRequest request) {
-    // try {
-    // // TODO : service.assignAnimalsToStakeholder(request);
-    // return new ResponseEntity<>("Animal assigned Successfully", HttpStatus.OK);
-    // } catch (Exception e) {
-    // e.printStackTrace();
-    // return new ResponseEntity<>(ERR_MSG,HttpStatus.INTERNAL_SERVER_ERROR);
-    // }
-    // }
-
-    // @PostMapping("/slaughter/_save")
-    // public ResponseEntity<String> aaaignAnimal(
-    // @ApiParam(value = "List of Stakeholder", required = true) @Valid @RequestBody
-    // CommonRequest commonSearchRequest) {
-    // try {
-    // // TODO : service.assignAnimalsToStakeholder(request);
-    // return new ResponseEntity<>("Animal assigned Successfully", HttpStatus.OK);
-    // } catch (Exception e) {
-    // e.printStackTrace();
-    // return new ResponseEntity<>(ERR_MSG,HttpStatus.INTERNAL_SERVER_ERROR);
-    // }
-    // }
-
+    @PostMapping("/_save")
+    public ResponseEntity<Object> saveFee(@RequestBody CollectFeeRequest request) {
+        try {
+            FeeDetail common = service.saveFee(request.getRequestInfo(), request.getFeedetail());
+            ResponseInfo responseInfo = responseInfoFactory
+                    .createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
+            CollectedFeeResponse res = CollectedFeeResponse.builder()
+                    .details(common)
+                    .responseInfo(responseInfo)
+                    .build();
+            return new ResponseEntity<>(res, HttpStatus.OK);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(ERR_MSG, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }
