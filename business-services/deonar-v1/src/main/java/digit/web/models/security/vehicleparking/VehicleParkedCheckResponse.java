@@ -1,7 +1,6 @@
-package digit.web.models.security.vehicleParking;
+package digit.web.models.security.vehicleparking;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import digit.web.models.security.SecurityCheckDetails;
 import lombok.*;
 import org.egov.common.contract.response.ResponseInfo;
 

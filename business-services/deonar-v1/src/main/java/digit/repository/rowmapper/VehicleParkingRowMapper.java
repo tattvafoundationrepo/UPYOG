@@ -1,7 +1,7 @@
 package digit.repository.rowmapper;
 
 import digit.constants.DeonarConstant;
-import digit.web.models.security.vehicleParking.VehicleParkedCheckDetails;
+import digit.web.models.security.vehicleparking.VehicleParkedCheckDetails;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
@@ -44,4 +44,7 @@ public class VehicleParkingRowMapper implements ResultSetExtractor<List<VehicleP
 
         return new ArrayList<>(map.values());
     }
+
+
+
 }

@@ -1,10 +1,10 @@
-package digit.web.models.security.vehicleParking;
+package digit.web.models.security.vehicleparking;
+
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;
 import lombok.*;
 import org.egov.common.contract.request.RequestInfo;
-
 
 @Data
 @AllArgsConstructor
@@ -12,7 +12,7 @@ import org.egov.common.contract.request.RequestInfo;
 @Builder
 @Setter
 @Getter
-public class VehicleParkingRequest {
+public class VehicleParkedCheckRequest {
 
     @JsonProperty("RequestInfo")
     @Valid
@@ -20,17 +20,6 @@ public class VehicleParkingRequest {
     private RequestInfo requestInfo = null;
 
     @JsonProperty("vehicleParking")
-    private VehicleParkingDetails vehicleParkingDetails;
+    private VehicleParkedCheckCriteria vehicleParkedCheckCriteria;
 
-    private Long parkingTime;
-
-    private Long departureTime;
-
-    private Long createdAt;
-
-    private int createdBy;
-
-    private int updatedBy;
-
-    private Long updatedAt;
 }

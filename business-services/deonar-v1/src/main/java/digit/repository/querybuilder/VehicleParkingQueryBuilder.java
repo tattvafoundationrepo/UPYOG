@@ -1,7 +1,7 @@
 package digit.repository.querybuilder;
 
 import digit.constants.DeonarConstant;
-import digit.web.models.security.vehicleParking.VehicleParkedCheckCriteria;
+import digit.web.models.security.vehicleparking.VehicleParkedCheckCriteria;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import java.util.List;
@@ -19,6 +19,18 @@ public class VehicleParkingQueryBuilder {
                            v.departuretime AS departureTime
                     FROM public.eg_deonar_vehicle_parking v
             """;
+
+    public static String BASE_QUERY_VEHICLE_PARKED_IN = """
+                 SELECT v.vehicletype AS vehicleType,
+                        v.vehiclenumber AS vehicleNumber,
+                        v.createdby AS createdBy,
+                        v.updatedby AS updatedBy,
+                        v.parkingtime AS parkingTime,
+                        v.departuretime AS departureTime
+                       FROM public.eg_deonar_vehicle_parking v
+                        WHERE v.departuretime IS NULL
+                        ORDER BY v.vehicleType
+                    """;
 
     public String getVehicleParkingSearchQuery(VehicleParkedCheckCriteria criteria, List<Object> preparedStmtList) {
         StringBuilder query = new StringBuilder(BASE_QUERY_VEHICLE_PARKING);
@@ -39,6 +51,9 @@ public class VehicleParkingQueryBuilder {
         return query.toString();
     }
 
+    public String getParkedInVehicleSearchQuery(List<Object> preparedStmtList) {
+      return BASE_QUERY_VEHICLE_PARKED_IN;
+    }
     private void addClauseIfRequired(StringBuilder query, List<Object> preparedStmtList) {
         if (preparedStmtList.isEmpty()) {
             query.append(DeonarConstant.WHERE);

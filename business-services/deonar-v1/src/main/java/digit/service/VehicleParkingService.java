@@ -3,10 +3,7 @@ package digit.service;
 import digit.constants.DeonarConstant;
 import digit.kafka.Producer;
 import digit.repository.VehicleParkingRepository;
-import digit.web.models.security.vehicleParking.VehicleParkedCheckCriteria;
-import digit.web.models.security.vehicleParking.VehicleParkedCheckDetails;
-import digit.web.models.security.vehicleParking.VehicleParkingDetails;
-import digit.web.models.security.vehicleParking.VehicleParkingRequest;
+import digit.web.models.security.vehicleparking.*;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -24,7 +21,7 @@ public class VehicleParkingService {
     VehicleParkingRepository vehicleParkingRepository;
 
 
-    public void saveParkedVehicleDetails(VehicleParkingRequest request) {
+    public VehicleParkingRequest saveParkedVehicleDetails(VehicleParkingRequest request) {
         if (request == null) {
             throw new CustomException("INVALID_DATA", "Vehicle parking request data is null or incomplete.");
         }
@@ -32,15 +29,18 @@ public class VehicleParkingService {
         long currentTimeMillis = System.currentTimeMillis();
         VehicleParkingDetails vehicleParkingDetails = request.getVehicleParkingDetails();
         if (vehicleParkingDetails.isVehicleIn()) {
-            request.setParkingTime(currentTimeMillis);
+            vehicleParkingDetails.setParkingTime(currentTimeMillis);
             request.setCreatedBy(request.getRequestInfo().getUserInfo().getId().intValue());
             request.setCreatedAt(currentTimeMillis);
         } else {
-            request.setDepartureTime(currentTimeMillis);
+            vehicleParkingDetails.setDepartureTime(currentTimeMillis);
             request.setUpdatedBy(request.getRequestInfo().getUserInfo().getId().intValue());
             request.setUpdatedAt(currentTimeMillis);
         }
+
         producer.push(DeonarConstant.SAVE_VEHICLE_PARKING, request);
+        request.setVehicleParkingDetails(vehicleParkingDetails);
+        return request;
     }
 
 
@@ -50,5 +50,10 @@ public class VehicleParkingService {
         }
         return vehicleParkingRepository.getVehicleParkedDetails(criteria);
     }
+
+    public List<VehicleParkedCheckDetails> getParkedInVehicleDetails() {
+        return vehicleParkingRepository.getParkedInVehicleDetails();
+    }
+
 
 }

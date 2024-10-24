@@ -1,4 +1,4 @@
-package digit.web.models.security.vehicleParking;
+package digit.web.models.security.vehicleparking;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
@@ -16,4 +16,5 @@ public class VehicleParkedCheckCriteria {
 
     @JsonProperty("vehicleNumber")
     private String vehicleNumber;
+
 }
