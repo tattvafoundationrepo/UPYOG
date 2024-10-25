@@ -22,12 +22,14 @@ public class SlaughterListRowMapper implements ResultSetExtractor<List<Shopkeepe
         Map<String, ShopkeeperDetails> shopkeeperMap = new HashMap<>();
 
         while (rs.next()) {
+            String ddReference = rs.getString("ddreference");
             String assigneeId = rs.getString("assigneeid");
             String arrivalId = rs.getString("arrivalid");
 
-            ShopkeeperDetails shopkeeperDetails = shopkeeperMap.get(assigneeId);
+            ShopkeeperDetails shopkeeperDetails = shopkeeperMap.get(ddReference);
             if (shopkeeperDetails == null) {
                 shopkeeperDetails = ShopkeeperDetails.builder()
+                        .ddReference(ddReference)
                         .assigneeId(assigneeId)
                         .shopkeeperName(rs.getString("shopkeeper"))
                         .licenceNumber(rs.getString("licence"))

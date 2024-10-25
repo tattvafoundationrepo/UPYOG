@@ -124,7 +124,7 @@ public class CollectionRowMapper<T> implements ResultSetExtractor<List<T>> {
             if (parkingFee == null) {
                 // If not, create a new parkingFee object and add it to the map
                 parkingFee = ParkingFee.builder()
-                        .vehiclenumber(rs.getString("vehiclenumber"))
+                        .vehiclenumber(vehiclenumber)
                         .vehicletype(rs.getString("vehicletype"))
                         .parkingdate(rs.getString("parkingdate"))
                         .parkingtime(rs.getString("parkingtime"))
@@ -163,7 +163,7 @@ public class CollectionRowMapper<T> implements ResultSetExtractor<List<T>> {
         // Use a map to store slaughterFee objects by arrivalid
         Map<String, SlaughterFee> slaughterFeeMap = new LinkedHashMap<>();
         while (rs.next()) {
-            String assigneeid = rs.getString("assigneeid");
+            String assigneeid = rs.getString("ddreference");
             float total = rs.getFloat("totalslaughterFee");
 
             // Check if an slaughterFee object already exists for this arrivalId

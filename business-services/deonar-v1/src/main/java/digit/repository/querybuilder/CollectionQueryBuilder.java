@@ -85,13 +85,13 @@ public class CollectionQueryBuilder {
 
     public String getSlaughterFee(CollectionSearchCriteria criteria, List<Object> preparedStmtList) {
         final String SLAUGHTERFEE_QUERY = """
-             SELECT assigneelic,animal,animalcount,feevalue,totalslaughterFee
+             SELECT ddreference,assigneelic,animal,animalcount,feevalue,totalslaughterFee
                 FROM eg_deonar_vslaughterfee
             """;
         StringBuilder query = new StringBuilder(SLAUGHTERFEE_QUERY);
         if (criteria.getSearch() != null) {
             addClauseIfRequired(query, preparedStmtList);
-            query.append(" assigneelic = ? ");
+            query.append(" ddreference = ? ");
             preparedStmtList.add(criteria.getSearch());
         }
         return query.toString();

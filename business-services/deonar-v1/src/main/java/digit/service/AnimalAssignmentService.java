@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.stream.LongStream;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -31,6 +29,7 @@ public class AnimalAssignmentService {
     private StakeholderRepository stakeholderRepository;
 
     public void assignAnimalsToStakeholder(AnimalAssignmentRequest request) {
+        saveAnimalRemoval(request);
         List<Assignments> assignments = new ArrayList<>();
         setDateTime(request);
         List<Long> stakeHolderIdDistinctList = request.getAnimalAssignments().stream()

@@ -34,5 +34,6 @@ public class ShopkeeperDetails {
     private String assigneeId;
     private String shopkeeperName;
     private List<AnimalAssignmentDetails> animalAssignmentDetailsList;
+    private String ddReference;
 
 }

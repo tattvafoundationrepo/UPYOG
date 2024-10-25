@@ -41,16 +41,16 @@ public class AnimalAssignmentController {
         }
     }
 
-    @PostMapping("/remove/animal")
-    public ResponseEntity<String> removalAnimal(@RequestBody AnimalAssignmentRequest request) {
-        try {
-            service.saveAnimalRemoval(request);
-            return new ResponseEntity<>("Animal removed Successfully", HttpStatus.OK);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return new ResponseEntity<>("removal failed", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
+    // @PostMapping("/remove/animal")
+    // public ResponseEntity<String> removalAnimal(@RequestBody AnimalAssignmentRequest request) {
+    //     try {
+    //         service.saveAnimalRemoval(request);
+    //         return new ResponseEntity<>("Animal removed Successfully", HttpStatus.OK);
+    //     } catch (Exception e) {
+    //         e.printStackTrace();
+    //         return new ResponseEntity<>("removal failed", HttpStatus.INTERNAL_SERVER_ERROR);
+    //     }
+    // }
 
     @PostMapping("/get/shopkeepers")
     public ResponseEntity<ShopkeeperResponse> getShopkeeper(
