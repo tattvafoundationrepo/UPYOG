@@ -13,5 +13,6 @@ public class AnimalAssignment {
     private Long token;
     private Long assignedStakeholder;
     private Long deonarRemovalType;
+    private String ddReference;
 
 }

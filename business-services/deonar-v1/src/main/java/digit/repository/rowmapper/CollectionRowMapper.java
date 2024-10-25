@@ -47,7 +47,7 @@ public class CollectionRowMapper<T> implements ResultSetExtractor<List<T>> {
     }
 
     private List<EntryFee> extractEntryFee(ResultSet rs) throws SQLException {
-        // Use a map to store EntryFee objects by arrivalid
+        // Use a map to store EntryFee objects by arrivalidLIC67891
         Map<String, EntryFee> entryFeeMap = new LinkedHashMap<>();
         while (rs.next()) {
             String arrivalId = rs.getString("arrivalid");

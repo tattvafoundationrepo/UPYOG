@@ -1,7 +1,10 @@
 package digit.repository.querybuilder;
 
 import java.util.List;
+
+import org.egov.common.contract.models.RequestInfoWrapper;
 import org.springframework.stereotype.Component;
+
 import digit.web.models.security.SecurityCheckCriteria;
 
 @Component
@@ -13,13 +16,22 @@ public class SecurityCheckQueryBuilder {
               permissiondate,licencenumber      ,registrationnumber      , validtodate      ,  animaltype
              ,animaltypeid ,token,tradable,stable
               from eg_deonar_vmain
-
                                 """;
 
     private static final String BASE_QUERY_INSPECTION = """
             SELECT * FROM public.eg_deonar_vmain b
             where Not Exists (Select * from public.eg_deonar_vinspection where  b.arrivalid= arrivalid
-            """;                    
+            """;
+
+    private static final String BASE_QUERY_TRADING_LIST = """
+            SELECT * FROM eg_deonar_vtradablelist
+
+            """;
+
+    private static final String BASE_QUERY_STABLING_LIST = """
+            SELECT * FROM eg_deonar_vstablelist
+
+            """;
 
     private void addClauseIfRequired(StringBuilder query, List<Object> preparedStmtList) {
         if (preparedStmtList.isEmpty()) {
@@ -46,25 +58,25 @@ public class SecurityCheckQueryBuilder {
 
     public String getSearchQueryForInspection(SecurityCheckCriteria criteria, List<Object> preparedStmtList) {
         StringBuilder query = new StringBuilder(BASE_QUERY_INSPECTION);
-       // preparedStmtList.add(criteria.getInspectionId());
-        if(criteria.getInspectionId() == 1){
+        // preparedStmtList.add(criteria.getInspectionId());
+        if (criteria.getInspectionId() == 1) {
             query.append(" and inspectiontype = 2 ) ");
         }
-        if(criteria.getInspectionId() == 2){
+        if (criteria.getInspectionId() == 2) {
             query.append(" and inspectiontype = 3 ) ");
         }
-        if(criteria.getInspectionId() == 3){
+        if (criteria.getInspectionId() == 3) {
             query.append(" and inspectiontype = 4 ) ");
         }
-        if(criteria.getInspectionId() == 4){
+        if (criteria.getInspectionId() == 4) {
             query.append(" and inspectiontype = 4 ) ");
         }
         return query.toString();
     }
 
     public String getSearchQuery(SecurityCheckCriteria criteria, List<Object> preparedStmtList) {
-        if(criteria.getInspectionId() != null){
-            String inspectionQuery = getSearchQueryForInspection(criteria,preparedStmtList); 
+        if (criteria.getInspectionId() != null) {
+            String inspectionQuery = getSearchQueryForInspection(criteria, preparedStmtList);
             return inspectionQuery;
         }
         StringBuilder query = new StringBuilder(BASE_QUERY2);
@@ -97,21 +109,29 @@ public class SecurityCheckQueryBuilder {
             query.append(" vehiclenumber = ? ");
             preparedStmtList.add(criteria.getVehicleNumber());
         }
-        if(criteria.getTradable() != null){
+        if (criteria.getTradable() != null) {
             addClauseIfRequired(query, preparedStmtList);
             query.append(" tradable = ? ");
             preparedStmtList.add(criteria.getTradable());
         }
-        if(criteria.getStable() != null){
+        if (criteria.getStable() != null) {
             addClauseIfRequired(query, preparedStmtList);
             query.append(" stable = ? ");
             preparedStmtList.add(criteria.getStable());
         }
-            
+
         addClauseIfRequired(query, preparedStmtList);
         query.append(" token is not null ");
         query.append(" order by arrivalid ");
 
         return query.toString();
+    }
+
+    public String getTradingListQuery(RequestInfoWrapper request, List<Object> preparedStmtList) {
+        return BASE_QUERY_TRADING_LIST;
+    }
+
+    public String getStablingListQuery(RequestInfoWrapper request, List<Object> preparedStmtList) {
+        return BASE_QUERY_STABLING_LIST;
     }
 }

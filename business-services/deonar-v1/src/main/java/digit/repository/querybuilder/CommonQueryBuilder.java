@@ -102,6 +102,9 @@ public class CommonQueryBuilder {
             case "document":
                 query.append("eg_bmc_document as tbl");
                 break;
+            case "vehicle":
+            query.append("eg_deonar_vehicle_type as tbl");
+            break;
             default:
                 query.append("(Select 0 as id, 'No Record found'  as name) as tbl ");
                 break;

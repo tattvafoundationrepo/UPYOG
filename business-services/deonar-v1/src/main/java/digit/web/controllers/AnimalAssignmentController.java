@@ -4,6 +4,7 @@ import java.util.List;
 
 import javax.validation.Valid;
 
+import org.egov.common.contract.models.RequestInfoWrapper;
 import org.egov.common.contract.response.ResponseInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -13,9 +14,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import digit.service.AnimalAssignmentService;
+import digit.service.SecurityCheckService;
 import digit.util.ResponseInfoFactory;
 import digit.web.models.AnimalAssignmentRequest;
-
+import digit.web.models.security.SecurityCheckDetails;
+import digit.web.models.security.SecurityCheckRequest;
+import digit.web.models.security.SecurityCheckResponse;
 import digit.web.models.shopkeeper.ShopkeeperDetails;
 import digit.web.models.shopkeeper.ShopkeeperRequest;
 import digit.web.models.shopkeeper.ShopkeeperResponse;
@@ -26,6 +30,9 @@ public class AnimalAssignmentController {
 
     @Autowired
     private ResponseInfoFactory responseInfoFactory;
+
+      @Autowired
+    private SecurityCheckService securityCheckService;
 
     @Autowired
     AnimalAssignmentService service;
@@ -73,6 +80,42 @@ public class AnimalAssignmentController {
                 .responseInfo(responseInfo).build();
         return new ResponseEntity<>(shopkeeperResponse, HttpStatus.OK);
     }
+
+    
+    @PostMapping("/get/trading/_list")
+    public ResponseEntity<SecurityCheckResponse> getTradingLists(
+            @ApiParam(value = "Lists for animal trading", required = true)
+            @Valid @RequestBody RequestInfoWrapper request) {
+
+        List<SecurityCheckDetails> securityDetails = service.getListForTrading(request);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(),
+        true);
+        SecurityCheckResponse response = SecurityCheckResponse.builder()
+                .securityCheckDetails(securityDetails)
+                .responseInfo(responseInfo)
+                .build();
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+             
+    @PostMapping("/get/stabling/_list")
+    public ResponseEntity<SecurityCheckResponse> getStablingLists(
+            @ApiParam(value = "Lists for animal stabling", required = true)
+            @Valid @RequestBody RequestInfoWrapper request) {
+
+        List<SecurityCheckDetails> securityDetails = service.getListForTrading(request);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(),
+        true);
+        SecurityCheckResponse response = SecurityCheckResponse.builder()
+                .securityCheckDetails(securityDetails)
+                .responseInfo(responseInfo)
+                .build();
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+
+
 
 
 }

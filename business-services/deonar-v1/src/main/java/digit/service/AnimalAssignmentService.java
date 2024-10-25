@@ -1,9 +1,13 @@
 package digit.service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+
+import org.egov.common.contract.models.RequestInfoWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -13,6 +17,7 @@ import digit.util.IdgenUtil;
 import digit.web.models.AnimalAssignment;
 import digit.web.models.AnimalAssignmentRequest;
 import digit.web.models.Assignments;
+import digit.web.models.security.SecurityCheckDetails;
 import digit.web.models.shopkeeper.ShopkeeperDetails;
 import digit.web.models.shopkeeper.ShopkeeperRequest;
 
@@ -29,8 +34,10 @@ public class AnimalAssignmentService {
     private StakeholderRepository stakeholderRepository;
 
     public void assignAnimalsToStakeholder(AnimalAssignmentRequest request) {
-        saveAnimalRemoval(request);
+
+        // saveAnimalRemoval(request);
         List<Assignments> assignments = new ArrayList<>();
+
         setDateTime(request);
         List<Long> stakeHolderIdDistinctList = request.getAnimalAssignments().stream()
                 .map(AnimalAssignment::getAssignedStakeholder).distinct().collect(Collectors.toList());
@@ -38,11 +45,17 @@ public class AnimalAssignmentService {
                 request.getRequestInfo().getUserInfo().getTenantId(), "deonar.ddrefid", "",
                 stakeHolderIdDistinctList.size());
 
+        Map<Long, String> idDdMap = IntStream.range(0, stakeHolderIdDistinctList.size())
+                .boxed()
+                .collect(Collectors.toMap(stakeHolderIdDistinctList::get, ddReferences::get));
+
         IntStream.range(0, stakeHolderIdDistinctList.size())
                 .forEach(i -> assignments.add(
                         new Assignments(stakeHolderIdDistinctList.get(i), ddReferences.get(i),
                                 request.getArrivalId())));
         request.setAssignments(assignments);
+        request.getAnimalAssignments().forEach(
+                assignment -> assignment.setDdReference(idDdMap.get(assignment.getAssignedStakeholder())));
         producer.push("save-animal-assignment", request);
 
     }
@@ -65,12 +78,17 @@ public class AnimalAssignmentService {
         return details;
     }
 
-    public void setDateTime(AnimalAssignmentRequest request){
+    public void setDateTime(AnimalAssignmentRequest request) {
         Long time = System.currentTimeMillis();
         request.setCreatedAt(time);
         request.setCreatedBy(request.getRequestInfo().getUserInfo().getId());
         request.setUpdatedAt(time);
-        request.setUpdatedBy(request.getRequestInfo().getUserInfo().getId()); 
+        request.setUpdatedBy(request.getRequestInfo().getUserInfo().getId());
+    }
+
+    public List<SecurityCheckDetails> getListForTrading(RequestInfoWrapper request) {
+        List<SecurityCheckDetails> stablingList = stakeholderRepository.getStablingListDetails(request);
+        return stablingList;
     }
 
 }
