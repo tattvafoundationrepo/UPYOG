@@ -87,8 +87,14 @@ public class AnimalAssignmentService {
     }
 
     public List<SecurityCheckDetails> getListForTrading(RequestInfoWrapper request) {
+        List<SecurityCheckDetails> tradingList = stakeholderRepository.getTradingListDetails(request);
+        return tradingList;
+    }
+
+    public List<SecurityCheckDetails> getListForStabling(RequestInfoWrapper request) {
         List<SecurityCheckDetails> stablingList = stakeholderRepository.getStablingListDetails(request);
         return stablingList;
     }
+
 
 }
