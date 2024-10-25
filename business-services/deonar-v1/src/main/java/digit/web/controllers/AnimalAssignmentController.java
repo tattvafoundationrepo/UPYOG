@@ -103,7 +103,7 @@ public class AnimalAssignmentController {
             @ApiParam(value = "Lists for animal stabling", required = true)
             @Valid @RequestBody RequestInfoWrapper request) {
 
-        List<SecurityCheckDetails> securityDetails = service.getListForTrading(request);
+        List<SecurityCheckDetails> securityDetails = service.getListForStabling(request);
         ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(),
         true);
         SecurityCheckResponse response = SecurityCheckResponse.builder()
