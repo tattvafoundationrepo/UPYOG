@@ -88,6 +88,12 @@ public class AnimalAssignmentService {
         return stablingList;
     }
 
+
+    public List<SecurityCheckDetails> getListForDawanwala(RequestInfoWrapper request) {
+        List<SecurityCheckDetails> dawanwalaAssignmentList = stakeholderRepository.getListForDawanwalaAssingnmet(request);
+        return dawanwalaAssignmentList;
+    }
+
     public void setDateTime(AnimalAssignmentRequest request) {
         Long time = System.currentTimeMillis();
         request.setCreatedAt(time);
@@ -95,6 +101,8 @@ public class AnimalAssignmentService {
         request.setUpdatedAt(time);
         request.setUpdatedBy(request.getRequestInfo().getUserInfo().getId());
     }
+
+   
 
 
 }
