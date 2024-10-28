@@ -6,6 +6,7 @@ import org.egov.common.contract.models.RequestInfoWrapper;
 import org.springframework.stereotype.Component;
 
 import digit.web.models.security.SecurityCheckCriteria;
+import digit.web.models.shopkeeper.ShopkeeperRequest;
 
 @Component
 public class SecurityCheckQueryBuilder {
@@ -30,7 +31,10 @@ public class SecurityCheckQueryBuilder {
 
     private static final String BASE_QUERY_STABLING_LIST = """
             SELECT * FROM eg_deonar_vstablelist
+            """;
+    private static final String BASE_QUERY_SLAUGHTER_LIST = """
 
+             select * from eg_deonar_vslaughterlist
             """;
 
     private void addClauseIfRequired(StringBuilder query, List<Object> preparedStmtList) {
@@ -133,5 +137,10 @@ public class SecurityCheckQueryBuilder {
 
     public String getStablingListQuery(RequestInfoWrapper request, List<Object> preparedStmtList) {
         return BASE_QUERY_STABLING_LIST;
+    }
+
+    public String getSlaughterListQuery(ShopkeeperRequest request, List<Object> preparedStmtList) {
+       return BASE_QUERY_SLAUGHTER_LIST;
+    
     }
 }
