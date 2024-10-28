@@ -51,7 +51,7 @@ public class StakeholderRepository {
 
     public List<ShopkeeperDetails>getSlaughterListDetails(ShopkeeperRequest request){
         List<Object> preparedStmtList = new ArrayList<>();
-        String query = " select * from eg_deonar_vslaughterlist ";
+        String query = securityCheckQueryBuilder.getSlaughterListQuery(request, preparedStmtList);
         log.info("Final query: " + query);
         return jdbcTemplate.query(query, slaughterListRowMapper, preparedStmtList.toArray());
     }
