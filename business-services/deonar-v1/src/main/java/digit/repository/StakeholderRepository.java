@@ -71,4 +71,11 @@ public class StakeholderRepository {
         return jdbcTemplate.query(query, securityCheckDetailRowMapper, preparedStmtList.toArray());
     }
 
+    public List<SecurityCheckDetails> getListForDawanwalaAssingnmet(RequestInfoWrapper request) {
+        List<Object> preparedStmtList = new ArrayList<>();
+        String query = securityCheckQueryBuilder.getListForDawanwalaQuery(request, preparedStmtList);
+        log.info("Final query: " + query);
+        return jdbcTemplate.query(query, securityCheckDetailRowMapper, preparedStmtList.toArray());
+    }
+
 }
