@@ -41,6 +41,10 @@ public class SecurityCheckQueryBuilder {
              select * from eg_deonar_vlistfordawanwalaassignment
             """;
 
+    private static final String BASE_QUERY_HELKARI_ASSIGNMENT_LIST = """
+            select * from eg_deonar_vlistforhelkariassignment 
+            """;;
+
     private void addClauseIfRequired(StringBuilder query, List<Object> preparedStmtList) {
         if (preparedStmtList.isEmpty()) {
             query.append(" WHERE ");
@@ -150,5 +154,9 @@ public class SecurityCheckQueryBuilder {
 
     public String getListForDawanwalaQuery(RequestInfoWrapper request, List<Object> preparedStmtList) {
         return BASE_QUERY_DAWANWALA_ASSIGNMENT_LIST;
+    }
+
+    public String getListForHelkariQuery(RequestInfoWrapper request, List<Object> preparedStmtList) {
+        return BASE_QUERY_HELKARI_ASSIGNMENT_LIST;
     }
 }
