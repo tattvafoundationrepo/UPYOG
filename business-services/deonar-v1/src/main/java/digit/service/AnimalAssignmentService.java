@@ -102,6 +102,11 @@ public class AnimalAssignmentService {
         request.setUpdatedBy(request.getRequestInfo().getUserInfo().getId());
     }
 
+    public List<SecurityCheckDetails> getListForHelkari(RequestInfoWrapper request) {
+        List<SecurityCheckDetails> helkariAssignmentList = stakeholderRepository.getListForHelkariAssingnmet(request);
+        return helkariAssignmentList;
+    }
+
    
 
 
