@@ -2,7 +2,6 @@ package digit.repository.querybuilder;
 
 import java.util.List;
 
-
 import org.springframework.stereotype.Component;
 
 import digit.repository.CommonSearchCriteria;
@@ -45,7 +44,7 @@ public class CommonQueryBuilder {
               """;
 
     private static final String STAKEHOLDER_VIEW_QUERY = """
-            select stakeholdername as name , stakeholderid as id, licencenumber, animalid , animaltype 
+            select stakeholdername as name , stakeholderid as id, licencenumber, animalid , animaltype
             , mobilenumber , tradertype , registrationnumber
             """;
 
@@ -72,10 +71,10 @@ public class CommonQueryBuilder {
                 query.append(" from eg_deonar_vhelkari ");
 
                 break;
-            case "broker" :
-            query.append(" from eg_deonar_vbroker ");
+            case "broker":
+                query.append(" from eg_deonar_vbroker ");
 
-            break;   
+                break;
 
             default:
                 break;
@@ -103,8 +102,11 @@ public class CommonQueryBuilder {
                 query.append("eg_bmc_document as tbl");
                 break;
             case "vehicle":
-            query.append("eg_deonar_vehicle_type as tbl");
-            break;
+                query.append("eg_deonar_vehicle_type as tbl");
+                break;
+            case "removal":
+                query.append("eg_deonar_removal_type as tbl");
+                break;
             default:
                 query.append("(Select 0 as id, 'No Record found'  as name) as tbl ");
                 break;
