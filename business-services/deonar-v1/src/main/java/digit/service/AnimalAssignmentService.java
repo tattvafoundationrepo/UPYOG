@@ -34,8 +34,8 @@ public class AnimalAssignmentService {
     private StakeholderRepository stakeholderRepository;
 
     public void assignAnimalsToStakeholder(AnimalAssignmentRequest request) {
-
-        // saveAnimalRemoval(request);
+        if(request.getAnimalAssignments().get(0).getDeonarRemovalType() != null)
+            saveAnimalRemoval(request);
         List<Assignments> assignments = new ArrayList<>();
 
         setDateTime(request);
@@ -78,14 +78,6 @@ public class AnimalAssignmentService {
         return details;
     }
 
-    public void setDateTime(AnimalAssignmentRequest request) {
-        Long time = System.currentTimeMillis();
-        request.setCreatedAt(time);
-        request.setCreatedBy(request.getRequestInfo().getUserInfo().getId());
-        request.setUpdatedAt(time);
-        request.setUpdatedBy(request.getRequestInfo().getUserInfo().getId());
-    }
-
     public List<SecurityCheckDetails> getListForTrading(RequestInfoWrapper request) {
         List<SecurityCheckDetails> tradingList = stakeholderRepository.getTradingListDetails(request);
         return tradingList;
@@ -94,6 +86,14 @@ public class AnimalAssignmentService {
     public List<SecurityCheckDetails> getListForStabling(RequestInfoWrapper request) {
         List<SecurityCheckDetails> stablingList = stakeholderRepository.getStablingListDetails(request);
         return stablingList;
+    }
+
+    public void setDateTime(AnimalAssignmentRequest request) {
+        Long time = System.currentTimeMillis();
+        request.setCreatedAt(time);
+        request.setCreatedBy(request.getRequestInfo().getUserInfo().getId());
+        request.setUpdatedAt(time);
+        request.setUpdatedBy(request.getRequestInfo().getUserInfo().getId());
     }
 
 
