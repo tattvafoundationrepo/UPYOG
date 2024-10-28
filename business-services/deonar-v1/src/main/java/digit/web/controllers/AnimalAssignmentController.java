@@ -131,6 +131,24 @@ public class AnimalAssignmentController {
     }
 
 
+    @PostMapping("/get/animalList/_helkari")
+    public ResponseEntity<SecurityCheckResponse> getListsForHelkari(
+            @ApiParam(value = "Lists for Assigningf helkari", required = true)
+            @Valid @RequestBody RequestInfoWrapper request) {
+
+        List<SecurityCheckDetails> securityDetails = service.getListForHelkari(request);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(),
+        true);
+        SecurityCheckResponse response = SecurityCheckResponse.builder()
+                .securityCheckDetails(securityDetails)
+                .responseInfo(responseInfo)
+                .build();
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+
+
 
 
 
