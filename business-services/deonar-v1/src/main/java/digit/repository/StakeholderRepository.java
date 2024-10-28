@@ -78,4 +78,11 @@ public class StakeholderRepository {
         return jdbcTemplate.query(query, securityCheckDetailRowMapper, preparedStmtList.toArray());
     }
 
+    public List<SecurityCheckDetails> getListForHelkariAssingnmet(RequestInfoWrapper request) {
+        List<Object> preparedStmtList = new ArrayList<>();
+        String query = securityCheckQueryBuilder.getListForHelkariQuery(request, preparedStmtList);
+        log.info("Final query: " + query);
+        return jdbcTemplate.query(query, securityCheckDetailRowMapper, preparedStmtList.toArray());
+    }
+
 }
