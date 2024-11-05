@@ -17,6 +17,7 @@ import digit.util.IdgenUtil;
 import digit.web.models.AnimalAssignment;
 import digit.web.models.AnimalAssignmentRequest;
 import digit.web.models.Assignments;
+import digit.web.models.SlaughterList;
 import digit.web.models.security.SecurityCheckDetails;
 import digit.web.models.shopkeeper.ShopkeeperDetails;
 import digit.web.models.shopkeeper.ShopkeeperRequest;
@@ -72,9 +73,9 @@ public class AnimalAssignmentService {
         return details;
     }
 
-    public List<ShopkeeperDetails> getListForSlaughter(ShopkeeperRequest request) {
+    public List<SlaughterList> getListForSlaughter(ShopkeeperRequest request) {
 
-        List<ShopkeeperDetails> details = stakeholderRepository.getSlaughterListDetails(request);
+        List<SlaughterList> details = stakeholderRepository.getSlaughterListDetails(request);
         return details;
     }
 
@@ -108,5 +109,6 @@ public class AnimalAssignmentService {
     }
 
    
+
 
 }
