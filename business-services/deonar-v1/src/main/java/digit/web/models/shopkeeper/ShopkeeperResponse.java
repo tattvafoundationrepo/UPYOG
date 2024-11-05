@@ -6,6 +6,7 @@ import org.egov.common.contract.response.ResponseInfo;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import digit.web.models.SlaughterList;
 import lombok.Builder;
 
 
@@ -18,5 +19,8 @@ public class ShopkeeperResponse {
 
     @JsonProperty("animalAssignments")
     private List<ShopkeeperDetails> ShopkeeperDetails;
+
+    @JsonProperty("slaughterLists")
+    private List<SlaughterList> slaughterListDetails;
 
 }
