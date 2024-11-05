@@ -10,11 +10,14 @@ import org.springframework.util.ObjectUtils;
 
 import com.google.gson.Gson;
 
+import com.google.gson.reflect.TypeToken;
+import java.lang.reflect.Type;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 public class InspectionService {
@@ -71,11 +74,11 @@ public class InspectionService {
         inspectionDetail.setUpdatedBy(username);
         inspectionDetail.setResultRemark(inspectionRequest.getRemark());
         inspectionDetail.setAnimalTypeId(inspectionRequest.getAnimalTypeId());
-
+        inspectionRequest.setOpinion(getOpinionValueFromReport(inspectionDetail.getReport()));
         request.setInspectionRequest(inspectionRequest);
         request.setInspectionDetail(inspectionDetail);
         request.setInspection(inspection);
-
+        
         producer.push("save-inspection-details", request);
 
         return inspectionRequest;
@@ -156,11 +159,31 @@ public class InspectionService {
             request.setAnimalTokenNumber(animal.get("count"));
             request.setAnimalTypeId(animal.get("animalTypeId"));
             request.setRemark("ok");
+            Optional<String> opinion = list.stream()
+            .filter(indicator -> "opinion".equals(indicator.getInspectionIndicator()))
+            .map(InspectionIndicators::getInspectionIndicatorValue)
+            .findFirst();
+            request.setOpinion(opinion.get());
             saveInspectionDetails(request);
         }
         List<InspectionDetails> details = repository.getInspectionDetails(criteria.getEntryUnitId(),
                 criteria.getInspectionType());
         return details;
     }
+
+
+    public static String getOpinionValueFromReport(String reportJson) {
+        Type listType = new TypeToken<List<InspectionIndicators>>() {}.getType();
+        Gson gson= new Gson();
+        List<InspectionIndicators> indicatorsList = gson.fromJson(reportJson, listType);
+
+        Optional<String> opinionValue = indicatorsList.stream()
+            .filter(indicator -> "opinion".equals(indicator.getInspectionIndicator()))
+            .map(InspectionIndicators::getInspectionIndicatorValue)
+            .findFirst();
+
+        return opinionValue.orElse(null);
+    }
+
 
 }
