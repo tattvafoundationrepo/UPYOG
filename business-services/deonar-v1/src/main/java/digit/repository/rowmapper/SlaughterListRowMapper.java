@@ -1,6 +1,8 @@
 package digit.repository.rowmapper;
 
 import digit.web.models.AnimalAssignmentDetails;
+import digit.web.models.SlaughterList;
+import digit.web.models.security.AnimalDetail;
 import digit.web.models.shopkeeper.ShopkeeperDetails;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
@@ -14,21 +16,21 @@ import java.util.List;
 import java.util.Map;
 
 @Component
-public class SlaughterListRowMapper implements ResultSetExtractor<List<ShopkeeperDetails>> {
+public class SlaughterListRowMapper implements ResultSetExtractor<List<SlaughterList>> {
 
     @Override
-    public List<ShopkeeperDetails> extractData(ResultSet rs) throws SQLException, DataAccessException {
+    public List<SlaughterList> extractData(ResultSet rs) throws SQLException, DataAccessException {
 
-        Map<String, ShopkeeperDetails> shopkeeperMap = new HashMap<>();
+        Map<String, SlaughterList> shopkeeperMap = new HashMap<>();
 
         while (rs.next()) {
             String ddReference = rs.getString("ddreference");
             String assigneeId = rs.getString("assigneeid");
             String arrivalId = rs.getString("arrivalid");
 
-            ShopkeeperDetails shopkeeperDetails = shopkeeperMap.get(ddReference);
+            SlaughterList shopkeeperDetails = shopkeeperMap.get(ddReference);
             if (shopkeeperDetails == null) {
-                shopkeeperDetails = ShopkeeperDetails.builder()
+                shopkeeperDetails = SlaughterList.builder()
                         .ddReference(ddReference)
                         .assigneeId(assigneeId)
                         .shopkeeperName(rs.getString("shopkeeper"))
@@ -41,10 +43,10 @@ public class SlaughterListRowMapper implements ResultSetExtractor<List<Shopkeepe
                 shopkeeperMap.put(assigneeId, shopkeeperDetails);
             }
 
-            AnimalAssignmentDetails animalAssignmentDetails = AnimalAssignmentDetails.builder()
+            AnimalDetail animalAssignmentDetails = AnimalDetail.builder()
                     .animalTypeId(rs.getLong("animaltypeid"))
-                    .tokenNum(rs.getInt("token"))
-                    .animalName(rs.getString("animal"))
+                    .count(rs.getInt("token"))
+                    .animalType(rs.getString("animal"))
                     .build();
 
             shopkeeperDetails.getAnimalAssignmentDetailsList().add(animalAssignmentDetails);
