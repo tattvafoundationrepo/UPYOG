@@ -13,6 +13,7 @@ import digit.repository.querybuilder.ShopkeeperQueryBuilder;
 import digit.repository.rowmapper.SecurityCheckDetailRowMapper;
 import digit.repository.rowmapper.ShopkeeperRowMapper;
 import digit.repository.rowmapper.SlaughterListRowMapper;
+import digit.web.models.SlaughterList;
 import digit.web.models.security.SecurityCheckDetails;
 import digit.web.models.shopkeeper.ShopkeeperDetails;
 import digit.web.models.shopkeeper.ShopkeeperRequest;
@@ -49,7 +50,7 @@ public class StakeholderRepository {
         return jdbcTemplate.query(query, shopkeeperRowMapper, preparedStmtList.toArray());
     }
 
-    public List<ShopkeeperDetails>getSlaughterListDetails(ShopkeeperRequest request){
+    public List<SlaughterList>getSlaughterListDetails(ShopkeeperRequest request){
         List<Object> preparedStmtList = new ArrayList<>();
         String query = securityCheckQueryBuilder.getSlaughterListQuery(request, preparedStmtList);
         log.info("Final query: " + query);
@@ -86,4 +87,3 @@ public class StakeholderRepository {
     }
 
 }
-
