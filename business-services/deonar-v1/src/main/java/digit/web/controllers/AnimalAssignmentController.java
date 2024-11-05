@@ -17,6 +17,7 @@ import digit.service.AnimalAssignmentService;
 import digit.service.SecurityCheckService;
 import digit.util.ResponseInfoFactory;
 import digit.web.models.AnimalAssignmentRequest;
+import digit.web.models.SlaughterList;
 import digit.web.models.security.SecurityCheckDetails;
 import digit.web.models.security.SecurityCheckRequest;
 import digit.web.models.security.SecurityCheckResponse;
@@ -73,10 +74,10 @@ public class AnimalAssignmentController {
     @PostMapping("/get/slaughter/_list")
     public ResponseEntity<ShopkeeperResponse> getSlaughterList(
             @ApiParam(value = "Details for inspection ", required = true) @Valid @RequestBody ShopkeeperRequest request) {
-        List<ShopkeeperDetails> ShopkeeperDetails = service.getListForSlaughter(request);
+        List<SlaughterList> ShopkeeperDetails = service.getListForSlaughter(request);
         ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(),
                 true);
-        ShopkeeperResponse shopkeeperResponse = ShopkeeperResponse.builder().ShopkeeperDetails(ShopkeeperDetails)
+        ShopkeeperResponse shopkeeperResponse = ShopkeeperResponse.builder().slaughterListDetails(ShopkeeperDetails)
                 .responseInfo(responseInfo).build();
         return new ResponseEntity<>(shopkeeperResponse, HttpStatus.OK);
     }
@@ -146,6 +147,7 @@ public class AnimalAssignmentController {
 
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
+
 
 
 
