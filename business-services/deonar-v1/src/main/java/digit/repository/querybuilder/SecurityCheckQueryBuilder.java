@@ -90,13 +90,13 @@ public class SecurityCheckQueryBuilder {
                                 "where not  Exists (Select * from public.eg_deonar_vinspection where  b.arrivalid= arrivalid and inspectiontype in (2,3,4))");
         }
         if (criteria.getInspectionId() == 2) {
-            query.append(String.format(BASE_QUERY_INSPECTION,  " and inspectiontype  in (1) and opinion  in('Need to re-inspect') "));
+            query.append(String.format(BASE_QUERY_INSPECTION,  " and inspectiontype  in (1,2)  "));
         }
         if (criteria.getInspectionId() == 3) {
-            query.append(String.format(BASE_QUERY_INSPECTION," and  inspectiontype not in (3,4) and opinion  in('Fit for slaughter') "));
+            query.append(String.format(BASE_QUERY_INSPECTION," and  inspectiontype not in (4)  "));
         }
         if (criteria.getInspectionId() == 4) {
-            query.append(String.format(BASE_QUERY_INSPECTION," and inspectiontype  in (3)  and opinion in('Fit for slaughter') "));
+            query.append(String.format(BASE_QUERY_INSPECTION," and inspectiontype  in (3) "));
         }
         return query.toString();
     }
