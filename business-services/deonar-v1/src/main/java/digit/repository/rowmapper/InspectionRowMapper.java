@@ -1,23 +1,27 @@
 package digit.repository.rowmapper;
 
 import digit.web.models.inspection.InspectionDetails;
-import digit.web.models.inspection.InspectionIndicators;
+
 import digit.web.models.security.AnimalDetail;
+
+
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.stereotype.Component;
 
-import com.google.gson.reflect.TypeToken;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import java.lang.reflect.Field;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
+
 import java.util.List;
-import java.util.Map;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-import java.lang.reflect.Type;
+
 @Component
 public class InspectionRowMapper implements ResultSetExtractor<List<InspectionDetails>> {
 
@@ -27,29 +31,50 @@ public class InspectionRowMapper implements ResultSetExtractor<List<InspectionDe
         while (rs.next()) {
             InspectionDetails details = InspectionDetails.builder()
                         .arrivalId(rs.getString("arrivalid"))
-                        .inspectionDate(rs.getString("inspectiondate"))
-                        .inspectiontime(rs.getString("inspectiontime"))
-                        .inspectionid(rs.getLong("inspectionid"))
-                        .animalDetails(null)
-                        .resultmark(rs.getString("resultremark"))
-                        .id(rs.getLong("id"))
-                        .report(new ArrayList<>())
-                        .inspectionType(rs.getLong("inspectiontype"))
+                        .inspectionId(rs.getLong("inspectionid"))
+                        .animalDetail(null)
+                        .remark(rs.getString("resultremark"))
+                        .inspectionDetailId(rs.getLong("id"))
+                     //   .report(rs.getString("report"))
+                        .inspectionId(rs.getLong("inspectiontype"))
+                        .opinion(rs.getString("opinion"))
+                        .other(rs.getString("other"))
                         .build();
-            Gson gson  = new Gson();
-            List<InspectionIndicators> indicators = new  ArrayList<>();
-            Type listType = new TypeToken<List<InspectionIndicators>>() {}.getType();
-            indicators = gson.fromJson(rs.getString("report"), listType);
-            details.setReport(indicators);
-
+                        try {
+                            mapJsonToInspectionDetails(rs.getString("report"),details);
+                        } catch (SQLException e) {
+                            e.printStackTrace();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
             AnimalDetail animalDetail = AnimalDetail.builder()
-                    .animalType(rs.getString("animal"))
+                 //   .animalType(rs.getString("animal"))
                     .count(rs.getInt("tokenno"))
                     .animalTypeId(rs.getLong("animaltypeid"))
+                    .editable(rs.getBoolean("flag"))
                     .build();
-            details.setAnimalDetails(animalDetail);;
+            details.setAnimalDetail(animalDetail);;
             detailsList.add(details);
         }
-        return detailsList;
+        return detailsList; 
     }
+
+    public static void mapJsonToInspectionDetails(String jsonArray, InspectionDetails details) throws Exception {
+        ObjectMapper mapper = new ObjectMapper();
+
+ 
+        JsonNode arrayNode = mapper.readTree(jsonArray);
+        ObjectNode mergedNode = mapper.createObjectNode();
+        for (JsonNode node : arrayNode) {
+            mergedNode.setAll((ObjectNode) node);
+        }
+        for (Field field : InspectionDetails.class.getDeclaredFields()) {
+            field.setAccessible(true);  
+            String fieldName = field.getName();
+            if (mergedNode.has(fieldName)) {
+                field.set(details, mergedNode.get(fieldName).asText());
+            }
+        }
+    }
+
 }

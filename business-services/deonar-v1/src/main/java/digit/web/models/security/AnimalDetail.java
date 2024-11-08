@@ -16,10 +16,12 @@ public class AnimalDetail{
     @JsonProperty("animalType")
     private String animalType;
 
-    @JsonProperty("count")
+    @JsonProperty("token")
     private Integer count;
 
     private Boolean tradable;
 
     private Boolean stable;
+
+    private Boolean editable ;
 }
