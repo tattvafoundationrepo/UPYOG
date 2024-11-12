@@ -76,7 +76,7 @@ public class InspectionRepository {
             return result;
         }, arrivalId);
     }
-    public String getAnimalType(Long long1) {
+    public  String getAnimalType(Long long1) {
        String sql = "select name from eg_deonar_animal_type where id = ?";
        return jdbcTemplate.queryForObject(sql, String.class, long1);
     }
