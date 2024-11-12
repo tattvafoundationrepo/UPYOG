@@ -26,10 +26,12 @@ public class VehicleParkingQueryBuilder {
                         v.createdby AS createdBy,
                         v.updatedby AS updatedBy,
                         v.parkingtime AS parkingTime,
-                        v.departuretime AS departureTime
+                        v.departuretime AS departureTime,
+                        vt.name AS vehicletypename
                        FROM public.eg_deonar_vehicle_parking v
+                       left join eg_deonar_vehicle_type vt on v.vehicletype = vt.id
                         WHERE v.departuretime IS NULL
-                        ORDER BY v.vehicleType
+                        ORDER BY v.vehiclenumber
                     """;
     public static String BASE_QUERY_MONTHLY_VEHICLE_PARKING_FEE = """
                     SELECT v.vehicletype AS vehicleType,

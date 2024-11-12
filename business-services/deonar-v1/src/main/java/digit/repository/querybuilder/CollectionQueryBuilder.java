@@ -44,6 +44,20 @@ public class CollectionQueryBuilder {
         return query.toString();
     }
 
+    public String getRemovalFeeQuery(CollectionSearchCriteria criteria, List<Object> preparedStmtList) {
+        final String REMOVALFEE_QUERY = """
+                SELECT arrivalid,animal,animalcount,feevalue,totalstablefee
+                FROM eg_deonar_vremovalfee
+                """;
+        StringBuilder query = new StringBuilder(REMOVALFEE_QUERY);
+        if (criteria.getSearch() != null) {
+            addClauseIfRequired(query, preparedStmtList);
+            query.append(" arrivalid = ? ");
+            preparedStmtList.add(criteria.getSearch());
+        }
+        return query.toString();
+    }
+
     public String getParkingFee(CollectionSearchCriteria criteria, List<Object> preparedStmtList) {
         final String PARKINGFEE_QUERY = """
                 SELECT
@@ -68,12 +82,15 @@ public class CollectionQueryBuilder {
 
     public String getWashingFee(CollectionSearchCriteria criteria, List<Object> preparedStmtList) {
         final String WASHINGFEE_QUERY = """
-            SELECT
-                vehicletype,
-                vehiclenumber,
-                totalwashingfee
-                FROM eg_deonar_vwashingfee
-            """;
+                        SELECT
+                            vehicletype,
+                            vehiclenumber,
+                            totalwashingfee
+                            FROM eg_deonar_vwashin public String getRemovalFeeQuery(CollectionSearchCriteria criteria, List<Object> preparedStmtList) {
+                    // TODO Auto-generated method stub
+                    throw new UnsupportedOperationException("Unimplemented method 'getRemovalFeeQuery'");
+                }gfee
+                        """;
         StringBuilder query = new StringBuilder(WASHINGFEE_QUERY);
         if (criteria.getSearch() != null) {
             addClauseIfRequired(query, preparedStmtList);
@@ -85,9 +102,9 @@ public class CollectionQueryBuilder {
 
     public String getSlaughterFee(CollectionSearchCriteria criteria, List<Object> preparedStmtList) {
         final String SLAUGHTERFEE_QUERY = """
-             SELECT ddreference,assigneelic,animal,animalcount,feevalue,totalslaughterFee
-                FROM eg_deonar_vslaughterfee
-            """;
+                 SELECT ddreference,assigneelic,animal,animalcount,feevalue,totalslaughterFee
+                    FROM eg_deonar_vslaughterfee
+                """;
         StringBuilder query = new StringBuilder(SLAUGHTERFEE_QUERY);
         if (criteria.getSearch() != null) {
             addClauseIfRequired(query, preparedStmtList);
@@ -96,4 +113,5 @@ public class CollectionQueryBuilder {
         }
         return query.toString();
     }
+
 }

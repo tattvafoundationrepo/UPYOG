@@ -108,6 +108,11 @@ public class AnimalAssignmentService {
         return helkariAssignmentList;
     }
 
+    public List<SecurityCheckDetails> getListOfRemovedAnimals(RequestInfoWrapper request) {
+        List<SecurityCheckDetails> removalList = stakeholderRepository.getRemovalListDetails(request);
+        return removalList;
+    }
+
    
 
 

@@ -20,7 +20,7 @@ public class FeeDetail {
     private String feetype;
     private float feevalue;
     private String method;
-    private String refererenceno;
+    private String referenceno;
     private String recieptno;
     private AuditDetails audit;
 }

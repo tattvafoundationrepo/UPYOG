@@ -27,6 +27,7 @@ public class ParkedInVehicleRowMapper implements ResultSetExtractor<List<Vehicle
             long parkingTimeMillis = rs.getLong(DeonarConstant.PARKING_TIME);
             if (parkingTimeMillis == 0) continue;
             VehicleParkedCheckDetails details = VehicleParkedCheckDetails.builder()
+                    .vehicleType(rs.getString("vehicletypename"))
                     .vehicleId(rs.getLong(DeonarConstant.VEHICLE_TYPE))
                     .vehicleNumber(rs.getString(DeonarConstant.VEHICLE_NUMBER))
                     .parkingDate(Instant.ofEpochMilli(parkingTimeMillis).atZone(ZoneId.of(DeonarConstant.ASIA_KOLKATA)).toLocalDate())

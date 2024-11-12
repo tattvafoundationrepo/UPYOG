@@ -86,4 +86,11 @@ public class StakeholderRepository {
         return jdbcTemplate.query(query, securityCheckDetailRowMapper, preparedStmtList.toArray());
     }
 
+    public List<SecurityCheckDetails> getRemovalListDetails(RequestInfoWrapper request) {
+        List<Object> preparedStmtList = new ArrayList<>();
+        String query = securityCheckQueryBuilder.getRemovalListQuery(request, preparedStmtList);
+        log.info("Final query: " + query);
+        return jdbcTemplate.query(query, securityCheckDetailRowMapper, preparedStmtList.toArray());
+    }
+
 }

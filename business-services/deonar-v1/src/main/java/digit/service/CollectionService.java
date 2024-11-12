@@ -51,6 +51,14 @@ public class CollectionService {
         return common;
     }
 
+    public List<StableFee> getRemovalFee(RequestInfo requestInfo, CollectionSearchCriteria criteria) {
+        List<StableFee> common = commonRepository.getRemovalCollectionFee(criteria);
+
+        if (CollectionUtils.isEmpty(common))
+            return new ArrayList<>();
+        return common;
+    }
+
     public List<ParkingFee> getParkingFee(RequestInfo requestInfo, CollectionSearchCriteria criteria) {
         // Fetch applications from database according to the given search criteria
         List<ParkingFee> common = commonRepository.getParkingFee(criteria);
@@ -96,11 +104,13 @@ public class CollectionService {
                 .feevalue(feedetail.getFeevalue())
                 .method(feedetail.getMethod())
                 .recieptno(recieptNo.getFirst())
-                .refererenceno(feedetail.getRefererenceno())
+                .referenceno(feedetail.getReferenceno())
                 .recieptno(recieptNo.get(0))
                 .audit(audit)
                 .build();
         producer.push("topic_deonar_savefee", common);
         return common;
     }
+
+    
 }

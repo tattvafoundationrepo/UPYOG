@@ -50,6 +50,15 @@ public class CollectionRepository {
         return jdbcTemplate.query(query, entryfeerowMapper, preparedStmtList.toArray());
     }
 
+    public List<StableFee> getRemovalCollectionFee(CollectionSearchCriteria criteria) {
+        List<Object> preparedStmtList = new ArrayList<>();
+        String query = queryBuilder.getRemovalFeeQuery(criteria, preparedStmtList);
+        log.info("Final query: " + query);
+        // Create a new instance of the row mapper with the correct type
+        CollectionRowMapper<StableFee> entryfeerowMapper = new CollectionRowMapper<>(StableFee.class);
+        return jdbcTemplate.query(query, entryfeerowMapper, preparedStmtList.toArray());
+    }
+
     public List<ParkingFee> getParkingFee(CollectionSearchCriteria criteria) {
         List<Object> preparedStmtList = new ArrayList<>();
         String query = queryBuilder.getParkingFee(criteria, preparedStmtList);
@@ -76,4 +85,6 @@ public class CollectionRepository {
         CollectionRowMapper<SlaughterFee> entryfeerowMapper = new CollectionRowMapper<>(SlaughterFee.class);
         return jdbcTemplate.query(query, entryfeerowMapper, preparedStmtList.toArray());
     }
+
+    
 }

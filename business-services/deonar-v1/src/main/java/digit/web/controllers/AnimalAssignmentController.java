@@ -115,6 +115,23 @@ public class AnimalAssignmentController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
+    @PostMapping("/get/removal/_list")
+    public ResponseEntity<SecurityCheckResponse> getRemovalLists(
+            @ApiParam(value = "Lists of removed animal", required = true)
+            @Valid @RequestBody RequestInfoWrapper request) {
+
+        List<SecurityCheckDetails> securityDetails = service.getListOfRemovedAnimals(request);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(),
+        true);
+        SecurityCheckResponse response = SecurityCheckResponse.builder()
+                .securityCheckDetails(securityDetails)
+                .responseInfo(responseInfo)
+                .build();
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+
     @PostMapping("/get/animalList/_dawanwala")
     public ResponseEntity<SecurityCheckResponse> getListsForDawanawala(
             @ApiParam(value = "Lists for Assigningf Dawanwala", required = true)
