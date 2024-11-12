@@ -31,9 +31,35 @@ public class VehicleParkingQueryBuilder {
                         WHERE v.departuretime IS NULL
                         ORDER BY v.vehicleType
                     """;
-
+    public static String BASE_QUERY_MONTHLY_VEHICLE_PARKING_FEE = """
+                    SELECT v.vehicletype AS vehicleType,
+                           v.vehiclenumber AS vehicleNumber,
+                           v.startdate AS startDate,
+                           v.enddate AS endDate,
+                           v.monthlyfee AS monthlyFee
+                    FROM public.eg_deonar_vehicleparking_monthly_fee v
+            """;
     public String getVehicleParkingSearchQuery(VehicleParkedCheckCriteria criteria, List<Object> preparedStmtList) {
         StringBuilder query = new StringBuilder(BASE_QUERY_VEHICLE_PARKING);
+
+        if (criteria.getVehicleType() != null) {
+            addClauseIfRequired(query, preparedStmtList);
+            query.append("v.vehicletype = ? ");
+            preparedStmtList.add(criteria.getVehicleType());
+        }
+        if (criteria.getVehicleNumber() != null) {
+            addClauseIfRequired(query, preparedStmtList);
+            query.append(" v.vehiclenumber = ? ");
+            preparedStmtList.add(criteria.getVehicleNumber());
+        }
+
+        log.info("Prepared parameters: {}", preparedStmtList);
+        query.append("order by v.vehicleType");
+        return query.toString();
+    }
+
+    public String getMonthlyVehicleParkingSearchQuery(VehicleParkedCheckCriteria criteria, List<Object> preparedStmtList) {
+        StringBuilder query = new StringBuilder(BASE_QUERY_MONTHLY_VEHICLE_PARKING_FEE);
 
         if (criteria.getVehicleType() != null) {
             addClauseIfRequired(query, preparedStmtList);

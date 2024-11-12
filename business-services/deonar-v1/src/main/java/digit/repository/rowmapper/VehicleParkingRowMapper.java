@@ -31,7 +31,7 @@ public class VehicleParkingRowMapper implements ResultSetExtractor<List<VehicleP
             VehicleParkedCheckDetails details = map.get(vehicleNumber);
             if (details == null) {
                 details = VehicleParkedCheckDetails.builder()
-                        .vehicleType(rs.getLong(DeonarConstant.VEHICLE_TYPE))
+                        .vehicleId(rs.getLong(DeonarConstant.VEHICLE_TYPE))
                         .vehicleNumber(vehicleNumber)
                         .parkingDate((rs.getLong(DeonarConstant.PARKING_TIME) == 0) ? null : Instant.ofEpochMilli(rs.getLong(DeonarConstant.PARKING_TIME)).atZone(ZoneId.of(DeonarConstant.ASIA_KOLKATA)).toLocalDate())
                         .parkingTime((rs.getLong(DeonarConstant.PARKING_TIME) == 0) ? null : Instant.ofEpochMilli(rs.getLong(DeonarConstant.PARKING_TIME)).atZone(ZoneId.of(DeonarConstant.ASIA_KOLKATA)).toLocalTime())

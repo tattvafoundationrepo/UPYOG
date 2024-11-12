@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -83,4 +84,77 @@ public class VehicleParkingController {
         }
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
+
+    @PostMapping("/vehicleParking/_saveMonthlyParkingFee")
+    public ResponseEntity<VehicleParkingFeeResponse> saveParkingFee(@RequestBody VehicleParkingFeeRequest vehicleParkingFeeRequest) {
+
+        VehicleParkingFeeResponse response = new VehicleParkingFeeResponse();
+
+        try {
+            VehicleParkingFeeRequest request  = vehicleParkingService.saveMonthlyParkingFee(vehicleParkingFeeRequest);
+            ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(vehicleParkingFeeRequest.getRequestInfo(), true);
+            response.setResponseInfo(responseInfo);
+            response.setMessage("Vehicle monthly parking fee saved successfully");
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(vehicleParkingFeeRequest.getRequestInfo(), true);
+            response = VehicleParkingFeeResponse.builder().message("Error occurred while trying to saving vehicle monthly parking fee: " + e.getMessage()).responseInfo(responseInfo).build();
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @PostMapping("/vehicleParking/_searchVehicleMonthlyParkingFee")
+    public ResponseEntity<VehicleParkingFeeResponse> getVehicleMonthlyParkingDetails(@RequestBody VehicleParkedCheckRequest vehicleParkedCheckRequest) {
+
+        VehicleParkingFeeResponse response;
+        try {
+            List<VehicleParkingFeeResponseDetails> vehicleParkingFeeResponses = vehicleParkingService.getVehicleMonthlyDetails(vehicleParkedCheckRequest.getVehicleParkedCheckCriteria());
+            ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(vehicleParkedCheckRequest.getRequestInfo(), true);
+            response = VehicleParkingFeeResponse.builder().vehicleParkingFeeResponseDetails(vehicleParkingFeeResponses)
+                    .responseInfo(responseInfo).message("Vehicle monthly parking fee details fetched successfully.").build();
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(vehicleParkedCheckRequest.getRequestInfo(), true);
+            response = VehicleParkingFeeResponse.builder().message("Error occurred while trying to retrieve parked vehicle details: " + e.getMessage()).responseInfo(responseInfo).build();
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @PostMapping("/vehicleParking/_parkingFee")
+    public ResponseEntity<VehicleParkingFeeResponse> getParkingFee(@RequestBody VehicleParkedCheckRequest vehicleParkedCheckRequest) {
+
+        VehicleParkingFeeResponse response;
+        try {
+            VehicleParkingFeeResponseDetails vehicleParkingFeeResponseDetails = vehicleParkingService.getParkingFee(vehicleParkedCheckRequest.getVehicleParkedCheckCriteria());
+            List<VehicleParkingFeeResponseDetails> list = new ArrayList<>();
+            list.add(vehicleParkingFeeResponseDetails);
+            ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(vehicleParkedCheckRequest.getRequestInfo(), true);
+            response = VehicleParkingFeeResponse.builder().vehicleParkingFeeResponseDetails(list).responseInfo(responseInfo)
+                    .message("Vehicle fee fetched successfully").build();
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(vehicleParkedCheckRequest.getRequestInfo(), true);
+            response = VehicleParkingFeeResponse.builder().message("Error occurred while trying to fetch parking fee: " + e.getMessage()).responseInfo(responseInfo).build();
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @PostMapping("/vehicleParking/_VehicleWashingFee")
+    public ResponseEntity<VehicleWashingFeesResponse> getVehicleWashingFee(@RequestBody VehicleParkedCheckRequest vehicleParkedCheckRequest) {
+        VehicleWashingFeesResponse response;
+        try {
+            response = vehicleParkingService.getVehicleWashingFee(vehicleParkedCheckRequest.getVehicleParkedCheckCriteria());
+            ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(vehicleParkedCheckRequest.getRequestInfo(), true);
+            response.setResponseInfo(responseInfo);
+            response.setMessage("Vehicle washing fee fetched successfully");
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(vehicleParkedCheckRequest.getRequestInfo(), true);
+            response = VehicleWashingFeesResponse.builder().message("Error occurred while trying to fetch vehicle washing fee: " + e.getMessage()).responseInfo(responseInfo).build();
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        }
+    }
+
+
+
 }

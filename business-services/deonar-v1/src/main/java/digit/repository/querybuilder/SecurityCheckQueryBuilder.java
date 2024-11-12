@@ -87,7 +87,7 @@ public class SecurityCheckQueryBuilder {
         if (criteria.getInspectionId() == 1) {
 
             query.append("SELECT * FROM public.eg_deonar_vmain b\n" + //
-                                "where not  Exists (Select * from public.eg_deonar_vinspection where  b.arrivalid= arrivalid and inspectiontype in (2,3,4))");
+                                "where not  Exists (Select * from public.eg_deonar_vinspection where  b.arrivalid= arrivalid and inspectiontype in (4))");
         }
         if (criteria.getInspectionId() == 2) {
             query.append(String.format(BASE_QUERY_INSPECTION,  " and inspectiontype  in (1,2)  "));

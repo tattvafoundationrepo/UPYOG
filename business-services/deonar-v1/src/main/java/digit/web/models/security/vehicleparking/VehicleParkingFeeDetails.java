@@ -4,17 +4,23 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
 @Data
-@Getter
-@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class VehicleParkedCheckCriteria {
+@Setter
+@Getter
+public class VehicleParkingFeeDetails {
 
     @JsonProperty("vehicleType")
-    private Long vehicleType;
-    
+    private int vehicleType;
+
     @JsonProperty("vehicleNumber")
     private String vehicleNumber;
+
+    @JsonProperty("monthlyFee")
+    private double monthlyFee;
+
+    @JsonProperty("parkingType")
+    private String parkingType;
 
 }
