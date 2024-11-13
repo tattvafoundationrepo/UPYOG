@@ -112,5 +112,15 @@ public class CollectionService {
         return common;
     }
 
+    public List<StableFee> getTradingFee(RequestInfo requestInfo, CollectionSearchCriteria criteria) {
+
+        List<StableFee> common = commonRepository.getTradingCollectionFee(criteria);
+
+        if (CollectionUtils.isEmpty(common))
+            return new ArrayList<>();
+        return common;
+        
+    }
+
     
 }

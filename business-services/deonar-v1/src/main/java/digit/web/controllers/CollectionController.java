@@ -75,6 +75,25 @@ public class CollectionController {
         }
     }
 
+    @PostMapping("/trading/_get")
+    public ResponseEntity<Object> getTradingFee(
+            @ApiParam(value = "Get trading Fee Details", required = true) @Valid @RequestBody CollectionRequest request) {
+        try {
+            List<StableFee> common = service.getTradingFee(request.getRequestInfo(), request.getCriteria());
+            ResponseInfo responseInfo = responseInfoFactory
+                    .createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
+            StableFeeResponse res = StableFeeResponse.builder()
+                    .details(common)
+                    .responseInfo(responseInfo)
+                    .build();
+            return new ResponseEntity<>(res, HttpStatus.OK);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(ERR_MSG, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
 
     @PostMapping("/removal/_get")
     public ResponseEntity<Object> getRemovalFee(
