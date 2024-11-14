@@ -13,8 +13,6 @@ import org.egov.common.contract.response.ResponseInfo;
 @Builder
 public class VehicleWashingFeesResponse {
 
-    @JsonProperty("ResponseInfo")
-    private ResponseInfo responseInfo;
 
     @JsonProperty("vehicleType")
     private String vehicleType;

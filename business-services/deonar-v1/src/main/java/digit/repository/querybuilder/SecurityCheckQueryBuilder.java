@@ -58,10 +58,14 @@ public class SecurityCheckQueryBuilder {
             select * from eg_deonar_vlistforhelkariassignment
             """;;
 
-            private static final String BASE_QUERY_REMOVAL_LIST = """
-                SELECT * FROM eg_deonar_vremovallist
-                """;        
+    private static final String BASE_QUERY_REMOVAL_LIST = """
+            SELECT * FROM eg_deonar_vremovallist
+            """;
 
+    private static final  String ENTRY_FEE_COLLECTION_LIST = """
+            select * from eg_deonar_vlistforentryfeecollection
+            """;
+            
     private void addClauseIfRequired(StringBuilder query, List<Object> preparedStmtList) {
         if (preparedStmtList.isEmpty()) {
             query.append(" WHERE ");
@@ -91,16 +95,16 @@ public class SecurityCheckQueryBuilder {
         if (criteria.getInspectionId() == 1) {
 
             query.append("SELECT * FROM public.eg_deonar_vmain b\n" + //
-                                "where not  Exists (Select * from public.eg_deonar_vinspection where  b.arrivalid= arrivalid and inspectiontype in (4))");
+                    "where not  Exists (Select * from public.eg_deonar_vinspection where  b.arrivalid= arrivalid and inspectiontype in (4))");
         }
         if (criteria.getInspectionId() == 2) {
-            query.append(String.format(BASE_QUERY_INSPECTION,  " and inspectiontype  in (1,2)  "));
+            query.append(String.format(BASE_QUERY_INSPECTION, " and inspectiontype  in (1,2)  "));
         }
         if (criteria.getInspectionId() == 3) {
-            query.append(String.format(BASE_QUERY_INSPECTION," and  inspectiontype not in (4)  "));
+            query.append(String.format(BASE_QUERY_INSPECTION, " and  inspectiontype not in (4)  "));
         }
         if (criteria.getInspectionId() == 4) {
-            query.append(String.format(BASE_QUERY_INSPECTION," and inspectiontype  in (3) "));
+            query.append(String.format(BASE_QUERY_INSPECTION, " and inspectiontype  in (3) "));
         }
         return query.toString();
     }
@@ -111,6 +115,11 @@ public class SecurityCheckQueryBuilder {
             return inspectionQuery;
         }
         StringBuilder query = new StringBuilder(BASE_QUERY2);
+        
+        if(criteria.getForCollection() == true){
+            query = new StringBuilder(ENTRY_FEE_COLLECTION_LIST);
+            return query.toString();
+        }
         if (criteria.getArrivalUuid() != null) {
             addClauseIfRequired(query, preparedStmtList);
             query.append(" arrivalid = ? ");

@@ -33,6 +33,8 @@ public class SecurityCheckCriteria {
     public Boolean stable;
 
     @JsonProperty("inspectionid")
-    private Long inspectionId;
+    private Long inspectionId; 
+
+    private Boolean forCollection;
 
 }
