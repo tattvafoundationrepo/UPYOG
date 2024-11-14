@@ -32,7 +32,7 @@ public class SlaughterListRowMapper implements ResultSetExtractor<List<Slaughter
             if (shopkeeperDetails == null) {
                 shopkeeperDetails = SlaughterList.builder()
                         .ddReference(ddReference)
-                        .assigneeId(assigneeId)
+                        .stakeholderId(assigneeId)
                         .shopkeeperName(rs.getString("shopkeeper"))
                         .licenceNumber(rs.getString("licence"))
                         .mobileNumber(rs.getString("mobile"))
