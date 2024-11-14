@@ -10,8 +10,6 @@ import java.util.Date;
 @Setter
 @Builder
 @AllArgsConstructor
-@NoArgsConstructor
-@Data
 @EqualsAndHashCode(of = {"id"})
 public class Address {
     private String pinCode;

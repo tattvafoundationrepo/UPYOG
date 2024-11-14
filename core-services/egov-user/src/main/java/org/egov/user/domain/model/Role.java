@@ -8,8 +8,6 @@ import java.util.Date;
 @Setter
 @Builder
 @AllArgsConstructor
-@NoArgsConstructor
-@Data
 @ToString
 @EqualsAndHashCode(of = {"code", "tenantId"})
 public class Role {
