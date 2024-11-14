@@ -16,8 +16,10 @@ public class VehicleParkingQueryBuilder {
                            v.createdby AS createdBy,
                            v.updatedby AS updatedBy,
                            v.parkingtime AS parkingTime,
-                           v.departuretime AS departureTime
+                           v.departuretime AS departureTime,
+                           vt.name AS vehicletypename
                     FROM public.eg_deonar_vehicle_parking v
+                    left join eg_deonar_vehicle_type vt on v.vehicletype = vt.id
             """;
 
     public static String BASE_QUERY_VEHICLE_PARKED_IN = """
@@ -56,7 +58,7 @@ public class VehicleParkingQueryBuilder {
         }
 
         log.info("Prepared parameters: {}", preparedStmtList);
-        query.append("order by v.vehicleType");
+        query.append("order by v.vehiclenumber");
         return query.toString();
     }
 
