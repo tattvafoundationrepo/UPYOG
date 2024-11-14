@@ -22,7 +22,7 @@ public class SlaughterList {
     private String arrivalId;
     private String mobileNumber;
     private String licenceNumber;
-    private String assigneeId;
+    private String stakeholderId;
     private String shopkeeperName;
     private List<AnimalDetail> animalAssignmentDetailsList;
     private String ddReference;
