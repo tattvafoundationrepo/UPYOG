@@ -16,6 +16,7 @@ import lombok.ToString;
 @Builder
 @ToString
 public class FeeDetail {
+    private String uuid;
     private String paidby;
     private Long feetype;
     private float feevalue;

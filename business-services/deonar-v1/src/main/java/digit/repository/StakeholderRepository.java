@@ -13,6 +13,7 @@ import digit.repository.querybuilder.ShopkeeperQueryBuilder;
 import digit.repository.rowmapper.SecurityCheckDetailRowMapper;
 import digit.repository.rowmapper.ShopkeeperRowMapper;
 import digit.repository.rowmapper.SlaughterListRowMapper;
+import digit.web.models.GetListRequest;
 import digit.web.models.SlaughterList;
 import digit.web.models.security.SecurityCheckDetails;
 import digit.web.models.shopkeeper.ShopkeeperDetails;
@@ -57,7 +58,7 @@ public class StakeholderRepository {
         return jdbcTemplate.query(query, slaughterListRowMapper, preparedStmtList.toArray());
     }
 
-    public List<SecurityCheckDetails> getTradingListDetails(RequestInfoWrapper request) {
+    public List<SecurityCheckDetails> getTradingListDetails(GetListRequest request) {
   
         List<Object> preparedStmtList = new ArrayList<>();
         String query = securityCheckQueryBuilder.getTradingListQuery(request, preparedStmtList);
@@ -65,28 +66,28 @@ public class StakeholderRepository {
         return jdbcTemplate.query(query, securityCheckDetailRowMapper, preparedStmtList.toArray());
     }
 
-    public List<SecurityCheckDetails> getStablingListDetails(RequestInfoWrapper request) {
+    public List<SecurityCheckDetails> getStablingListDetails(GetListRequest request) {
         List<Object> preparedStmtList = new ArrayList<>();
         String query = securityCheckQueryBuilder.getStablingListQuery(request, preparedStmtList);
         log.info("Final query: " + query);
         return jdbcTemplate.query(query, securityCheckDetailRowMapper, preparedStmtList.toArray());
     }
 
-    public List<SecurityCheckDetails> getListForDawanwalaAssingnmet(RequestInfoWrapper request) {
+    public List<SecurityCheckDetails> getListForDawanwalaAssingnmet(GetListRequest request) {
         List<Object> preparedStmtList = new ArrayList<>();
         String query = securityCheckQueryBuilder.getListForDawanwalaQuery(request, preparedStmtList);
         log.info("Final query: " + query);
         return jdbcTemplate.query(query, securityCheckDetailRowMapper, preparedStmtList.toArray());
     }
 
-    public List<SecurityCheckDetails> getListForHelkariAssingnmet(RequestInfoWrapper request) {
+    public List<SecurityCheckDetails> getListForHelkariAssingnmet(GetListRequest request) {
         List<Object> preparedStmtList = new ArrayList<>();
         String query = securityCheckQueryBuilder.getListForHelkariQuery(request, preparedStmtList);
         log.info("Final query: " + query);
         return jdbcTemplate.query(query, securityCheckDetailRowMapper, preparedStmtList.toArray());
     }
 
-    public List<SecurityCheckDetails> getRemovalListDetails(RequestInfoWrapper request) {
+    public List<SecurityCheckDetails> getRemovalListDetails(GetListRequest request) {
         List<Object> preparedStmtList = new ArrayList<>();
         String query = securityCheckQueryBuilder.getRemovalListQuery(request, preparedStmtList);
         log.info("Final query: " + query);

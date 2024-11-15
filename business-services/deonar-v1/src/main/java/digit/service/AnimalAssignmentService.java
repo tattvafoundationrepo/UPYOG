@@ -17,6 +17,7 @@ import digit.util.IdgenUtil;
 import digit.web.models.AnimalAssignment;
 import digit.web.models.AnimalAssignmentRequest;
 import digit.web.models.Assignments;
+import digit.web.models.GetListRequest;
 import digit.web.models.SlaughterList;
 import digit.web.models.security.SecurityCheckDetails;
 import digit.web.models.shopkeeper.ShopkeeperDetails;
@@ -79,18 +80,18 @@ public class AnimalAssignmentService {
         return details;
     }
 
-    public List<SecurityCheckDetails> getListForTrading(RequestInfoWrapper request) {
+    public List<SecurityCheckDetails> getListForTrading(GetListRequest request) {
         List<SecurityCheckDetails> tradingList = stakeholderRepository.getTradingListDetails(request);
         return tradingList;
     }
 
-    public List<SecurityCheckDetails> getListForStabling(RequestInfoWrapper request) {
+    public List<SecurityCheckDetails> getListForStabling(GetListRequest request) {
         List<SecurityCheckDetails> stablingList = stakeholderRepository.getStablingListDetails(request);
         return stablingList;
     }
 
 
-    public List<SecurityCheckDetails> getListForDawanwala(RequestInfoWrapper request) {
+    public List<SecurityCheckDetails> getListForDawanwala(GetListRequest request) {
         List<SecurityCheckDetails> dawanwalaAssignmentList = stakeholderRepository.getListForDawanwalaAssingnmet(request);
         return dawanwalaAssignmentList;
     }
@@ -103,12 +104,12 @@ public class AnimalAssignmentService {
         request.setUpdatedBy(request.getRequestInfo().getUserInfo().getId());
     }
 
-    public List<SecurityCheckDetails> getListForHelkari(RequestInfoWrapper request) {
+    public List<SecurityCheckDetails> getListForHelkari(GetListRequest request) {
         List<SecurityCheckDetails> helkariAssignmentList = stakeholderRepository.getListForHelkariAssingnmet(request);
         return helkariAssignmentList;
     }
 
-    public List<SecurityCheckDetails> getListOfRemovedAnimals(RequestInfoWrapper request) {
+    public List<SecurityCheckDetails> getListOfRemovedAnimals(GetListRequest request) {
         List<SecurityCheckDetails> removalList = stakeholderRepository.getRemovalListDetails(request);
         return removalList;
     }

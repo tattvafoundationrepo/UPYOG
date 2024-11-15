@@ -99,6 +99,7 @@ public class CollectionService {
                 .lastModifiedTime(epochTime)
                 .build();
         FeeDetail common = FeeDetail.builder()
+                .uuid(feedetail.getUuid())
                 .paidby(feedetail.getPaidby())
                 .feetype(feedetail.getFeetype())
                 .feevalue(feedetail.getFeevalue())

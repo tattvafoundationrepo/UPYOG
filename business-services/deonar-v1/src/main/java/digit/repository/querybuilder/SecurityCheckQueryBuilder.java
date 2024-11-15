@@ -6,6 +6,7 @@ import org.egov.common.contract.models.RequestInfoWrapper;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 
+import digit.web.models.GetListRequest;
 import digit.web.models.security.SecurityCheckCriteria;
 import digit.web.models.shopkeeper.ShopkeeperRequest;
 
@@ -170,11 +171,21 @@ public class SecurityCheckQueryBuilder {
         return query.toString();
     }
 
-    public String getTradingListQuery(RequestInfoWrapper request, List<Object> preparedStmtList) {
+    public String getTradingListQuery(GetListRequest request, List<Object> preparedStmtList) {
+        if(!ObjectUtils.isEmpty(request.getForCollection())){
+            if(request.getForCollection() == true){
+                return " select * from eg_deonar_vlistfortradingcollection ";
+            }
+        }
         return BASE_QUERY_TRADING_LIST;
     }
 
-    public String getStablingListQuery(RequestInfoWrapper request, List<Object> preparedStmtList) {
+    public String getStablingListQuery(GetListRequest request, List<Object> preparedStmtList) {
+        if(!ObjectUtils.isEmpty(request.getForCollection())){
+            if(request.getForCollection() == true){
+                return " select * from eg_deonar_vlistforstablecollectionfee ";
+            }
+        }
         return BASE_QUERY_STABLING_LIST;
     }
 
@@ -183,15 +194,15 @@ public class SecurityCheckQueryBuilder {
 
     }
 
-    public String getListForDawanwalaQuery(RequestInfoWrapper request, List<Object> preparedStmtList) {
+    public String getListForDawanwalaQuery(GetListRequest request, List<Object> preparedStmtList) {
         return BASE_QUERY_DAWANWALA_ASSIGNMENT_LIST;
     }
 
-    public String getListForHelkariQuery(RequestInfoWrapper request, List<Object> preparedStmtList) {
+    public String getListForHelkariQuery(GetListRequest request, List<Object> preparedStmtList) {
         return BASE_QUERY_HELKARI_ASSIGNMENT_LIST;
     }
 
-    public String getRemovalListQuery(RequestInfoWrapper request, List<Object> preparedStmtList) {
+    public String getRemovalListQuery(GetListRequest request, List<Object> preparedStmtList) {
         return BASE_QUERY_REMOVAL_LIST;
     }
 }

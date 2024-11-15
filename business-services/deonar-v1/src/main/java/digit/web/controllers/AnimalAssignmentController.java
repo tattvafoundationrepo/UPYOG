@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -17,6 +18,7 @@ import digit.service.AnimalAssignmentService;
 import digit.service.SecurityCheckService;
 import digit.util.ResponseInfoFactory;
 import digit.web.models.AnimalAssignmentRequest;
+import digit.web.models.GetListRequest;
 import digit.web.models.SlaughterList;
 import digit.web.models.security.SecurityCheckDetails;
 import digit.web.models.security.SecurityCheckRequest;
@@ -86,7 +88,7 @@ public class AnimalAssignmentController {
     @PostMapping("/get/trading/_list")
     public ResponseEntity<SecurityCheckResponse> getTradingLists(
             @ApiParam(value = "Lists for animal trading", required = true)
-            @Valid @RequestBody RequestInfoWrapper request) {
+            @Valid @RequestBody GetListRequest request) {
 
         List<SecurityCheckDetails> securityDetails = service.getListForTrading(request);
         ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(),
@@ -102,7 +104,7 @@ public class AnimalAssignmentController {
     @PostMapping("/get/stabling/_list")
     public ResponseEntity<SecurityCheckResponse> getStablingLists(
             @ApiParam(value = "Lists for animal stabling", required = true)
-            @Valid @RequestBody RequestInfoWrapper request) {
+            @Valid @RequestBody GetListRequest request) {
 
         List<SecurityCheckDetails> securityDetails = service.getListForStabling(request);
         ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(),
@@ -118,7 +120,7 @@ public class AnimalAssignmentController {
     @PostMapping("/get/removal/_list")
     public ResponseEntity<SecurityCheckResponse> getRemovalLists(
             @ApiParam(value = "Lists of removed animal", required = true)
-            @Valid @RequestBody RequestInfoWrapper request) {
+            @Valid @RequestBody GetListRequest request) {
 
         List<SecurityCheckDetails> securityDetails = service.getListOfRemovedAnimals(request);
         ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(),
@@ -135,7 +137,7 @@ public class AnimalAssignmentController {
     @PostMapping("/get/animalList/_dawanwala")
     public ResponseEntity<SecurityCheckResponse> getListsForDawanawala(
             @ApiParam(value = "Lists for Assigningf Dawanwala", required = true)
-            @Valid @RequestBody RequestInfoWrapper request) {
+            @Valid @RequestBody GetListRequest request) {
 
         List<SecurityCheckDetails> securityDetails = service.getListForDawanwala(request);
         ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(),
@@ -152,7 +154,7 @@ public class AnimalAssignmentController {
     @PostMapping("/get/animalList/_helkari")
     public ResponseEntity<SecurityCheckResponse> getListsForHelkari(
             @ApiParam(value = "Lists for Assigningf helkari", required = true)
-            @Valid @RequestBody RequestInfoWrapper request) {
+            @Valid @RequestBody GetListRequest request) {
 
         List<SecurityCheckDetails> securityDetails = service.getListForHelkari(request);
         ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(),
