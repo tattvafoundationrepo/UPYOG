@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.egov.common.contract.models.RequestInfoWrapper;
 import org.springframework.stereotype.Component;
+import org.springframework.util.ObjectUtils;
 
 import digit.web.models.security.SecurityCheckCriteria;
 import digit.web.models.shopkeeper.ShopkeeperRequest;
@@ -62,10 +63,10 @@ public class SecurityCheckQueryBuilder {
             SELECT * FROM eg_deonar_vremovallist
             """;
 
-    private static final  String ENTRY_FEE_COLLECTION_LIST = """
+    private static final String ENTRY_FEE_COLLECTION_LIST = """
             select * from eg_deonar_vlistforentryfeecollection
             """;
-            
+
     private void addClauseIfRequired(StringBuilder query, List<Object> preparedStmtList) {
         if (preparedStmtList.isEmpty()) {
             query.append(" WHERE ");
@@ -116,9 +117,11 @@ public class SecurityCheckQueryBuilder {
         }
         StringBuilder query = new StringBuilder(BASE_QUERY2);
         
-        if(criteria.getForCollection() == true){
-            query = new StringBuilder(ENTRY_FEE_COLLECTION_LIST);
-            return query.toString();
+        if (!ObjectUtils.isEmpty(criteria.getForCollection())) {
+            if (criteria.getForCollection() == true) {
+                query = new StringBuilder(ENTRY_FEE_COLLECTION_LIST);
+                return query.toString();
+            }
         }
         if (criteria.getArrivalUuid() != null) {
             addClauseIfRequired(query, preparedStmtList);
