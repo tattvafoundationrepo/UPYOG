@@ -31,7 +31,6 @@ public class PenaltyController {
     private PenaltyService service;
 
     @PostMapping("/get/_penalties")
-    @CrossOrigin("*")
     public ResponseEntity<PenaltyResponse> getPenalties(
             @ApiParam(value = "Details for penalties fetch request", required = true) @Valid @RequestBody RequestInfoWrapper request) {
 
@@ -65,7 +64,6 @@ public class PenaltyController {
     }
 
     @PostMapping("/penalty/list/_get")
-    @CrossOrigin("*")
     public ResponseEntity<PenaltyResponse> getPenaltiesForCollection(
             @ApiParam(value = "fetch list for penalty fee collection", required = true) @Valid @RequestBody RequestInfoWrapper request) {
 
