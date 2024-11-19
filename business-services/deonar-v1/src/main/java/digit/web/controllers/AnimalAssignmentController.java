@@ -4,13 +4,11 @@ import java.util.List;
 
 import javax.validation.Valid;
 
-import org.egov.common.contract.models.RequestInfoWrapper;
 import org.egov.common.contract.response.ResponseInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -19,9 +17,10 @@ import digit.service.SecurityCheckService;
 import digit.util.ResponseInfoFactory;
 import digit.web.models.AnimalAssignmentRequest;
 import digit.web.models.GetListRequest;
+import digit.web.models.RemovalList;
+import digit.web.models.RemovalListResponse;
 import digit.web.models.SlaughterList;
 import digit.web.models.security.SecurityCheckDetails;
-import digit.web.models.security.SecurityCheckRequest;
 import digit.web.models.security.SecurityCheckResponse;
 import digit.web.models.shopkeeper.ShopkeeperDetails;
 import digit.web.models.shopkeeper.ShopkeeperRequest;
@@ -118,14 +117,14 @@ public class AnimalAssignmentController {
     }
 
     @PostMapping("/get/removal/_list")
-    public ResponseEntity<SecurityCheckResponse> getRemovalLists(
+    public ResponseEntity<RemovalListResponse> getRemovalLists(
             @ApiParam(value = "Lists of removed animal", required = true)
             @Valid @RequestBody GetListRequest request) {
 
-        List<SecurityCheckDetails> securityDetails = service.getListOfRemovedAnimals(request);
+        List<RemovalList> securityDetails = service.getListOfRemovedAnimals(request);
         ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(),
         true);
-        SecurityCheckResponse response = SecurityCheckResponse.builder()
+        RemovalListResponse response = RemovalListResponse.builder()
                 .securityCheckDetails(securityDetails)
                 .responseInfo(responseInfo)
                 .build();
@@ -166,6 +165,9 @@ public class AnimalAssignmentController {
 
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
+
+
+    
 
 
 

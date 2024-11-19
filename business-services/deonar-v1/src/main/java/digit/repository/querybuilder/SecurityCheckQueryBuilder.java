@@ -1,8 +1,6 @@
 package digit.repository.querybuilder;
 
 import java.util.List;
-
-import org.egov.common.contract.models.RequestInfoWrapper;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 
@@ -190,8 +188,23 @@ public class SecurityCheckQueryBuilder {
     }
 
     public String getSlaughterListQuery(ShopkeeperRequest request, List<Object> preparedStmtList) {
+
+        if(!ObjectUtils.isEmpty(request.getForCollection())){
+            if(request.getForCollection() == true){
+                return " select * from eg_deonar_vlistforslaughterfeecollection ";
+            }
+        }
         return BASE_QUERY_SLAUGHTER_LIST;
 
+    }
+
+    public String getRemovalListQuery(GetListRequest request, List<Object> preparedStmtList) {
+        if(!ObjectUtils.isEmpty(request.getForCollection())){
+            if(request.getForCollection() == true){
+                return " select * from eg_deonar_vlistforremovalfee ";
+            }
+        }
+        return BASE_QUERY_REMOVAL_LIST;
     }
 
     public String getListForDawanwalaQuery(GetListRequest request, List<Object> preparedStmtList) {
@@ -202,7 +215,4 @@ public class SecurityCheckQueryBuilder {
         return BASE_QUERY_HELKARI_ASSIGNMENT_LIST;
     }
 
-    public String getRemovalListQuery(GetListRequest request, List<Object> preparedStmtList) {
-        return BASE_QUERY_REMOVAL_LIST;
-    }
 }

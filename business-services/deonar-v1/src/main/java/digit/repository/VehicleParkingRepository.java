@@ -6,7 +6,6 @@ import digit.repository.rowmapper.VehicleMonthlyFeeRowMapper;
 import digit.repository.rowmapper.VehicleParkingRowMapper;
 import digit.web.models.security.vehicleparking.VehicleParkedCheckCriteria;
 import digit.web.models.security.vehicleparking.VehicleParkedCheckDetails;
-import digit.web.models.security.vehicleparking.VehicleParkingFeeResponse;
 import digit.web.models.security.vehicleparking.VehicleParkingFeeResponseDetails;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

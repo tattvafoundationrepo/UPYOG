@@ -24,7 +24,7 @@ public class ShopkeeperRequest {
     private String registrationNo;
 
 
-
+    private Boolean forCollection;
 
 
 }

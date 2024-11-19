@@ -3,17 +3,18 @@ package digit.repository;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.egov.common.contract.models.RequestInfoWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import digit.repository.querybuilder.SecurityCheckQueryBuilder;
 import digit.repository.querybuilder.ShopkeeperQueryBuilder;
+import digit.repository.rowmapper.RemovalListRowmapper;
 import digit.repository.rowmapper.SecurityCheckDetailRowMapper;
 import digit.repository.rowmapper.ShopkeeperRowMapper;
 import digit.repository.rowmapper.SlaughterListRowMapper;
 import digit.web.models.GetListRequest;
+import digit.web.models.RemovalList;
 import digit.web.models.SlaughterList;
 import digit.web.models.security.SecurityCheckDetails;
 import digit.web.models.shopkeeper.ShopkeeperDetails;
@@ -42,6 +43,10 @@ public class StakeholderRepository {
 
     @Autowired
     SecurityCheckDetailRowMapper securityCheckDetailRowMapper;
+
+
+    @Autowired
+    RemovalListRowmapper removalListRowmapper;
 
 
     public List<ShopkeeperDetails>getShopKeeperDetails(ShopkeeperRequest request){
@@ -87,11 +92,11 @@ public class StakeholderRepository {
         return jdbcTemplate.query(query, securityCheckDetailRowMapper, preparedStmtList.toArray());
     }
 
-    public List<SecurityCheckDetails> getRemovalListDetails(GetListRequest request) {
+    public List<RemovalList> getRemovalListDetails(GetListRequest request) {
         List<Object> preparedStmtList = new ArrayList<>();
         String query = securityCheckQueryBuilder.getRemovalListQuery(request, preparedStmtList);
         log.info("Final query: " + query);
-        return jdbcTemplate.query(query, securityCheckDetailRowMapper, preparedStmtList.toArray());
+        return jdbcTemplate.query(query, removalListRowmapper, preparedStmtList.toArray());
     }
 
 }

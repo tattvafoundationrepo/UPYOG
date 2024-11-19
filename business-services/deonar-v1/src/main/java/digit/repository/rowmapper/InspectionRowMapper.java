@@ -1,7 +1,5 @@
 package digit.repository.rowmapper;
 
-import digit.repository.InspectionRepository;
-import digit.service.InspectionService;
 import digit.web.models.inspection.InspectionDetails;
 
 import digit.web.models.security.AnimalDetail;

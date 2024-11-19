@@ -1,9 +1,9 @@
 package digit.repository.rowmapper;
 
-import digit.web.models.AnimalAssignmentDetails;
+
 import digit.web.models.SlaughterList;
 import digit.web.models.security.AnimalDetail;
-import digit.web.models.shopkeeper.ShopkeeperDetails;
+
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.stereotype.Component;
@@ -34,7 +34,7 @@ public class SlaughterListRowMapper implements ResultSetExtractor<List<Slaughter
                         .ddReference(ddReference)
                         .stakeholderId(assigneeId)
                         .shopkeeperName(rs.getString("shopkeeper"))
-                        .licenceNumber(rs.getString("licence"))
+                        .licenceNumber(rs.getString("assigneelic"))
                         .mobileNumber(rs.getString("mobile"))
                         .arrivalId(arrivalId)
                         .animalAssignmentDetailsList(new ArrayList<>()) 

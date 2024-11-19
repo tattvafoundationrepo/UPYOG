@@ -1,6 +1,5 @@
 package digit.repository.querybuilder;
 
-import digit.web.models.security.SecurityCheckCriteria;
 import org.springframework.stereotype.Component;
 
 import java.util.List;

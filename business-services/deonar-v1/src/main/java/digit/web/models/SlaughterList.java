@@ -1,11 +1,6 @@
 package digit.web.models;
 
-import java.sql.Date;
-import java.sql.Time;
 import java.util.List;
-
-import org.hibernate.validator.constraints.pl.NIP;
-
 import digit.web.models.security.AnimalDetail;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

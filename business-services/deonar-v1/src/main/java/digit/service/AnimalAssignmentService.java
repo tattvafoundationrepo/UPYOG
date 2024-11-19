@@ -1,13 +1,11 @@
 package digit.service;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import org.egov.common.contract.models.RequestInfoWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +16,7 @@ import digit.web.models.AnimalAssignment;
 import digit.web.models.AnimalAssignmentRequest;
 import digit.web.models.Assignments;
 import digit.web.models.GetListRequest;
+import digit.web.models.RemovalList;
 import digit.web.models.SlaughterList;
 import digit.web.models.security.SecurityCheckDetails;
 import digit.web.models.shopkeeper.ShopkeeperDetails;
@@ -109,8 +108,8 @@ public class AnimalAssignmentService {
         return helkariAssignmentList;
     }
 
-    public List<SecurityCheckDetails> getListOfRemovedAnimals(GetListRequest request) {
-        List<SecurityCheckDetails> removalList = stakeholderRepository.getRemovalListDetails(request);
+    public List<RemovalList> getListOfRemovedAnimals(GetListRequest request) {
+        List<RemovalList> removalList = stakeholderRepository.getRemovalListDetails(request);
         return removalList;
     }
 

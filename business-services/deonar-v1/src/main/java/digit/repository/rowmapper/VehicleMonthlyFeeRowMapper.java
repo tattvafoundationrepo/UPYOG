@@ -2,8 +2,6 @@ package digit.repository.rowmapper;
 
 
 import digit.constants.DeonarConstant;
-import digit.web.models.security.vehicleparking.VehicleParkedCheckDetails;
-import digit.web.models.security.vehicleparking.VehicleParkingFeeResponse;
 import digit.web.models.security.vehicleparking.VehicleParkingFeeResponseDetails;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;

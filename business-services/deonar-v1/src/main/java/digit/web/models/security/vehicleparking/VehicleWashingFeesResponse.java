@@ -3,7 +3,6 @@ package digit.web.models.security.vehicleparking;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
-import org.egov.common.contract.response.ResponseInfo;
 
 @Data
 @Getter
