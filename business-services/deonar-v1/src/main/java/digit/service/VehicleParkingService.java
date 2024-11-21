@@ -16,13 +16,11 @@ import static digit.constants.DeonarConstant.*;
 @Service
 public class VehicleParkingService {
 
-
     @Autowired
     private Producer producer;
 
     @Autowired
     VehicleParkingRepository vehicleParkingRepository;
-
 
     public VehicleParkingRequest saveParkedVehicleDetails(VehicleParkingRequest request) {
         if (request == null) {
@@ -37,6 +35,9 @@ public class VehicleParkingService {
             request.setCreatedAt(currentTimeMillis);
         } else {
             vehicleParkingDetails.setDepartureTime(currentTimeMillis);
+            vehicleParkingDetails.setParkingTime(
+                    vehicleParkingRepository.getParkedInTime(request.getVehicleParkingDetails().getVehicleType(),
+                            request.getVehicleParkingDetails().getVehicleNumber()));
             request.setUpdatedBy(request.getRequestInfo().getUserInfo().getId().intValue());
             request.setUpdatedAt(currentTimeMillis);
         }
@@ -45,7 +46,6 @@ public class VehicleParkingService {
         request.setVehicleParkingDetails(vehicleParkingDetails);
         return request;
     }
-
 
     public List<VehicleParkedCheckDetails> getVehicleDetails(VehicleParkedCheckCriteria criteria) {
         if (criteria == null) {
@@ -57,6 +57,7 @@ public class VehicleParkingService {
     public List<VehicleParkedCheckDetails> getParkedInVehicleDetails() {
         return vehicleParkingRepository.getParkedInVehicleDetails();
     }
+
     public VehicleParkingFeeRequest saveMonthlyParkingFee(VehicleParkingFeeRequest request) {
         long currentTimeMillis = System.currentTimeMillis();
         long currentTimeAfterOneMonth = LocalDateTime.ofInstant(Instant.ofEpochMilli(currentTimeMillis), ZoneOffset.UTC)
@@ -70,30 +71,34 @@ public class VehicleParkingService {
             case 12:
                 switch (parkingType) {
                     case DAY_ONLY:
-                        if(parkingFee != TWO_WHEELER_MONTHLY_DAY_CHARGES){
-                            throw new CustomException("Monthly Parking fee for vehicle is not correct","Please provide the valid parking fee");
+                        if (parkingFee != TWO_WHEELER_MONTHLY_DAY_CHARGES) {
+                            throw new CustomException("Monthly Parking fee for vehicle is not correct",
+                                    "Please provide the valid parking fee");
                         }
                         break;
                     case DAY_NIGHT:
-                        if(parkingFee != TWO_WHEELER_MONTHLY_DAY_NIGHT_CHARGES){
-                            throw new CustomException("Monthly Parking fee for vehicle is not correct","Please provide the valid parking fee");
+                        if (parkingFee != TWO_WHEELER_MONTHLY_DAY_NIGHT_CHARGES) {
+                            throw new CustomException("Monthly Parking fee for vehicle is not correct",
+                                    "Please provide the valid parking fee");
                         }
                         break;
                 }
                 break;
-                case 11:
-                    switch (parkingType) {
-                        case DAY_ONLY:
-                            if(parkingFee != LORRY_TRUCK_TEMPO_CAR_THREE_WHEELER_MONTHLY_DAY_CHARGES){
-                                throw new CustomException("Monthly Parking fee for vehicle is not correct","Please provide the valid parking fee");
-                            }
-                            break;
-                        case DAY_NIGHT:
-                            if(parkingFee != LORRY_TRUCK_TEMPO_CAR_THREE_WHEELER_MONTHLY_DAY_NIGHT_CHARGES){
-                                throw new CustomException("Monthly Parking fee for vehicle is not correct","Please provide the valid parking fee");
-                            }
-                              break;
-                    }
+            case 11:
+                switch (parkingType) {
+                    case DAY_ONLY:
+                        if (parkingFee != LORRY_TRUCK_TEMPO_CAR_THREE_WHEELER_MONTHLY_DAY_CHARGES) {
+                            throw new CustomException("Monthly Parking fee for vehicle is not correct",
+                                    "Please provide the valid parking fee");
+                        }
+                        break;
+                    case DAY_NIGHT:
+                        if (parkingFee != LORRY_TRUCK_TEMPO_CAR_THREE_WHEELER_MONTHLY_DAY_NIGHT_CHARGES) {
+                            throw new CustomException("Monthly Parking fee for vehicle is not correct",
+                                    "Please provide the valid parking fee");
+                        }
+                        break;
+                }
 
         }
         request.setStartDate(currentTimeMillis);
@@ -104,7 +109,7 @@ public class VehicleParkingService {
         request.setUpdatedAt(currentTimeMillis);
         producer.push(DeonarConstant.SAVE_MONTHLY_VEHICLE_PARKING_FEE, request);
 
-      return request;
+        return request;
     }
 
     public List<VehicleParkingFeeResponseDetails> getVehicleMonthlyDetails(VehicleParkedCheckCriteria criteria) {
@@ -114,12 +119,13 @@ public class VehicleParkingService {
         return vehicleParkingRepository.getMonthlyVehicleParkedDetails(criteria);
     }
 
-
     public VehicleParkingFeeResponseDetails getParkingFee(VehicleParkedCheckCriteria criteria) {
 
         VehicleParkingFeeResponseDetails response = new VehicleParkingFeeResponseDetails();
-        List<VehicleParkingFeeResponseDetails> vehicleParkingMonthly = vehicleParkingRepository.getMonthlyVehicleParkedDetails(criteria);
-        if(vehicleParkingMonthly.isEmpty()){}
+        List<VehicleParkingFeeResponseDetails> vehicleParkingMonthly = vehicleParkingRepository
+                .getMonthlyVehicleParkedDetails(criteria);
+        if (vehicleParkingMonthly.isEmpty()) {
+        }
 
         List<VehicleParkedCheckDetails> parkingDetails = vehicleParkingRepository.getVehicleParkedDetails(criteria);
         LocalTime parkedInTime = parkingDetails.getFirst().getParkingTime();
@@ -130,17 +136,19 @@ public class VehicleParkingService {
             parkedOutTime = LocalTime.now();
             parkedOutDate = LocalDate.now();
         }
-            long vehicleId = parkingDetails.getFirst().getVehicleId();
-            if (vehicleId == 11) {
-                parkingDetails.getFirst().setVehicleType(THREE_WHEELER);
-            } else if (vehicleId == 12) {
-                parkingDetails.getFirst().setVehicleType(TWO_WHEELER);
-            }
-            String vehicleType = parkingDetails.getFirst().getVehicleType();
-            double parkingFee = VehicleParkingRepository.calculateParkingFee(parkedInTime, parkedOutTime, parkedIndDate, parkedOutDate, vehicleType);
-            response = VehicleParkingFeeResponseDetails.builder().parkingFee(parkingFee).vehicleNumber(criteria.getVehicleNumber()).vehicleType(vehicleType).build();
+        long vehicleId = parkingDetails.getFirst().getVehicleId();
+        if (vehicleId == 11) {
+            parkingDetails.getFirst().setVehicleType(THREE_WHEELER);
+        } else if (vehicleId == 12) {
+            parkingDetails.getFirst().setVehicleType(TWO_WHEELER);
+        }
+        String vehicleType = parkingDetails.getFirst().getVehicleType();
+        double parkingFee = VehicleParkingRepository.calculateParkingFee(parkedInTime, parkedOutTime, parkedIndDate,
+                parkedOutDate, vehicleType);
+        response = VehicleParkingFeeResponseDetails.builder().parkingFee(parkingFee)
+                .vehicleNumber(criteria.getVehicleNumber()).vehicleType(vehicleType).build();
         // } else {
-        //     response.setParkingFee(0);
+        // response.setParkingFee(0);
         // }
         return response;
     }
@@ -155,7 +163,8 @@ public class VehicleParkingService {
         List<VehicleParkedCheckDetails> parkingDetails = vehicleParkingRepository.getParkedInVehicleDetails();
 
         String vehicleNumber = criteria.getVehicleNumber();
-        boolean isVehicleParked = parkingDetails.stream().anyMatch(details -> details.getVehicleNumber().equals(vehicleNumber));
+        boolean isVehicleParked = parkingDetails.stream()
+                .anyMatch(details -> details.getVehicleNumber().equals(vehicleNumber));
         Long vehicleId = criteria.getVehicleType();
         if (vehicleId == 11) {
             vehicleType = THREE_WHEELER;
@@ -164,13 +173,13 @@ public class VehicleParkingService {
         }
         if (isVehicleParked) {
             washingFee = CHARGES_FOR_WASHING_PRIVATE_MEAT_VAN;
-            response = VehicleWashingFeesResponse.builder().vehicleNumber(criteria.getVehicleNumber()).vehicleType(vehicleType).washingFee(washingFee).build();
+            response = VehicleWashingFeesResponse.builder().vehicleNumber(criteria.getVehicleNumber())
+                    .vehicleType(vehicleType).washingFee(washingFee).build();
         } else {
-            response = VehicleWashingFeesResponse.builder().vehicleNumber(criteria.getVehicleNumber()).vehicleType(vehicleType).washingFee(0).build();
+            response = VehicleWashingFeesResponse.builder().vehicleNumber(criteria.getVehicleNumber())
+                    .vehicleType(vehicleType).washingFee(0).build();
         }
         return response;
     }
-
-
 
 }

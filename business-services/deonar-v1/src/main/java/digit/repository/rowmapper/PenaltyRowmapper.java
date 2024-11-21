@@ -23,10 +23,13 @@ public class PenaltyRowmapper implements ResultSetExtractor<List<PenaltyTypeDeta
         List<PenaltyTypeDetails> penaltyTypeDetailsList = new ArrayList<>();
 
         while (rs.next()) {
+            String unitValue = rs.getString("Unit");
             PenaltyTypeDetails penaltyTypeDetails = PenaltyTypeDetails.builder()
                 .id(rs.getLong("id"))
                 .penaltyType(rs.getString("CategoryPenaltyType"))
-                .perUnit("per unit".equalsIgnoreCase(rs.getString("Unit"))) 
+                .perUnit("per unit".equalsIgnoreCase(unitValue) 
+                    || "per animal".equalsIgnoreCase(unitValue)
+                    || "per vehicle".equalsIgnoreCase(unitValue)) 
                 .feeAmount(rs.getDouble("FeeAmount"))
                 .build();
 

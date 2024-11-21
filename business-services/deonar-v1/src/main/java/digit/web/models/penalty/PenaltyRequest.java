@@ -20,7 +20,7 @@ public class PenaltyRequest {
         @JsonProperty("RequestInfo")
         private RequestInfo requestInfo;
 
-        private Long stakeholderId;
+        private String stakeholderId;
         private Long penaltyId;
         private Integer units;
         private Double amount;

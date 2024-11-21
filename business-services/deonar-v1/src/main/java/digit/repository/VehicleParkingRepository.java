@@ -4,6 +4,8 @@ import digit.repository.querybuilder.VehicleParkingQueryBuilder;
 import digit.repository.rowmapper.ParkedInVehicleRowMapper;
 import digit.repository.rowmapper.VehicleMonthlyFeeRowMapper;
 import digit.repository.rowmapper.VehicleParkingRowMapper;
+import digit.web.models.GetListRequest;
+import digit.web.models.security.SecurityCheckDetails;
 import digit.web.models.security.vehicleparking.VehicleParkedCheckCriteria;
 import digit.web.models.security.vehicleparking.VehicleParkedCheckDetails;
 import digit.web.models.security.vehicleparking.VehicleParkingFeeResponseDetails;
@@ -11,6 +13,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -200,5 +204,12 @@ public class VehicleParkingRepository {
 
         return overnightCharges;
     }
+
+     public Long getParkedInTime(long vehicleType,String vehicleNumber) {
+        String query = " select parkingtime from eg_deonar_vehicle_parking where vehicletype = ? and vehiclenumber = ? and departuretime is null ";
+        log.info("Final query: " + query);
+        return jdbcTemplate.queryForObject(query, Long.class, vehicleType,vehicleNumber );
+    }
+
 
 }

@@ -33,7 +33,6 @@ public class RaisedPenaltyListRowmapper implements ResultSetExtractor<List<Raise
                 .stakeholderName(rs.getString("stakeholdername"))
                 .penaltyType(rs.getString("category") +" - "+ rs.getString("penaltytype"))
                 .build();
-
             penaltyDetailsList.add(penaltyDetails);
         }
 
