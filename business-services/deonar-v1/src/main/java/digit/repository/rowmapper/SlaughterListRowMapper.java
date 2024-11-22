@@ -34,7 +34,7 @@ public class SlaughterListRowMapper implements ResultSetExtractor<List<Slaughter
                         .ddReference(ddReference)
                         .stakeholderId(assigneeId)
                         .shopkeeperName(rs.getString("shopkeeper"))
-                        .licenceNumber(rs.getString("assigneelic"))
+                        .licenceNumber(rs.getString("licence"))
                         .mobileNumber(rs.getString("mobile"))
                         .arrivalId(arrivalId)
                         .animalAssignmentDetailsList(new ArrayList<>()) 
