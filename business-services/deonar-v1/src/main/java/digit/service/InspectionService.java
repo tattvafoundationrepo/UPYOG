@@ -10,11 +10,9 @@ import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-
 
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
@@ -23,7 +21,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-
 @Service
 public class InspectionService {
     @Autowired
@@ -31,8 +28,6 @@ public class InspectionService {
 
     @Autowired
     private Producer producer;
-
-  
 
     public InspectionRequest updateInspectionDetails(InspectionRequest inspectionRequest) {
         if (inspectionRequest == null) {
@@ -45,60 +40,61 @@ public class InspectionService {
         inspection.setUpdatedAt(time);
         inspection.setUpdatedBy(username);
         inspectionRequest.setInspection(inspection);
-        inspectionRequest.getInspectionDetails().setReport(toCustomJson(inspectionRequest.getInspectionDetails())) ;
+        inspectionRequest.getInspectionDetails().setReport(toCustomJson(inspectionRequest.getInspectionDetails()));
         producer.push("update-inspection-details", inspectionRequest);
         return inspectionRequest;
 
     }
 
-        public List<InspectionDetails> getInspectionDetails(InspectionSearchCriteria criteria) throws Exception {
-            List<InspectionDetails> details = new ArrayList<>();
-            Long id = repository.getArrivalId(criteria.getEntryUnitId(), criteria.getInspectionType());
-            if (id != null) {
-               details = repository.getInspectionDetails(criteria.getEntryUnitId(),
-                        criteria.getInspectionType());
-                return details;
-            }
-
-            InspectionRequest request = new InspectionRequest();
-            Long time = System.currentTimeMillis();
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss");
-            String username = criteria.getRequestInfo().getUserInfo().getUserName();
-            Inspection inspection = new Inspection();
-            inspection.setArrivalId(criteria.getEntryUnitId());
-            inspection.setEmployeeId(criteria.getRequestInfo().getUserInfo().getUuid());
-            inspection.setInspectionDate(time);
-            inspection.setInspectionTime(LocalTime.now().format(formatter));
-            inspection.setInspectionUnitId(1);
-            inspection.setCreatedAt(time);
-            inspection.setUpdatedAt(time);
-            inspection.setCreatedBy(username);
-            inspection.setUpdatedBy(username);
-            inspection.setInspectionType(criteria.getInspectionType().intValue());
-            request.setInspection(inspection);
-            producer.push("save-inspection-details", request);
-            
-            List<Map<String, Long>> tokens = repository.getAnimalTypeCounts(criteria.getEntryUnitId());
-
-            for (Map<String, Long> animal : tokens) {
-                InspectionDetails iDetail = new InspectionDetails();
-                String animalType = repository.getAnimalType(animal.get("animalTypeId"));
-                String  result = repository.getInspectionIndicatorsByType(criteria.getInspectionType(),animal.get("animalTypeId"));
-                InspectionRowMapper.mapJsonToInspectionDetails(result, iDetail);
-                iDetail.setArrivalId(criteria.getEntryUnitId());
-                iDetail.setInspectionId(criteria.getInspectionType());
-                iDetail.setAnimalTokenNumber(animal.get("count"));
-                AnimalDetail animalDetail = AnimalDetail.builder()
-                  .animalType(animalType)
-                  .animalTypeId(animal.get("animalTypeId"))
-                  .count(animal.get("count").intValue())
-                  .editable(true)
-                  .build();
-                iDetail.setAnimalDetail(animalDetail); 
-                details.add(iDetail);
-            } 
+    public List<InspectionDetails> getInspectionDetails(InspectionSearchCriteria criteria) throws Exception {
+        List<InspectionDetails> details = new ArrayList<>();
+        Long id = repository.getArrivalId(criteria.getEntryUnitId(), criteria.getInspectionType());
+        if (id != null) {
+            details = repository.getInspectionDetails(criteria.getEntryUnitId(),
+                    criteria.getInspectionType());
             return details;
         }
+
+        InspectionRequest request = new InspectionRequest();
+        Long time = System.currentTimeMillis();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss");
+        String username = criteria.getRequestInfo().getUserInfo().getUserName();
+        Inspection inspection = new Inspection();
+        inspection.setArrivalId(criteria.getEntryUnitId());
+        inspection.setEmployeeId(criteria.getRequestInfo().getUserInfo().getUuid());
+        inspection.setInspectionDate(time);
+        inspection.setInspectionTime(LocalTime.now().format(formatter));
+        inspection.setInspectionUnitId(1);
+        inspection.setCreatedAt(time);
+        inspection.setUpdatedAt(time);
+        inspection.setCreatedBy(username);
+        inspection.setUpdatedBy(username);
+        inspection.setInspectionType(criteria.getInspectionType().intValue());
+        request.setInspection(inspection);
+        producer.push("save-inspection-details", request);
+
+        List<Map<String, Long>> tokens = repository.getAnimalTypeCounts(criteria.getEntryUnitId());
+
+        for (Map<String, Long> animal : tokens) {
+            InspectionDetails iDetail = new InspectionDetails();
+            String animalType = repository.getAnimalType(animal.get("animalTypeId"));
+            String result = repository.getInspectionIndicatorsByType(criteria.getInspectionType(),
+                    animal.get("animalTypeId"));
+            InspectionRowMapper.mapJsonToInspectionDetails(result, iDetail);
+            iDetail.setArrivalId(criteria.getEntryUnitId());
+            iDetail.setInspectionId(criteria.getInspectionType());
+            iDetail.setAnimalTokenNumber(animal.get("count"));
+            AnimalDetail animalDetail = AnimalDetail.builder()
+                    .animalType(animalType)
+                    .animalTypeId(animal.get("animalTypeId"))
+                    .count(animal.get("count").intValue())
+                    .editable(true)
+                    .build();
+            iDetail.setAnimalDetail(animalDetail);
+            details.add(iDetail);
+        }
+        return details;
+    }
 
     public String toCustomJson(InspectionDetails details) {
         ObjectMapper mapper = new ObjectMapper();
@@ -125,19 +121,16 @@ public class InspectionService {
         fieldsToInclude.put("pelvicCavity", details.getPelvicCavity());
         fieldsToInclude.put("specimenCollection", details.getSpecimenCollection());
         fieldsToInclude.put("specialObservation", details.getSpecialObservation());
-    
+
         for (Map.Entry<String, String> entry : fieldsToInclude.entrySet()) {
-            if (entry.getValue() != null) { 
+            if (entry.getValue() != null) {
                 ObjectNode fieldNode = mapper.createObjectNode();
                 fieldNode.put(entry.getKey(), entry.getValue());
                 arrayNode.add(fieldNode);
             }
         }
-    
+
         return arrayNode.toString();
     }
-    
-
-    
 
 }

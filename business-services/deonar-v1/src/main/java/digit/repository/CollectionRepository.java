@@ -15,6 +15,7 @@ import digit.web.models.collection.ParkingFee;
 import digit.web.models.collection.SlaughterFee;
 import digit.web.models.collection.StableFee;
 import digit.web.models.collection.WashFee;
+import digit.web.models.collection.WeighingFee;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
@@ -94,6 +95,17 @@ public class CollectionRepository {
         // Create a new instance of the row mapper with the correct type
         CollectionRowMapper<SlaughterFee> entryfeerowMapper = new CollectionRowMapper<>(SlaughterFee.class);
         return jdbcTemplate.query(query, entryfeerowMapper, preparedStmtList.toArray());
+    }
+
+    public List<WeighingFee> getWeighingCollectionFee(CollectionSearchCriteria criteria) {
+
+        List<Object> preparedStmtList = new ArrayList<>();
+        String query = queryBuilder.getWeighingFee(criteria, preparedStmtList);
+        log.info("Final query: " + query);
+        // Create a new instance of the row mapper with the correct type
+        CollectionRowMapper<WeighingFee> entryfeerowMapper = new CollectionRowMapper<>(WeighingFee.class);
+        return jdbcTemplate.query(query, entryfeerowMapper, preparedStmtList.toArray());
+      
     }
 
    

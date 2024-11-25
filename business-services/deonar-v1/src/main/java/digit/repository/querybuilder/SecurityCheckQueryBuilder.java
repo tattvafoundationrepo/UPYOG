@@ -66,6 +66,10 @@ public class SecurityCheckQueryBuilder {
             select * from eg_deonar_vlistforentryfeecollection
             """;
 
+    private static final String BASE_QUERY_WEIGHING_LIST = """
+            select * from eg_deonar_vlistforweighingfee
+            """;
+
     private void addClauseIfRequired(StringBuilder query, List<Object> preparedStmtList) {
         if (preparedStmtList.isEmpty()) {
             query.append(" WHERE ");
@@ -115,7 +119,7 @@ public class SecurityCheckQueryBuilder {
             return inspectionQuery;
         }
         StringBuilder query = new StringBuilder(BASE_QUERY2);
-        
+
         if (!ObjectUtils.isEmpty(criteria.getForCollection())) {
             if (criteria.getForCollection() == true) {
                 query = new StringBuilder(ENTRY_FEE_COLLECTION_LIST);
@@ -170,8 +174,8 @@ public class SecurityCheckQueryBuilder {
     }
 
     public String getTradingListQuery(GetListRequest request, List<Object> preparedStmtList) {
-        if(!ObjectUtils.isEmpty(request.getForCollection())){
-            if(request.getForCollection() == true){
+        if (!ObjectUtils.isEmpty(request.getForCollection())) {
+            if (request.getForCollection() == true) {
                 return " select * from eg_deonar_vlistfortradingcollection ";
             }
         }
@@ -179,8 +183,8 @@ public class SecurityCheckQueryBuilder {
     }
 
     public String getStablingListQuery(GetListRequest request, List<Object> preparedStmtList) {
-        if(!ObjectUtils.isEmpty(request.getForCollection())){
-            if(request.getForCollection() == true){
+        if (!ObjectUtils.isEmpty(request.getForCollection())) {
+            if (request.getForCollection() == true) {
                 return " select * from eg_deonar_vlistforstablecollectionfee ";
             }
         }
@@ -189,8 +193,8 @@ public class SecurityCheckQueryBuilder {
 
     public String getSlaughterListQuery(ShopkeeperRequest request, List<Object> preparedStmtList) {
 
-        if(!ObjectUtils.isEmpty(request.getForCollection())){
-            if(request.getForCollection() == true){
+        if (!ObjectUtils.isEmpty(request.getForCollection())) {
+            if (request.getForCollection() == true) {
                 return " select * from eg_deonar_vlistforslaughterfeecollection ";
             }
         }
@@ -199,8 +203,8 @@ public class SecurityCheckQueryBuilder {
     }
 
     public String getRemovalListQuery(GetListRequest request, List<Object> preparedStmtList) {
-        if(!ObjectUtils.isEmpty(request.getForCollection())){
-            if(request.getForCollection() == true){
+        if (!ObjectUtils.isEmpty(request.getForCollection())) {
+            if (request.getForCollection() == true) {
                 return " select * from eg_deonar_vlistforremovalfee ";
             }
         }
@@ -213,6 +217,10 @@ public class SecurityCheckQueryBuilder {
 
     public String getListForHelkariQuery(GetListRequest request, List<Object> preparedStmtList) {
         return BASE_QUERY_HELKARI_ASSIGNMENT_LIST;
+    }
+
+    public String getWeighingListQuery(ShopkeeperRequest request, List<Object> preparedStmtList) {
+        return BASE_QUERY_WEIGHING_LIST;
     }
 
 }

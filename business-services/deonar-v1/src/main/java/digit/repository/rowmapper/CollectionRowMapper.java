@@ -13,6 +13,8 @@ import digit.web.models.collection.ParkingFee;
 import digit.web.models.collection.SlaughterFee;
 import digit.web.models.collection.StableFee;
 import digit.web.models.collection.WashFee;
+import digit.web.models.collection.WeighingFee;
+import digit.web.models.collection.WeighingFeeDetails;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -42,6 +44,9 @@ public class CollectionRowMapper<T> implements ResultSetExtractor<List<T>> {
         }
         if (type.equals(SlaughterFee.class)) {
             return (List<T>) extractSlaughterFee(rs);
+        }
+        if (type.equals(WeighingFee.class)) {
+            return (List<T>) extractWeighingFee(rs);
         }
         throw new UnsupportedOperationException("Type " + type.getName() + " is not supported.");
     }
@@ -133,7 +138,7 @@ public class CollectionRowMapper<T> implements ResultSetExtractor<List<T>> {
                         .totalhours(rs.getInt("parking_hours"))
                         .total(rs.getFloat("totalparkingfee"))
                         .build();
-                        parkingFeeMap.put(vehiclenumber, parkingFee);
+                parkingFeeMap.put(vehiclenumber, parkingFee);
             }
         }
         return new ArrayList<>(parkingFeeMap.values());
@@ -153,7 +158,7 @@ public class CollectionRowMapper<T> implements ResultSetExtractor<List<T>> {
                         .vehicletype(rs.getString("vehicletype"))
                         .total(rs.getFloat("totalwashingfee"))
                         .build();
-                        washFeeMap.put(vehiclenumber, washFee);
+                washFeeMap.put(vehiclenumber, washFee);
             }
         }
         return new ArrayList<>(washFeeMap.values());
@@ -193,4 +198,36 @@ public class CollectionRowMapper<T> implements ResultSetExtractor<List<T>> {
         return new ArrayList<>(slaughterFeeMap.values());
     }
 
+    private List<WeighingFee> extractWeighingFee(ResultSet rs) throws SQLException {
+
+        Map<String, WeighingFee> weighingFeeMap = new LinkedHashMap<>();
+        while (rs.next()) {
+            String assigneeid = rs.getString("ddreference");
+            Double total = rs.getDouble("total");
+
+            WeighingFee weighingFee = weighingFeeMap.get(assigneeid);
+
+            if (weighingFee == null) {
+
+                weighingFee = WeighingFee.builder()
+                        .ddreference(assigneeid)
+                        .details(new ArrayList<>())
+                        .total(total)
+                        .build();
+                weighingFeeMap.put(assigneeid, weighingFee);
+            }
+            WeighingFeeDetails details = WeighingFeeDetails.builder()
+                    .animal(rs.getString("animal"))
+                    .unit(rs.getLong("unit"))
+                    .fee(rs.getDouble("fee"))
+                    .subtotal(rs.getDouble("subtotal"))
+                    .skinunit(rs.getLong("skinunit"))
+                    .skinfee(rs.getDouble("skinfee"))
+                    .build();
+
+            weighingFee.getDetails().add(details);
+        }
+        return new ArrayList<>(weighingFeeMap.values());
+
+    }
 }

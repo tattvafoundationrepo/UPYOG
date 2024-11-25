@@ -99,4 +99,12 @@ public class StakeholderRepository {
         return jdbcTemplate.query(query, removalListRowmapper, preparedStmtList.toArray());
     }
 
+    public List<SlaughterList> getWeighingListDetails(ShopkeeperRequest request) {
+ 
+        List<Object> preparedStmtList = new ArrayList<>();
+        String query = securityCheckQueryBuilder.getWeighingListQuery(request, preparedStmtList);
+        log.info("Final query: " + query);
+        return jdbcTemplate.query(query, slaughterListRowMapper, preparedStmtList.toArray());
+    }
+
 }

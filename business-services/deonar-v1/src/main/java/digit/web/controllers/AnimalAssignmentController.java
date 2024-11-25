@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -82,6 +83,21 @@ public class AnimalAssignmentController {
                 .responseInfo(responseInfo).build();
         return new ResponseEntity<>(shopkeeperResponse, HttpStatus.OK);
     }
+
+
+    @PostMapping("/get/weighing/_list")
+ 
+    public ResponseEntity<ShopkeeperResponse> getWeighingList(
+            @ApiParam(value = " list for weighing collection fee ", required = true) @Valid @RequestBody ShopkeeperRequest request) {
+        List<SlaughterList> ShopkeeperDetails = service.getListForWeighing(request);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(),
+                true);
+        ShopkeeperResponse shopkeeperResponse = ShopkeeperResponse.builder().slaughterListDetails(ShopkeeperDetails)
+                .responseInfo(responseInfo).build();
+        return new ResponseEntity<>(shopkeeperResponse, HttpStatus.OK);
+    }
+
+
 
     
     @PostMapping("/get/trading/_list")

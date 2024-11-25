@@ -18,6 +18,7 @@ import digit.web.models.collection.ParkingFee;
 import digit.web.models.collection.SlaughterFee;
 import digit.web.models.collection.StableFee;
 import digit.web.models.collection.WashFee;
+import digit.web.models.collection.WeighingFee;
 
 
 @Service
@@ -121,6 +122,16 @@ public class CollectionService {
             return new ArrayList<>();
         return common;
         
+    }
+
+    public List<WeighingFee> getWeighingFee(RequestInfo requestInfo, CollectionSearchCriteria criteria) {
+
+        List<WeighingFee> common = commonRepository.getWeighingCollectionFee(criteria);
+
+        if (CollectionUtils.isEmpty(common))
+            return new ArrayList<>();
+        return common;
+       
     }
 
     

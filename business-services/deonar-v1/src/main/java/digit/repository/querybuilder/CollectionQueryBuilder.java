@@ -130,4 +130,20 @@ public class CollectionQueryBuilder {
 
     }
 
+    public String getWeighingFee(CollectionSearchCriteria criteria, List<Object> preparedStmtList) {
+
+        final String WEIGHING_FEE_QUERY = """
+            SELECT *
+            FROM eg_deonar_vweighingfee
+            """;
+    StringBuilder query = new StringBuilder(WEIGHING_FEE_QUERY);
+    if (criteria.getSearch() != null) {
+        addClauseIfRequired(query, preparedStmtList);
+        query.append(" ddreference = ? ");
+        preparedStmtList.add(criteria.getSearch());
+    }
+    return query.toString();
+      
+    }
+
 }

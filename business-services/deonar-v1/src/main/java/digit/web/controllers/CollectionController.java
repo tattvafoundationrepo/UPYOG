@@ -28,6 +28,8 @@ import digit.web.models.collection.FeeDetail;
 import digit.web.models.collection.StableFeeResponse;
 import digit.web.models.collection.WashFee;
 import digit.web.models.collection.WashingFeeResponse;
+import digit.web.models.collection.WeighingFee;
+import digit.web.models.collection.WeighingFeeResponse;
 import io.swagger.annotations.ApiParam;
 import jakarta.validation.Valid;
 
@@ -140,6 +142,25 @@ public class CollectionController {
             ResponseInfo responseInfo = responseInfoFactory
                     .createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
             WashingFeeResponse res = WashingFeeResponse.builder()
+                    .details(common)
+                    .responseInfo(responseInfo)
+                    .build();
+            return new ResponseEntity<>(res, HttpStatus.OK);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(ERR_MSG, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @PostMapping("/weighing/_get")
+
+    public ResponseEntity<Object> getWeighingFee(
+            @ApiParam(value = "Get weighing Fee Details", required = true) @Valid @RequestBody CollectionRequest request) {
+        try {
+            List<WeighingFee> common = service.getWeighingFee(request.getRequestInfo(), request.getCriteria());
+            ResponseInfo responseInfo = responseInfoFactory
+                    .createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
+            WeighingFeeResponse res = WeighingFeeResponse.builder()
                     .details(common)
                     .responseInfo(responseInfo)
                     .build();

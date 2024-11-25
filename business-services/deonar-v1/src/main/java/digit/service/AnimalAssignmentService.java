@@ -113,6 +113,13 @@ public class AnimalAssignmentService {
         return removalList;
     }
 
+    public List<SlaughterList> getListForWeighing(ShopkeeperRequest request) {
+
+        List<SlaughterList> details = stakeholderRepository.getWeighingListDetails(request);
+        return details;
+        
+    }
+
    
 
 

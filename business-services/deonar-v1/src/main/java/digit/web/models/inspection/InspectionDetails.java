@@ -90,6 +90,8 @@ public class InspectionDetails {
     private Long animalTypeId;
     private String report;
 
+    private Long animalQuarters;
+
 
 }
 

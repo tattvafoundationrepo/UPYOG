@@ -1,7 +1,5 @@
 package digit.web.controllers;
 
-
-
 import javax.validation.Valid;
 
 import org.egov.common.contract.response.ResponseInfo;
