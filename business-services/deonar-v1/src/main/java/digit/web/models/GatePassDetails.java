@@ -1,5 +1,9 @@
 package digit.web.models;
 
+import java.util.List;
+
+import org.egov.common.contract.models.AuditDetails;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -10,23 +14,23 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class GatePassDetails {
-
-    private Long vehicleType;
+    
     private String vehicleNumber;
     private String receiverName;
     private String receiverContact;
-    private String typeOfAnimal;
-    private Double carcasweight;
-    private Double kenaweight;
-    private String referenceNumber;
     private Long shopkeeper;
-    private Long helkari;
+    private Double total; 
+    private List<AnimalTypeDetails> animalDetails; 
+    private AuditDetails auditDetails; 
+    private String jsonAnimalDetails;
+    private String gatePassReference;
 
-    private Long createdDate;
-
-    private Long lastModifiedDate;
-
-    private Long createdBy;
-    private Long lastModifiedBy;
+    @Data
+    public static class AnimalTypeDetails { 
+        private String ddReference; 
+        private String animalType; 
+        private Integer carcassCount; 
+        private Integer kenaeCount; 
+    }
 
 }

@@ -14,7 +14,6 @@ import digit.util.IdgenUtil;
 import digit.web.models.penalty.PenaltyRequest;
 import digit.web.models.penalty.PenaltyTypeDetails;
 import digit.web.models.penalty.RaisedPenalties;
-import jakarta.validation.Valid;
 
 @Service
 public class PenaltyService {

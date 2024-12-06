@@ -14,9 +14,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class GatePassSearchCriteria {
 
-
-    private Long shopkeeper;
-
-    private Long helkari;
+    private String  licenceNumber;
 
 }

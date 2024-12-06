@@ -128,6 +128,7 @@ public class CollectionQueryBuilder {
         }
         return query.toString();
 
+
     }
 
     public String getWeighingFee(CollectionSearchCriteria criteria, List<Object> preparedStmtList) {

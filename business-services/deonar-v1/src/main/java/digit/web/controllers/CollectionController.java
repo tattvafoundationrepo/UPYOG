@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,13 +17,13 @@ import digit.web.models.collection.CollectFeeRequest;
 import digit.web.models.collection.CollectedFeeResponse;
 import digit.web.models.collection.CollectionRequest;
 import digit.web.models.collection.EntryFee;
-import digit.web.models.collection.StableFee;
+import digit.web.models.collection.EntryFeeResponse;
+import digit.web.models.collection.FeeDetail;
 import digit.web.models.collection.ParkingFee;
 import digit.web.models.collection.ParkingFeeResponse;
 import digit.web.models.collection.SlaughterFee;
 import digit.web.models.collection.SlaughterFeeResponse;
-import digit.web.models.collection.EntryFeeResponse;
-import digit.web.models.collection.FeeDetail;
+import digit.web.models.collection.StableFee;
 import digit.web.models.collection.StableFeeResponse;
 import digit.web.models.collection.WashFee;
 import digit.web.models.collection.WashingFeeResponse;
@@ -153,7 +152,6 @@ public class CollectionController {
     }
 
     @PostMapping("/weighing/_get")
-
     public ResponseEntity<Object> getWeighingFee(
             @ApiParam(value = "Get weighing Fee Details", required = true) @Valid @RequestBody CollectionRequest request) {
         try {

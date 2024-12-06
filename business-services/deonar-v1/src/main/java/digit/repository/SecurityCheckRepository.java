@@ -34,6 +34,6 @@ public class SecurityCheckRepository {
         List<Object> preparedStmtList = new ArrayList<>();
         String query = queryBuilder.getSearchQuery(searchCriteria, preparedStmtList);
         log.info("Executing security check search with query: {}", query);
-        return jdbcTemplate.query(query, preparedStmtList.toArray(), rowMapper);
+        return jdbcTemplate.query(query, rowMapper, preparedStmtList.toArray());
     }
 }

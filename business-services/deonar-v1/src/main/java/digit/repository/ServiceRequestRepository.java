@@ -1,6 +1,5 @@
 package digit.repository;
 
-
 import java.util.Map;
 
 import org.egov.tracer.model.ServiceCallException;
@@ -21,25 +20,23 @@ public class ServiceRequestRepository {
 
     private RestTemplate restTemplate;
 
-
     public ServiceRequestRepository(ObjectMapper mapper, RestTemplate restTemplate) {
         this.mapper = mapper;
         this.restTemplate = restTemplate;
     }
-
 
     public Object fetchResult(StringBuilder uri, Object request) {
         mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
         Object response = null;
         log.info("URI: " + uri.toString());
         try {
-			log.info("Request: " + mapper.writeValueAsString(request));
+            log.info("Request: " + mapper.writeValueAsString(request));
             response = restTemplate.postForObject(uri.toString(), request, Map.class);
-        }catch(HttpClientErrorException e) {
-            log.error("External Service threw an Exception: ",e);
+        } catch (HttpClientErrorException e) {
+            log.error("External Service threw an Exception: ", e);
             throw new ServiceCallException(e.getResponseBodyAsString());
-        }catch(Exception e) {
-            log.error("Exception while fetching from searcher: ",e);
+        } catch (Exception e) {
+            log.error("Exception while fetching from searcher: ", e);
         }
 
         return response;

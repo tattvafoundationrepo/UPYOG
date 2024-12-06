@@ -9,12 +9,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import digit.service.AnimalAssignmentService;
-import digit.service.SecurityCheckService;
 import digit.util.ResponseInfoFactory;
 import digit.web.models.AnimalAssignmentRequest;
 import digit.web.models.GetListRequest;
@@ -34,8 +32,6 @@ public class AnimalAssignmentController {
     @Autowired
     private ResponseInfoFactory responseInfoFactory;
 
-      @Autowired
-    private SecurityCheckService securityCheckService;
 
     @Autowired
     AnimalAssignmentService service;
@@ -51,16 +47,6 @@ public class AnimalAssignmentController {
         }
     }
 
-    // @PostMapping("/remove/animal")
-    // public ResponseEntity<String> removalAnimal(@RequestBody AnimalAssignmentRequest request) {
-    //     try {
-    //         service.saveAnimalRemoval(request);
-    //         return new ResponseEntity<>("Animal removed Successfully", HttpStatus.OK);
-    //     } catch (Exception e) {
-    //         e.printStackTrace();
-    //         return new ResponseEntity<>("removal failed", HttpStatus.INTERNAL_SERVER_ERROR);
-    //     }
-    // }
 
     @PostMapping("/get/shopkeepers")
     public ResponseEntity<ShopkeeperResponse> getShopkeeper(

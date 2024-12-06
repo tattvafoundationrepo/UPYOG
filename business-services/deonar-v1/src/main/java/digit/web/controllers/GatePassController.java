@@ -1,5 +1,7 @@
 package digit.web.controllers;
 
+import java.util.List;
+
 import javax.validation.Valid;
 
 import org.egov.common.contract.response.ResponseInfo;
@@ -7,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -14,8 +17,8 @@ import digit.service.GatePassService;
 import digit.util.ResponseInfoFactory;
 import digit.web.models.GatePassDetails;
 import digit.web.models.GatePassDetailsResponse;
+import digit.web.models.GatePassMapper;
 import digit.web.models.GatePassRequest;
-
 import io.swagger.annotations.ApiParam;
 
 @Controller
@@ -34,11 +37,11 @@ public class GatePassController {
             @ApiParam(value = " Weight lists of slaughter animals ", required = true)
             @Valid @RequestBody GatePassRequest request) {
 
-        GatePassDetails securityDetails = service.getListForGatePass(request.getCriteria());
+        List<GatePassMapper> details = service.getListForGatePass(request.getCriteria());
         ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(),
         true);
         GatePassDetailsResponse response = GatePassDetailsResponse.builder()
-                .details(securityDetails)
+                .details(details)
                 .responseInfo(responseInfo)
                 .build();
 
@@ -53,7 +56,7 @@ public class GatePassController {
             ResponseInfo responseInfo = responseInfoFactory
                     .createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
                     GatePassDetailsResponse response = GatePassDetailsResponse.builder()
-                    .details(common)
+                    .saveDetails(common)
                     .responseInfo(responseInfo)
                     .build();
             return new ResponseEntity<>(response, HttpStatus.OK);

@@ -1,5 +1,7 @@
 package digit.web.models;
 
+import java.util.List;
+
 import org.egov.common.contract.response.ResponseInfo;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -15,8 +17,12 @@ import lombok.NoArgsConstructor;
 public class GatePassDetailsResponse {
    
     @JsonProperty("ResponseInfo")
-    ResponseInfo responseInfo;
+    private ResponseInfo responseInfo;
+    
+    @JsonProperty("gatePassDetails")
+    private  List<GatePassMapper> details;
 
-    GatePassDetails details;
+    @JsonProperty("SavedGatePassDetails")
+    private GatePassDetails saveDetails;
 
 }

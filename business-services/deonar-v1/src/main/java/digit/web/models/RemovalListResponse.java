@@ -6,7 +6,6 @@ import org.egov.common.contract.response.ResponseInfo;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import digit.web.models.security.SecurityCheckDetails;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

@@ -7,17 +7,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import com.fasterxml.jackson.databind.ObjectMapper;
+
 import digit.service.CommonService;
 import digit.util.ResponseInfoFactory;
 import digit.web.models.common.CommonDetails;
 import digit.web.models.common.CommonRequest;
 import digit.web.models.common.CommonResponse;
 import io.swagger.annotations.ApiParam;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
 @jakarta.annotation.Generated(value = "org.egov.codegen.SpringBootCodegen", date = "2024-06-05T23:24:36.608+05:30")
@@ -26,21 +26,13 @@ import jakarta.validation.Valid;
 @RequestMapping("")
 public class CommonApiController {
 
-    private final ObjectMapper objectMapper;
-
-    private final HttpServletRequest request;
-
+   
+    @Autowired
     private CommonService commonService;
     @Autowired
     private ResponseInfoFactory responseInfoFactory;
 
-    @Autowired
-    public CommonApiController(ObjectMapper objectMapper, HttpServletRequest request, CommonService commonService) {
-        this.objectMapper = objectMapper;
-        this.request = request;
-        this.commonService = commonService;
-    }
-
+    
     @PostMapping("/common/_get")
     public ResponseEntity<CommonResponse>registrationSearchPost(
             @ApiParam(value = "Common Details", required = true) 

@@ -1,20 +1,15 @@
 package digit.repository;
 
-import digit.repository.querybuilder.VehicleParkingQueryBuilder;
-import digit.repository.rowmapper.ParkedInVehicleRowMapper;
-import digit.repository.rowmapper.VehicleMonthlyFeeRowMapper;
-import digit.repository.rowmapper.VehicleParkingRowMapper;
-import digit.web.models.GetListRequest;
-import digit.web.models.security.SecurityCheckDetails;
-import digit.web.models.security.vehicleparking.VehicleParkedCheckCriteria;
-import digit.web.models.security.vehicleparking.VehicleParkedCheckDetails;
-import digit.web.models.security.vehicleparking.VehicleParkingFeeResponseDetails;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Repository;
-
-import com.fasterxml.jackson.annotation.JsonProperty;
+import static digit.constants.DeonarConstant.LORRY_TRUCK_TEMPO_CAR_THREE_WHEELER_DAY_RATE;
+import static digit.constants.DeonarConstant.THREE_WHEELER;
+import static digit.constants.DeonarConstant.THREE_WHEELER_OVERNIGHT_AFTER_6AM;
+import static digit.constants.DeonarConstant.THREE_WHEELER_OVERNIGHT_LESS_2H;
+import static digit.constants.DeonarConstant.THREE_WHEELER_OVERNIGHT_MORE_2H;
+import static digit.constants.DeonarConstant.TWO_WHEELER;
+import static digit.constants.DeonarConstant.TWO_WHEELER_DAY_RATE;
+import static digit.constants.DeonarConstant.TWO_WHEELER_OVERNIGHT_AFTER_6AM;
+import static digit.constants.DeonarConstant.TWO_WHEELER_OVERNIGHT_LESS_2H;
+import static digit.constants.DeonarConstant.TWO_WHEELER_OVERNIGHT_MORE_2H;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -22,7 +17,18 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
-import static digit.constants.DeonarConstant.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Repository;
+
+import digit.repository.querybuilder.VehicleParkingQueryBuilder;
+import digit.repository.rowmapper.ParkedInVehicleRowMapper;
+import digit.repository.rowmapper.VehicleMonthlyFeeRowMapper;
+import digit.repository.rowmapper.VehicleParkingRowMapper;
+import digit.web.models.security.vehicleparking.VehicleParkedCheckCriteria;
+import digit.web.models.security.vehicleparking.VehicleParkedCheckDetails;
+import digit.web.models.security.vehicleparking.VehicleParkingFeeResponseDetails;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Repository
@@ -51,7 +57,7 @@ public class VehicleParkingRepository {
         try {
             String query = queryBuilder.getVehicleParkingSearchQuery(criteria, preparedStmtList);
             log.info("Executing parked In vehicle check with query: {}", query);
-            VehicleParkedCheckDetails = jdbcTemplate.query(query, preparedStmtList.toArray(), rowMapper);
+            VehicleParkedCheckDetails =  jdbcTemplate.query(query, rowMapper, preparedStmtList.toArray());
         }catch (Exception e) {
             log.error("Exception occurred while trying to call database to get the parked In vehicle: " + e.getMessage());
             throw  e;
@@ -66,7 +72,7 @@ public class VehicleParkingRepository {
         try {
             String query = queryBuilder.getParkedInVehicleSearchQuery(preparedStmtList);
             log.info("Executing parked vehicle check with query: {}", query);
-            VehicleParkedCheckDetails = jdbcTemplate.query(query, preparedStmtList.toArray(), parkedInVehicleRowMapper);
+            VehicleParkedCheckDetails = jdbcTemplate.query(query, parkedInVehicleRowMapper, preparedStmtList.toArray());
         }catch (Exception e) {
             log.error("Exception occurred while trying to call database to get the parked vehicle: " + e.getMessage());
             throw  e;
@@ -80,7 +86,7 @@ public class VehicleParkingRepository {
         try {
             String query = queryBuilder.getMonthlyVehicleParkingSearchQuery(criteria, preparedStmtList);
             log.info("Executing monthly vehicle parking fee check with query: {}", query);
-            vehicleParkingFeeResponses = jdbcTemplate.query(query, preparedStmtList.toArray(), vehicleMonthlyFeeRowMapper);
+            vehicleParkingFeeResponses = jdbcTemplate.query(query, vehicleMonthlyFeeRowMapper, preparedStmtList.toArray());
         }catch (Exception e) {
             log.error("Exception occurred while trying to call database to get the monthly vehicle parking fee: " + e.getMessage());
             throw  e;

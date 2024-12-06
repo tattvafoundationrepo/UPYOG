@@ -17,31 +17,7 @@ public class CommonQueryBuilder {
 
     private static final String ORDERBY_NAME = " ORDER BY name DESC ";
 
-    private static final String STAKEHOLDER_BASE_QUERY = """
-              SELECT \
-               SK.id, \
-               SK.stakeholdername AS name,\
-               l.licencenumber as licencenumber,\
-               at.id as animalId,\
-               at.name as animalType \
-                FROM \
-               eg_deonar_stakeholder SK \
-            LEFT JOIN \
-            eg_deonar_stakeholder_type_mapping SKTM ON SKTM.stakeholderid = SK.id \
-            LEFT JOIN \
-            eg_deonar_stakeholders_type SKT ON SKT.id = stakeholdertypeid \
-            LEFT JOIN \
-            eg_deonar_stakeholder_licence_mapping sl ON sl.stakeholderid = SK.id \
-            LEFT JOIN \
-            eg_deonar_licence l ON l.id = sl.licenceid \
-            LEFT JOIN \
-            eg_deonar_stakeholder_animal_type_mapping sam ON sam.stakeholdertypeid = SKT.id \
-            LEFT JOIN \
-            eg_deonar_animal_type at ON at.id = sam.animalTypeId \
-            where  lower( SKT.name) = ? \
-            ORDER BY \
-            SK.stakeholdername
-              """;
+
 
     private static final String STAKEHOLDER_VIEW_QUERY = """
             select stakeholdername as name , stakeholderid as id, licencenumber, animalid , animaltype
@@ -107,6 +83,9 @@ public class CommonQueryBuilder {
             case "removal":
                 query.append("eg_deonar_removal_type as tbl");
                 break;
+            case "slaughterunit":
+                query.append("eg_deonar_slaughter_unit as tbl");
+                break;    
             default:
                 query.append("(Select 0 as id, 'No Record found'  as name) as tbl ");
                 break;
@@ -115,12 +94,6 @@ public class CommonQueryBuilder {
         return query.toString();
     }
 
-    private void addClauseIfRequired(StringBuilder query, List<Object> preparedStmtList) {
-        if (preparedStmtList.isEmpty()) {
-            query.append(" WHERE ");
-        } else {
-            query.append(" AND ");
-        }
-    }
+    
 
 }

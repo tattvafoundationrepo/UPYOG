@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 import digit.repository.querybuilder.GatePassQueryBuilder;
 import digit.repository.rowmapper.GatePassRowmapper;
 import digit.web.models.GatePassDetails;
+import digit.web.models.GatePassMapper;
 import digit.web.models.GatePassSearchCriteria;
 
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +30,7 @@ public class GatePassRepository {
      @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    public GatePassDetails getGatePassSlaughterInfo(GatePassSearchCriteria criteria) {
+    public List<GatePassMapper> getGatePassSlaughterInfo(GatePassSearchCriteria criteria) {
 
         List<Object> preparedStmtList = new ArrayList<>();
         String query = builder.getGatePassQuery(criteria, preparedStmtList);

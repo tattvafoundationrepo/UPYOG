@@ -106,7 +106,7 @@ public class VehicleParkingController {
         VehicleParkingFeeResponse response = new VehicleParkingFeeResponse();
 
         try {
-            VehicleParkingFeeRequest request = vehicleParkingService.saveMonthlyParkingFee(vehicleParkingFeeRequest);
+   
             ResponseInfo responseInfo = responseInfoFactory
                     .createResponseInfoFromRequestInfo(vehicleParkingFeeRequest.getRequestInfo(), true);
             response.setResponseInfo(responseInfo);
