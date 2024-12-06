@@ -78,37 +78,22 @@ public class SecurityCheckQueryBuilder {
         }
     }
 
-    private String createQuery(List<String> ids) {
-        StringBuilder builder = new StringBuilder();
-        int length = ids.size();
-        for (int i = 0; i < length; i++) {
-            builder.append(" ?");
-            if (i != length - 1)
-                builder.append(",");
-        }
-        return builder.toString();
-    }
-
-    private void addToPreparedStatement(List<Object> preparedStmtList, List<String> ids) {
-        ids.forEach(preparedStmtList::add);
-    }
+   
 
     public String getSearchQueryForInspection(SecurityCheckCriteria criteria, List<Object> preparedStmtList) {
         StringBuilder query = new StringBuilder();
         // preparedStmtList.add(criteria.getInspectionId());
         if (criteria.getInspectionId() == 1) {
-
-            query.append("SELECT * FROM public.eg_deonar_vmain b\n" + //
-                    "where not  Exists (Select * from public.eg_deonar_vinspection where  b.arrivalid= arrivalid and inspectiontype in (4))");
+            query.append("select * from eg_deonar_vlistforantemortem ");
         }
         if (criteria.getInspectionId() == 2) {
-            query.append(String.format(BASE_QUERY_INSPECTION, " and inspectiontype  in (1,2)  "));
+            query.append("select * from  eg_deonar_vlistforreantemortem ");
         }
         if (criteria.getInspectionId() == 3) {
-            query.append(String.format(BASE_QUERY_INSPECTION, " and  inspectiontype not in (4)  "));
+            query.append("select * from eg_deonar_vlistforpremortem ");
         }
         if (criteria.getInspectionId() == 4) {
-            query.append(String.format(BASE_QUERY_INSPECTION, " and inspectiontype  in (3) "));
+            query.append("select * from eg_deonar_vlistforpostmortem ");
         }
         return query.toString();
     }
