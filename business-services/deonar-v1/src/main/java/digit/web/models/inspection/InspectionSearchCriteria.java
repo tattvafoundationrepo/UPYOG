@@ -21,4 +21,6 @@ public class InspectionSearchCriteria {
     private String entryUnitId;
     private Long inspectionType;
 
+    private Long animalTypeId;
+    private Long token;
 }
