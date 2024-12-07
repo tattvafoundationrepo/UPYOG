@@ -1,8 +1,10 @@
 package digit.repository.querybuilder;
 
+import java.util.List;
+
 import org.springframework.stereotype.Component;
 
-import java.util.List;
+import digit.web.models.inspection.InspectionSearchCriteria;
 
 @Component
 public class InspectionQueryBuilder {
@@ -14,17 +16,27 @@ public class InspectionQueryBuilder {
 
 
 
-    public String getSearchQuery(String arrivalId,Long inspectionType, List<Object> preparedStmtList) {
+    public String getSearchQuery(InspectionSearchCriteria criteria, List<Object> preparedStmtList) {
         StringBuilder query = new StringBuilder(BASE_QUERY2);
-        if (arrivalId!= null) {
+        if (criteria.getEntryUnitId()!= null) {
             addClauseIfRequired(query, preparedStmtList);
             query.append(" arrivalid = ? ");
-            preparedStmtList.add(arrivalId);
+            preparedStmtList.add(criteria.getEntryUnitId());
         }
-		if (inspectionType!= null) {
+		if (criteria.getInspectionType()!= null) {
             addClauseIfRequired(query, preparedStmtList);
             query.append(" inspectiontype = ? ");
-            preparedStmtList.add(inspectionType);
+            preparedStmtList.add(criteria.getInspectionType());
+        }
+        if (criteria.getAnimalTypeId()!= null) {
+            addClauseIfRequired(query, preparedStmtList);
+            query.append(" animaltypeid = ? ");
+            preparedStmtList.add(criteria.getAnimalTypeId());
+        }
+        if (criteria.getToken()!= null) {
+            addClauseIfRequired(query, preparedStmtList);
+            query.append(" tokenno = ? ");
+            preparedStmtList.add(criteria.getToken());
         }
         return query.toString();
     }
