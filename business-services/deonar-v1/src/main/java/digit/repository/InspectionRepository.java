@@ -1,7 +1,5 @@
 package digit.repository;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -10,7 +8,6 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
 import digit.repository.querybuilder.InspectionQueryBuilder;
@@ -78,25 +75,27 @@ public class InspectionRepository {
 
 
     public List<InspectionDetails> getReantemortemInspection(String entryUnitId) {
-
-        String sql = " select distinct arrivalid,animaltypeid,token from eg_deonar_vlistforreantemortem ";
+        String sql = "SELECT DISTINCT animaltypeid, token FROM eg_deonar_vlistforreantemortem WHERE arrivalid = ?";
         List<InspectionDetails> finalList = new ArrayList<>();
-        jdbcTemplate.query(sql, new RowMapper<InspectionSearchCriteria>() {
-        @Override
-        public InspectionSearchCriteria mapRow(ResultSet rs, int rowNum) throws SQLException {
+    
+        jdbcTemplate.query(sql, ps -> ps.setString(1, entryUnitId), (rs, rowNum) -> {
             InspectionSearchCriteria inspection = new InspectionSearchCriteria();
-            inspection.setEntryUnitId(rs.getString("arrivalid"));       
-            inspection.setAnimalTypeId(rs.getLong("animaltypeid")); 
-            inspection.setToken(rs.getLong("token"));   
+            inspection.setEntryUnitId(entryUnitId); 
+            inspection.setAnimalTypeId(rs.getLong("animaltypeid"));
+            inspection.setToken(rs.getLong("token"));
             inspection.setInspectionType(1L);
+    
+    
             List<InspectionDetails> details = getInspectionDetails(inspection);
-            finalList.add(details.getFirst());   
-            return inspection;
-        }
-    });
-
+            if (!details.isEmpty()) {
+                finalList.add(details.get(0));
+            }
+            return null;
+        });
+    
         return finalList;
     }
-
+    
+    
 
 }
