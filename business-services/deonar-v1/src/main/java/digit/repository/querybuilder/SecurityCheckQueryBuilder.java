@@ -1,142 +1,211 @@
-package digit.service;
+package digit.repository.querybuilder;
 
-import digit.kafka.Producer;
-import digit.repository.InspectionRepository;
-import digit.repository.rowmapper.InspectionRowMapper;
-import digit.web.models.inspection.*;
-import digit.web.models.security.AnimalDetail;
-
-import org.egov.tracer.model.CustomException;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import org.springframework.stereotype.Component;
+import org.springframework.util.ObjectUtils;
 
-@Service
-public class InspectionService {
-    @Autowired
-    private InspectionRepository repository;
+import digit.web.models.GetListRequest;
+import digit.web.models.security.SecurityCheckCriteria;
+import digit.web.models.shopkeeper.ShopkeeperRequest;
 
-    @Autowired
-    private Producer producer;
+@Component
+public class SecurityCheckQueryBuilder {
 
-    public InspectionRequest updateInspectionDetails(InspectionRequest inspectionRequest) {
-        if (inspectionRequest == null) {
-            throw new CustomException("INVALID_DATA", "Inspection request data is null or incomplete.");
+    private static final String BASE_QUERY2 = """
+            select   arrivalid ,importpermission  ,stakeholdername ,stakeholderid ,dateofarrival,
+              timeofarrival      ,vehiclenumber      ,mobilenumber      ,email      , stakeholdertypename,
+              permissiondate,licencenumber      ,registrationnumber      , validtodate      ,  animaltype
+             ,animaltypeid ,token,tradable,stable
+              from eg_deonar_vmain
+                                """;
+
+    private static final String BASE_QUERY_INSPECTION = """
+                       SELECT *
+            FROM (
+                SELECT b.*,
+                       ROW_NUMBER() OVER (PARTITION BY b.animaltypeid, b."token", b.arrivalid ORDER BY b.arrivalid) AS rn
+                FROM public.eg_deonar_vmain b
+                WHERE EXISTS (
+                    SELECT *
+                    FROM public.eg_deonar_vinspection vi
+                    WHERE b.animaltypeid = vi.animaltypeid
+                      AND b."token" = vi."tokenno"
+                      AND b.arrivalid = vi.arrivalid
+                      %s
+                      )
+            ) AS subquery
+            WHERE rn = 1;
+                        """;
+
+    private static final String BASE_QUERY_TRADING_LIST = """
+            SELECT * FROM eg_deonar_vtradablelist
+
+            """;
+
+    private static final String BASE_QUERY_STABLING_LIST = """
+            SELECT * FROM eg_deonar_vstablelist
+            """;
+    private static final String BASE_QUERY_SLAUGHTER_LIST = """
+
+             select * from eg_deonar_vslaughterlist
+            """;
+    private static final String BASE_QUERY_DAWANWALA_ASSIGNMENT_LIST = """
+
+             select * from eg_deonar_vlistfordawanwalaassignment
+            """;
+
+    private static final String BASE_QUERY_HELKARI_ASSIGNMENT_LIST = """
+            select * from eg_deonar_vlistforhelkariassignment
+            """;;
+
+    private static final String BASE_QUERY_REMOVAL_LIST = """
+            SELECT * FROM eg_deonar_vremovallist
+            """;
+
+    private static final String ENTRY_FEE_COLLECTION_LIST = """
+            select * from eg_deonar_vlistforentryfeecollection
+            """;
+
+    private static final String BASE_QUERY_WEIGHING_LIST = """
+            select * from eg_deonar_vlistforweighingfee
+            """;
+
+    private void addClauseIfRequired(StringBuilder query, List<Object> preparedStmtList) {
+        if (preparedStmtList.isEmpty()) {
+            query.append(" WHERE ");
+        } else {
+            query.append(" AND ");
         }
-        Long time = System.currentTimeMillis();
-        String username = inspectionRequest.getRequestInfo().getUserInfo().getUserName();
-
-        Inspection inspection = new Inspection();
-        inspection.setUpdatedAt(time);
-        inspection.setUpdatedBy(username);
-        inspectionRequest.setInspection(inspection);
-        inspectionRequest.getInspectionDetails().setReport(toCustomJson(inspectionRequest.getInspectionDetails()));
-        producer.push("update-inspection-details", inspectionRequest);
-        return inspectionRequest;
-
     }
 
-    public List<InspectionDetails> getInspectionDetails(InspectionSearchCriteria criteria) throws Exception {
-        List<InspectionDetails> details = new ArrayList<>();
-        Long id = repository.getArrivalId(criteria.getEntryUnitId(), criteria.getInspectionType());
-        if(criteria.getInspectionType() == 2){
-          details  = repository.getReantemortemInspection(criteria.getEntryUnitId());
-          return details;
+   
+
+    public String getSearchQueryForInspection(SecurityCheckCriteria criteria, List<Object> preparedStmtList) {
+        StringBuilder query = new StringBuilder();
+        // preparedStmtList.add(criteria.getInspectionId());
+        if (criteria.getInspectionId() == 1) {
+            query.append("select * from eg_deonar_vlistforantemortem ");
         }
-
-        if (id != null) {
-            details = repository.getInspectionDetails(criteria);
-            return details;
+        if (criteria.getInspectionId() == 2) {
+            query.append("select * from  eg_deonar_vlistforreantemortem ");
         }
-
-
-
-        InspectionRequest request = new InspectionRequest();
-        Long time = System.currentTimeMillis();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss");
-        String username = criteria.getRequestInfo().getUserInfo().getUserName();
-        Inspection inspection = new Inspection();
-        inspection.setArrivalId(criteria.getEntryUnitId());
-        inspection.setEmployeeId(criteria.getRequestInfo().getUserInfo().getUuid());
-        inspection.setInspectionDate(time);
-        inspection.setInspectionTime(LocalTime.now().format(formatter));
-        inspection.setInspectionUnitId(1);
-        inspection.setCreatedAt(time);
-        inspection.setUpdatedAt(time);
-        inspection.setCreatedBy(username);
-        inspection.setUpdatedBy(username);
-        inspection.setInspectionType(criteria.getInspectionType().intValue());
-        request.setInspection(inspection);
-        producer.push("save-inspection-details", request);
-
-        List<Map<String, Long>> tokens = repository.getAnimalTypeCounts(criteria.getEntryUnitId());
-
-        for (Map<String, Long> animal : tokens) {
-            InspectionDetails iDetail = new InspectionDetails();
-            String animalType = repository.getAnimalType(animal.get("animalTypeId"));
-            String result = repository.getInspectionIndicatorsByType(criteria.getInspectionType(),
-                    animal.get("animalTypeId"));
-            InspectionRowMapper.mapJsonToInspectionDetails(result, iDetail);
-            iDetail.setArrivalId(criteria.getEntryUnitId());
-            iDetail.setInspectionId(criteria.getInspectionType());
-            iDetail.setAnimalTokenNumber(animal.get("count"));
-            AnimalDetail animalDetail = AnimalDetail.builder()
-                    .animalType(animalType)
-                    .animalTypeId(animal.get("animalTypeId"))
-                    .count(animal.get("count").intValue())
-                    .editable(true)
-                    .build();
-            iDetail.setAnimalDetail(animalDetail);
-            details.add(iDetail);
+        if (criteria.getInspectionId() == 3) {
+            query.append("select * from eg_deonar_vlistforpremortem ");
         }
-        return details;
+        if (criteria.getInspectionId() == 4) {
+            query.append("select * from eg_deonar_vlistforpostmortem ");
+        }
+        return query.toString();
     }
 
-    public String toCustomJson(InspectionDetails details) {
-        ObjectMapper mapper = new ObjectMapper();
-        ArrayNode arrayNode = mapper.createArrayNode();
-        Map<String, String> fieldsToInclude = new HashMap<>();
-        fieldsToInclude.put("pulseRate", details.getPulseRate());
-        fieldsToInclude.put("eyes", details.getEyes());
-        fieldsToInclude.put("species", details.getSpecies());
-        fieldsToInclude.put("breed", details.getBreed());
-        fieldsToInclude.put("pregnancy", details.getPregnancy());
-        fieldsToInclude.put("posture", details.getPosture());
-        fieldsToInclude.put("bodyTemp", details.getBodyTemperature());
-        fieldsToInclude.put("bodyColor", details.getBodyColor());
-        fieldsToInclude.put("approxAge", details.getApproximateAge());
-        fieldsToInclude.put("appetite", details.getAppetite());
-        fieldsToInclude.put("gait", details.getGait());
-        fieldsToInclude.put("nostrils", details.getNostrils());
-        fieldsToInclude.put("muzzle", details.getMuzzle());
-        fieldsToInclude.put("sex", details.getSex());
-        fieldsToInclude.put("slaughterReceiptNumber", details.getSlaughterReceiptNumber());
-        fieldsToInclude.put("visibleMucusMembrane", details.getVisibleMucusMembrane());
-        fieldsToInclude.put("thoracicCavity", details.getThoracicCavity());
-        fieldsToInclude.put("abdominalCavity", details.getAbdominalCavity());
-        fieldsToInclude.put("pelvicCavity", details.getPelvicCavity());
-        fieldsToInclude.put("specimenCollection", details.getSpecimenCollection());
-        fieldsToInclude.put("specialObservation", details.getSpecialObservation());
+    public String getSearchQuery(SecurityCheckCriteria criteria, List<Object> preparedStmtList) {
+        if (criteria.getInspectionId() != null) {
+            String inspectionQuery = getSearchQueryForInspection(criteria, preparedStmtList);
+            return inspectionQuery;
+        }
+        StringBuilder query = new StringBuilder(BASE_QUERY2);
 
-        for (Map.Entry<String, String> entry : fieldsToInclude.entrySet()) {
-            if (entry.getValue() != null) {
-                ObjectNode fieldNode = mapper.createObjectNode();
-                fieldNode.put(entry.getKey(), entry.getValue());
-                arrayNode.add(fieldNode);
+        if (!ObjectUtils.isEmpty(criteria.getForCollection())) {
+            if (criteria.getForCollection() == true) {
+                query = new StringBuilder(ENTRY_FEE_COLLECTION_LIST);
+                return query.toString();
             }
         }
+        if (criteria.getArrivalUuid() != null) {
+            addClauseIfRequired(query, preparedStmtList);
+            query.append(" arrivalid = ? ");
+            preparedStmtList.add(criteria.getArrivalUuid());
+        }
 
-        return arrayNode.toString();
+        if (criteria.getImportPermissionNumber() != null) {
+            addClauseIfRequired(query, preparedStmtList);
+            query.append(" importpermission = ? ");
+            preparedStmtList.add(criteria.getImportPermissionNumber());
+        }
+
+        if (criteria.getTraderName() != null) {
+            addClauseIfRequired(query, preparedStmtList);
+            query.append(" stakeholdername = ? ");
+            preparedStmtList.add(criteria.getTraderName());
+        }
+
+        if (criteria.getLicenseNumber() != null) {
+            addClauseIfRequired(query, preparedStmtList);
+            query.append(" licencenumber = ? ");
+            preparedStmtList.add(criteria.getLicenseNumber());
+        }
+
+        if (criteria.getVehicleNumber() != null) {
+            addClauseIfRequired(query, preparedStmtList);
+            query.append(" vehiclenumber = ? ");
+            preparedStmtList.add(criteria.getVehicleNumber());
+        }
+        if (criteria.getTradable() != null) {
+            addClauseIfRequired(query, preparedStmtList);
+            query.append(" tradable = ? ");
+            preparedStmtList.add(criteria.getTradable());
+        }
+        if (criteria.getStable() != null) {
+            addClauseIfRequired(query, preparedStmtList);
+            query.append(" stable = ? ");
+            preparedStmtList.add(criteria.getStable());
+        }
+
+        addClauseIfRequired(query, preparedStmtList);
+        query.append(" token is not null ");
+        query.append(" order by arrivalid ");
+
+        return query.toString();
+    }
+
+    public String getTradingListQuery(GetListRequest request, List<Object> preparedStmtList) {
+        if (!ObjectUtils.isEmpty(request.getForCollection())) {
+            if (request.getForCollection() == true) {
+                return " select * from eg_deonar_vlistfortradingcollection ";
+            }
+        }
+        return BASE_QUERY_TRADING_LIST;
+    }
+
+    public String getStablingListQuery(GetListRequest request, List<Object> preparedStmtList) {
+        if (!ObjectUtils.isEmpty(request.getForCollection())) {
+            if (request.getForCollection() == true) {
+                return " select * from eg_deonar_vlistforstablecollectionfee ";
+            }
+        }
+        return BASE_QUERY_STABLING_LIST;
+    }
+
+    public String getSlaughterListQuery(ShopkeeperRequest request, List<Object> preparedStmtList) {
+
+        if (!ObjectUtils.isEmpty(request.getForCollection())) {
+            if (request.getForCollection() == true) {
+                return " select * from eg_deonar_vlistforslaughterfeecollection ";
+            }
+        }
+        return BASE_QUERY_SLAUGHTER_LIST;
+
+    }
+
+    public String getRemovalListQuery(GetListRequest request, List<Object> preparedStmtList) {
+        if (!ObjectUtils.isEmpty(request.getForCollection())) {
+            if (request.getForCollection() == true) {
+                return " select * from eg_deonar_vlistforremovalfee ";
+            }
+        }
+        return BASE_QUERY_REMOVAL_LIST;
+    }
+
+    public String getListForDawanwalaQuery(GetListRequest request, List<Object> preparedStmtList) {
+        return BASE_QUERY_DAWANWALA_ASSIGNMENT_LIST;
+    }
+
+    public String getListForHelkariQuery(GetListRequest request, List<Object> preparedStmtList) {
+        return BASE_QUERY_HELKARI_ASSIGNMENT_LIST;
+    }
+
+    public String getWeighingListQuery(ShopkeeperRequest request, List<Object> preparedStmtList) {
+        return BASE_QUERY_WEIGHING_LIST;
     }
 
 }
