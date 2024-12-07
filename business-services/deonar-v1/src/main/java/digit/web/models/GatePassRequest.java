@@ -19,9 +19,7 @@ public class GatePassRequest {
     RequestInfo requestInfo;
 
     GatePassSearchCriteria criteria;
-    
-
-    GatePassDetails gatePassDetails ;
+    GatePassDetails gatePassDetails;
 
 }
 

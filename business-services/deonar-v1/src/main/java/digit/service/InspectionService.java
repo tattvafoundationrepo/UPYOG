@@ -49,9 +49,13 @@ public class InspectionService {
     public List<InspectionDetails> getInspectionDetails(InspectionSearchCriteria criteria) throws Exception {
         List<InspectionDetails> details = new ArrayList<>();
         Long id = repository.getArrivalId(criteria.getEntryUnitId(), criteria.getInspectionType());
+        if(criteria.getInspectionType() == 2){
+          details  = repository.getReantemortemInspection(criteria.getEntryUnitId());
+          return details;
+        }
+
         if (id != null) {
-            details = repository.getInspectionDetails(criteria.getEntryUnitId(),
-                    criteria.getInspectionType());
+            details = repository.getInspectionDetails(criteria);
             return details;
         }
 
