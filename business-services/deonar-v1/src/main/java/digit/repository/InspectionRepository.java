@@ -1,28 +1,23 @@
 package digit.repository;
 
-import digit.repository.querybuilder.InspectionQueryBuilder;
-
-import digit.repository.rowmapper.InspectionRowMapper;
-
-import digit.web.models.inspection.InspectionDetails;
-
-import lombok.extern.slf4j.Slf4j;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
-
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
-
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
-
-
-import java.util.ArrayList;
-import java.util.List;
-
-
-import java.util.Map;
-import java.util.HashMap;
+import digit.repository.querybuilder.InspectionQueryBuilder;
+import digit.repository.rowmapper.InspectionRowMapper;
+import digit.web.models.inspection.InspectionDetails;
+import digit.web.models.inspection.InspectionSearchCriteria;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Repository
@@ -39,9 +34,9 @@ public class InspectionRepository {
  
 
 
-    public List<InspectionDetails> getInspectionDetails(String arrivalId, Long inspectionType) {
+    public List<InspectionDetails> getInspectionDetails(InspectionSearchCriteria criteria) {
         List<Object> preparedStmtList = new ArrayList<>();
-        String query = queryBuilder.getSearchQuery(arrivalId, inspectionType, preparedStmtList);
+        String query = queryBuilder.getSearchQuery(criteria, preparedStmtList);
         log.info("Executing security check search with query: {}", query);
         return jdbcTemplate.query(query, rowMapper, preparedStmtList.toArray());
     }
@@ -79,6 +74,28 @@ public class InspectionRepository {
     public  String getAnimalType(Long long1) {
        String sql = "select name from eg_deonar_animal_type where id = ?";
        return jdbcTemplate.queryForObject(sql, String.class, long1);
+    }
+
+
+    public List<InspectionDetails> getReantemortemInspection(String entryUnitId) {
+
+        String sql = " select distinct arrivalid,animaltypeid,token from eg_deonar_vlistforreantemortem ";
+        List<InspectionDetails> finalList = new ArrayList<>();
+        jdbcTemplate.query(sql, new RowMapper<InspectionSearchCriteria>() {
+        @Override
+        public InspectionSearchCriteria mapRow(ResultSet rs, int rowNum) throws SQLException {
+            InspectionSearchCriteria inspection = new InspectionSearchCriteria();
+            inspection.setEntryUnitId(rs.getString("arrivalid"));       
+            inspection.setAnimalTypeId(rs.getLong("animaltypeid")); 
+            inspection.setToken(rs.getLong("token"));   
+            inspection.setInspectionType(1L);
+            List<InspectionDetails> details = getInspectionDetails(inspection);
+            finalList.add(details.getFirst());   
+            return inspection;
+        }
+    });
+
+        return finalList;
     }
 
 
