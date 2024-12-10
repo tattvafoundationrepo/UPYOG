@@ -1,30 +1,46 @@
-import { CardLabel, LabelFieldPair, OTPInput } from "@upyog/digit-ui-react-components";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
+import { CardLabel, LabelFieldPair } from "@upyog/digit-ui-react-components";
 import { useHistory } from "react-router-dom";
 import Timeline from "../components/bmcTimeline";
 import { useTranslation } from "react-i18next";
+import OTPInput from "../components/OTPInput";
 
 const AadhaarVerification = () => {
+  const tenantId = Digit.SessionStorage.get("CITIZEN.COMMON.HOME.CITY")?.code || Digit.ULBService.getCurrentTenantId();
   const [aadhaar, setAadhaar] = useState("");
   const [error, setError] = useState("");
-  const [isAadhaarValid, setIsAadhaarValid] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [existingAadhaarNumber, setExistingAadhaarNumber] = useState(false);
+  const userDetails = Digit.UserService.getUser();
+  const [userDetail, setUserDetail] = useState({});
   const history = useHistory();
   const { t } = useTranslation();
 
-  useEffect(() => {
-    if (aadhaar.length === 12 && /^[0-9]{12}$/.test(aadhaar)) {
-      setIsAadhaarValid(true);
-      setError("");
-    } else {
-      setIsAadhaarValid(false);
-      if (aadhaar.length === 12) {
-        setError(t("Aadhaar number should contain exactly 12 digits"));
+  const userFunction = (data) => {
+    if (data && data.UserDetails && data.UserDetails.length > 0) {
+      setUserDetail(data.UserDetails[0]);
+      const existingAadhaar = data.UserDetails[0].AadharUser?.aadharRef;
+      if (existingAadhaar) {
+        setAadhaar(existingAadhaar);
+        setExistingAadhaarNumber(true);
       } else {
-        setError("");
+        setExistingAadhaarNumber(false);
       }
     }
-  }, [aadhaar, t]);
+  };
+
+  const getUserDetails = { UserSearchCriteria: { Option: "full", TenantID: tenantId, UserID: userDetails?.info?.id } };
+  Digit.Hooks.bmc.useUsersDetails(getUserDetails, { select: userFunction });
+
+  const validateAadhaar = (number) => {
+    if (!number) {
+      return t("Aadhaar number cannot be empty");
+    }
+    if (number.length !== 12 || !/^\d+$/.test(number)) {
+      return t("Aadhaar number should contain exactly 12 digits");
+    }
+    return "";
+  };
 
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -32,14 +48,17 @@ const AadhaarVerification = () => {
     if (isSubmitting) return;
     setIsSubmitting(true);
 
-    if (!aadhaar) {
-      setError(t("Aadhaar number should contain exactly 12 digits"));
-    } else if (isAadhaarValid) {
-      history.push({
-        pathname: "/digit-ui/citizen/bmc/aadhaarForm",
-        state: { aadharRef: aadhaar },
-      });
+    const validationError = validateAadhaar(aadhaar);
+    if (validationError) {
+      setError(validationError);
+      setIsSubmitting(false);
+      return;
     }
+
+    history.push({
+      pathname: "/digit-ui/citizen/bmc/aadhaarForm",
+      state: { aadharRef: aadhaar },
+    });
 
     setIsSubmitting(false);
   };
@@ -60,12 +79,12 @@ const AadhaarVerification = () => {
                 <div className="bmc-title" style={{ textAlign: "center" }}>
                   {t("BMC_AADHAAR_VERIFICATION")}
                 </div>
-                <LabelFieldPair>
-                  <CardLabel className="aadhaar-label">{t("BMC_AADHAAR_LABEL")}</CardLabel>
-                  <div className="aadhaar-container" style={{ width: "580px" }}>
-                    <OTPInput length={12} value={aadhaar} onChange={handleAadhaarChange} />
-                  </div>
-                </LabelFieldPair>
+                <div className="aadhaar-container">
+                  <LabelFieldPair>
+                    <CardLabel>{t("BMC_AADHAR_NUMBER")}</CardLabel>
+                    <OTPInput length={12} value={aadhaar} onChange={handleAadhaarChange} disabled={existingAadhaarNumber} />
+                  </LabelFieldPair>
+                </div>
                 {error && <div style={{ textAlign: "center", color: "red" }}>{error}</div>}
                 <div style={{ textAlign: "center" }}>
                   <button

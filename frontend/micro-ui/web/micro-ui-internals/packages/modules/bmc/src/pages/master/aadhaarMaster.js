@@ -66,7 +66,6 @@ export const wardMasterPage = (_props) => {
 
   const onSubmit = (data) => {
     setOwner(data);
-    console.log(data);
   };
 
   return (
@@ -188,7 +187,6 @@ export const electoralMasterPage = (_props) => {
 
   const onSubmit = (data) => {
     setOwner(data);
-    console.log(data);
   };
 
   return (
@@ -310,7 +308,6 @@ export const religionMasterPage = (_props) => {
 
   const onSubmit = (data) => {
     setOwner(data);
-    console.log(data);
   };
 
   return (
@@ -406,7 +403,6 @@ export const casteCategoryMasterPage = (_props) => {
 
   const onSubmit = (data) => {
     setOwner(data);
-    console.log(data);
   };
 
   return (
@@ -502,7 +498,6 @@ export const bankMasterPage = (_props) => {
 
   const onSubmit = (data) => {
     setOwner(data);
-    console.log(data);
   };
 
   return (
@@ -625,7 +620,6 @@ export const sectorMasterPage = (_props) => {
 
   const onSubmit = (data) => {
     setOwner(data);
-    console.log(data);
   };
   return (
     <React.Fragment>
@@ -720,7 +714,6 @@ export const qualificationMasterPage = (_props) => {
 
   const onSubmit = (data) => {
     setOwner(data);
-    console.log(data);
   };
 
   return (
@@ -816,7 +809,6 @@ export const courseMasterPage = (_props) => {
 
   const onSubmit = (data) => {
     setOwner(data);
-    console.log(data);
   };
 
   return (

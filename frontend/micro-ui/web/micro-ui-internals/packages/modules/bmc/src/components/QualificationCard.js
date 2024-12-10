@@ -3,20 +3,35 @@ import React, { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import dropdownOptions from "../pagecomponents/dropdownOptions.json";
+import { useMemo } from "react";
+import CustomTable from './CustomTable';
+import CustomModal from './CustomModal'
+import { CardLabel, LabelFieldPair } from "@upyog/digit-ui-react-components";
+import TableCard from "@tattvafoundation/digit-ui-module-deonar/src/pages/employee/commonFormFields/tableCard";
 
-const QualificationCard = ({ tenantId, onUpdate, initialRows = [], AddOption = true, AllowRemove = true, ...props }) => {
+const QualificationCard = ({ tenantId, onUpdate, initialRows = [], AddOption = true, AllowRemove = true, AllowEdit = true }) => {
   const { t } = useTranslation();
 
-  const initialDefaultValues = {
-    qualification: null,
-    yearOfPassing: null,
-    percentage: 0,
-    board: null,
-  };
+  const initialDefaultValues = useMemo(() => {
+    return {
+      qualification: null,
+      yearOfPassing: null,
+      percentage: null,
+      board: null,
+    };
+  }, []);
+  const userDetails = Digit.UserService.getUser();
+  const [userDetail, setUserDetail] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isDisabled, setIsDisabled] = useState(false)
+  const [documents, setDocuments] = useState([])
+  const [qualifications, setQualifications] = useState([]);
+  const [isEditing, setIsEditing] = useState(false); // To track edit mode
+  const [selectedRow, setSelectedRow] = useState(null);
+  const [isMobileView, setIsMobileView] = useState(window.innerWidth < 769);
 
   const processQualificationData = (items, headerLocale) => {
-    if (!Array.isArray(items)) return null;
-
+    if (items.length === 0) return [];
     return items
       .map((item) => {
         if (typeof item === "object" && item.qualificationId && item.qualification) {
@@ -31,22 +46,22 @@ const QualificationCard = ({ tenantId, onUpdate, initialRows = [], AddOption = t
             board: { label: item.board, value: item.board },
           };
         }
-        return null; // Handle cases where item is neither a string nor an object with id and name
+        return null;
       })
-      .filter((item) => item !== null); // Filter out null values in case of invalid items
+      .filter((item) => item !== null);
   };
 
-  const headerLocale = Digit.Utils.locale.getTransformedLocale(tenantId);
-  const [qualifications, setQualifications] = useState([]);
   const processCommonData = (data, headerLocale) => {
     return (
       data?.CommonDetails?.map((item) => ({
         id: item.id,
-        name: item.name,
+        qualification: item.name,
         i18nKey: `${headerLocale}_ADMIN_${item.name}`,
       })) || []
     );
   };
+
+  const headerLocale = Digit.Utils.locale.getTransformedLocale(tenantId);
 
   const qualificationFunction = (data) => {
     const qualificationData = processCommonData(data, headerLocale);
@@ -56,6 +71,7 @@ const QualificationCard = ({ tenantId, onUpdate, initialRows = [], AddOption = t
 
   const getQualification = { CommonSearchCriteria: { Option: "qualification" } };
   Digit.Hooks.bmc.useCommonGet(getQualification, { select: qualificationFunction });
+
   const {
     control,
     handleSubmit,
@@ -65,191 +81,431 @@ const QualificationCard = ({ tenantId, onUpdate, initialRows = [], AddOption = t
   } = useForm({
     defaultValues: initialDefaultValues,
   });
-  const [rows, setRows] = useState([]);
 
+  const [rows, setRows] = useState([]);
   useEffect(() => {
     const processedRows = processQualificationData(initialRows, headerLocale);
-    setRows(processedRows);
-  }, [initialRows, headerLocale]);
-
-  // const years = Array.from({ length: new Date().getFullYear() - 1989 }, (v, k) => ({
-  //   label: `${1990 + k}`,
-  //   value: 1990 + k,
-  // }));
-
-  const dynamicStartYear = new Date().getFullYear() - 100;
+    if (!processedRows || processedRows.length === 0) {
+      //setRows([initialDefaultValues]); // Ensure at least one row is available
+    } else {
+      setRows(processedRows);
+    }
+  }, [initialRows, headerLocale, initialDefaultValues]);
+  const dynamicStartYear = new Date().getFullYear() - 49;
   const currentYear = new Date().getFullYear();
 
   const years = Array.from({ length: currentYear - dynamicStartYear + 1 }, (v, k) => ({
     label: `${dynamicStartYear + k}`,
     value: dynamicStartYear + k,
   }));
-
+  const saveQualifications = Digit.Hooks.bmc.useSaveQualification()
   const addRow = () => {
-    const formData = getValues();
-    const updatedRows = [
-      ...rows,
-      {
-        qualification: formData.qualification,
-        yearOfPassing: formData.yearOfPassing,
-        percentage: formData.percentage,
-        board: formData.board,
+    const formData = getValues(); // Get form data
+    const isDuplicate = rows.some((row) => row.qualification.qualification === formData.qualification.qualification);
+  
+    if (isDuplicate) {
+      alert(t("Qualification already exists. Please select a different qualification."));
+      return; // Stop further processing if duplicate is found
+    }
+
+    // Construct the new row with the required structure
+    const newRow = {
+      updatedQualifications: [
+        {
+          qualification: formData.qualification || "",
+          yearOfPassing: formData.yearOfPassing || "",
+          board: formData.board || "",
+          percentage: formData.percentage || "",
+        },
+      ]
+    };
+
+    // Save the document data (API call)
+    saveQualifications.mutate(newRow, {
+      onSuccess: (response) => {
+
+        // Update the rows state with the new data
+        setRows((prevRows) => [
+          ...prevRows,
+          ...newRow.updatedQualifications.map((doc) => ({
+            qualification: doc.qualification,
+            yearOfPassing: doc.yearOfPassing,
+            board: doc.board,
+            percentage: doc.percentage,
+          })),
+        ]);
+
+        // Close the modal
+        toggleModal();
+
+        // Reset form to default values
+        reset(initialDefaultValues);
+
+        // Call onUpdate callback if provided
+        if (onUpdate) {
+          onUpdate([
+            ...rows,
+            ...newRow.updatedQualifications.map((doc) => ({
+              qualification: doc.qualification,
+              yearOfPassing: doc.yearOfPassing,
+              board: doc.board,
+              percentage: doc.percentage,
+            })),
+          ]);
+        }
       },
-    ];
-    setRows(updatedRows);
-    // reset(initialDefaultValues);
-    onUpdate(updatedRows); // Call the callback function to update the parent component
+      onError: (error) => {
+        console.error("Failed to save document:", error);
+      },
+    });
   };
 
-  const removeRow = (index) => {
-    const updatedRows = rows.filter((row, i) => i !== index);
-    setRows(updatedRows);
-    onUpdate(updatedRows); // Call the callback function to update the parent component
+  const removeRows = Digit.Hooks.bmc.useRemoveDocuments()
+
+  const removeQualificationRow = (id) => {
+    // Find the document by id
+    const QualificationToRemove = rows.find((item) => item.qualification.id === id);
+
+    if (!QualificationToRemove) {
+      console.error("No matching qualification found with the given id:", id);
+      return;
+    }
+
+    const payload = {
+      removalcriteria: {
+        id: QualificationToRemove.qualification.id,
+        option: 'qualification',
+      },
+    };
+
+    // Call remove API
+    removeRows.mutate(payload, {
+      onSuccess: () => {
+        // Remove the document from rows state
+        setRows((prevRows) => prevRows.filter((row) => row.qualification.id !== id));
+      },
+      onError: (error) => {
+        console.error("Failed to delete document row:", error);
+      },
+    });
   };
+
+
+
+  const userFunction = (data) => {
+    if (data && data.UserDetails && data.UserDetails.length > 0) {
+      setUserDetail(data.UserDetails[0]);
+    }
+  };
+
+  const getUserDetails = { UserSearchCriteria: { Option: "full", TenantID: tenantId, UserID: userDetails?.info?.id } };
+  Digit.Hooks.bmc.useUsersDetails(getUserDetails, { select: userFunction });
+
+
+  const visibleColumns = (handleOnClick) => [
+    {
+      Header: t("QUALIFICATION"),
+      accessor: "qualification.i18nKey",Cell: ({ value }) => t(value) || t("N/A"),
+      sortable: true,
+      Cell: ({ row }) => (
+        <span
+          onClick={AllowEdit ? () => handleOnClick(row.original.qualification.qualification) : null}
+          style={{ cursor: AllowEdit ? "pointer" : "default", color: AllowEdit ? "red" : "black" }}
+        >
+          {row.original.qualification.qualification}
+        </span>
+      ),
+      isVisible: true,
+    },
+    { Header: t("BMC_YEAR_OF_PASSING"), accessor: "yearOfPassing.value" },
+    { Header: t("BMC_BOARD"), accessor: "board.value" },
+    { Header: t("BMC_PERCENTAGE"), accessor: "percentage",Cell: ({ value }) => t(value)+'%'},
+    {
+      Header: t("Actions"),
+      accessor: "action",
+      Cell: ({ row }) => (
+        <span
+          onClick={AllowRemove ? () => removeQualificationRow(row.original.qualification.id) : null}
+          style={{
+            cursor: AllowRemove ? "pointer" : "not-allowed",
+            color: AllowRemove ? "blue" : "gray",
+          }}
+        >
+          <RemoveIcon />
+        </span>
+      ),
+    },
+  ];
+
+  const fields = [
+    {
+      key: "qualification.i18nKey",
+      label: "QUALIFICATION",
+      display: (data) => data.qualification.qualification || "N/A", // Safely access nested value
+    },
+    {
+      key: "yearOfPassing.value",
+      label: "BMC_YEAR_OF_PASSING",
+    },
+    {
+      key: "percentage",
+      label: "BMC_PERCENTAGE",
+    },
+    {
+      key: "action",
+      label: "Actions",
+      display: (data) => (
+        <button
+          onClick={() => removeQualificationRow(data?.qualification?.id)}
+          style={{
+            cursor: "pointer",
+            color: "white",
+            backgroundColor: "red",
+            border: "none",
+            borderRadius: "4px",
+            padding: "4px 8px",
+            fontSize: "14px",
+          }}
+        >
+          Delete
+        </button>
+      ),
+    },
+  ];
+  const handleAddEmployee = () => {
+    setIsModalOpen(!isModalOpen);
+  };
+  const myConfig = {
+    elements: [
+      {
+        label: { heading: t("BMC_ADD_QUALIFICATION"), cancel: "Cancel", submit: "Submit" },
+        type: "p",
+        text: t("BMC_ADD_QUALIFICATION"),
+        style: { textDecoration: "underline", cursor: "pointer" },
+        onClick: "onAddDocumentClick",
+      },
+      {
+        label: { heading: "Add Document Number", cancel: "Cancel", submit: "Submit" },
+      },
+    ],
+  };
+  const toggleModal = () => setIsModalOpen(!isModalOpen);
+
+
+  const documentFunction = (data) => {
+    const documentsData = processCommonData(data, headerLocale);
+    setDocuments(documentsData);
+    return { documentsData };
+  };
+  const getDocuments = { CommonSearchCriteria: { Option: "qualification" } };
+  Digit.Hooks.bmc.useCommonGet(getDocuments, { select: documentFunction });
+  const handleOnClick = (rowDocument) => {
+    const rowToEdit = rows.find((row) => row.qualification.qualification === rowDocument);
+    if (rowToEdit) {
+      setSelectedRow(rowToEdit);
+      setIsEditing(true);
+      reset({
+        qualification: rowToEdit.qualification, // Populate modal fields
+        yearOfPassing: rowToEdit.yearOfPassing,
+        board: rowToEdit.board,
+        percentage: rowToEdit.percentage,
+      });
+      toggleModal(); // Open modal
+    }
+  };
+  const updateRow = () => {
+    const formData = getValues(); // Get updated form data
+    setRows((prevRows) =>
+      prevRows.map((row) =>
+        row.qualification.value === selectedRow.qualification.value
+          ? {
+            ...row,
+            qualification: formData.qualification || "",
+            yearOfPassing: formData.yearOfPassing || "",
+            board: formData.board || "",
+            percentage: formData.percentage || "",
+          }
+          : row
+      )
+    );
+    if (onUpdate) {
+      onUpdate(rows);
+    }
+    toggleModal(); // Close modal
+    setIsEditing(false); // Reset edit mode
+    reset(initialDefaultValues); // Reset form
+  };
+
+  const handleUUIDClick = (entryUnitId) => {
+    setIsModalOpen(!isModalOpen);
+  };
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobileView(window.innerWidth < 769);
+    };
+    window.addEventListener("resize", handleResize);
+    handleResize();
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
 
   return (
     <React.Fragment>
       <div className="bmc-row-card-header">
-        <div className="bmc-card-row">
-          <div className="bmc-title">{t("QUALIFICATION")}</div>
-          <div className="bmc-table-container" style={{ padding: "1rem" }}>
-            <form onSubmit={handleSubmit(addRow)}>
-              <table className="bmc-hover-table">
-                <thead>
-                  <tr>
-                    <th scope="col">Qualification</th>
-                    <th scope="col">Year of Passing</th>
-                    <th scope="col">Percentage</th>
-                    <th scope="col">Board</th>
-                    {AllowRemove && <th scope="col"></th>}
-                  </tr>
-                </thead>
-                <tbody>
-                  {AddOption && (
-                    <tr>
-                      <td data-label="Qualification" style={{ textAlign: "left" }}>
-                        <Controller
-                          control={control}
-                          name="qualification"
-                          rules={{ required: t("CORE_COMMON_REQUIRED_ERRMSG") }}
-                          render={(props) => (
-                            <div>
-                              <Dropdown
-                                placeholder="SELECT THE EDUCATION QUALIFICATION"
-                                selected={props.value}
-                                select={(qualification) => props.onChange(qualification)}
-                                option={qualifications}
-                                optionKey="i18nKey"
-                                t={t}
-                                isMandatory={true}
-                                className="employee-select-wrap bmc-form-field"
-                              />
-                              {errors.qualification && <span style={{ color: "red" }}>{errors.qualification.message}</span>}
-                            </div>
-                          )}
-                        />
-                      </td>
-                      <td data-label="Year of Passing" style={{ textAlign: "left" }}>
-                        <Controller
-                          control={control}
-                          name="yearOfPassing"
-                          rules={{ required: t("CORE_COMMON_REQUIRED_ERRMSG") }}
-                          render={(props) => (
-                            <div>
-                              <Dropdown
-                                placeholder="SELECT YEAR OF PASSING"
-                                selected={props.value}
-                                select={(year) => props.onChange(year)}
-                                option={years}
-                                optionKey="value"
-                                t={t}
-                                isMandatory={true}
-                                className="employee-select-wrap bmc-form-field"
-                              />
-                              {errors.yearOfPassing && <span style={{ color: "red" }}>{errors.yearOfPassing.message}</span>}
-                            </div>
-                          )}
-                        />
-                      </td>
-                      <td data-label="Percentage" style={{ textAlign: "left" }}>
-                        <Controller
-                          control={control}
-                          name="percentage"
-                          rules={{
-                            required: t("CORE_COMMON_REQUIRED_ERRMSG"),
-                            min: {
-                              value: 0,
-                              message: t("PERCENTAGE MUST BE AT LEAST 0"),
-                            },
-                            max: {
-                              value: 100,
-                              message: t("PERCENTAGE MUST BE AT MOST 100"),
-                            },
-                          }}
-                          render={(props) => (
-                            <div>
-                              <TextInput
-                                name="percentage"
-                                value={props.value}
-                                onChange={props.onChange}
-                                placeholder="Percentage"
-                                type="number"
-                                optionKey="value"
-                              />
-                              {errors.percentage && <span style={{ color: "red" }}>{errors.percentage.message}</span>}
-                            </div>
-                          )}
-                        />
-                      </td>
-                      <td data-label="Board" style={{ textAlign: "left" }}>
-                        <Controller
-                          control={control}
-                          name="board"
-                          rules={{ required: t("CORE_COMMON_REQUIRED_ERRMSG") }}
-                          render={(props) => (
-                            <div>
-                              <Dropdown
-                                placeholder="SELECT BOARD"
-                                selected={props.value}
-                                select={(board) => props.onChange(board)}
-                                option={dropdownOptions.board}
-                                optionKey="value"
-                                t={t}
-                                isMandatory={true}
-                              />
-                              {errors.board && <span style={{ color: "red" }}>{errors.board.message}</span>}
-                            </div>
-                          )}
-                        />
-                      </td>
-                      <td data-label="Add Row">
-                        <button type="submit">
-                          <AddIcon className="bmc-add-icon" />
-                        </button>
-                      </td>
-                    </tr>
-                  )}
 
-                  {rows.map((row, index) => (
-                    <tr key={index}>
-                      <td>{row.qualification ? row.qualification.i18nKey : "-"}</td>
-                      <td>{row.yearOfPassing ? row.yearOfPassing.label : "-"}</td>
-                      <td>{row.percentage}</td>
-                      <td>{row.board ? row.board.label : "-"}</td>
-                      {AllowRemove && (
-                        <td data-label="Remove Row">
-                          <button type="button" onClick={() => removeRow(index)}>
-                            <RemoveIcon className="bmc-remove-icon" />
-                          </button>
-                        </td>
-                      )}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </form>
+        <div className="bmc-title">{t("BMC_QUALIFICATION_DETAILS")}</div>
+        {isMobileView && rows.map((data, index) => <TableCard data={data} key={index} fields={fields} onUUIDClick={handleUUIDClick} />)}
+        {!isMobileView && (
+        <CustomTable
+          t={t}
+          columns={visibleColumns(handleOnClick)}
+          data={rows}
+          manualPagination={false}
+          onAddEmployeeClick={handleAddEmployee}
+          config={myConfig}
+          tableClassName={"ebe-custom-scroll"}
+          showSearch={AllowEdit ? true : false}
+          showText={AllowEdit ? true : false}
+        />
+        )}
+        <CustomModal
+          isOpen={isModalOpen}
+          onClose={() => {
+            toggleModal();
+            setIsEditing(false); // Reset edit mode on close
+            reset(initialDefaultValues); // Reset form values
+          }}
+          title={<h1 className="heading-m">{isEditing ? t("Edit Qualification") : t("Add Qualification")}</h1>}
+          actionCancelLabel={t("Cancel")}
+          actionCancelOnSubmit={() => {
+            toggleModal();
+            setIsEditing(false); // Reset edit mode on cancel
+            reset(initialDefaultValues); // Reset form values
+          }}
+          actionSaveLabel={t(isEditing ? "Update" : "Submit")}
+          actionSaveOnSubmit={handleSubmit(isEditing ? updateRow : addRow)}
+          formId="modal-action"
+        >
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }} className="bmc-col11-card">
+
+
+            <div style={{ width: '300px' }}>
+              <LabelFieldPair>
+                <CardLabel className="bmc-label">
+                  {t("QUALIFICATION")}
+                  {errors.qualification && <sup style={{ color: "red", fontSize: "x-small" }}>{errors.qualification.message}</sup>}
+                </CardLabel>
+                <Controller
+                  control={control}
+                  name="qualification"
+                  rules={{ required: t("CORE_COMMON_REQUIRED_ERRMSG") }}
+                  render={(props) => (
+                    <div>
+                      <Dropdown
+                        placeholder={t("SELECT THE EDUCATION QUALIFICATION")}
+                        selected={props.value}
+                        select={(qualification) => props.onChange(qualification)}
+                        option={qualifications}
+                        optionKey="i18nKey"
+                        t={t}
+                        className="employee-select-wrap bmc-form-field"
+                      />
+                    </div>
+                  )}
+                />
+              </LabelFieldPair>
+            </div>
+            <div style={{ width: "300px" }}>
+              <LabelFieldPair>
+                <CardLabel className="bmc-label">
+                  {t("BMC_YEAR_OF_PASSING")}
+                  {errors.yearOfPassing && <sup style={{ color: "red", fontSize: "x-small" }}>{errors.yearOfPassing.message}</sup>}
+                </CardLabel>
+                <Controller
+                  control={control}
+                  name="yearOfPassing"
+                  rules={{ required: t("CORE_COMMON_REQUIRED_ERRMSG") }}
+                  render={(props) => (
+                    <div>
+                      <Dropdown
+                        placeholder={t("BMC_YEAR_OF_PASSING")}
+                        selected={props.value}
+                        select={(year) => props.onChange(year)}
+                        option={years}
+                        optionKey="value"
+                        t={t}
+                        className="employee-select-wrap bmc-form-field"
+                      />
+                    </div>
+                  )}
+                />
+              </LabelFieldPair>
+            </div>
+            <div style={{ width: "300px" }}>
+              <LabelFieldPair>
+                <CardLabel className="bmc-label">
+                  {t("BMC_BOARD")}
+                  {errors.board && <sup style={{ color: "red", fontSize: "x-small" }}>{errors.board.message}</sup>}
+                </CardLabel>
+                <Controller
+                  control={control}
+                  name="board"
+                  rules={{ required: t("CORE_COMMON_REQUIRED_ERRMSG") }}
+                  render={(props) => (
+                    <div>
+                      <Dropdown
+                        placeholder={t("SELECT BOARD")}
+                        selected={props.value}
+                        select={(board) => props.onChange(board)}
+                        option={dropdownOptions.board}
+                        optionKey="value"
+                        t={t}
+                        className="employee-select-wrap bmc-form-field"
+                      />
+                    </div>
+                  )}
+                />
+              </LabelFieldPair>
+            </div>
+            <div style={{ width: "300px" }}>
+              <LabelFieldPair>
+                <CardLabel className="bmc-label">
+                  {t("BMC_PERCENTAGE")}
+                  {errors.percentage && <sup style={{ color: "red", fontSize: "x-small" }}>{errors.percentage.message}</sup>}
+                </CardLabel>
+                <Controller
+                  control={control}
+                  name="percentage"
+                  rules={{
+                    required: t("CORE_COMMON_REQUIRED_ERRMSG"),
+                    min: {
+                      value: 0,
+                      message: t("PERCENTAGE MUST BE AT LEAST 0"),
+                    },
+                    max: {
+                      value: 100,
+                      message: t("PERCENTAGE MUST BE AT MOST 100"),
+                    },
+                  }}
+                  render={(props) => (
+                    <div>
+                      <TextInput
+                        placeholder={t("BMC_PERCENTAGE")}
+                        value={props.value}
+                        onChange={props.onChange}
+                        type={"number"}
+                        onBlur={props.onBlur}
+                        t={t}
+                      />
+                    </div>
+                  )}
+                />
+              </LabelFieldPair>
+            </div>
           </div>
-        </div>
+        </CustomModal>
       </div>
     </React.Fragment>
   );

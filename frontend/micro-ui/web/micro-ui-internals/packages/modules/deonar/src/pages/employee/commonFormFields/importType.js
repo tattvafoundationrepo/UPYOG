@@ -3,30 +3,26 @@ import { useTranslation } from "react-i18next";
 import { CardLabel, Dropdown, LabelFieldPair } from "@upyog/digit-ui-react-components";
 import { Controller, useForm } from "react-hook-form";
 import { importTypeOptions } from "../../../constants/dummyData";
+import useDeonarCommon from "../../../../../../libraries/src/hooks/deonar/useCommonDeonar";
 
-const ImportTypeField = ({ control, setData, data }) => {
+const ImportTypeField = ({ control, setData, data, options }) => {
   const { t } = useTranslation();
   const [formField, setFormField] = useState("");
   const [error, setError] = useState("");
-  const [options, setOptions] = useState([]);
 
   useEffect(() => {
     if (formField.length === 0) {
-      setError("REQUIRED_FIELD");
+      setError(t("CORE_COMMON_REQUIRED_ERRMSG"));
     }
     else {
       setError("");
     }
   }, [formField]);
 
-  useEffect(() => {
-    setOptions(importTypeOptions);
-  }, []);
-
   return (
     <div className="bmc-col3-card">
         <LabelFieldPair>
-            <CardLabel className="bmc-label">{t("DEONAR_IMPORT_TYPE")}</CardLabel>
+            <CardLabel className="bmc-label">{t("DEONAR_IMPORT_TYPE")} &nbsp;{error && <sup style={{ color: "red", fontSize: "x-small" }}>{error}</sup>}</CardLabel>
             <Controller
             control={control}
             name="importType"
@@ -52,7 +48,7 @@ const ImportTypeField = ({ control, setData, data }) => {
             )}
             />
         </LabelFieldPair>
-        {error && <div style={{ color: "red" }}>{error}</div>}
+        {/* {error && <div style={{ color: "red" }}>{error}</div>} */}
     </div>
   );
 };

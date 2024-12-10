@@ -8,7 +8,7 @@ const SearchButtonField = ({onSearch}) => {
 
   return (
     <div className="bmc-col3-card">
-        <div className="bmc-search-button" style={{ textAlign: "end" }}>
+        <div className="bmc-search-button" style={{ textAlign: "end", paddingTop: "21px" }}>
             <button type="button" className="bmc-card-button" style={{ borderBottom: "3px solid black" }} onClick={onSearch}>
             {t("BMC_Search")}
             </button>

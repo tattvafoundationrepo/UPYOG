@@ -3,13 +3,13 @@ import { useTranslation } from "react-i18next";
 import { CardLabel, Dropdown, LabelFieldPair, TextInput, DatePicker } from "@upyog/digit-ui-react-components";
 import { Controller, useForm } from "react-hook-form";
 
-const StablingFeeAmountField = ({control, setData, data}) => {
+const StablingFeeAmountField = ({control, setData, data, style}) => {
   const { t } = useTranslation();
   const [error, setError] = useState("");
 
   useEffect(() => {
     if (!data.stablingFeeAmount) {
-      setError("REQUIRED_FIELD");
+      setError(t("REQUIRED_FIELD"));
     }
     else {
       setError("");
@@ -17,7 +17,7 @@ const StablingFeeAmountField = ({control, setData, data}) => {
   }, [data]);
 
   return (
-    <div className="bmc-col3-card">
+    <div className="bmc-col3-card" style={style}>
         <LabelFieldPair>
             <CardLabel className="bmc-label">{t("DEONAR_STABLING_FEE_AMOUNT")}</CardLabel>
             <Controller

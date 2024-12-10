@@ -1,0 +1,36 @@
+.ebe-add-employee-wrp{
+    display: flex;
+    flex-direction: column;
+    min-width: 600px;
+  }
+  
+  .ebe-add-employee{
+    display: flex;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .ebe-search-bar{
+    width:"50%"
+  }
+
+  @media (max-width: 768px) {
+
+    .ebe-add-employee{
+        display: block
+      }
+      .ebe-add-employee-wrp{
+        min-width: auto;
+      }
+
+      .ebe-search-bar{
+        width:"100%"
+      }
+      
+  }
+
+  @media (max-width: 1024px) {
+  .ebe-custom-scroll {
+    display: block;
+  }
+}

@@ -5,10 +5,11 @@ import Timeline from "../components/bmcTimeline";
 import RadioButton from "../components/radiobutton";
 import Title from "../components/title";
 import { Modal } from "@upyog/digit-ui-react-components";
+import {convertCriteria} from "../utils/index";
 
 const SelectSchemePage = () => {
   const { t } = useTranslation();
-  const tenantId = Digit.ULBService.getCurrentTenantId();
+  const tenantId = Digit.SessionStorage.get("CITIZEN.COMMON.HOME.CITY")?.code || Digit.ULBService.getCurrentTenantId();
   const headerLocale = Digit.Utils.locale.getTransformedLocale(tenantId);
   const [radioValueCheck, setRadioValueCheck] = useState({});
   const [selectedRadio, setSelectedRadio] = useState("");
@@ -124,7 +125,7 @@ const SelectSchemePage = () => {
     return Object.keys(groupedSchemes).map((schemeHead) => (
       <div key={schemeHead} className="bmc-row-card-header">
         <div className="bmc-title" style={{ color: "#F47738" }}>
-          {schemeHead}
+          {t(schemeHead)}
         </div>
         <div className="bmc-card-row">
           {groupedSchemes[schemeHead].map((scheme) => (
@@ -136,7 +137,6 @@ const SelectSchemePage = () => {
               onSelect={setSelectedRadio}
               onClick={() => handleSchemeSelect(scheme)}
               selectedOption={selectedRadio}
-              style={{ paddingLeft: "1rem", margin: "0" }}
               isMandatory={true}
             />
           ))}
@@ -145,19 +145,32 @@ const SelectSchemePage = () => {
     ));
   };
 
+  function capitalizeWords(str) {
+    return str
+      .split(" ")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(" ");
+  }
+
   const renderSelectedSchemeDetails = () => {
     if (!selectedScheme) return null;
     return (
       <React.Fragment>
         <div className="bmc-row-card-header">
-          <div className="bmc-title">{selectedScheme.schemeDesc}</div>
+          <div className="bmc-title">{t(capitalizeWords(selectedScheme.schemeDesc))}</div>
           <div className="bmc-card-row">
-            {t("Following are the critierias to avail this scheme")}
-            <div className="bmc-criteria">
+            <div style={{ "font-size": "smaller", "font-weight": "bold" }}>{t("Following are the critieria to avail this scheme")}:</div>
+            <ul className="bmc-criteria">
               {selectedScheme.criteria.map((criterion, index) => (
-                <span key={index}>{`${criterion.criteriaType} ${criterion.criteriaCondition} ${criterion.criteriaValue}`}</span>
+                <li key={index}>
+                  {convertCriteria(t,criterion.criteriaType,criterion.criteriaCondition, criterion.criteriaValue)}
+                  {/* {`${t(criterion.criteriaType)} ${criterion.criteriaCondition} ${criterion.criteriaType === "Benefitted"
+                      ? convertMillisecondsToDays(criterion.criteriaValue) + ' Year'
+                      : t(criterion.criteriaValue)
+                    }` } */}
+                </li>
               ))}
-            </div>
+            </ul>
           </div>
         </div>
 
@@ -175,28 +188,27 @@ const SelectSchemePage = () => {
                       ]}
                       selectedOption={radioValueCheck}
                       onSelect={setRadioValueCheck}
-                      style={{ marginTop: "0", marginBottom: "0" }}
                       value={selectedRadio}
                       isMandatory={true}
                     />
                   </div>
                   <div className="bmc-col-small-header">
                     <div className="bmc-course-amount" style={{ textAlign: "end" }}>
-                      Amount: ₹ {course.courseAmount}
+                      {t("Amount")}: ₹ {t(course.courseAmount)}
                     </div>
                   </div>
                 </div>
 
                 <div className="bmc-select-scheme">
                   <label htmlFor={`course-${course.courseID}`}>
-                    <strong>{course.i18nKey}</strong>: {course.courseDesc} (Duration: {course.courseDuration})
+                    <strong>{t(course.i18nKey)}</strong>: {t(course.courseDesc)} ({t("Duration")}: {t(course.courseDuration)})
                   </label>
                 </div>
                 <div style={{ display: "flex", justifyContent: "flex-end" }}>
                   <button
                     style={{
                       backgroundColor: "#F47738",
-                      width: "91px",
+                      width: "140px",
                       height: "34px",
                       color: "white",
                       marginTop: "1.5rem",
@@ -205,7 +217,7 @@ const SelectSchemePage = () => {
                     }}
                     onClick={openModal}
                   >
-                    View More
+                    {t("BMC_VIEW_MORE")}
                   </button>
                 </div>
                 {isModalOpen && radioValueCheck.value === course.i18nKey && (
@@ -217,12 +229,12 @@ const SelectSchemePage = () => {
                       headerBarEnd={<CloseBtn onClick={closeModal} />}
                       headerBarMain={
                         <h5 className="bmc-title" style={{ textAlign: "center", padding: "1rem" }}>
-                          Selected Course: {course.i18nKey}
+                          {t("Selected Course")}: {t(course.i18nKey)}
                         </h5>
                       }
                     >
                       <p style={{ fontSize: "15px" }}>
-                        <strong>Course Description:</strong> {course.courseDesc}
+                        <strong>{t("Course Description")}:</strong> {t(course.courseDesc)}
                       </p>
                     </Modal>
                   </div>
@@ -246,27 +258,26 @@ const SelectSchemePage = () => {
                       ]}
                       selectedOption={radioValueCheck}
                       onSelect={setRadioValueCheck}
-                      style={{ marginTop: "0", marginBottom: "0" }}
                       value={selectedRadio}
                       isMandatory={true}
                     />
                   </div>
                   <div className="bmc-col-small-header">
                     <div className="bmc-course-amount" style={{ textAlign: "end" }}>
-                      Amount: ₹ {machine.machAmount}
+                      {t("Amount")}: ₹ {t(machine.machAmount)}
                     </div>
                   </div>
                 </div>
                 <div className="bmc-select-scheme">
                   <label htmlFor={`machine-${machine.machID}`}>
-                    <strong>{machine.i18nKey}</strong>: {machine.machDesc}
+                    <strong>{t(machine.i18nKey)}</strong>: {t(machine.machDesc)}
                   </label>
                 </div>
                 <div style={{ display: "flex", justifyContent: "flex-end" }}>
                   <button
                     style={{
                       backgroundColor: "#F47738",
-                      width: "91px",
+                      width: "140px",
                       height: "34px",
                       color: "white",
                       marginTop: "1.5rem",
@@ -275,7 +286,7 @@ const SelectSchemePage = () => {
                     }}
                     onClick={openModal}
                   >
-                    View More
+                    {t("BMC_VIEW_MORE")}
                   </button>
                 </div>
                 {isModalOpen && radioValueCheck.value === machine.i18nKey && (
@@ -287,15 +298,15 @@ const SelectSchemePage = () => {
                       headerBarEnd={<CloseBtn onClick={closeModal} />}
                       headerBarMain={
                         <h5 className="bmc-title" style={{ textAlign: "center", padding: "1rem" }}>
-                          Selected Machine : {machine.i18nKey}
+                          {t("Selected Machine")} : {t(machine.i18nKey)}
                         </h5>
                       }
                     >
                       <p style={{ fontSize: "15px" }}>
-                        <strong>Machine Description:</strong> {machine.machDesc}
+                        <strong>{t("Machine Description")}:</strong> ₹ {t(machine.machDesc)}
                       </p>
                       <p style={{ fontSize: "15px" }}>
-                        <strong>Machine Amount:</strong> {machine.machAmount}
+                        <strong>{t("Machine Amount")}:</strong> {t(machine.machAmount)}
                       </p>
                     </Modal>
                   </div>
@@ -311,11 +322,11 @@ const SelectSchemePage = () => {
     <React.Fragment>
       <div className="bmc-card-full">
         {window.location.href.includes("/citizen") && <Timeline currentStep={3} />}
-        <Title text={"Select Scheme"} />
+        <Title text={t("Select Scheme")} />
         <div className="bmc-card-grid">{renderSchemeSections()}</div>
         {renderSelectedSchemeDetails()}
       </div>
-      <div style={{ textAlign: "end", padding: "1rem" }}>
+      <div className="bmc-card-row" style={{ textAlign: "end", padding: "1rem" }}>
         <Link
           to={{
             pathname: "/digit-ui/citizen/bmc/ApplicationDetails",
@@ -326,21 +337,13 @@ const SelectSchemePage = () => {
             },
           }}
           style={{ textDecoration: "none" }}
-          disabled={!selectedRadio}
         >
-          <button
-            className="bmc-card-button"
-            style={{ backgroundColor: radioValueCheck ? "#F47738" : "grey", borderBottom: "3px solid black", marginRight: "1rem" }}
-          >
-            {t("BMC_Next")}
+          <button className="bmc-card-button" style={{ borderBottom: "3px solid black", marginRight: "1rem", backgroundColor: !selectedRadio ? "gray" : "#F47738" }} disabled={!selectedRadio}>
+            {t("BMC_NEXT")}
           </button>
         </Link>
-        <button
-          className="bmc-card-button-cancel"
-          style={{ borderBottom: "3px solid black", outline: "none", marginRight: "5rem" }}
-          onClick={() => history.goBack()}
-        >
-          {t("BMC_Cancel")}
+        <button className="bmc-card-button-cancel" style={{ borderBottom: "3px solid black", outline: "none" }} onClick={() => history.goBack()}>
+          {t("BMC_CANCEL")}
         </button>
       </div>
     </React.Fragment>

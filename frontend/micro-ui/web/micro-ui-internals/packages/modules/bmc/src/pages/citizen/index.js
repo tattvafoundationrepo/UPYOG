@@ -1,9 +1,12 @@
 import React from "react";
 
 import { BackButton, PrivateRoute } from "@upyog/digit-ui-react-components";
-import { Switch, useLocation, useRouteMatch } from "react-router-dom";
+import { Route, Switch, useLocation, useRouteMatch } from "react-router-dom";
 
 import { useTranslation } from "react-i18next";
+import FAQsSection from "../FAQS/FAQs";
+import HowItsWorkSection from "../HowItWork/HowItwork";
+
 
 const App = ({}) => {
   const { t } = useTranslation();
@@ -14,28 +17,31 @@ const App = ({}) => {
   const AadhaarFullForm = Digit?.ComponentRegistryService?.getComponent("AadhaarFullForm");
   const SelectSchemePage = Digit?.ComponentRegistryService?.getComponent("SelectSchemePage");
   const BMCReviewPage = Digit?.ComponentRegistryService?.getComponent("BMCReviewPage");
-  // const AadhaarSatutsVerificationPage = Digit?.ComponentRegistryService?.getComponent("AadhaarSatutsVerificationPage");
+  const AllApplicationsPage = Digit?.ComponentRegistryService?.getComponent("AllApplicationsPage");
+  const test = Digit?.ComponentRegistryService?.getComponent("BMCLinks");
+  const CurrentSchemeApplications = Digit?.ComponentRegistryService?.getComponent("CurrentSchemeApplications");
+
   return (
     <React.Fragment>
       <div className="bmc-citizen-wrapper" style={{ width: "100%" }}>
         {!location.pathname.includes("/response") && <BackButton>{t("CS_COMMON_BACK")}</BackButton>}
         <Switch>
-          {/* <AppContainer> */}
-            <PrivateRoute exact path={`${path}/applicationDetails`} component={ApplicationDetail} />
-            <PrivateRoute exact path={`${path}/aadhaarLogin`} component={Aadhar} />
-            <PrivateRoute exact path={`${path}/aadhaarForm`} component={AadhaarFullForm} />
-            <PrivateRoute exact path={`${path}/selectScheme`} component={SelectSchemePage} />
-            <PrivateRoute exact path={`${path}/review`} component={BMCReviewPage} />
-            {/* <PrivateRoute exact path={`${path}/aadhaarSatutsVerificationPage`} component={AadhaarSatutsVerificationPage} /> */}
-            {/* <PrivateRoute exact path={`${path}/aadhaarVerify`} component={AadhaarVerifyPage} />
-            <PrivateRoute exact path={`${path}/aadhaarEmployee`} component={AadhaarEmployeePage} />
-            <PrivateRoute exact path={`${path}/randmization`} component={RandmizationPage} />
-            <PrivateRoute exact path={`${path}/crossverify`} component={CrossVerifyPage} />
-            <PrivateRoute exact path={`${path}/approve`} component={ApprovePage} />
-            <PrivateRoute exact path={`${path}/wardwiseapplication`} component={wardWiseApplication} />
-            <PrivateRoute exact path={`${path}/schemewiseapplication`} component={schemeWiseApplication} />
-            <PrivateRoute exact path={`${path}/coursewiseapplication`} component={courseWiseApplication} />
-          {/* </AppContainer> */}
+          <Route exact path={`${path}/bmc-home`} component={test} />
+          <PrivateRoute exact path={`${path}/applicationDetails`} component={ApplicationDetail} />
+          <PrivateRoute exact path={`${path}/aadhaarLogin`} component={Aadhar} />
+          <PrivateRoute exact path={`${path}/aadhaarForm`} component={AadhaarFullForm} />
+          <PrivateRoute exact path={`${path}/selectScheme`} component={SelectSchemePage} />
+          <PrivateRoute exact path={`${path}/review`} component={BMCReviewPage} />
+          <PrivateRoute exact path={`${path}/allApplications`} component={AllApplicationsPage} />
+          <PrivateRoute exact key={"avilablescheme"} path={`${path}/avilablescheme`}>
+            <CurrentSchemeApplications />
+          </PrivateRoute>
+          <PrivateRoute exact key={"faqs"} path={`${path}/faqs`}>
+            <FAQsSection />
+          </PrivateRoute>
+          <PrivateRoute exact key={"howItWorks"} path={`${path}/howItWorks`}>
+            <HowItsWorkSection />
+          </PrivateRoute>
         </Switch>
       </div>
     </React.Fragment>

@@ -14,10 +14,11 @@ import {
 } from "@upyog/digit-ui-module-hrms";
 
 
-import { initCustomisationComponents } from "./Customisations";
+//import { initCustomisationComponents } from "./Customisations";
 
 import { BMCLinks, BMCModule, initBMCComponents } from "@tattvafoundation/digit-ui-module-bmc";
 import { DEONARModule, initDEONARComponents } from "@tattvafoundation/digit-ui-module-deonar";
+import { EBEModule, initEBEComponents } from "@tattvafoundation/digit-ui-module-ebe";
 // import { initReportsComponents } from "@egovernments/digit-ui-module-reports";
 
 initLibraries();
@@ -26,7 +27,8 @@ const enabledModules = [
   "Payment",
   "HRMS",
   "BMC",
-  "DEONAR"
+  "DEONAR",
+  "EBE"
 ];
 window.Digit.ComponentRegistryService.setupRegistry({
   ...paymentConfigs,
@@ -35,7 +37,9 @@ window.Digit.ComponentRegistryService.setupRegistry({
   HRMSModule,
   BMCLinks,
   BMCModule,
-  DEONARModule
+  DEONARModule,
+  EBEModule,
+
 });
 
 
@@ -44,7 +48,8 @@ initHRMSComponents();
 initDEONARComponents();
 initBMCComponents();
 // initReportsComponents();
-initCustomisationComponents();
+//initCustomisationComponents();
+initEBEComponents();
 
 const moduleReducers = (initData) => ({
  

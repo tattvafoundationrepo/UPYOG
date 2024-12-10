@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CardLabel, TextInput, LabelFieldPair } from "@upyog/digit-ui-react-components";
 import { Controller } from "react-hook-form";
@@ -10,9 +10,8 @@ const ArrivalUuidField = ({ control, setData, data, uuid, disabled }) => {
 
   useEffect(() => {
     if (!data.arrivalUuid) {
-      setError("REQUIRED_FIELD");
-    }
-    else {
+      setError(t("CORE_COMMON_REQUIRED_ERRMSG"));
+    } else {
       setError("");
     }
   }, [data]);
@@ -20,17 +19,23 @@ const ArrivalUuidField = ({ control, setData, data, uuid, disabled }) => {
   useEffect(() => {
     if (uuid) {
       setVal(uuid);
-    }
-    else {
+    } else {
       setVal("");
     }
   }, [uuid]);
 
+  const validateAlphanumeric = (value) => {
+    const regex = /^[a-zA-Z0-9]*$/; // Regular expression to allow only alphanumeric characters
+    return regex.test(value);
+  };
+
   return (
     <React.Fragment>
-      <div className="bmc-col3-card">
+      <div className="bmc-col3-card" style={disabled ? { display: "none" } : {}}>
         <LabelFieldPair>
-          <CardLabel className="bmc-label">{t("DEONAR_ARRIVAL_UUID")}</CardLabel>
+          <CardLabel className="bmc-label">
+            {t("DEONAR_ARRIVAL_UUID")} &nbsp;{error && <sup style={{ color: "red", fontSize: "x-small" }}>{error}</sup>}
+          </CardLabel>
           <Controller
             control={control}
             name="arrivalUuid"
@@ -39,13 +44,19 @@ const ArrivalUuidField = ({ control, setData, data, uuid, disabled }) => {
               <TextInput
                 value={val}
                 onChange={(e) => {
-                  props.onChange(e.target.value);
-                  const newData = {
-                    ...data,
-                    arrivalUuid: e.target.value
-                  };
-                  setData(newData);
-                  setVal(e.target.value);
+                  const value = e.target.value;
+                  if (validateAlphanumeric(value)) {
+                    setError("");
+                    props.onChange(value);
+                    const newData = {
+                      ...data,
+                      arrivalUuid: value,
+                    };
+                    setData(newData);
+                    setVal(value);
+                  } else {
+                    setError(t("ONLY_ALPHANUMERIC_CHARACTERS_ALLOWED"));
+                  }
                 }}
                 onBlur={props.onBlur}
                 optionKey="i18nKey"
@@ -56,8 +67,7 @@ const ArrivalUuidField = ({ control, setData, data, uuid, disabled }) => {
             )}
           />
         </LabelFieldPair>
-        {error && <div style={{ color: "red" }}>{error}</div>}
-      </div>    
+      </div>
     </React.Fragment>
   );
 };

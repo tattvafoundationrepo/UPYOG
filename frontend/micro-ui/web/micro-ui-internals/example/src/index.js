@@ -12,18 +12,21 @@ import { DigitUI } from "@upyog/digit-ui-module-core";
 
 import { BMCLinks, BMCModule, initBMCComponents } from "@tattvafoundation/digit-ui-module-bmc";
 import { DEONARModule, initDEONARComponents } from "@tattvafoundation/digit-ui-module-deonar";
+import { EBEModule, initEBEComponents } from "@tattvafoundation/digit-ui-module-ebe";
 
 
 // import {initCustomisationComponents} from "./customisations";
 
 // import { PGRModule, PGRLinks } from "@egovernments/digit-ui-module-pgr";
 // import { Body, TopBar } from "@upyog/digit-ui-react-components";
-import "@upyog-niua/upyog-css/example/index.css";
+import "@tattvafoundation/upyog-css/dist/index.css";
+//import "@upyog-niua/upyog-css/dist/index.css";
+
 // import * as comps from "@upyog/digit-ui-react-components";
 
 // import { subFormRegistry } from "@upyog/digit-ui-libraries";
 
-import { pgrCustomizations, pgrComponents } from "./pgr";
+// import { pgrCustomizations, pgrComponents } from "./pgr";
 
 var Digit = window.Digit || {};
 
@@ -31,7 +34,8 @@ const enabledModules = [
   "Payment",
   "HRMS",
   "BMC",
-  "DEONAR"
+  "DEONAR",
+  "EBE"
 ];
 
 const initTokens = (stateCode) => {
@@ -69,28 +73,30 @@ const initDigitUI = () => {
     HRMSModule,
     BMCModule,
     BMCLinks,
-    DEONARModule
+    DEONARModule,
+    EBEModule
   });
 
   
   initHRMSComponents();
   initDEONARComponents();
   initBMCComponents();
+  initEBEComponents();
   // initCustomisationComponents();
 
   const moduleReducers = (initData) => ({
   });
 
-  window.Digit.Customizations = {
-    PGR: pgrCustomizations,
-    TL: {
-      customiseCreateFormData: (formData, licenceObject) => licenceObject,
-      customiseRenewalCreateFormData: (formData, licenceObject) => licenceObject,
-      customiseSendbackFormData: (formData, licenceObject) => licenceObject,
-    },
-  };
+  // window.Digit.Customizations = {
+  //   PGR: pgrCustomizations,
+  //   TL: {
+  //     customiseCreateFormData: (formData, licenceObject) => licenceObject,
+  //     customiseRenewalCreateFormData: (formData, licenceObject) => licenceObject,
+  //     customiseSendbackFormData: (formData, licenceObject) => licenceObject,
+  //   },
+  // };
 
-  const stateCode = window?.globalConfigs?.getConfig("STATE_LEVEL_TENANT_ID") || "pb";
+  const stateCode = window?.globalConfigs?.getConfig("STATE_LEVEL_TENANT_ID") || "mh";
   initTokens(stateCode);
 
   const registry = window?.Digit.ComponentRegistryService.getRegistry();

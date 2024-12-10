@@ -278,6 +278,39 @@ const swAccess = () => {
   return SW_ACCESS?.length > 0;
 };
 
+const BMCAccess = () => {
+  const userInfo = Digit.UserService.getUser();
+  const userRoles = userInfo?.info?.roles?.map((roleData) => roleData?.code);
+  const BMCRoles = [
+    "SUPERUSER",
+    "BMC_PLANNING_DEPT_USER",
+  ];
+  const BMC_Access = userRoles?.filter((role) => BMCRoles?.includes(role));
+  return BMC_Access?.length > 0;
+};
+
+const EBEAccess = () => {
+  const userInfo = Digit.UserService.getUser();
+  console.log(userInfo);
+  const userRoles = userInfo?.info?.roles?.map((roleData) => roleData?.code);
+  const BMCRoles = [
+    "SUPERUSER",
+    "EBE_DEPT_USER"
+  ];
+  const BMC_Access = userRoles?.filter((role) => BMCRoles?.includes(role));
+  return BMC_Access?.length > 0;
+};
+
+const DEONARAccess = () => {
+  const userInfo = Digit.UserService.getUser();
+  const userRoles = userInfo?.info?.roles?.map((roleData) => roleData?.code);
+  const BMCRoles = [
+    "SUPERUSER",
+    "DEONAR_DEPT_USER"
+  ];
+  const BMC_Access = userRoles?.filter((role) => BMCRoles?.includes(role));
+  return BMC_Access?.length > 0;
+};
 
 export default {
   pdf: PDFUtil,
@@ -314,6 +347,8 @@ export default {
   tlAccess,
   wsAccess,
   swAccess,
-
+  BMCAccess,
+  EBEAccess,
+  DEONARAccess,
   ...privacy
 };

@@ -15,15 +15,17 @@ const App = ({ path, stateCode, userType, tenants }) => {
   const RemovalFeePage = Digit.ComponentRegistryService?.getComponent("RemovalFeePage");
   const StablingFeePage = Digit.ComponentRegistryService?.getComponent("StablingFeePage");
   const AnteMortemInspectionPage = Digit.ComponentRegistryService?.getComponent("AnteMortemInspectionPage");
-  const ReAnteMortemInspectionPage = Digit.ComponentRegistryService?.getComponent("ReAnteMortemInspection");
-  const AnteMortemPreSlaughterInspectionPage = Digit.ComponentRegistryService?.getComponent("AnteMortemPreSlaughterInspectionPage");
-  const PostMortemInspectionPage = Digit.ComponentRegistryService?.getComponent("PostMortemInspectionPage");
   const SlaughterFeeRecoveryPage = Digit.ComponentRegistryService?.getComponent("SlaughterFeeRecoveryPage");
   const VehicleWashing = Digit.ComponentRegistryService?.getComponent("VehicleWashing");
   const WeighingCharge = Digit.ComponentRegistryService?.getComponent("WeighingCharge");
   const PenaltyCharge = Digit.ComponentRegistryService?.getComponent("PenaltyCharge");
   const GatePass = Digit.ComponentRegistryService?.getComponent("GatePass");
-
+  const Trading = Digit.ComponentRegistryService?.getComponent("Trading");
+  const S = Digit.ComponentRegistryService?.getComponent("S");
+  const FeeCollection = Digit.ComponentRegistryService?.getComponent("FeeCollection");
+  const Slaughtering = Digit.ComponentRegistryService?.getComponent("Slaughtering");
+  const Helkari = Digit.ComponentRegistryService?.getComponent("Helkari");
+  const Inbox = Digit?.ComponentRegistryService?.getComponent('DEONARInbox');
   const mobileView = innerWidth <= 640;
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const inboxInitialState = {
@@ -35,18 +37,19 @@ const App = ({ path, stateCode, userType, tenants }) => {
     const { t } = useTranslation();
     const crumbs = [
       {
-        path: `/${window?.contextPath}/employee`,
+        path: `/digit-ui/employee`,
         content: t("HOME"),
         show: true,
       },
       {
-        path: `/${window?.contextPath}/employee`,
+        path: `/digit-ui/employee`,
         content: t(location.pathname.split("/").pop()),
         show: true,
       },
     ];
     return <BreadCrumb crumbs={crumbs} spanStyle={{ maxWidth: "min-content" }} />;
   };
+
   return (
     <Switch>
       <AppContainer className="ground-container">
@@ -59,16 +62,21 @@ const App = ({ path, stateCode, userType, tenants }) => {
         <PrivateRoute path={`${path}/assignshopkeeper`} component={AssignShopkeeperAfterTradingPage} />
         <PrivateRoute path={`${path}/entryfee`} component={EntryFeePage} />
         <PrivateRoute path={`${path}/removalfee`} component={RemovalFeePage} />
-        <PrivateRoute path={`${path}/stablingfee`} component={StablingFeePage} />
-        <PrivateRoute path={`${path}/antemorteminspection`} component={AnteMortemInspectionPage} />
-        <PrivateRoute path={`${path}/reantemorteminspection`} component={ReAnteMortemInspectionPage} />
-        <PrivateRoute path={`${path}/antemortembeforeslaughterinspection`} component={AnteMortemPreSlaughterInspectionPage} />
-        <PrivateRoute path={`${path}/postmorteminspection`} component={PostMortemInspectionPage} />
+        <PrivateRoute path={`${path}/stabling`} component={StablingFeePage} />
+        <PrivateRoute path={`${path}/trading`} component={Trading} />
+        <PrivateRoute path={`${path}/s`} component={S} />
+        <PrivateRoute path={`${path}/feeCollection`} component={FeeCollection} />
+        <PrivateRoute path={`${path}/slaughtering`} component={Slaughtering} />
+        <PrivateRoute path={`${path}/inspection`} component={AnteMortemInspectionPage} />
         <PrivateRoute path={`${path}/slaughterfeerecovery`} component={SlaughterFeeRecoveryPage} />
         <PrivateRoute path={`${path}/vehiclewashing`} component={VehicleWashing} />
         <PrivateRoute path={`${path}/weighingcharge`} component={WeighingCharge} />
         <PrivateRoute path={`${path}/penaltyCharge`} component={PenaltyCharge} />
         <PrivateRoute path={`${path}/gatePass`} component={GatePass} />
+        <PrivateRoute path={`${path}/helkari`} component={Helkari} />
+        <PrivateRoute path={`${path}/inbox`} component={() => (
+              <Inbox parentRoute={path} businessService="deonar" filterComponent="DEONAR_INBOX_FILTER" initialStates={inboxInitialState} isInbox={true} />
+            )} />
       </AppContainer>
     </Switch>
   );

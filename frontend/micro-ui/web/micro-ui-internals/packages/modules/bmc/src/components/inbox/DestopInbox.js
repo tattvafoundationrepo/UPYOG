@@ -1,14 +1,23 @@
-import { Card, Loader } from "@upyog/digit-ui-react-components";
+import { Card, CloseSvg, Loader } from "@upyog/digit-ui-react-components";
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import InboxLinks from "../inbox/ApplicationLinks";
 import ApplicationTable from "../inbox/ApplicationTable";
 import SearchApplication from "./search";
+import CustomTable from "../CustomTable";
+import InteractiveCharts from "../InteractiveCharts";
+import { useEffect } from "react";
+
 
 const DesktopInbox = ({ tableConfig, filterComponent, ...props }) => {
   const { t } = useTranslation();
   const tenantIds = Digit.SessionStorage.get("BMC_TENANTS");
+  const [totalRecords, setTotalRecords] = useState(0);
+  const [sortParams, setSortParams] = useState({});
+  const [getApplicationData, setGetApplicationData] = useState([]);
+
+
   const GetCell = (value) => <span className="cell-text">{t(value)}</span>;
   const GetSlaCell = (value) => {
     return value == "INACTIVE" ? <span className="sla-cell-error">{t(value) || ""}</span> : <span className="sla-cell-success">{t(value) || ""}</span>;
@@ -16,6 +25,19 @@ const DesktopInbox = ({ tableConfig, filterComponent, ...props }) => {
   const data = props?.data?.Employees;
 
   const [FilterComponent, setComp] = useState(() => Digit.ComponentRegistryService?.getComponent(filterComponent));
+
+  
+
+  const applicationFunction = (data) => {
+
+    if (data) {
+      setGetApplicationData(data.applications);
+    }
+  };
+
+
+  Digit.Hooks.bmc.useBMCInboxApplicationStatus({}, { select: applicationFunction });
+
 
   const columns = React.useMemo(() => {
     return [
@@ -90,63 +112,96 @@ const DesktopInbox = ({ tableConfig, filterComponent, ...props }) => {
     ];
   }, []);
 
+  const visibleColumns = [
+    {
+      Header: t("BMC_ApplicationNumber"),
+      accessor: "ApplicationNumber",
+      Cell: ({ value }) => t(value) || "N/A",
+    },
+    {
+      Header: t("Name"),
+      accessor: "Name",
+      Cell: ({ value }) => t(value) || "N/A",
+    },
+    {
+      Header: t("BMC_SchemeName"),
+      accessor: "SchemeName",
+      Cell: ({ value }) => t(value) || "N/A",
+    },
+    {
+      Header: t("BMC_MachineName"),
+      accessor: "MachineName",
+      Cell: ({ value }) => t(value) || "N/A",
+    },
+    {
+      Header: t("BMC_CourseName"),
+      accessor: "CourseName",
+      Cell: ({ value }) => t(value) || "N/A",
+    },
+
+    {
+      Header: t("BMC_LastModifiedDate"),
+      accessor: "CreatedDate",
+      Cell: ({ value }) => t(value) || "N/A",
+    },
+    {
+      Header: t("BMC_CurrentStatus"),
+      accessor: "state",
+      Cell: ({ value }) => t(value) || "N/A",
+    },
+
+    // {
+    //   Header: t("BMC_Comment"),
+    //   accessor: "comment",
+    //   Cell: ({ value }) => t(value) || "N/A",
+    // }
+  ];
+
+  const handleOnClick = (rowDocument) => {
+
+  };
+  const pieChartData = {
+    labels: ['Red', 'Blue', 'Yellow'],
+    datasets: [
+      {
+        label: 'Categories',
+        data: [30, 45, 25],
+        backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'],
+        hoverBackgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'],
+      },
+    ],
+  };
+
+  const detailsData = {
+    Red: {
+      labels: ['Detail A', 'Detail B', 'Detail C'],
+      data: [10, 20, 15],
+    },
+    Blue: {
+      labels: ['Detail X', 'Detail Y', 'Detail Z'],
+      data: [25, 30, 35],
+    },
+    Yellow: {
+      labels: ['Detail 1', 'Detail 2', 'Detail 3'],
+      data: [5, 10, 10],
+    },
+  };
+
   let result;
-  if (props.isLoading) {
-    result = <Loader />;
-  } else if (data?.length === 0) {
-    result = (
-      <Card style={{ marginTop: 20 }}>
-        {/* TODO Change localization key */}
-        {t("COMMON_TABLE_NO_RECORD_FOUND")
-          .split("\\n")
-          .map((text, index) => (
-            <p key={index} style={{ textAlign: "center" }}>
-              {text}
-            </p>
-          ))}
-      </Card>
-    );
-  } else if (data?.length > 0) {
-    result = (
-      <ApplicationTable
-        t={t}
-        data={data}
-        columns={columns}
-        getCellProps={(cellInfo) => {
-          return {
-            style: {
-              maxWidth: cellInfo.column.Header == t("HR_EMP_ID_LABEL") ? "150px" : "",
-              padding: "20px 18px",
-              fontSize: "16px",
-              minWidth: "150px",
-            },
-          };
-        }}
-        onPageSizeChange={props.onPageSizeChange}
-        currentPage={props.currentPage}
-        onNextPage={props.onNextPage}
-        onPrevPage={props.onPrevPage}
-        pageSizeLimit={props.pageSizeLimit}
-        onSort={props.onSort}
-        disableSort={props.disableSort}
-        sortParams={props.sortParams}
-        totalRecords={props.totalRecords}
-      />
-    );
-  }
+
 
   return (
-    <div className="inbox-container" style={{ overflow: "auto", scrollbarWidth: "none", msOverflowStyle: "none" }}>
+    <div className="inbox-container bmc-row-card-header" style={{ overflow: "auto", scrollbarWidth: "none", msOverflowStyle: "none" }}>
       {!props.isSearch && (
         <div className="filters-container">
           <InboxLinks
             parentRoute={props.parentRoute}
             allLinks={[
               {
-                text: "HR_COMMON_CREATE_EMPLOYEE_HEADER",
-                link: `/${window?.contextPath}/employee/bmc/create`,
+                text: "BMC_MASTER",
+                link: `/digit-ui/employee/bmc/create`,
                 businessService: "bmc",
-                roles: ["BMC_ADMIN"],
+                roles: ["SUPERUSER"],
               },
             ]}
             headerText={"BMC"}
@@ -165,8 +220,30 @@ const DesktopInbox = ({ tableConfig, filterComponent, ...props }) => {
           </div>
         </div>
       )}
-      <div style={{ flex: 1 }}>
-        <SearchApplication
+      {<div className="result" style={{ marginLeft: !props?.isSearch ? "24px" : "", flex: 1 }}>
+        <div className="bmc-row-card-header">
+
+
+          <CustomTable
+            t={t}
+            pageSizeLimit={10}
+            columns={visibleColumns}
+            data={getApplicationData || []}
+            manualPagination={false}
+            totalRecords={totalRecords}
+            sortParams={sortParams}
+            config={[]}
+            tableClassName={"ebe-custom-scroll"}
+            // isLoadingRows={isLoading}
+            showSearch={true}
+            showText={true}
+
+
+          />
+        </div>
+
+        <InteractiveCharts pieChartData={pieChartData} detailsData={detailsData}></InteractiveCharts>
+        {/* <SearchApplication
           defaultSearchParams={props.defaultSearchParams}
           onSearch={props.onSearch}
           type="desktop"
@@ -177,8 +254,8 @@ const DesktopInbox = ({ tableConfig, filterComponent, ...props }) => {
         />
         <div className="result" style={{ marginLeft: !props?.isSearch ? "24px" : "", flex: 1 }}>
           {result}
-        </div>
-      </div>
+        </div> */}
+      </div>}
     </div>
   );
 };

@@ -54,6 +54,7 @@ import { PTRService } from "./services/elements/PTR";
 
 
 import {CustomService} from "./services/elements/CustomService";    
+import DeonarService from "./services/elements/deonarService";
    
 
 
@@ -118,6 +119,8 @@ const initLibraries = () => {
   setupLibraries("AuditService",AuditService);
   setupLibraries("PTRService", PTRService);
   setupLibraries("SchemeService",SchemeService);
+
+  setupLibraries("deonarService",DeonarService)
   return new Promise((resolve) => {
     initI18n(resolve);
   });

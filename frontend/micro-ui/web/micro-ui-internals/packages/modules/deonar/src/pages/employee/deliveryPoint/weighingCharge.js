@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Controller, useForm } from "react-hook-form";
 import SearchButtonField from "../commonFormFields/searchBtn";
@@ -10,11 +10,15 @@ import ReferenceNumberField from "../commonFormFields/referenceNumber";
 import SubmitPrintButtonFields from "../commonFormFields/submitPrintBtn";
 import HealthStatDropdownField from "../commonFormFields/healthStatDropdown";
 import WeightField from "../commonFormFields/weightField";
+import { typeOfAnimal, weighingChargeMockData } from "../../../constants/dummyData";
+import { COLLECTION_POINT_ENDPOINT } from "../../../constants/apiEndpoints";
+import useSubmitForm from "../../../hooks/useSubmitForm";
 
 const WeighingCharge = () => {
   const { t } = useTranslation();
   const [data, setData] = useState({});
-  const [subFormType, setSubFormType] = useState(null);
+  const [animalTypeOptions, setAnimalTypeOptions] = useState([]);
+  const { submitForm, isSubmitting, response, error } = useSubmitForm(COLLECTION_POINT_ENDPOINT);
 
   const {
     control,
@@ -22,46 +26,51 @@ const WeighingCharge = () => {
     handleSubmit,
     getValues,
     formState: { errors, isValid },
-  } = useForm({ defaultValues: {}, mode: "onChange" });
+  } = useForm({ defaultValues: {
+    typeOfAnimal: {},
+    carcassWeight: 0,
+    kenaWeight: 0,
+    paymentMode: {},
+    referenceNumber: 0
+  }, mode: "onChange" });
 
-  const fetchDataByReferenceNumber = async (referenceNumber) => {
-    const mockData = {
-      arrivalUuid: referenceNumber,
-      importType: "Type A",
-      importPermissionNumber: "123456",
-      importPermissionDate: new Date(),
-      traderName: "John Doe",
-      licenseNumber: "LIC123",
-      vehicleNumber: "ABC123",
-      numberOfAliveAnimals: 5,
-      numberOfDeadAnimals: 2,
-      arrivalDate: new Date(),
-      arrivalTime: "12:00",
-    };
-    return mockData;
+  useEffect(() => {
+    setAnimalTypeOptions(typeOfAnimal);
+  }, []);
+
+  const fetchDataByReferenceNumber = async () => {
+    return weighingChargeMockData;
   };
 
   const handleSearch = async () => {
-    const referenceNumber = getValues("arrivalUuid");
-    if (referenceNumber) {
+    const shopkeeperName = getValues("shopkeeperName");
+    const helkariName = getValues("helkariName");
+    if (shopkeeperName && helkariName) {
       try {
-        const result = await fetchDataByReferenceNumber(referenceNumber);
+        const result = await fetchDataByReferenceNumber();
         setData(result);
+        console.log(result);
         Object.keys(result).forEach((key) => {
           setValue(key, result[key]);
         });
+        setValue('shopkeeperName', shopkeeperName);
+        setValue('helkariName', helkariName);
       } catch (error) {
         console.error("Failed to fetch data", error);
       }
     }
   };
 
-  const onSubmit = (formData) => {
-    console.log("Form data submitted:", formData);
-    const jsonData = JSON.stringify(formData);
-    console.log("Generated JSON:", jsonData);
+  const onSubmit = async (formData) => {
+    try {
+      const result = await submitForm(formData);
+      console.log("Form successfully submitted:", result);
+      alert("Form submission successful !");
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      alert("Form submission failed !");
+    }
   };
-
   return (
     <React.Fragment>
       <div className="bmc-card-full">
@@ -69,20 +78,18 @@ const WeighingCharge = () => {
           <MainFormHeader title={"DEONAR_WEIGHING_CHARGE"} />
           <div className="bmc-row-card-header">
             <div className="bmc-card-row">
-                <ShopkeeperNameField />
-                <HelkariNameField />
-                <SearchButtonField />
+                <ShopkeeperNameField control={control} data={data} setData={setData} />
+                <HelkariNameField control={control} data={data} setData={setData} />
+                <SearchButtonField onSearch={handleSearch} />
             </div>
           </div>
           <div className="bmc-row-card-header">
             <div className="bmc-card-row">
-                <ShopkeeperNameField />
-                <HelkariNameField />
-                <HealthStatDropdownField name="typeOfAnimal" label="DEONAR_TYPE_OF_ANIMAL" />
-                <WeightField name="carcassWeight" label="DEONAR_CARCASS_WEIGHT" />
-                <WeightField name="kenaWeight" label="DEONAR_KENA_WEIGHT" />
-                <PaymentModeField />
-                <ReferenceNumberField />
+                <HealthStatDropdownField name="typeOfAnimal" label="DEONAR_TYPE_OF_ANIMAL" control={control} data={data} setData={setData} options={animalTypeOptions} />
+                <WeightField name="carcassWeight" label="DEONAR_CARCASS_WEIGHT" control={control} data={data} setData={setData} />
+                <WeightField name="kenaWeight" label="DEONAR_KENA_WEIGHT" control={control} data={data} setData={setData} />
+                <PaymentModeField control={control} data={data} setData={setData} />
+                <ReferenceNumberField control={control} data={data} setData={setData} />
                 <SubmitPrintButtonFields />
             </div>
           </div>

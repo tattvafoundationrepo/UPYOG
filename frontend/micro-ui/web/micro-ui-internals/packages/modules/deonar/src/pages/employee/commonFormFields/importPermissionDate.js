@@ -3,14 +3,14 @@ import { useTranslation } from "react-i18next";
 import { CardLabel, LabelFieldPair, DatePicker } from "@upyog/digit-ui-react-components";
 import { Controller } from "react-hook-form";
 
-const ImportPermissionDateField = ({ control, data, setData }) => {
+const ImportPermissionDateField = ({ control, data, setData, style }) => {
   const { t } = useTranslation();
   const [error, setError] = useState("");
 
   useEffect(() => {
     const validateImportPermissionDate = () => {
       if (!data.importPermissionDate) {
-        setError("REQUIRED_FIELD");
+        setError(t("CORE_COMMON_REQUIRED_ERRMSG"));
         return;
       }
 
@@ -28,8 +28,10 @@ const ImportPermissionDateField = ({ control, data, setData }) => {
     validateImportPermissionDate();
   }, [data, t]);
 
+  const today = new Date().toISOString().split("T")[0];
+
   return (
-    <div className="bmc-col3-card">
+    <div className="bmc-col3-card" style={style}>
       <LabelFieldPair>
         <CardLabel className="bmc-label">{t("DEONAR_IMPORT_PERMISSION_DATE")}</CardLabel>
         <Controller
@@ -49,11 +51,12 @@ const ImportPermissionDateField = ({ control, data, setData }) => {
               }}
               onBlur={field.onBlur}
               placeholder={t("DEONAR_IMPORT_PERMISSION_DATE")}
+              max={today}
             />
           )}
         />
       </LabelFieldPair>
-      {error && <div style={{ color: "red" }}>{error}</div>}
+      {/* {error && <div style={{ color: "red" }}>{error}</div>} */}
     </div>
   );
 };

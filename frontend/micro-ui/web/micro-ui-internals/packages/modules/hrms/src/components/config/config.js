@@ -39,7 +39,8 @@ export const newConfig = [
         withoutLabel: true,
       },
     ],
-  },
+  }
+  ,
   {
     head: "HR_NEW_EMPLOYEE_FORM_HEADER",
     body: [
@@ -61,10 +62,9 @@ export const newConfig = [
         key: "SelectEmployeeId",
         withoutLabel: true,
       },
-
       {
         type: "component",
-        component: "Banner",
+        component: "HRBanner",
         key: "Banner1",
         withoutLabel: true,
         texts: {
@@ -86,7 +86,6 @@ export const newConfig = [
       },
     ],
   },
-
   {
     head: "HR_ASSIGN_DET_HEADER",
     body: [
@@ -96,7 +95,7 @@ export const newConfig = [
         key: "Banner2",
         withoutLabel: true,
         texts: {
-          nosideText:true,
+          nosideText: true,
           headerCaption: "Info",
           header: "HR_ASSIGN_DET_SUB_HEADER",
         },
@@ -108,5 +107,5 @@ export const newConfig = [
         withoutLabel: true,
       },
     ],
-  },
-];
+  }
+]

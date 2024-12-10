@@ -9,7 +9,7 @@ const RejectedRemovalTypesDropdownField = ({setRejectedType, options, control, s
 
   useEffect(() => {
     if (!data.rejectedRemovalType) {
-      setError("REQUIRED_FIELD");
+      setError(t("REQUIRED_FIELD"));
     }
     else {
       setError("");

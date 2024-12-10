@@ -11,16 +11,16 @@ const ParkingDateField = ({ control, data, setData }) => {
 
   useEffect(() => {
     if (!data.parkingDate) {
-      setError("REQUIRED_FIELD");
+      setError(t("CORE_COMMON_REQUIRED_ERRMSG"));
     } else {
       setError("");
     }
-  }, [data?.parkingDate]);
+  }, [data]);
 
   return (
     <div className="bmc-col3-card">
       <LabelFieldPair>
-        <CardLabel className="bmc-label">{t("DEONAR_PARKING_DATE")}</CardLabel>
+        <CardLabel className="bmc-label">{t("DEONAR_PARKING_DATE")} &nbsp;{error && <sup style={{ color: "red", fontSize: "x-small" }}>{error}</sup>}</CardLabel>
         <Controller
           control={control}
           name="parkingDate"
@@ -43,7 +43,6 @@ const ParkingDateField = ({ control, data, setData }) => {
           )}
         />
       </LabelFieldPair>
-      {error && <div style={{ color: "red" }}>{error}</div>}
     </div>
   );
 };

@@ -27,7 +27,7 @@ const defaultImage =
 export const ProfileImage = ({ info, stateName, t }) => {
   const [profilePic, setProfilePic] = useState(null);
   useEffect(async () => {
-    const tenant = Digit.ULBService.getCurrentTenantId();
+    const tenant = Digit.SessionStorage.get("CITIZEN.COMMON.HOME.CITY")?.code || Digit.ULBService.getCurrentTenantId();
     const uuid = info?.uuid;
     if (uuid) {
       const usersResponse = await Digit.UserService.userSearch(tenant, { uuid: [uuid] }, {});

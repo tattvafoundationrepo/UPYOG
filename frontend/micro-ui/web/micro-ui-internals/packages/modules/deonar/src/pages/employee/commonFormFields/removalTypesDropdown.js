@@ -9,7 +9,7 @@ const RemovalTypeOptionsField = ({setSubFormType, control, data, setData, option
 
   useEffect(() => {
     if (!data.setSubFormType) {
-      setError("REQUIRED_FIELD");
+      setError(t("REQUIRED_FIELD"));
     }
     else {
       setError("");

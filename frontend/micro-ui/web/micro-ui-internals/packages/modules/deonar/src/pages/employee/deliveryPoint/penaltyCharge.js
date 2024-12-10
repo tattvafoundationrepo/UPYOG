@@ -1,65 +1,102 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Controller, useForm } from "react-hook-form";
-import SearchButtonField from "../commonFormFields/searchBtn";
 import MainFormHeader from "../commonFormFields/formMainHeading";
-import ShopkeeperNameField from "../commonFormFields/shopkeeperName";
-import HelkariNameField from "../commonFormFields/helkariName";
-import PaymentModeField from "../commonFormFields/paymentMode";
-import ReferenceNumberField from "../commonFormFields/referenceNumber";
-import SubmitPrintButtonFields from "../commonFormFields/submitPrintBtn";
 import HealthStatDropdownField from "../commonFormFields/healthStatDropdown";
 import PenaltyChargeAmountField from "../commonFormFields/penaltyChargeAmt";
+import { CardLabel, LabelFieldPair, TextInput, Toast } from "@upyog/digit-ui-react-components";
+import SubmitButtonField from "../commonFormFields/submitBtn";
 
 const PenaltyCharge = () => {
   const { t } = useTranslation();
   const [data, setData] = useState({});
-  const [subFormType, setSubFormType] = useState(null);
+  const [penaltyOptions, setPenaltyOptions] = useState([]);
+  const [penaltyAmount, setPenaltyAmount] = useState();
+  const [feeAmount, setFeeAmount] = useState();
+  const [error, setError] = useState(null);
+  const [showPenaltyPerUnit, setShowPenaltyPerUnit] = useState(false);
+  const [toast, setToast] = useState(null);
 
   const {
     control,
     setValue,
     handleSubmit,
     getValues,
+    reset,
     formState: { errors, isValid },
-  } = useForm({ defaultValues: {}, mode: "onChange" });
+  } = useForm();
 
-  const fetchDataByReferenceNumber = async (referenceNumber) => {
-    const mockData = {
-      arrivalUuid: referenceNumber,
-      importType: "Type A",
-      importPermissionNumber: "123456",
-      importPermissionDate: new Date(),
-      traderName: "John Doe",
-      licenseNumber: "LIC123",
-      vehicleNumber: "ABC123",
-      numberOfAliveAnimals: 5,
-      numberOfDeadAnimals: 2,
-      arrivalDate: new Date(),
-      arrivalTime: "12:00",
-    };
-    return mockData;
-  };
+  const { data: penaltyData, isLoading, isError } = Digit.Hooks.deonar.useGetPenalty();
 
-  const handleSearch = async () => {
-    const referenceNumber = getValues("arrivalUuid");
-    if (referenceNumber) {
-      try {
-        const result = await fetchDataByReferenceNumber(referenceNumber);
-        setData(result);
-        Object.keys(result).forEach((key) => {
-          setValue(key, result[key]);
-        });
-      } catch (error) {
-        console.error("Failed to fetch data", error);
+  useEffect(() => {
+    if (penaltyData && penaltyData.PenaltyTypeDetails) {
+      const penaltyOptions = penaltyData.PenaltyTypeDetails.map((item) => ({
+        name: item.penaltyType,
+        value: item.id,
+        feeAmount: item.feeAmount,
+        penaltyPerUnit: item.perUnit,
+      }));
+      setPenaltyOptions(penaltyOptions);
+    } else if (isError) {
+      setError(error);
+    }
+  }, [penaltyData, isError, error]);
+
+  const savePenaltiesData = Digit.Hooks.deonar.useSavePenalty();
+
+  useEffect(() => {
+    if (getValues("typeOfPenalty")) {
+      const selectedPenalty = penaltyOptions.find((option) => option.value === getValues("typeOfPenalty").value);
+      if (selectedPenalty) {
+        setPenaltyAmount(selectedPenalty.feeAmount);
+        setValue("penaltyChargeAmount", selectedPenalty.feeAmount);
+        setFeeAmount(selectedPenalty.feeAmount);
+        setShowPenaltyPerUnit(selectedPenalty.penaltyPerUnit);
       }
     }
+  }, [getValues("typeOfPenalty"), penaltyOptions, setValue]);
+
+  useEffect(() => {
+    const penaltyPerUnit = getValues("penaltyPerUnit");
+    if (penaltyPerUnit && penaltyAmount) {
+      const updatedFeeAmount = penaltyAmount * penaltyPerUnit;
+      setFeeAmount(updatedFeeAmount);
+      setValue("penaltyChargeAmount", updatedFeeAmount);
+    }
+  }, [getValues("penaltyPerUnit"), penaltyAmount, setValue]);
+
+  const showToast = (type, message, duration = 5000) => {
+    setToast({ key: type, action: message });
+    setTimeout(() => {
+      setToast(null);
+    }, duration);
   };
 
-  const onSubmit = (formData) => {
-    console.log("Form data submitted:", formData);
-    const jsonData = JSON.stringify(formData);
-    console.log("Generated JSON:", jsonData);
+  const onSubmit = async (formData) => {
+    const payload = {
+      penaltyId: formData.typeOfPenalty.value,
+      amount: formData.penaltyChargeAmount,
+      units: formData.penaltyPerUnit,
+      stakeholderId: formData.licenseNumber,
+    };
+
+    savePenaltiesData.mutate(payload, {
+      onSuccess: () => {
+        reset({
+          typeOfPenalty: "",
+          penaltyChargeAmount: "",
+          penaltyPerUnit: "",
+          licenseNumber: "",
+        });
+        setPenaltyAmount("");
+        setFeeAmount("");
+        showToast("success", t("DEONAR_PENALTY_CHARGE_DATA_SUBMITTED_SUCCESSFULY"));
+      },
+      onError: (error) => {
+        console.error("Failed to fetch data", error);
+        showToast("success", t("DEONAR_PENALTY_CHARGE_DATA_NOT_SUBMITTED_SUCCESSFULY"));
+      },
+    });
   };
 
   return (
@@ -69,24 +106,82 @@ const PenaltyCharge = () => {
           <MainFormHeader title={"DEONAR_PENALTY_CHARGE"} />
           <div className="bmc-row-card-header">
             <div className="bmc-card-row">
-                <ShopkeeperNameField />
-                <HelkariNameField />
-                <SearchButtonField />
-            </div>
-          </div>
-          <div className="bmc-row-card-header">
-            <div className="bmc-card-row">
-                <ShopkeeperNameField />
-                <HelkariNameField />
-                <HealthStatDropdownField name="typeOfPenalty" label="DEONAR_TYPE_OF_PENALTY" />
-                <PenaltyChargeAmountField />
-                <PaymentModeField />
-                <ReferenceNumberField />
-                <SubmitPrintButtonFields />
+              <HealthStatDropdownField
+                name="typeOfPenalty"
+                label="DEONAR_TYPE_OF_PENALTY"
+                control={control}
+                data={data}
+                setData={setData}
+                options={penaltyOptions}
+              />
+              {showPenaltyPerUnit && (
+                <div className="bmc-col3-card">
+                  <LabelFieldPair>
+                    <CardLabel className="bmc-label">{t("DEONAR_PENALTY_PERUNIT")}</CardLabel>
+                    <Controller
+                      control={control}
+                      name="penaltyPerUnit"
+                      rules={{ required: t("CORE_COMMON_REQUIRED_ERRMSG") }}
+                      render={(props) => (
+                        <div>
+                          <TextInput
+                            value={props.value}
+                            onChange={(e) => {
+                              props.onChange(e.target.value);
+                              const newData = { ...data, penaltyPerUnit: e.target.value };
+                              setData(newData);
+                            }}
+                            onBlur={props.onBlur}
+                            optionKey="i18nKey"
+                            t={t}
+                            placeholder={t("DEONAR_PENALTY_PERUNIT")}
+                          />
+                        </div>
+                      )}
+                    />
+                  </LabelFieldPair>
+                </div>
+              )}
+              <PenaltyChargeAmountField control={control} data={data} setData={setData} amount={feeAmount} />
+
+              <div className="bmc-col3-card">
+                <LabelFieldPair>
+                  <CardLabel className="bmc-label">{t("DEONAR_LICENSE_NUMBER")}</CardLabel>
+                  <Controller
+                    control={control}
+                    name="licenseNumber"
+                    rules={{ required: t("CORE_COMMON_REQUIRED_ERRMSG") }}
+                    render={(props) => (
+                      <div>
+                        <TextInput
+                          value={props.value}
+                          onChange={(e) => {
+                            props.onChange(e.target.value);
+                          }}
+                          onBlur={props.onBlur}
+                          optionKey="i18nKey"
+                          t={t}
+                          placeholder={t("DEONAR_LICENSE_NUMBER")}
+                        />
+                      </div>
+                    )}
+                  />
+                </LabelFieldPair>
+              </div>
+
+              <SubmitButtonField control={control} />
             </div>
           </div>
         </form>
       </div>
+      {toast && (
+        <Toast
+          error={toast.key === t("error")}
+          label={t(toast.key === t("success") ? t("DEONAR_PENALTY_CHARGE_DATA_SUBMITTED_SUCCESSFULY") : toast.action)}
+          onClose={() => setToast(null)}
+          style={{ maxWidth: "670px" }}
+        />
+      )}
     </React.Fragment>
   );
 };

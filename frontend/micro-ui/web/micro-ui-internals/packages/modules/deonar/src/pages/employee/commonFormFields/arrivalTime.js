@@ -12,7 +12,7 @@ const ArrivalTimeField = ({ control, data, setData }) => {
 
   useEffect(() => {
     if (!data.arrivalTime) {
-      setError("REQUIRED_FIELD");
+      setError(t("CORE_COMMON_REQUIRED_ERRMSG"));
     } else {
       setError("");
     }
@@ -21,7 +21,7 @@ const ArrivalTimeField = ({ control, data, setData }) => {
   return (
     <div className="bmc-col3-card">
       <LabelFieldPair>
-        <CardLabel className="bmc-label">{t("DEONAR_ARRIVAL_TIME")}</CardLabel>
+        <CardLabel className="bmc-label">{t("DEONAR_ARRIVAL_TIME")} &nbsp;{error && <sup style={{ color: "red", fontSize: "x-small" }}>{error}</sup>}</CardLabel>
         <Controller
           control={control}
           name="arrivalTime"
@@ -49,7 +49,6 @@ const ArrivalTimeField = ({ control, data, setData }) => {
           )}
         />
       </LabelFieldPair>
-      {error && <div style={{ color: "red" }}>{error}</div>}
     </div>
   );
 };

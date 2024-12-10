@@ -4,14 +4,14 @@ import { CardLabel, Dropdown, LabelFieldPair, TextInput, DatePicker } from "@upy
 import { Controller, useForm } from "react-hook-form";
 import useStablingFee from "../../../hooks/useStablingFee";
 
-const StablingDaysField = ({control, data, setData, setValues, getValues}) => {
+const StablingDaysField = ({control, data, setData, setValues, getValues, style}) => {
   const { t } = useTranslation();
   const [error, setError] = useState("");
   const stablingFee = useStablingFee();
 
   useEffect(() => {
     if (!data.stablingDays) {
-      setError("REQUIRED_FIELD");
+      setError(t("REQUIRED_FIELD"));
     }
     else {
       setError("");
@@ -21,6 +21,10 @@ const StablingDaysField = ({control, data, setData, setValues, getValues}) => {
   const handleInputChange = (e, props) => {
     const value = e.target.value.replace(/\D/g, ""); // Remove any non-digit characters
     props.onChange(value);
+
+    if (value <= 0 || value >= 366) {
+      setError(t("VALUE_OUT_OF_RANGE"));
+    }
 
     if (setValues) {
         let amount = 0;
@@ -54,7 +58,7 @@ const StablingDaysField = ({control, data, setData, setValues, getValues}) => {
   };
 
   return (
-    <div className="bmc-col3-card">
+    <div className="bmc-col3-card" style={style}>
         <LabelFieldPair>
             <CardLabel className="bmc-label">{t("DEONAR_STABLING_DAYS")}</CardLabel>
             <Controller

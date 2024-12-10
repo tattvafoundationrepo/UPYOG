@@ -60,13 +60,58 @@ export const arraysEqual = (a1, a2) => a1.length === a2.length && a1.every((o, i
 /* exceptional incase of state level user , where return all cities*/
 export const getCityThatUserhasAccess = (cities = []) => {
   const userInfo = Digit.UserService.getUser();
-  console.log(userInfo);
   let roleObject = {};
   userInfo?.info?.roles.map((roleData) => { roleObject[roleData?.code] = roleObject[roleData?.code] ? [...roleObject[roleData?.code], roleData?.tenantId] : [roleData?.tenantId] });
-  const tenant = Digit.ULBService.getCurrentTenantId();
+  const tenant = Digit.SessionStorage.get("CITIZEN.COMMON.HOME.CITY")?.code || Digit.ULBService.getCurrentTenantId();
   if (roleObject[Digit.Utils?.hrmsRoles?.[0]].includes(Digit.ULBService.getStateId())) {
     return cities;
   }
   return cities.filter(city => roleObject[Digit.Utils?.hrmsRoles?.[0]]?.includes(city?.code));
 
 }
+
+export const convertMillisecondsToYears = (milliseconds) => {
+  console.log("milliseconds", milliseconds)
+  // Returning null if the input is not provided or invalid
+  if (milliseconds) {
+    const millisecondsPerDay = 24 * 60 * 60 * 1000 * 365;
+    const days = milliseconds / millisecondsPerDay;
+    return Math.floor(days); // You can also choose to return a floating-point number if you need precision
+  } else {
+    return null;
+  }
+};
+
+export const convertCriteria = (t,criteriatype, criteriacondtion, criteriavalue) => {
+  let returnString = t(criteriatype) + " " + t(criteriacondtion) + " ";
+  switch (criteriatype) {
+    case 'Income': 
+      returnString += "₹" + criteriavalue;
+      break;
+    case 'Age': 
+      returnString += criteriavalue + t("YEARS");
+      break;
+    case 'Disability': 
+      returnString += criteriavalue + ' %';
+      break;
+    case 'Education': 
+          switch(criteriavalue){
+            case '1': returnString += t("Primary"); break;
+            case '2': returnString += t("High School"); break;
+            case '3': returnString += t("Senior Secondary"); break;
+            case '4': returnString += t("Diploma"); break;
+            case '5': returnString += t("Graduation"); break;
+            case '6': returnString += t("Postgraduate Diploma"); break;
+            default: returnString += t("Postgraduation"); break;
+          }
+      // No action needed here if Education doesn't add anything to returnString
+          break;
+    case 'Benefitted': 
+      returnString += convertMillisecondsToYears(criteriavalue ) + t("YEARS");  // Adjust unit if you want 'days' or 'years'
+      break;
+    default: 
+      returnString += t(criteriavalue);
+      break;
+  }
+  return returnString;
+};

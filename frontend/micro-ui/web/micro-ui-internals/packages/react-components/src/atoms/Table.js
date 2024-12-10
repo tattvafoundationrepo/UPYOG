@@ -11,7 +11,7 @@ const Table = ({
   columns,
   getCellProps,
   currentPage = 0,
-  pageSizeLimit = 10,
+  pageSizeLimit = 5,
   disableSort = true,
   autoSort = false,
   initSortId = "",
@@ -158,7 +158,7 @@ const Table = ({
             style={{ marginRight: "15px" }}
             onChange={manualPagination ? onPageSizeChange : (e) => setPageSize(Number(e.target.value))}
           >
-            {[10, 20, 30, 40, 50].map((pageSize) => (
+            {[5,10,15,20].map((pageSize) => (
               <option key={pageSize} value={pageSize}>
                 {pageSize}
               </option>

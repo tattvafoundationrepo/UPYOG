@@ -162,6 +162,7 @@ const CreateEmployee = () => {
         user: {
           mobileNumber: data?.SelectEmployeePhoneNumber?.mobileNumber,
           name: data?.SelectEmployeeName?.employeeName,
+          fatherOrHusbandName:"test",
           correspondenceAddress: data?.SelectEmployeeCorrespondenceAddress?.correspondenceAddress,
           emailId: data?.SelectEmployeeEmailId?.emailId ? data?.SelectEmployeeEmailId?.emailId : undefined,
           gender: data?.SelectEmployeeGender?.gender.code,
@@ -193,7 +194,7 @@ const CreateEmployee = () => {
   if (isLoading) {
     return <Loader />;
   }
-  const config =mdmsData?.config?mdmsData.config: newConfig;
+  const config = newConfig;
   return (
     <div>
       <div style={isMobile ? {marginLeft: "-12px", fontFamily: "calibri", color: "#FF0000"} :{ marginLeft: "15px", fontFamily: "calibri", color: "#FF0000" }}>

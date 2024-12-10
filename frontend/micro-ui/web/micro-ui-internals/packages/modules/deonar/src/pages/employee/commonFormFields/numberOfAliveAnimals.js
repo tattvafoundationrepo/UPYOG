@@ -7,34 +7,41 @@ const NumberOfAliveAnimalsField = ({ control, data, setData }) => {
   const { t } = useTranslation();
   const [error, setError] = useState("");
 
+  const handleInputChange = (e, field) => {
+    const value = e.target.value;
+
+    if (value >= 0 && value < 1000) {
+      field.onChange(value);
+      const newData = {
+        ...data,
+        numberOfAliveAnimals: value,
+      };
+      setData(newData);
+      setError(""); 
+    } else {
+      setError(t("CORE_COMMON_INVALID_RANGE_ERRMSG")); 
+    }
+  };
+
   useEffect(() => {
     if (!data.numberOfAliveAnimals) {
-      setError("REQUIRED_FIELD");
-    } else {
-      setError("");
+      setError(t("CORE_COMMON_REQUIRED_ERRMSG"));
     }
   }, [data]);
 
   return (
     <div className="bmc-col3-card">
       <LabelFieldPair>
-        <CardLabel className="bmc-label">{t("DEONAR_NUMBER_OF_ALIVE_ANIMALS")}</CardLabel>
+        <CardLabel className="bmc-label">{t("DEONAR_NUMBER_OF_ANIMALS")}&nbsp;{error && <sup style={{ color: "red", fontSize: "x-small" }}>{error}</sup>}</CardLabel>
         <Controller
           control={control}
           name="numberOfAliveAnimals"
-          rules={{ required: t("CORE_COMMON_REQUIRED_ERRMSG") }}
           render={(field) => (
             <div>
               <TextInput
+                type="number"
                 value={field.value}
-                onChange={(e) => {
-                  field.onChange(e.target.value);
-                  const newData = {
-                    ...data,
-                    numberOfAliveAnimals: e.target.value,
-                  };
-                  setData(newData);
-                }}
+                onChange={(e) => handleInputChange(e, field)}
                 onBlur={field.onBlur}
                 optionKey="i18nKey"
                 t={t}
@@ -44,7 +51,6 @@ const NumberOfAliveAnimalsField = ({ control, data, setData }) => {
           )}
         />
       </LabelFieldPair>
-      {error && <div style={{ color: "red" }}>{error}</div>}
     </div>
   );
 };

@@ -13,14 +13,10 @@ const App = ({ path, stateCode, userType, tenants }) => {
   // const AadhaarSatutsVerificationPage = Digit?.ComponentRegistryService?.getComponent("AadhaarSatutsVerificationPage");
   const AadhaarEmployeePage = Digit?.ComponentRegistryService?.getComponent("AadhaarEmployeePage");
   const RandmizationPage = Digit.ComponentRegistryService?.getComponent("RandmizationPage");
-  const CrossVerifyPage = Digit.ComponentRegistryService?.getComponent("CrossVerifyPage");
   //const AadhaarVerifyPage = Digit.ComponentRegistryService?.getComponent("AadhaarVerifyPage");
   const ApprovePage = Digit.ComponentRegistryService?.getComponent("ApprovePage");
-  const courseWiseApplication = Digit.ComponentRegistryService?.getComponent("courseWiseApplication");
-  const wardWiseApplication = Digit.ComponentRegistryService?.getComponent("wardWiseApplication");
-  const schemeWiseApplication = Digit.ComponentRegistryService?.getComponent("schemeWiseApplication");
   const mobileView = innerWidth <= 640;
-  const tenantId = Digit.ULBService.getCurrentTenantId();
+  const tenantId = Digit.SessionStorage.get("CITIZEN.COMMON.HOME.CITY")?.code || Digit.ULBService.getCurrentTenantId();
   const Inbox = Digit?.ComponentRegistryService?.getComponent('BMCInbox');
   const inboxInitialState = {
     searchParams: {
@@ -31,12 +27,12 @@ const App = ({ path, stateCode, userType, tenants }) => {
     const { t } = useTranslation();
     const crumbs = [
       {
-        path: `/${window?.contextPath}/employee`,
+        path: `/digit-ui/employee`,
         content: t("HOME"),
         show: true,
       },
       {
-        path: `/${window?.contextPath}/employee`,
+        path: `/digit-ui/employee`,
         content: t(location.pathname.split("/").pop()),
         show: true,
       },
@@ -55,11 +51,7 @@ const App = ({ path, stateCode, userType, tenants }) => {
         <PrivateRoute path={`${path}/aadhaarVerify`} component={AadhaarVerifyPage} />
         <PrivateRoute path={`${path}/aadhaarEmployee`} component={AadhaarEmployeePage} />
         <PrivateRoute path={`${path}/randmization`} component={RandmizationPage} />
-        <PrivateRoute path={`${path}/crossverify`} component={CrossVerifyPage} />
         <PrivateRoute path={`${path}/approve`} component={ApprovePage} />
-        <PrivateRoute path={`${path}/wardwiseapplication`} component={wardWiseApplication} />
-        <PrivateRoute path={`${path}/schemewiseapplication`} component={schemeWiseApplication} />
-        <PrivateRoute path={`${path}/coursewiseapplication`} component={courseWiseApplication} />
       </AppContainer>
     </Switch>
   );

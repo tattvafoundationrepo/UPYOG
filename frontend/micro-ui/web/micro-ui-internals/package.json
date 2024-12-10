@@ -11,7 +11,8 @@
     "packages/modules/core",
     "packages/modules/bmc",
     "packages/modules/deonar",
-    "packages/modules/hrms"
+    "packages/modules/hrms",
+    "packages/modules/ebe"
   ],
   "author": "Abhinav Kushwaha <abhinav.kushwaha@egovernments.org>",
   "license": "MIT",
@@ -22,7 +23,7 @@
   "scripts": {
     "start": "SKIP_PREFLIGHT_CHECK=true run-s build start:dev",
     "sprint": "SKIP_PREFLIGHT_CHECK=true run-s start:script",
-    "start:dev": "run-p dev:**",
+    "start:dev": "SKIP_PREFLIGHT_CHECK=true run-p dev:**",
     "start:script": "./scripts/create.sh",
     "dev:css": "cd packages/css && yarn start",
     "publish:css": "cd packages/css && yarn publish --access public",
@@ -33,6 +34,7 @@
     "dev:hrms": "cd packages/modules/hrms && yarn start",
     "dev:bmc": "cd packages/modules/bmc && yarn start",
     "dev:deonar": "cd packages/modules/deonar && yarn start",
+    "dev:ebe": "cd packages/modules/ebe && yarn start",
     "dev:example": "cd example && yarn start",
     "build": "run-p build:**",
     "build:libraries": "cd packages/libraries && yarn build",
@@ -42,6 +44,7 @@
     "build:hrms": "cd packages/modules/hrms && yarn build",
     "build:bmc": "cd packages/modules/bmc && yarn build",
     "build:deonar": "cd packages/modules/deonar && yarn build",
+    "build:ebe": "cd packages/modules/ebe && yarn build",
     "deploy:jenkins": "./scripts/jenkins.sh"
   },
   "devDependencies": {

@@ -1,7 +1,7 @@
-import { AppContainer, CitizenHomeCard, Loader } from "@upyog/digit-ui-react-components";
+import { CitizenHomeCard, Loader, PTIcon } from "@upyog/digit-ui-react-components";
 import React, { useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { Switch, useRouteMatch } from "react-router-dom";
+import { useRouteMatch } from "react-router-dom";
 
 //Citizen Pages
 import AddressDetailCard from "./components/AddressDetails";
@@ -15,7 +15,9 @@ import ApplicationDetail from "./pagecomponents/applicationDetail";
 import BMCReviewPage from "./pagecomponents/bmcReview";
 import SelectSchemePage from "./pagecomponents/selectScheme";
 import BMCCitizenHome from "./pages/citizen";
-import SchemeDetailsPage from "./components/schemeDetails"
+import SchemeDetailsPage from "./components/schemeDetails";
+import FAQsSection from "./pages/FAQS/FAQs";
+import HowItsWorkSection from "./pages/HowItWork/HowItwork";
 
 //Employee Pages
 import BMCCard from "./components/BMCCard";
@@ -25,33 +27,21 @@ import SearchApplications from "./components/SearchApplications";
 import WorkflowActions from "./components/Workflow";
 import BMCEmployeeHome from "./pages/employee";
 import ApprovePage from "./pages/employee/Approve";
-import BMCInbox from './pages/employee/Inbox';
+import BMCInbox from "./pages/employee/Inbox";
 import AadhaarEmployeePage from "./pages/employee/aadhaarEmployee";
-import AadhaarSatutsVerificationPage from "./pages/employee/aadhaarSatutsVerification";
 import AadhaarVerifyPage from "./pages/employee/aadhaarVerify";
-import CrossVerifyPage from "./pages/employee/crossVerify";
 import RandmizationPage from "./pages/employee/randmization";
 //Master Pages
-import {
-  bankMasterPage,
-  casteCategoryMasterPage,
-  courseMasterPage,
-  courseWiseApplication,
-  electoralMasterPage,
-  qualificationMasterPage,
-  religionMasterPage,
-  schemeWiseApplication,
-  sectorMasterPage,
-  wardMasterPage,
-  wardWiseApplication,
-} from "./pages/master/aadhaarMaster";
-
 
 import getRootReducer from "./redux/reducers";
-
+import DocumentCard from "./components/DocumentCard";
+import UserOthersDetails from "./components/userOthersDetails";
+import BankDetailsForm from "./components/BankDetails";
+import AllApplicationsPage from "./components/AllApplications";
+import CurrentSchemeApplications from "./components/currentScheme";
 
 export const BMCModule = ({ stateCode, userType, tenants }) => {
-  const tenantId = Digit.ULBService.getCurrentTenantId();
+  const tenantId = Digit.SessionStorage.get("CITIZEN.COMMON.HOME.CITY")?.code || Digit.ULBService.getCurrentTenantId();
   const language = Digit.StoreData.getCurrentLanguage();
   const { path, url } = useRouteMatch();
   const moduleCode = ["BMC"];
@@ -66,22 +56,18 @@ export const BMCModule = ({ stateCode, userType, tenants }) => {
     return <Loader />;
   }
   if (userType === "citizen") {
-    return (<Switch>
-      <AppContainer className="ground-container">
-        <BMCCitizenHome path={path} stateCode={stateCode} />
-      </AppContainer>
-    </Switch>);
+    return (
+      <BMCCitizenHome path={path} stateCode={stateCode} />
+    );
   }
-  return (<Switch>
-    <AppContainer className="ground-container">
-      <BMCEmployeeHome path={path} stateCode={stateCode} />
-    </AppContainer>
-  </Switch>);
+  return (
+    <BMCEmployeeHome path={path} stateCode={stateCode} />
+  );
 };
 
-export const BMCLinks = ({ matchPath }) => {
+export const BMCLinks = ({ matchPath,userType }) => {
   const { t } = useTranslation();
-  const [params, setParams, clearParams] = Digit.Hooks.useSessionStorage(BMC_CITIZEN_CREATE_COMPLAINT, {});
+  const [params, setParams, clearParams] = Digit.Hooks.useSessionStorage("PT_CREATE_PROPERTY", {});
 
   useEffect(() => {
     clearParams();
@@ -89,12 +75,37 @@ export const BMCLinks = ({ matchPath }) => {
 
   const links = [
     {
-      link: `${matchPath}/create`,
-      i18nKey: t("CS_CREATE"),
+      link: `/digit-ui/citizen/bmc/aadhaarLogin`,
+      i18nKey: t("BMC_NEWAPPLICATION"),
     },
+    {
+      link: `/digit-ui/citizen/bmc/allApplications`,
+      i18nKey: t("BMC_MYAPPLICATIONS"),
+    },
+    {
+      link: `/digit-ui/citizen/bmc/howItWorks`,
+      i18nKey: t("BMC_HOW_IT_WORKS"),
+    },
+    {
+      link: `/digit-ui/citizen/bmc/faqs`,
+      i18nKey: t("BMC_FAQ_S"),
+    },
+    {
+      link: `/digit-ui/citizen/bmc/avilablescheme`,
+      i18nKey: t("BMC_CURRENTSCHEME"),
+    }
   ];
 
-  return <CitizenHomeCard header={t("CS_COMMON_HOME_COMPLAINTS")} links={links} />;
+  return (
+    <React.Fragment>
+      <div className="HomePageWrapper" style={{"padding-top": 10}}>
+        <div className="BannerWithSearch">
+        <img src={"https://ukpfms-digit-repo.s3.ap-south-1.amazonaws.com/Free-Silai-Machine-Yojna-1-jpg.jpeg"} alt="noimagefound" />
+        </div>
+        <CitizenHomeCard header={t("BMC")} links={links} Icon={() => <PTIcon className="fill-path-primary-main" />} />
+      </div>
+    </React.Fragment>
+  );
 };
 
 const componentsToRegister = {
@@ -107,22 +118,9 @@ const componentsToRegister = {
   AadhaarFullForm,
   SelectSchemePage,
   BMCReviewPage,
-  wardMasterPage,
-  electoralMasterPage,
-  religionMasterPage,
-  casteCategoryMasterPage,
-  bankMasterPage,
-  qualificationMasterPage,
-  sectorMasterPage,
-  courseMasterPage,
-  AadhaarSatutsVerificationPage,
   AadhaarEmployeePage,
   RandmizationPage,
-  wardWiseApplication,
-  schemeWiseApplication,
-  courseWiseApplication,
   AadhaarVerifyPage,
-  CrossVerifyPage,
   ApprovePage,
   BMCCard,
   BMCInbox,
@@ -135,6 +133,13 @@ const componentsToRegister = {
   SearchApplications,
   SchemeDetailsPage,
   BMC_INBOX_FILTER: (props) => <InboxFilter {...props} />,
+  DocumentCard,
+  UserOthersDetails,
+  BankDetailsForm,
+  AllApplicationsPage,
+  CurrentSchemeApplications,
+  FAQsSection,
+  HowItsWorkSection
 };
 
 export const initBMCComponents = () => {

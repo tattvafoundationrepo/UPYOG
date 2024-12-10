@@ -19,11 +19,12 @@ RUN yarn add @upyog/digit-ui-module-ws
 RUN yarn add @upyog/digit-ui-module-commonpt
 RUN yarn add @tattvafoundation/digit-ui-module-bmc
 RUN yarn add @tattvafoundation/digit-ui-module-deonar
+RUN yarn add @tattvafoundation/upyog-css@1.0.12
 RUN yarn add @upyog-niua/upyog-ui-module-ptr
 ARG WORK_DIR
 WORKDIR /app
-ENV NODE_OPTIONS "--max-old-space-size=4096"
-ENV GENERATE_SOURCEMAP "false"
+ENV NODE_OPTIONS="--max-old-space-size=4096"
+ENV GENERATE_SOURCEMAP="false"
 
 COPY ${WORK_DIR} .
 RUN ls -lah

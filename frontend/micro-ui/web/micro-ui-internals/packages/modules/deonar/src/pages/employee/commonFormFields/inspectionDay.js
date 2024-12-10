@@ -1,18 +1,10 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CardLabel, Dropdown, LabelFieldPair, TextInput, DatePicker } from "@upyog/digit-ui-react-components";
 import { Controller, useForm } from "react-hook-form";
 
-const InspectionDayField = ({label, name}) => {
+const InspectionDayField = ({label, name, control, data, setData, getValues, setValue}) => {
   const { t } = useTranslation();
-
-  const {
-    control,
-    setValue,
-    handleSubmit,
-    getValues,
-    formState: { errors, isValid },
-  } = useForm({ defaultValues: {}, mode: "onChange" });
 
   return (
     <div className="bmc-col3-card">
@@ -22,18 +14,24 @@ const InspectionDayField = ({label, name}) => {
             control={control}
             name={name}
             rules={{ required: t("CORE_COMMON_REQUIRED_ERRMSG") }}
-            render={({ value, onChange, onBlur }) => (
+            render={(props) => (
                 <div>
-                <Dropdown
-                    value={value}
-                    name={name}
-                    selected={value}
-                    select={(value) => onChange(value)}
-                    onBlur={onBlur}
-                    optionKey="value"
+                  <TextInput
+                    value={props.value}
+                    onChange={(e) => {
+                      props.onChange(e.target.value);
+                      const newData = {
+                        ...data,
+                        [name]: e.target.value
+                      };
+                      setData(newData);
+                    }}
+                    onBlur={props.onBlur}
+                    optionKey="i18nKey"
                     t={t}
                     placeholder={t(label)}
-                />
+                    disabled={true}
+                    />
                 </div>
             )}
             />

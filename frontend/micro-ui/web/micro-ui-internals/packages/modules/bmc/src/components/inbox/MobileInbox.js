@@ -1,6 +1,7 @@
-import React from "react";
+import React , { useState }from "react";
 import { useTranslation } from "react-i18next";
 import { ApplicationCard } from "./ApplicationCard";
+import CustomTable from "../CustomTable";
 // import { ApplicationLinks } from "@upyog/digit-ui-react-components";
 
 const MobileInbox = ({
@@ -20,6 +21,50 @@ const MobileInbox = ({
   allLinks,
 }) => {
   const { t } = useTranslation();
+  const [totalRecords, setTotalRecords] = useState(0);
+  //const [sortParams, setSortParams] = useState({});
+
+  const visibleColumns = [
+    {
+      Header: t("BMC_ApplicationNumber"),
+      accessor: "applicationNumber",
+      Cell: ({ value }) => t(value) || "N/A", 
+    },
+    {
+      Header: t("BMC_SchemeName"),
+      accessor: "name",
+      Cell: ({ value }) => t(value) || "N/A", 
+    },
+    {
+      Header: t("BMC_MachineName"),
+      accessor: "machine",
+      Cell: ({ value }) => t(value) || "N/A", 
+    },
+    {
+      Header: t("BMC_CourseName"),
+      accessor: "courseName",
+      Cell: ({ value }) => t(value) || "N/A", 
+    },
+    {
+      Header: t("BMC_CurrentStatus"),
+      accessor: "currentStatus",
+      Cell: ({ value }) => t(value) || "N/A", 
+    },
+    {
+      Header: t("BMC_LastModifiedDate"),
+      accessor: "lastModifiedTime",
+      Cell: ({ value }) => t(value) || "N/A", 
+    },
+    {
+      Header: t("BMC_Comment"),
+      accessor: "comment",
+      Cell: ({ value }) => t(value) || "N/A", 
+    }
+  ];
+
+  const handleOnClick = (rowDocument) => {
+    
+  };
   // const getData = () => {
   //   return data?.Employees?.map((dataObj) => {
   //     const obj = {};
@@ -52,7 +97,7 @@ const GetSlaCell = (value) => {
       <div className="inbox-container">
         <div className="filters-container">
           {/* {!isSearch && <ApplicationLinks linkPrefix={parentRoute} allLinks={allLinks} isMobile={true} />} */}
-          <ApplicationCard
+          {/* <ApplicationCard
                 t={t}
             data={getData()}
             onFilterChange={onFilterChange}
@@ -66,7 +111,21 @@ const GetSlaCell = (value) => {
             sortParams={sortParams}
             filterComponent={filterComponent}
             serviceRequestIdKey={serviceRequestIdKey}
+          /> */
+          <CustomTable
+              t={t}
+              columns={visibleColumns}
+              data={[]}
+              manualPagination={false}
+              totalRecords={totalRecords}
+              sortParams={sortParams}
+              config={[]}
+              tableClassName={"ebe-custom-scroll"}
+              isLoadingRows={true}
+              showSearch={true}
+              showText={true}
           />
+          }
         </div>
       </div>
     </div>

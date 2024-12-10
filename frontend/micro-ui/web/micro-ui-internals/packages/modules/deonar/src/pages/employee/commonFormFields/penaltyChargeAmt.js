@@ -1,41 +1,49 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { CardLabel, Dropdown, LabelFieldPair, TextInput, DatePicker } from "@upyog/digit-ui-react-components";
-import { Controller, useForm } from "react-hook-form";
+import { CardLabel, LabelFieldPair, TextInput } from "@upyog/digit-ui-react-components";
+import { Controller } from "react-hook-form";
 
-const PenaltyChargeAmountField = () => {
+const PenaltyChargeAmountField = ({ control, data, setData, amount }) => {
   const { t } = useTranslation();
+  const [error, setError] = useState("");
 
-  const {
-    control,
-    setValue,
-    handleSubmit,
-    getValues,
-    formState: { errors, isValid },
-  } = useForm({ defaultValues: {}, mode: "onChange" });
+  useEffect(() => {
+    if (amount) {
+      setError("");
+    }
+  }, [amount]);
 
   return (
     <div className="bmc-col3-card">
-        <LabelFieldPair>
-            <CardLabel className="bmc-label">{t("DEONAR_PENALTY_CHARGE_AMOUNT")}</CardLabel>
-            <Controller
-                control={control}
-                name="penaltyChargeAmount"
-                rules={{ required: t("CORE_COMMON_REQUIRED_ERRMSG") }}
-                render={({ value, onChange, onBlur }) => (
-                <div>
-                    <TextInput
-                    value={value}
-                    onChange={(e) => onChange(e.target.value)}
-                    onBlur={onBlur}
-                    optionKey="i18nKey"
-                    t={t}
-                    placeholder={t("DEONAR_PENALTY_CHARGE_AMOUNT")}
-                    />
-                </div>
-                )}
-            />
-        </LabelFieldPair>
+      <LabelFieldPair>
+        <CardLabel className="bmc-label">{t("DEONAR_PENALTY_CHARGE_AMOUNT")}</CardLabel>
+        <Controller
+          control={control}
+          name="penaltyChargeAmount"
+          render={(props) => (
+            <div>
+              <TextInput
+                type="number"
+                value={props.value || amount || ""}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  props.onChange(value);
+                  const newData = {
+                    ...data,
+                    penaltyChargeAmount: value,
+                  };
+                  setData(newData);
+                }}
+                onBlur={props.onBlur}
+                optionKey="i18nKey"
+                t={t}
+                placeholder={t("DEONAR_PENALTY_CHARGE_AMOUNT")}
+              />
+              {error && <div style={{ color: "red" }}>{error}</div>}
+            </div>
+          )}
+        />
+      </LabelFieldPair>
     </div>
   );
 };

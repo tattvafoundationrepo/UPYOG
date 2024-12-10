@@ -9,7 +9,7 @@ const DeathRemovalTypesDropdownField = ({setDeathType, options, control, data, s
 
   useEffect(() => {
     if (!data.deathRemovalType) {
-      setError("REQUIRED_FIELD");
+      setError(t("CORE_COMMON_REQUIRED_ERRMSG"));
     }
     else {
       setError("");
@@ -19,7 +19,7 @@ const DeathRemovalTypesDropdownField = ({setDeathType, options, control, data, s
   return (
     <div className="bmc-col3-card">
         <LabelFieldPair>
-            <CardLabel className="bmc-label">{t("DEONAR_DEATH_REMOVAL_TYPE")}</CardLabel>
+            <CardLabel className="bmc-label">{t("DEONAR_DEATH_REMOVAL_TYPE")} &nbsp;{error && <sup style={{ color: "red", fontSize: "x-small" }}>{error}</sup>}</CardLabel>
             <Controller
             control={control}
             name="deathRemovalType"
@@ -47,7 +47,6 @@ const DeathRemovalTypesDropdownField = ({setDeathType, options, control, data, s
             )}
             />
         </LabelFieldPair>
-        {error && <div style={{ color: "red" }}>{error}</div>}
     </div>
   );
 };

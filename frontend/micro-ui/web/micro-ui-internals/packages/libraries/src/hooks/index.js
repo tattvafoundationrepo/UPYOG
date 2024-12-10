@@ -213,7 +213,7 @@ import WSuseSearch from "./ws/useSearch";
 import useOldValue from "./ws/useOldValue";
 import useSewSearch from "./ws/useSewSearch";
 import useSearchWS from "./ws/useSearchWS";
-import useBulkSearchWS from "./ws/useBulkSearchWS"
+import useBulkSearchWS from "./ws/useBulkSearchWS";
 import useMypaymentWS from "./ws/useMypaymentWS";
 import useWSDetailsPage from "./ws/useWSDetailsPage";
 import useWSApplicationActions from "./ws/useApplicationActions";
@@ -267,12 +267,40 @@ import useTenantsPTR from "./ptr/useTenants";
 import useCommonGet from "./bmc/useCommon";
 import useCommonGetBank from "./bmc/useCommonGetBank";
 import useSaveUserDetail from "./bmc/useSaveUserDetail";
-import useSaveSchemes from './bmc/saveScheme';
-import useVerifierSchemeDetail from './bmc/useVerifierScheme';
+import useSaveSchemes from "./bmc/saveScheme";
+import useVerifierSchemeDetail from "./bmc/useVerifierScheme";
+import useVerifierScheme from "./bmc/verifyScheme";
 import useSchemesGet from "./bmc/getSchemes";
 import useUsersDetails from "./bmc/useUsers";
-import useLocation from './bmc/useLocation';
+import useLocation from "./bmc/useLocation";
 import createTokenAPI from "./digiLockerApi/createTokenAPI";
+import useRemoveDocuments from "./bmc/removeDocument";
+
+import useUpdateCustom from "./useUpdateCustom";
+import useWorkflowDetailsV2 from "./useWorkflowDetailsV2";
+import useWorkflowDetailsnew from "./useWorkflowDetailsnew";
+import useAppCount from "./bmc/useAppCount";
+import useBMCApplicationStatus from "./bmc/getApplicationStatus";
+import useWorkFlowTransit from "./workflow/useWorkFlowTransit";
+import useEBECreateEnquiry from "./ebe/useEBECreateEnquiry";
+import useEmployeeInSAP from "./ebe/useEmployeeInSAP";
+import useDeonarCommon from "./deonar/useCommonDeonar";
+import useEstimatedID from "./ebe/useEstimatedID";
+import useGetEnquiry from "./ebe/useGetEnquiry";
+import useEBEProcessEnquiry from "./ebe/useEBEProcessEnquiry";
+import useENQCount from "./ebe/useENQCount";
+
+import useInspectionPointSave from "./deonar/useInspectionPointDeonar";
+import useGetInspectionPointData from "./deonar/useGetInspectionPoint";
+import useSavePrakingDetail from "./deonar/savePrakingDetail";
+import useGetPrakingDetail from "./deonar/getPrakingDetail";
+import useCollectionPoint from "./deonar/useCollectionPoint";
+import useGetPenalty from "./deonar/getPenalty";
+import useSavePenalty from "./deonar/savePenalty";
+import useSaveDocument from "./bmc/saveDocuments"
+import useSaveQualification from "./bmc/saveQualification";
+import useSaveBankDetails from "./bmc/saveBankDetails";
+import useBMCInboxApplicationStatus from "./bmc/useBMCCommon"
 
 const pgr = {
   useComplaintDetails,
@@ -292,7 +320,6 @@ const pgr = {
   useTradeLicenseBillingslab,
   useMDMS: usePGRMDMS,
 };
-
 
 const fsm = {
   useTenants: useTenantsFSM,
@@ -321,10 +348,6 @@ const fsm = {
   useVendorUpdate,
   useVehicleDetails,
   useVehicleCreate,
-  useVendorCreate,
-  useVendorUpdate,
-  useVehicleDetails,
-  useVehicleCreate,
   useUpdateVehicle,
   useDriverSearch,
   useDriverCreate,
@@ -347,8 +370,7 @@ const ptr = {
   useServiceSearchPTR,
   usePetDocumentSearch,
   useMyPetPayments,
-  useTenants: useTenantsPTR
- 
+  useTenants: useTenantsPTR,
 };
 
 const pt = {
@@ -533,7 +555,7 @@ const reports = {
   useReportMeta,
 };
 
-const bmc={
+const bmc = {
   useCommonGet,
   useSchemesGet,
   useCommonGetBank,
@@ -541,9 +563,39 @@ const bmc={
   useSaveUserDetail,
   useSaveSchemes,
   useVerifierSchemeDetail,
-  useLocation
+  useLocation,
+  useVerifierScheme,
+  useAppCount,
+  useBMCApplicationStatus,
+  useRemoveDocuments,
+  useSaveDocument,
+  useSaveBankDetails,
+  useSaveQualification,
+  useBMCInboxApplicationStatus
 };
 
+const deonar = {
+  useDeonarCommon,
+  useInspectionPointSave,
+  useGetInspectionPointData,
+  useSavePrakingDetail,
+  useGetPrakingDetail,
+  useCollectionPoint,
+  useGetPenalty,
+  useSavePenalty
+};
+
+const workflow = {
+  useWorkFlowTransit,
+};
+const ebe = {
+  useEBECreateEnquiry,
+  useEmployeeInSAP,
+  useEstimatedID,
+  useGetEnquiry,
+  useEBEProcessEnquiry,
+  useENQCount,
+};
 const Hooks = {
   useSessionStorage,
   useQueryParams,
@@ -553,6 +605,7 @@ const Hooks = {
   useFetchBillsForBuissnessService,
   useGetPaymentRulesForBusinessServices,
   useWorkflowDetails,
+  useWorkflowDetailsnew,
   useInitStore,
   useClickOutside,
   useUserSearch,
@@ -600,6 +653,9 @@ const Hooks = {
   useCustomAPIHook,
   reports,
   bmc,
+  deonar,
+  ebe,
+  workflow,
   useGetHowItWorksJSON,
   useGetFAQsJSON,
   useGetDSSFAQsJSON,
@@ -609,7 +665,9 @@ const Hooks = {
   useBulkPdfDetails,
   useBillAmendmentInbox,
   useAudit,
-  createTokenAPI
+  createTokenAPI,
+  useUpdateCustom,
+  useWorkflowDetailsV2,
 };
 
 export default Hooks;

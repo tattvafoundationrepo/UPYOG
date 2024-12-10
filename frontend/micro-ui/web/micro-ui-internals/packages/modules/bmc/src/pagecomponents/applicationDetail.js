@@ -9,12 +9,13 @@ const ApplicationDetailFull = (_props) => {
   const { t } = useTranslation();
   const location = useLocation();
   const history = useHistory();
-  const tenantId = Digit.ULBService.getCurrentTenantId();
+  const tenantId = Digit.SessionStorage.get("CITIZEN.COMMON.HOME.CITY")?.code || Digit.ULBService.getCurrentTenantId();
   const userDetails = Digit.UserService.getUser();
-  const { scheme, schemeType,selectedScheme } = location.state || {};
+  const { scheme, schemeType, selectedScheme } = location.state || {};
 
   const [userDetail, setUserDetail] = useState({});
   const [updateSchemeData, setUpdateSchemeData] = useState({});
+  const [checkboxStates, setCheckboxStates] = useState({ agreeToPay: false, statement: false });
 
   const userFunction = (data) => {
     if (data && data.UserDetails && data.UserDetails.length > 0) {
@@ -29,7 +30,12 @@ const ApplicationDetailFull = (_props) => {
     setUpdateSchemeData(updatedData);
   };
 
+  const handleCheckboxChange = (name, checked) => {
+    setCheckboxStates((prev) => ({ ...prev, [name]: checked }));
+  };
+
   const handleConfirmClick = () => {
+    
     history.push({
       pathname: "/digit-ui/citizen/bmc/review",
       state: {
@@ -39,13 +45,18 @@ const ApplicationDetailFull = (_props) => {
         updateSchemeData,
       },
     });
+    setTimeout(() => {
+      window.location.reload();
+    }, 1);
   };
+
+  const isButtonEnabled = checkboxStates.agreeToPay && checkboxStates.statement;
 
   return (
     <React.Fragment>
       <div className="bmc-card-full">
         {window.location.href.includes("/citizen") && <Timeline currentStep={4} />}
-        <Title text={`Application for ${scheme?.label}`} />
+        <Title text={`${t("Application")} - ${t(scheme?.label)}`} />
 
         <SchemeDetailsPage
           onUpdate={handleApplicationUpdate}
@@ -55,6 +66,8 @@ const ApplicationDetailFull = (_props) => {
           scheme={scheme}
           selectedScheme={selectedScheme}
           schemeType={schemeType}
+          checkboxStates={checkboxStates}
+          onCheckboxChange={handleCheckboxChange}
         />
         <div className="bmc-card-row" style={{ textAlign: "end" }}>
           <button
@@ -63,8 +76,9 @@ const ApplicationDetailFull = (_props) => {
             style={{
               borderBottom: "3px solid black",
               outline: "none",
+              backgroundColor: isButtonEnabled ? "#f47738" : "grey",
             }}
-            onClick={handleConfirmClick}
+            onClick={isButtonEnabled ? handleConfirmClick : null}
           >
             {t("BMC_Confirm")}
           </button>

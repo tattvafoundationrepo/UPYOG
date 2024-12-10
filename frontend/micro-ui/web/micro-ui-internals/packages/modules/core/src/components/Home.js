@@ -10,6 +10,8 @@ import {
   PGRIcon,
   PTIcon,
   TLIcon,
+  DocumentIcon,
+  PersonIcon,
   WSICon,
 } from "@upyog/digit-ui-react-components";
 import React from "react";
@@ -61,6 +63,8 @@ const iconSelector = (code) => {
   switch (code) {
     case "PT":
       return <PTIcon className="fill-path-primary-main" />;
+    case "BMC":
+      return <DocumentIcon className="fill-path-primary-main" />;
     case "WS":
       return <WSICon className="fill-path-primary-main" />;
     case "FSM":

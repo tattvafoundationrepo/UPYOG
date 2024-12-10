@@ -4,90 +4,117 @@ import { useTranslation } from "react-i18next";
 
 const DEONARCard = () => {
   const { t } = useTranslation();
+  const ADMIN = Digit.Utils.DEONARAccess();
   const tenantId = Digit.ULBService.getCurrentTenantId();
+  if (!ADMIN) {
+    return null;
+  }
+  //const { isLoading, isError, error, data, ...restapply } = Digit.Hooks.bmc.useAppCount({action:null});
 
-  const formatLabel = (label) => {
-    const [beforeDash, afterDash] = label.split(" - ");
-    return (
-      <React.Fragment>
-        <strong>{beforeDash}</strong>
-        <br />
-        {afterDash}
-      </React.Fragment>
-    );
-  };
+  let KPIForDEONAR = [];
+
+  let propsForDEONAR = [
+    {
+      label: t("SECURITY CHECK - ARRIVAL"),
+      link: `/digit-ui/employee/deonar/securitycheck`,
+      roles: ["SUPERUSER","DEONAR_COUNTER"]
+    },
+    {
+      label: t("STABLING"),
+      link: `/digit-ui/employee/deonar/stabling`,
+      roles: ["SUPERUSER","DEONAR_GENERIC"]
+    },
+    {
+      label: t("SHOPKEEPER"),
+      link: `/digit-ui/employee/deonar/s`,
+      roles: ["SUPERUSER","DEONAR_GENERIC"]
+    },
+    {
+      label: t("Helkari"),
+      link: `/digit-ui/employee/deonar/helkari`,
+      roles: ["SUPERUSER","DEONAR_GENERIC"]
+    },
+    {
+      label: t("TRADING"),
+      link: `/digit-ui/employee/deonar/trading`,
+      roles: ["SUPERUSER","DEONAR_GENERIC"]
+    },
+    {
+      label: t("INSPECTION"),
+      link: `/digit-ui/employee/deonar/inspection`,
+      roles: ["SUPERUSER","DEONAR_INSPECTION"]
+    },
+    {
+      label: t("SLAUGHTERING"),
+      link: `/digit-ui/employee/deonar/slaughtering`,
+      roles: ["SUPERUSER","DEONAR_GENERIC"]
+    },
+    {
+      label: t("COLLECTION"),
+      link: `/digit-ui/employee/deonar/feeCollection`,
+      roles: ["SUPERUSER","DEONAR_COLLECTION"]
+    },
+    {
+      label: t("PARKING"),
+      link: `/digit-ui/employee/deonar/parking`,
+      roles: ["SUPERUSER","DEONAR_GENERIC"]
+    },
+    // {
+    //   label: t("REMOVAL"),
+    //   link: `/digit-ui/employee/deonar/removal`,
+    //   roles: ["SUPERUSER","DEONAR_GENERIC"]
+    // },
+    // {
+    //   label: t("REMOVAL FEE"),
+    //   link: `/digit-ui/employee/deonar/removalfee`,
+    //   roles: ["SUPERUSER","DEONAR_COLLECTION"]
+    // },
+    // {
+    //   label: t("SLAUGHTER FEE RECOVERY"),
+    //   link: `/digit-ui/employee/deonar/slaughterfeerecovery`,
+    //   roles: ["SUPERUSER","DEONAR_COLLECTION"]
+    // },
+    // {
+    //   label: t("VEHICLE WASHING CHARGE COLLECTION"),
+    //   link: `/digit-ui/employee/deonar/vehiclewashing`,
+    //   roles: ["SUPERUSER","DEONAR_GENERIC"]
+    // },
+    // {
+    //   label: t("WEIGHING CHARGE"),
+    //   link: `/digit-ui/employee/deonar/weighingcharge`,
+    //   roles: ["SUPERUSER","DEONAR_GENERIC"]
+    // },
+    {
+      label: t("PENALTY CHARGE"),
+      link: `/digit-ui/employee/deonar/penaltyCharge`,
+      roles: ["SUPERUSER","DEONAR_GENERIC"]
+    },
+    {
+      label: t("GATE PASS"),
+      link: `/digit-ui/employee/deonar/gatePass`,
+      roles: ["SUPERUSER","DEONAR_GENERIC"]
+    },
+    {
+      label: t("INBOX"),
+      link: `/digit-ui/employee/deonar/inbox`,
+      roles: ["SUPERUSER","DEONAR_GENERIC"]
+    }
+  ];
+
+  //propsForDEONAR = propsForDEONAR.filter(link => link.role && Digit.Utils.didEmployeeHasRole(link.role));
+  propsForDEONAR = propsForDEONAR.filter(link => 
+    link.roles && link.roles.some(role => Digit.Utils.didEmployeeHasRole(role))
+  );
+  //KPIForDEONAR = KPIForDEONAR.filter(link => link.role && Digit.Utils.didEmployeeHasRole(link.role));
 
   const propsForModuleCard = {
     Icon: <PersonIcon />,
     moduleName: t("DEONAR"),
-    kpis: [],
+    kpis: [...KPIForDEONAR],
     links: [
-      {
-        label: formatLabel(t("SECURITY CHECK - ARRIVAL")),
-        link: `/digit-ui/employee/deonar/securitycheck`,
-      },
-      {
-        label: t("PARKING FEE"),
-        link: `/digit-ui/employee/deonar/parking`,
-      },
-      {
-        label: t("REMOVAL"),
-        link: `/digit-ui/employee/deonar/removal`,
-      },
-      {
-        label: formatLabel(t("COLLECTION POINT - ASSIGN SHOPKEEPER")),
-        link: `/digit-ui/employee/deonar/assignshopkeeper`,
-      },
-      {
-        label: t("ENTRY FEE"),
-        link: `/digit-ui/employee/deonar/entryfee`,
-      },
-      {
-        label: t("REMOVAL FEE"),
-        link: `/digit-ui/employee/deonar/removalfee`,
-      },
-      {
-        label: t("STABLING FEE"),
-        link: `/digit-ui/employee/deonar/stablingfee`,
-      },
-      {
-        label: formatLabel(t("INSPECTION POINT - ANTE MORTEM INSPECTION")),
-        link: `/digit-ui/employee/deonar/antemorteminspection`,
-      },
-      {
-        label: t("RE-ANTE MORTEM INSPECTION"),
-        link: `/digit-ui/employee/deonar/reantemorteminspection`,
-      },
-      {
-        label: t("BEFORE SLAUGHTER ANTE MORTEM INSPECTION"),
-        link: `/digit-ui/employee/deonar/antemortembeforeslaughterinspection`,
-      },
-      {
-        label: t("POST MORTEM INSPECTION"),
-        link: `/digit-ui/employee/deonar/postmorteminspection`,
-      },
-      {
-        label: formatLabel(t("SLAUGHTER RECOVERY POINT - SLAUGHTER FEE RECOVERY")),
-        link: `/digit-ui/employee/deonar/slaughterfeerecovery`,
-      },
-      {
-        label: formatLabel(t("DELIVERY POINT - VEHICLE WASHING CHARGE COLLECTION")),
-        link: `/digit-ui/employee/deonar/vehiclewashing`,
-      },
-      {
-        label: t("WEIGHING CHARGE"),
-        link: `/digit-ui/employee/deonar/weighingcharge`,
-      },
-      {
-        label: t("PENALTY CHARGE"),
-        link: `/digit-ui/employee/deonar/penaltyCharge`,
-      },
-      {
-        label: t("GATE PASS"),
-        link: `/digit-ui/employee/deonar/gatePass`,
-      },
+      ...propsForDEONAR,
     ],
-    longModuleName: false,
+    longModuleName: true
   };
   return <EmployeeModuleCard {...propsForModuleCard} />;
 };

@@ -29,7 +29,7 @@ const Filter = ({ searchParams, onFilterChange, onSearch, removeParam, ...props 
     } else {
       onSelectFilterRolessetSelectedRole(filters.role[0]);
     }
-  }, [filters.role]);
+  }, []);
 
   const [tenantId, settenantId] = useState(() => {
     return tenantIds.filter(
@@ -60,7 +60,7 @@ const Filter = ({ searchParams, onFilterChange, onSearch, removeParam, ...props 
     if (tenantId.code) {
       setSearchParams({ ..._searchParams, tenantId: tenantId.code });
     }
-  }, [tenantIds]);
+  }, []);
 
   useEffect(() => {
     if (filters.role && filters.role.length > 0) {
@@ -81,19 +81,19 @@ const Filter = ({ searchParams, onFilterChange, onSearch, removeParam, ...props 
     else if (filters.role && filters.role.length === 0) {
       setSearchParams({ ..._searchParams, roles: undefined });
     }
-  }, [filters.role]);
+  }, []);
 
   useEffect(() => {
     if (departments) {
       setSearchParams({ ..._searchParams, departments: departments.code });
     }
-  }, [departments]);
+  }, []);
 
   useEffect(() => {
     if (roles) {
       setSearchParams({ ..._searchParams, roles: roles.code });
     }
-  }, [roles]);
+  }, []);
 
   const ifExists = (list, key) => {
     return list?.filter((object) => object.code === key.code).length;
@@ -103,7 +103,7 @@ const Filter = ({ searchParams, onFilterChange, onSearch, removeParam, ...props 
     if (isActive) {
       setSearchParams({ ..._searchParams, isActive: isActive.code });
     }
-  }, [isActive]);
+  }, []);
   const clearAll = () => {
     onFilterChange({ delete: Object.keys(searchParams) });
     settenantId(tenantIds.filter((ele) => ele.code == Digit.ULBService.getCurrentTenantId())[0]);
@@ -143,7 +143,7 @@ const Filter = ({ searchParams, onFilterChange, onSearch, removeParam, ...props 
                   />
                 </svg>
               </span>
-              <span>{t("HR_COMMON_FILTER")}:</span>{" "}
+              <span>{t("BMC_COMMON_FILTER")}:</span>{" "}
             </div>
             <div className="clearAll" onClick={clearAll}>
               {t("HR_COMMON_CLEAR_ALL")}
@@ -176,7 +176,7 @@ const Filter = ({ searchParams, onFilterChange, onSearch, removeParam, ...props 
               />
             </div> */}
             <div>
-              <div className="filter-label">{t("HR_COMMON_TABLE_COL_DEPT")}</div>
+              <div className="filter-label">{t("BMC_SCHEME")}</div>
               <Dropdown
                 option={Digit.Utils.locale.convertToLocaleData(data?.MdmsRes?.["common-masters"]?.Department, 'COMMON_MASTERS_DEPARTMENT')}
                 selected={departments}
@@ -188,7 +188,7 @@ const Filter = ({ searchParams, onFilterChange, onSearch, removeParam, ...props 
             <div>
               <div>
                 {GetSelectOptions(
-                  t("HR_COMMON_TABLE_COL_ROLE"),
+                  t("BMC_SUB_SCHEME"),
                   Digit.Utils.locale.convertToLocaleData(data?.MdmsRes["ACCESSCONTROL-ROLES"]?.roles, 'ACCESSCONTROL_ROLES_ROLES', t),
                   selectedRoles,
                   onSelectRoles,
@@ -199,19 +199,19 @@ const Filter = ({ searchParams, onFilterChange, onSearch, removeParam, ...props 
               </div>
             </div>
             <div>
-              <div className="filter-label">{t("HR_EMP_STATUS_LABEL")}</div>
+              <div className="filter-label">{t("BMC_APPLICATION_STATUS")}</div>
               <RadioButtons
                 onSelect={setIsactive}
                 selected={isActive}
                 selectedOption={isActive}
                 optionsKey="name"
                 options={[
-                  { code: true, name: t("HR_ACTIVATE_HEAD") },
-                  { code: false, name: t("HR_DEACTIVATE_HEAD") },
+                  { code: true, name: t("BMC_APPROVED") },
+                  { code: false, name: t("BMC_NOT_APPROVED") },
                 ]}
               />
               {props.type !== "mobile" && <div>
-                <SubmitBar onSubmit={() => onFilterChange(_searchParams)} label={t("HR_COMMON_APPLY")} />
+                <SubmitBar onSubmit={() => onFilterChange(_searchParams)} label={t("BMC_COMMON_APPLY")} />
               </div>}
             </div>
           </div>

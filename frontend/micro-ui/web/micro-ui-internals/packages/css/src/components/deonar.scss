@@ -1,0 +1,201 @@
+
+/* Styles for screen widths below 768px */
+@media (max-width: 768px) {
+
+  .deonar-scrollable-table{
+    display: flex !important;
+  }
+  .deonar-scrollable-table thead th{
+    display: flex;
+    padding: 20px 10px;
+  }
+
+  .deonar-scrollable-table tbody tr{
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+  }
+
+  .deonar-scrollable-table tbody{
+    display: flex;
+  }
+  .deonar-scrollable-table tbody td{
+    padding: 20px 18px !important;
+  }
+
+  .deonar-modal-content{
+    overflow-y: auto;
+    max-height: 375px;
+  }
+
+  .bmc-form-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .bmc-form-field.half {
+    grid-column: 1 / -1;
+  }
+}
+@media (max-width: 1280px) {
+  .deonar-scrollable-table{
+    display: block;
+  }
+}
+
+
+.deonar-scrollable-table {
+  max-height: 400px; 
+  max-width: 100%;   
+  overflow-x: auto;
+  overflow-y: auto;
+}
+
+.deonar-custom-scroll {
+  display: block;
+}
+
+.deonar-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 130px;
+}
+
+.deonar-modal-content {
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  position: relative;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  margin-top: 75px;
+}
+
+.deonar-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.close-modal-btn {
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.deonar-modal-body {
+  margin-bottom: 20px;
+  p {
+    font-size: 16px;
+  }
+}
+
+.deonar-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.submit-btn {
+  background-color: #4CAF50;
+  color: white;
+  padding: 10px 15px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+
+  &:hover {
+    background-color: #45a049;
+  }
+}
+
+
+.bmc-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.bmc-form-field.half {
+  grid-column: span 1;
+}
+
+
+.no-uuid-message {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  text-align: center;
+  color: #666;
+}
+
+/************* Styles for confirmation overlay *********/
+
+.deonar-confirmation-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7); /* Dark overlay */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000; /* Ensure it is above other content */
+}
+
+.deonar-confirmation-content {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  padding: 20px;
+  max-width: 500px;
+  width: 100%; /* Responsive width */
+}
+
+.deonar-confirmation-header {
+  margin-bottom: 15px;
+}
+
+.deonar-confirmation-body {
+  margin-bottom: 20px;
+}
+
+.deonar-confirmation-footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.deonar-btn-confirm,
+.deonar-btn-cancel {
+  padding: 10px 15px;
+  border: none;
+  border-radius: 5px;
+  margin-left: 10px;
+  cursor: pointer;
+}
+
+.deonar-btn-confirm {
+  background-color: #007bff; /* Primary button color */
+  color: white;
+}
+
+.deonar-btn-cancel {
+  background-color: #a82227; /* Danger button color */
+  color: white;
+}
+
+.deonar-btn-confirm:hover,
+.deonar-btn-cancel:hover {
+  opacity: 0.9; /* Slight opacity change on hover */
+}

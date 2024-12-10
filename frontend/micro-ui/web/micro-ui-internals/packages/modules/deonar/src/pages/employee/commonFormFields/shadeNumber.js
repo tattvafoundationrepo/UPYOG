@@ -4,14 +4,14 @@ import { CardLabel, Dropdown, LabelFieldPair, TextInput, DatePicker } from "@upy
 import { Controller, useForm } from "react-hook-form";
 import { shadeNumberOptions } from "../../../constants/dummyData";
 
-const ShadeNumberField = ({control, setData, data}) => {
+const ShadeNumberField = ({control, setData, data, style}) => {
   const { t } = useTranslation();
   const [error, setError] = useState("");
   const [options, setOptions] = useState([]);
 
   useEffect(() => {
     if (!data.shadeNumber) {
-      setError("REQUIRED_FIELD");
+      setError("*");
     }
     else {
       setError("");
@@ -23,9 +23,9 @@ const ShadeNumberField = ({control, setData, data}) => {
   }, []);
 
   return (
-    <div className="bmc-col3-card">
+    <div className="bmc-col3-card" style={style}>
         <LabelFieldPair>
-            <CardLabel className="bmc-label">{t("DEONAR_SHADE_NUMBER")}</CardLabel>
+            <CardLabel className="bmc-label">{t("DEONAR_SHADE_NUMBER")}&nbsp;{error && <sup style={{ color: "red", fontSize: "x-small" }}>{error}</sup>}</CardLabel>
             <Controller
                 control={control}
                 name="shadeNumber"
@@ -52,7 +52,6 @@ const ShadeNumberField = ({control, setData, data}) => {
                 )}
             />
         </LabelFieldPair>
-        {error && <div style={{ color: "red" }}>{error}</div>}
       </div>
   );
 };

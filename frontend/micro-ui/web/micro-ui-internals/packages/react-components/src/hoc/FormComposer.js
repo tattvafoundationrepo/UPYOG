@@ -46,7 +46,7 @@ export const FormComposer = (props) => {
     if (props?.appData && !(props?.appData?.ConnectionHolderDetails?.[0]?.sameAsOwnerDetails) && iseyeIconClicked && Object.keys(props?.appData)?.length > 0 && (!(_.isEqual(props?.appData?.ConnectionHolderDetails?.[0],formData?.ConnectionHolderDetails?.[0] ))) ) {
       reset({ ...props?.appData });
     }
-  }, [props?.appData, formData, props?.appData?.ConnectionHolderDetails]);
+  }, [props?.appData, formData, props?.appData?.ConnectionHolderDetails,reset]);
 
   useEffect(() => {
     props.getFormAccessors && props.getFormAccessors({ setValue, getValues });
@@ -62,7 +62,7 @@ export const FormComposer = (props) => {
 
   useEffect(() => {
     props.onFormValueChange && props.onFormValueChange(setValue, formData, formState);
-  }, [formData]);
+  }, [formData,formState,props,setValue]);
 
   const fieldSelector = (type, populators, isMandatory, disable = false, component, config) => {
     const Component = typeof component === "string" ? Digit.ComponentRegistryService.getComponent(component) : component;

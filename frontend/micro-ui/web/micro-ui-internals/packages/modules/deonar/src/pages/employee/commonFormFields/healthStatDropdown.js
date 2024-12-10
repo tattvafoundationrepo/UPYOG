@@ -3,16 +3,8 @@ import { useTranslation } from "react-i18next";
 import { CardLabel, Dropdown, LabelFieldPair, TextInput, DatePicker } from "@upyog/digit-ui-react-components";
 import { Controller, useForm } from "react-hook-form";
 
-const HealthStatDropdownField = ({label, name}) => {
+const HealthStatDropdownField = ({label, name, control, setData, data, options, required}) => {
   const { t } = useTranslation();
-
-  const {
-    control,
-    setValue,
-    handleSubmit,
-    getValues,
-    formState: { errors, isValid },
-  } = useForm({ defaultValues: {}, mode: "onChange" });
 
   return (
     <div className="bmc-col3-card">
@@ -22,17 +14,26 @@ const HealthStatDropdownField = ({label, name}) => {
                 control={control}
                 name={name}
                 rules={{ required: t("CORE_COMMON_REQUIRED_ERRMSG") }}
-                render={({ value, onChange, onBlur }) => (
+                render={(props) => (
                     <div>
                     <Dropdown
-                        value={value}
+                        value={props.value}
                         name={name}
-                        selected={value}
-                        select={(value) => onChange(value)}
-                        onBlur={onBlur}
-                        optionKey="value"
+                        selected={props.value}
+                        select={(value) => {
+                          props.onChange(value);
+                          const newData = {
+                            ...data,
+                            [name]: value
+                          };
+                          setData(newData);
+                        }}
+                        onBlur={props.onBlur}
+                        optionKey="name"
+                        option={options}
                         t={t}
                         placeholder={t(label)}
+                        required={required || false}
                     />
                     </div>
                 )}

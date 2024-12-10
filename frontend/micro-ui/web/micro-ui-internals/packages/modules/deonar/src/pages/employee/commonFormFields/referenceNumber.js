@@ -3,23 +3,36 @@ import { useTranslation } from "react-i18next";
 import { CardLabel, Dropdown, LabelFieldPair, TextInput, DatePicker } from "@upyog/digit-ui-react-components";
 import { Controller, useForm } from "react-hook-form";
 
-const ReferenceNumberField = ({control, data, setData}) => {
+const ReferenceNumberField = ({control, data, setData, style}) => {
   const { t } = useTranslation();
   const [error, setError] = useState("");
 
   useEffect(() => {
     if (!data.referenceNumber) {
-      setError("REQUIRED_FIELD");
+      setError(t("*"));
     }
     else {
       setError("");
     }
   }, [data]);
 
+  const validateAlphanumeric = (value) => {
+    const regex = /^[a-zA-Z0-9]*$/; // Alphanumeric validation
+    if (value === "") {
+      setError(t("CORE_COMMON_REQUIRED_ERRMSG")); // Error message for empty value
+    } else if (!regex.test(value)) {
+      setError(t("ONLY_ALPHANUMERIC_CHARACTERS_ALLOWED")); // Error message for non-alphanumeric characters
+    }
+    else {
+      setError("");
+    }
+    return true;
+  };
+
   return (
-    <div className="bmc-col3-card">
+    <div className="bmc-col3-card" style={style}>
         <LabelFieldPair>
-            <CardLabel className="bmc-label">{t("DEONAR_REFERENCE_NUMBER")}</CardLabel>
+            <CardLabel className="bmc-label">{t("DEONAR_REFERENCE_NUMBER")}&nbsp;{error && <sup style={{ color: "red", fontSize: "x-small" }}>{error}</sup>}</CardLabel>
             <Controller
                 control={control}
                 name="referenceNumber"
@@ -30,12 +43,13 @@ const ReferenceNumberField = ({control, data, setData}) => {
                     value={props.value}
                     onChange={(e) => {
                       props.onChange(e.target.value);
-                      const newData = {
-                        ...data,
-                        referenceNumber: e.target.value
-                      };
-                      setData(newData);
-                    }}
+                      validateAlphanumeric(e.target.value);
+                        const newData = {
+                          ...data,
+                          referenceNumber: e.target.value
+                        };
+                        setData(newData);
+                   }}
                     onBlur={props.onBlur}
                     optionKey="i18nKey"
                     t={t}
@@ -45,7 +59,6 @@ const ReferenceNumberField = ({control, data, setData}) => {
                 )}
             />
         </LabelFieldPair>
-        {error && <div style={{ color: "red" }}>{error}</div>}
       </div>
   );
 };

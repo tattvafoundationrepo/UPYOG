@@ -11,7 +11,7 @@ const AssignDateField = ({control, data, setData}) => {
 
   useEffect(() => {
     if (!data.assignDate) {
-      setError("REQUIRED_FIELD");
+      setError(t("CORE_COMMON_REQUIRED_ERRMSG"));
     }
     else {
       setError("");

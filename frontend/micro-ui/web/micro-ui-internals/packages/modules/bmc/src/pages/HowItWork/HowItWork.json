@@ -1,0 +1,41 @@
+{
+    "tenantId": "mh.mumbai",
+    "moduleName": "BMC",
+    "FAQs": [
+        {
+            "BMC": {
+                "FAQs": [
+                    {
+                        "question": "HOW TO USE BMC",
+                        "answer": [
+                            {
+                                "point": "CLICK ON WELFARE SCHEME"
+                            },
+                            {
+                                "point": "ENTER THE AADHAR NUMBER"
+                            },
+                            {
+                                "point": "CLICK ON THE SUBMIT"
+                            },
+                            {
+                                "point": "FILL THE PERSONAL DETAILS"
+                            },
+                            {
+                                "point": "FILL THE ADDRESS DETAILS"
+                            },
+                            {
+                                "point": "FILL THE DOCUMENT DETAILS"
+                            },
+                            {
+                                "point": "FILL THE QUALIFICATION DETAILS"
+                            },
+                            {
+                                "point": "FILL THE BANK DETAILS"
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    ]
+}

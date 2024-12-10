@@ -22,6 +22,7 @@
     .popup-module-main {
       @apply px-lg pb-lg;
     }
+
     .popup-module-main {
       @apply w-full p-sm h-full;
     }
@@ -31,6 +32,11 @@
       @apply flex flex-row justify-end;
     }
   }
+}
+
+.popup-module-action-bar {
+  display: flex;
+  gap: 10px;
 }
 
 .popup-module-main {

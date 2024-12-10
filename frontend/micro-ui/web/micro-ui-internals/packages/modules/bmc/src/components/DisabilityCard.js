@@ -5,7 +5,7 @@ import { Controller, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import ToggleSwitch from "./Toggle";
 
-const DisabilityCard = ({ tenantId, onUpdate, initialRows = {}, AllowEdit = false, ...props }) => {
+const DisabilityCard = ({ tenantId, onUpdate, initialRows = {}, AllowEdit = false, ...props}) => {
   const { t } = useTranslation();
   const [isEditable, setIsEditable] = useState(AllowEdit);
   const [focusIndex, setFocusIndex] = useState({ index: -1, type: "" });
@@ -14,8 +14,8 @@ const DisabilityCard = ({ tenantId, onUpdate, initialRows = {}, AllowEdit = fals
   const headerLocale = useMemo(() => Digit.Utils.locale.getTransformedLocale(tenantId), [tenantId]);
 
   const initialDefaultValues = {
-    divyangcardid: "",
-    disabilitytype: "",
+    divyangcardid: null,
+    disabilitytype: null,
     divyangpercent: 0,
   };
 
@@ -124,27 +124,34 @@ const DisabilityCard = ({ tenantId, onUpdate, initialRows = {}, AllowEdit = fals
       <div className="bmc-row-card-header">
         <div className="bmc-card-row">
           <div className="bmc-card-row">
-            <div className="bmc-col-large-header">
-              <div className="bmc-title">{t("DISABILITY DETAILS")}</div>
-            </div>
-            <div className="bmc-col-small-header" style={{ textAlign: "end" }}>
-              <ToggleSwitch id={"DisabilityToggle"} isOn={isEditable} handleToggle={handleToggle} onLabel="Yes" offLabel="No" disabled={!AllowEdit} />
-            </div>
+            <span className="bmc-col-large-header">
+              <div className="bmc-title">{t("BMC_DISABILITY_DETAILS")}</div>
+            </span>
+            <span className="bmc-col-small-header" style={{ textAlign: "end" }}>
+              <ToggleSwitch
+                id={"DisabilityToggle"}
+                isOn={isEditable}
+                handleToggle={handleToggle}
+                onLabel={t("Yes")}
+                offLabel={t("No")}
+                disabled={!AllowEdit}
+                visible={AllowEdit}
+              />
+            </span>
           </div>
           <div className="bmc-col3-card">
             <LabelFieldPair>
-              <CardLabel className="bmc-label">{t("BMC_UDID_ID")}</CardLabel>
+            <CardLabel className="bmc-label">{t("BMC_UDID_ID")}&nbsp;{errors.divyangcardid && <sup style={{ color: "red", fontSize: "x-small" }}>{errors.divyangcardid.message}</sup>}</CardLabel>
               <Controller
                 control={control}
-                name={"divyangcardid"}
+                name="divyangcardid"
                 rules={{ required: t("CORE_COMMON_REQUIRED_ERRMSG") }}
                 render={(props) => (
                   <div>
-                    <TextInput
-                      {...props}
-                      disabled={!isEditable}
-                      isMandatory={true}
-                      placeholder={"Enter the udid ID"}
+                    <TextInput 
+                      disabled={!isEditable} 
+                      readOnly 
+                      value={props.value || ""} 
                       autoFocus={focusIndex.index === props.name}
                       onChange={(e) => {
                         props.onChange(e.target.value);
@@ -155,15 +162,15 @@ const DisabilityCard = ({ tenantId, onUpdate, initialRows = {}, AllowEdit = fals
                         props.onBlur(e);
                       }}
                     />
-                    {errors.divyangcardid && <span style={{ color: "red" }}>{errors.divyangcardid.message}</span>}
                   </div>
                 )}
               />
             </LabelFieldPair>
           </div>
+         
           <div className="bmc-col3-card">
             <LabelFieldPair>
-              <CardLabel className="bmc-label">{t("BMC_DISABILITY_TYPE")}</CardLabel>
+              <CardLabel className="bmc-label">{t("BMC_DISABILITY_TYPE")}&nbsp;{errors.disabilitytype && <sup style={{ color: "red", fontSize: "x-small" }}>{errors.disabilitytype.message}</sup>}</CardLabel>
               <Controller
                 control={control}
                 name={"disabilitytype"}
@@ -174,7 +181,7 @@ const DisabilityCard = ({ tenantId, onUpdate, initialRows = {}, AllowEdit = fals
                   <div>
                     {isEditable ? (
                       <Dropdown
-                        placeholder="SELECT THE DISABILITY TYPE"
+                        placeholder={t("BMC_SELECT_THE_DISABILITY_TYPE")}
                         selected={props.value}
                         select={(divyang) => props.onChange(divyang)}
                         onBlur={props.onBlur}
@@ -182,11 +189,11 @@ const DisabilityCard = ({ tenantId, onUpdate, initialRows = {}, AllowEdit = fals
                         optionKey="i18nKey"
                         t={t}
                         isMandatory={true}
+                        className="employee-select-wrap bmc-form-field"
                       />
                     ) : (
-                      <TextInput readOnly value={props.value?.name || ""} />
+                      <TextInput readOnly value={t(props.value?.i18nKey || "")} />
                     )}
-                    {errors.disabilitytype && <span style={{ color: "red" }}>{errors.disabilitytype.message}</span>}
                   </div>
                 )}
               />
@@ -194,7 +201,7 @@ const DisabilityCard = ({ tenantId, onUpdate, initialRows = {}, AllowEdit = fals
           </div>
           <div className="bmc-col2-card">
             <div className="bmc-range-container">
-              <CardLabel className="bmc-label">{t("BMC_DISABILITY_PERCENTAGE")}</CardLabel>
+              <CardLabel className="bmc-label">{t("BMC_DISABILITY_PERCENTAGE")}&nbsp;{errors.divyangpercent && <sup style={{ color: "red", fontSize: "x-small" }}>{errors.divyangpercent.message}</sup>}</CardLabel>
               <Controller
                 control={control}
                 name={"divyangpercent"}
@@ -221,8 +228,9 @@ const DisabilityCard = ({ tenantId, onUpdate, initialRows = {}, AllowEdit = fals
                         <option key={i} value={i + 1}></option>
                       ))}
                     </datalist>
-                    <span className="range-value">Disability: {rangeValue}%</span>
-                    {errors.divyangpercent && <span style={{ color: "red" }}>{errors.divyangpercent.message}</span>}
+                    <span className="range-value">
+                      {t("Disability")}: {rangeValue}%
+                    </span>
                   </div>
                 )}
               />

@@ -11,11 +11,13 @@ import WashingChargeAmountField from "../commonFormFields/washingChargeAmt";
 import PaymentModeField from "../commonFormFields/paymentMode";
 import ReferenceNumberField from "../commonFormFields/referenceNumber";
 import SubmitPrintButtonFields from "../commonFormFields/submitPrintBtn";
+import useSubmitForm from "../../../hooks/useSubmitForm";
+import { COLLECTION_POINT_ENDPOINT } from "../../../constants/apiEndpoints";
+import { vehicleWashingMockData } from "../../../constants/dummyData";
 
 const VehicleWashing = () => {
   const { t } = useTranslation();
   const [data, setData] = useState({});
-  const [subFormType, setSubFormType] = useState(null);
 
   const {
     control,
@@ -23,44 +25,48 @@ const VehicleWashing = () => {
     handleSubmit,
     getValues,
     formState: { errors, isValid },
-  } = useForm({ defaultValues: {}, mode: "onChange" });
+  } = useForm({ defaultValues: {
+    vehicleType: {},
+    vehicleNumber: 'MH-00 0000',
+    washingChargeAmount: 0,
+    paymentMode: {},
+    referenceNumber: 0
+  }, mode: "onChange" });
 
-  const fetchDataByReferenceNumber = async (referenceNumber) => {
-    const mockData = {
-      arrivalUuid: referenceNumber,
-      importType: "Type A",
-      importPermissionNumber: "123456",
-      importPermissionDate: new Date(),
-      traderName: "John Doe",
-      licenseNumber: "LIC123",
-      vehicleNumber: "ABC123",
-      numberOfAliveAnimals: 5,
-      numberOfDeadAnimals: 2,
-      arrivalDate: new Date(),
-      arrivalTime: "12:00",
-    };
-    return mockData;
+  const { submitForm, isSubmitting, response, error } = useSubmitForm(COLLECTION_POINT_ENDPOINT);
+
+  const fetchDataByReferenceNumber = async () => {
+    return vehicleWashingMockData;
   };
 
   const handleSearch = async () => {
-    const referenceNumber = getValues("arrivalUuid");
-    if (referenceNumber) {
+    const shopkeeperName = getValues("shopkeeperName");
+    const helkariName = getValues("helkariName");
+    if (shopkeeperName && helkariName) {
       try {
-        const result = await fetchDataByReferenceNumber(referenceNumber);
+        const result = await fetchDataByReferenceNumber();
         setData(result);
+        console.log(result);
         Object.keys(result).forEach((key) => {
           setValue(key, result[key]);
         });
+        setValue('shopkeeperName', shopkeeperName);
+        setValue('helkariName', helkariName);
       } catch (error) {
         console.error("Failed to fetch data", error);
       }
     }
   };
 
-  const onSubmit = (formData) => {
-    console.log("Form data submitted:", formData);
-    const jsonData = JSON.stringify(formData);
-    console.log("Generated JSON:", jsonData);
+  const onSubmit = async (formData) => {
+    try {
+      const result = await submitForm(formData);
+      console.log("Form successfully submitted:", result);
+      alert("Form submission successful !");
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      alert("Form submission failed !");
+    }
   };
 
   return (
@@ -70,20 +76,18 @@ const VehicleWashing = () => {
           <MainFormHeader title={"DEONAR_VEHICLE_WASHING_CHARGE"} />
           <div className="bmc-row-card-header">
             <div className="bmc-card-row">
-                <ShopkeeperNameField />
-                <HelkariNameField />
-                <SearchButtonField />
+                <ShopkeeperNameField control={control} data={data} setData={setData} />
+                <HelkariNameField control={control} data={data} setData={setData} />
+                <SearchButtonField onSearch={handleSearch} />
             </div>
           </div>
           <div className="bmc-row-card-header">
             <div className="bmc-card-row">
-                <ShopkeeperNameField />
-                <HelkariNameField />
                 <VehicleTypeDropdownField control={control} setData={setData} data={data} />
                 <VehicleNumberField control={control} setData={setData} data={data} />
-                <WashingChargeAmountField />
-                <PaymentModeField />
-                <ReferenceNumberField />
+                <WashingChargeAmountField control={control} data={data} setData={setData} />
+                <PaymentModeField control={control} data={data} setData={setData} />
+                <ReferenceNumberField control={control} data={data} setData={setData} />
                 <SubmitPrintButtonFields />
             </div>
           </div>

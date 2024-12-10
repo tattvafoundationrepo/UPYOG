@@ -5,7 +5,7 @@ import DesktopInbox from "../../components/inbox/DestopInbox";
 import MobileInbox from "../../components/inbox/MobileInbox";
 
 const Inbox = ({ parentRoute, businessService = "BMC", initialStates = {}, filterComponent, isInbox }) => {
-  const tenantId = Digit.ULBService.getCurrentTenantId();
+  const tenantId = Digit.SessionStorage.get("CITIZEN.COMMON.HOME.CITY")?.code || Digit.ULBService.getCurrentTenantId();
   //const { isLoading: isLoading, Errors, data: res } = Digit.Hooks.hrms.useHRMSCount(tenantId);
 
   const { t } = useTranslation();
@@ -67,22 +67,22 @@ const Inbox = ({ parentRoute, businessService = "BMC", initialStates = {}, filte
 
   const getSearchFields = () => {
     return [
-      {
-        label: t("HR_NAME_LABEL"),
-        name: "names",
-      },
-      {
-        label: t("HR_MOB_NO_LABEL"),
-        name: "phone",
-        maxlength: 10,
-        pattern: "[6-9][0-9]{9}",
-        title: t("ES_SEARCH_APPLICATION_MOBILE_INVALID"),
-        componentInFront: "+91",
-      },
-      {
-        label: t("HR_EMPLOYEE_ID_LABEL"),
-        name: "codes",
-      },
+      // {
+      //   label: t("BMC_CITIZEN_NAME"),
+      //   name: "names",
+      // },
+      // {
+      //   label: t("BMC_MOB_NO_LABEL"),
+      //   name: "phone",
+      //   maxlength: 10,
+      //   pattern: "[6-9][0-9]{9}",
+      //   title: t("ES_SEARCH_APPLICATION_MOBILE_INVALID"),
+      //   componentInFront: "+91",
+      // },
+      // {
+      //   label: t("BMC_APPLICATION_NO"),
+      //   name: "codes",
+      // },
     ];
   };
 //it is commented as HRMS count function is not available
@@ -122,7 +122,7 @@ const Inbox = ({ parentRoute, businessService = "BMC", initialStates = {}, filte
     } else {
       return (
         <div>
-          {isInbox && <Header>{t("HR_HOME_SEARCH_RESULTS_HEADING")}</Header>}
+          {isInbox && <Header>{t("BMC_WELFARE_APPLICATIONS")}</Header>}
           <DesktopInbox
             businessService={businessService}
             data={data}

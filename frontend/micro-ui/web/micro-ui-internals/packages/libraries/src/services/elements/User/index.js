@@ -111,7 +111,10 @@ export const UserService = {
       params: { tenantId: stateCode },
     }),
 
-  employeeSearch: (tenantId, filters) => {
+  employeeSearch: (tenantId, filters,executeFlag=true) => {
+    if (!executeFlag) {
+      return;
+    }
     return Request({
       url: Urls.EmployeeSearch,
       params: { tenantId, ...filters },
