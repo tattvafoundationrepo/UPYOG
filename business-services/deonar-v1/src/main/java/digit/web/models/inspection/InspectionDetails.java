@@ -50,7 +50,7 @@ public class InspectionDetails {
     private String pregnancy;
 
     @JsonProperty("approxAge")
-    private String approximateAge;
+    private String approxAge;
 
     @JsonProperty("gait")
     private String gait;
@@ -58,7 +58,7 @@ public class InspectionDetails {
     private String posture;
 
     @JsonProperty("bodyTemp")
-    private String bodyTemperature;
+    private String bodyTemp;
 
     @JsonProperty("appetite")
     private String appetite;
@@ -83,14 +83,16 @@ public class InspectionDetails {
     @JsonProperty("other")
     private String other;
 
-    @JsonProperty("remark")
-    private String remark;
+    @JsonProperty("resultremark")
+    private String resultremark;
 
 
     private Long animalTypeId;
     private String report;
 
     private Long animalQuarters;
+
+    private String jsonStringReport;
 
 
 }

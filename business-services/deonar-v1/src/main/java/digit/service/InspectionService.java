@@ -1,10 +1,11 @@
 package digit.service;
 
-import digit.kafka.Producer;
-import digit.repository.InspectionRepository;
-import digit.repository.rowmapper.InspectionRowMapper;
-import digit.web.models.inspection.*;
-import digit.web.models.security.AnimalDetail;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,12 +15,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import digit.kafka.Producer;
+import digit.repository.InspectionRepository;
+import digit.web.models.inspection.Inspection;
+import digit.web.models.inspection.InspectionDetails;
+import digit.web.models.inspection.InspectionRequest;
+import digit.web.models.inspection.InspectionSearchCriteria;
 
 @Service
 public class InspectionService {
@@ -46,59 +47,66 @@ public class InspectionService {
 
     }
 
-    public List<InspectionDetails> getInspectionDetails(InspectionSearchCriteria criteria) throws Exception {
-        List<InspectionDetails> details = new ArrayList<>();
-        Long id = repository.getArrivalId(criteria.getEntryUnitId(), criteria.getInspectionType());
-        if(criteria.getInspectionType() == 2){
-          details  = repository.getReantemortemInspection(criteria.getEntryUnitId());
-          return details;
-        }
+    // public List<InspectionDetails> getInspectionDetailsOld(InspectionSearchCriteria criteria) throws Exception {
+    //     List<InspectionDetails> details = new ArrayList<>();
 
-        if (id != null) {
-            details = repository.getInspectionDetails(criteria);
-            return details;
-        }
+        
+        
+        
+    //     if(criteria.getInspectionType() == 2){
+    //       details  = repository.getReantemortemInspection(criteria.getEntryUnitId());
+    //       for (InspectionDetails inspectionDetails : details) {
+    //         inspectionDetails.getAnimalDetail().setEditable(true);
+    //       }
+    //       return details;
+    //     }
+    //     Long id = repository.getArrivalId(criteria.getEntryUnitId(), criteria.getInspectionType());
+    //     if (id != null) {
+    //         details = repository.getInspectionDetails(criteria);
+    //         return details;
+    //     }
+        
+        
+    //     InspectionRequest request = new InspectionRequest();
+    //     Long time = System.currentTimeMillis();
+    //     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss");
+    //     String username = criteria.getRequestInfo().getUserInfo().getUserName();
+    //     Inspection inspection = new Inspection();
+    //     inspection.setArrivalId(criteria.getEntryUnitId());
+    //     inspection.setEmployeeId(criteria.getRequestInfo().getUserInfo().getUuid());
+    //     inspection.setInspectionDate(time);
+    //     inspection.setInspectionTime(LocalTime.now().format(formatter));
+    //     inspection.setInspectionUnitId(1);
+    //     inspection.setCreatedAt(time);
+    //     inspection.setUpdatedAt(time);
+    //     inspection.setCreatedBy(username);
+    //     inspection.setUpdatedBy(username);
+    //     inspection.setInspectionType(criteria.getInspectionType().intValue());
+    //     request.setInspection(inspection);
+    //     producer.push("save-inspection-details", request);
 
-        InspectionRequest request = new InspectionRequest();
-        Long time = System.currentTimeMillis();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss");
-        String username = criteria.getRequestInfo().getUserInfo().getUserName();
-        Inspection inspection = new Inspection();
-        inspection.setArrivalId(criteria.getEntryUnitId());
-        inspection.setEmployeeId(criteria.getRequestInfo().getUserInfo().getUuid());
-        inspection.setInspectionDate(time);
-        inspection.setInspectionTime(LocalTime.now().format(formatter));
-        inspection.setInspectionUnitId(1);
-        inspection.setCreatedAt(time);
-        inspection.setUpdatedAt(time);
-        inspection.setCreatedBy(username);
-        inspection.setUpdatedBy(username);
-        inspection.setInspectionType(criteria.getInspectionType().intValue());
-        request.setInspection(inspection);
-        producer.push("save-inspection-details", request);
+    //     List<Map<String, Long>> tokens = repository.getAnimalTypeCounts(criteria.getEntryUnitId());
 
-        List<Map<String, Long>> tokens = repository.getAnimalTypeCounts(criteria.getEntryUnitId());
-
-        for (Map<String, Long> animal : tokens) {
-            InspectionDetails iDetail = new InspectionDetails();
-            String animalType = repository.getAnimalType(animal.get("animalTypeId"));
-            String result = repository.getInspectionIndicatorsByType(criteria.getInspectionType(),
-                    animal.get("animalTypeId"));
-            InspectionRowMapper.mapJsonToInspectionDetails(result, iDetail);
-            iDetail.setArrivalId(criteria.getEntryUnitId());
-            iDetail.setInspectionId(criteria.getInspectionType());
-            iDetail.setAnimalTokenNumber(animal.get("count"));
-            AnimalDetail animalDetail = AnimalDetail.builder()
-                    .animalType(animalType)
-                    .animalTypeId(animal.get("animalTypeId"))
-                    .count(animal.get("count").intValue())
-                    .editable(true)
-                    .build();
-            iDetail.setAnimalDetail(animalDetail);
-            details.add(iDetail);
-        }
-        return details;
-    }
+    //     for (Map<String, Long> animal : tokens) {
+    //         InspectionDetails iDetail = new InspectionDetails();
+    //         String animalType = repository.getAnimalType(animal.get("animalTypeId"));
+    //         String result = repository.getInspectionIndicatorsByType(criteria.getInspectionType(),
+    //                 animal.get("animalTypeId"));
+    //         InspectionRowMapper.mapJsonToInspectionDetails(result, iDetail);
+    //         iDetail.setArrivalId(criteria.getEntryUnitId());
+    //         iDetail.setInspectionId(criteria.getInspectionType());
+    //         iDetail.setAnimalTokenNumber(animal.get("count"));
+    //         AnimalDetail animalDetail = AnimalDetail.builder()
+    //                 .animalType(animalType)
+    //                 .animalTypeId(animal.get("animalTypeId"))
+    //                 .count(animal.get("count").intValue())
+    //                 .editable(true)
+    //                 .build();
+    //         iDetail.setAnimalDetail(animalDetail);
+    //         details.add(iDetail);
+    //     }
+    //     return details;
+    // }
 
     public String toCustomJson(InspectionDetails details) {
         ObjectMapper mapper = new ObjectMapper();
@@ -110,9 +118,9 @@ public class InspectionService {
         fieldsToInclude.put("breed", details.getBreed());
         fieldsToInclude.put("pregnancy", details.getPregnancy());
         fieldsToInclude.put("posture", details.getPosture());
-        fieldsToInclude.put("bodyTemp", details.getBodyTemperature());
+        fieldsToInclude.put("bodyTemp", details.getBodyTemp());
         fieldsToInclude.put("bodyColor", details.getBodyColor());
-        fieldsToInclude.put("approxAge", details.getApproximateAge());
+        fieldsToInclude.put("approxAge", details.getApproxAge());
         fieldsToInclude.put("appetite", details.getAppetite());
         fieldsToInclude.put("gait", details.getGait());
         fieldsToInclude.put("nostrils", details.getNostrils());
@@ -136,5 +144,57 @@ public class InspectionService {
 
         return arrayNode.toString();
     }
+
+
+
+    public List<InspectionDetails> getInspectionDetails(InspectionSearchCriteria criteria) throws Exception {
+        
+        
+        List<InspectionDetails> details = new ArrayList<>();
+        Long id = repository.getArrivalId(criteria.getEntryUnitId(), criteria.getInspectionType());
+        if (id != null) {
+            criteria.setIsInitialCheck(true);
+            details = repository.getInspectionDetails(criteria);
+            return details;
+        }
+        InspectionRequest request = new InspectionRequest();
+        Long time = System.currentTimeMillis();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss");
+        String username = criteria.getRequestInfo().getUserInfo().getUserName();
+        Inspection inspection = new Inspection();
+        inspection.setArrivalId(criteria.getEntryUnitId());
+        inspection.setEmployeeId(criteria.getRequestInfo().getUserInfo().getUuid());
+        inspection.setInspectionDate(time);
+        inspection.setInspectionTime(LocalTime.now().format(formatter));
+        inspection.setInspectionUnitId(1);
+        inspection.setCreatedAt(time);
+        inspection.setUpdatedAt(time);
+        inspection.setCreatedBy(username);
+        inspection.setUpdatedBy(username);
+        inspection.setInspectionType(criteria.getInspectionType().intValue());
+        request.setInspection(inspection);
+        criteria.setIsInitialCheck(false);
+        details = repository.getInspectionDetails(criteria);
+       
+        for(InspectionDetails saveDetails : details){
+            request.setInspectionDetails(saveDetails);
+            producer.push("save-inspection-details", request);
+
+        }
+       
+        return details;
+    }
+
+   
+
+
+
+
+
+
+
+
+
+    
 
 }
