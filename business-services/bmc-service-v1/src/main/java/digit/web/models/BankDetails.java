@@ -26,6 +26,7 @@ public class BankDetails {
     private String createdBy;
     private String modifiedBy;
     private Long modifiedOn;
+    private Boolean isActive;
 
 
 }

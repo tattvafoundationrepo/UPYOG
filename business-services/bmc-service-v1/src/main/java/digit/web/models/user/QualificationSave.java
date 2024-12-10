@@ -29,6 +29,8 @@ public class QualificationSave {
 
     private Long percentage;
 
+    private Boolean available;
+
     private String createdBy;
     private String modifiedBy;
     private Long createdOn;

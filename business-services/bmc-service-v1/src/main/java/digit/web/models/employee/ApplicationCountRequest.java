@@ -25,6 +25,8 @@ public class ApplicationCountRequest {
     @JsonProperty("action")
     private String action;
 
+    private Boolean forVerify;
+
 
 
 }

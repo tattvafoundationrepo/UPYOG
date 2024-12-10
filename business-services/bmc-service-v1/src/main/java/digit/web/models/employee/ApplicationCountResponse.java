@@ -1,6 +1,5 @@
 package digit.web.models.employee;
 
-import java.util.List;
 import java.util.Map;
 
 import org.egov.common.contract.response.ResponseInfo;

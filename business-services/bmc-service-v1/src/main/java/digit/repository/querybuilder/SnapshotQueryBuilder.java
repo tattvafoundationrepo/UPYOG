@@ -3,8 +3,6 @@ package digit.repository.querybuilder;
 import java.util.List;
 
 import org.springframework.stereotype.Component;
-
-import digit.web.models.SchemeApplicationSearchCriteria;
 import digit.web.models.SnapshotSearchcriteria;
 
 @Component

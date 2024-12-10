@@ -15,6 +15,7 @@ import digit.service.UserService;
 import digit.util.ResponseInfoFactory;
 
 import digit.web.models.user.InputTest;
+import digit.web.models.user.RemoveRequest;
 import digit.web.models.user.UserDetails;
 import digit.web.models.user.UserRequest;
 import digit.web.models.user.UserResponse;
@@ -57,6 +58,55 @@ public class UserApiController {
         }
     }
 
+
+    @PostMapping("/user/remove/_document")
+    @CrossOrigin("*")
+    public ResponseEntity<String> removeUserDocument(@RequestBody RemoveRequest userRequest) {
+        
+           Integer row =  userService.removeUserDocument(userRequest);
+           if(row == 1){
+            return new ResponseEntity<>("Document Removed successfully.", HttpStatus.OK);
+           }
+           else{
+            return new ResponseEntity<>("Document not found for this id: " , HttpStatus.OK);
+           }
+
+    }
+
+
+
+    @PostMapping("/user/document/_save")
+    public ResponseEntity<String> saveUserDocumentDetails(@RequestBody InputTest userRequest) {
+        try {
+            userService.saveUserDocument(userRequest);
+            return new ResponseEntity<>("User details saved successfully.", HttpStatus.OK);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>("Failed to save user details: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @PostMapping("/user/bank/_save")
+    public ResponseEntity<String> saveUserBankDetails(@RequestBody InputTest userRequest) {
+        try {
+            userService.saveUserBank(userRequest);
+            return new ResponseEntity<>("User details saved successfully.", HttpStatus.OK);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>("Failed to save user details: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @PostMapping("/user/qualification/_save")
+    public ResponseEntity<String> saveUserQualificationDetails(@RequestBody InputTest userRequest) {
+        try {
+            userService.saveUserQualification(userRequest);
+            return new ResponseEntity<>("User details saved successfully.", HttpStatus.OK);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>("Failed to save user details: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
      
 
 }

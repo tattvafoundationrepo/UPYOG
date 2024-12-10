@@ -1,5 +1,7 @@
 package digit.repository;
 
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import digit.common.Status;
@@ -34,4 +36,9 @@ public class SchemeSearchCriteria {
 
     @JsonProperty("sla")
     private Integer sla;
+    
+    @JsonProperty("action")
+    private List<String> action;
+
+    private String uuid;
 }

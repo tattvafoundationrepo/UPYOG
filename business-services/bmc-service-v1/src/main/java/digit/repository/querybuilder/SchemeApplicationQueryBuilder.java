@@ -1,22 +1,38 @@
 package digit.repository.querybuilder;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.Date;
 import java.util.List;
+
+import javax.management.Query;
 
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
+import digit.web.models.DashboardCriteria;
 import digit.web.models.SchemeApplicationSearchCriteria;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Component
 public class SchemeApplicationQueryBuilder {
 
+
     // Base query to select fields from SchemeApplication table
     private static final String BASE_QUERY = """
-            SELECT usa.id as usa_id, usa.applicationNumber as usa_applicationNumber, usa.tenantid as usa_tenantid, usa.optedId as usa_optedId, \
-            usa.ApplicationStatus as usa_ApplicationStatus, usa.VerificationStatus as usa_VerificationStatus, usa.FirstApprovalStatus as usa_FirstApprovalStatus, \
-            usa.RandomSelection as usa_RandomSelection, usa.FinalApproval as usa_FinalApproval, usa.Submitted as usa_Submitted, usa.ModifiedOn as usa_ModifiedOn, \
-            usa.CreatedBy as usa_CreatedBy, usa.ModifiedBy as usa_ModifiedBy, \
+            SELECT id as id, applicationNumber as applicationNumber, userid as userid, tenantid as tenantid, optedId as optedId, \
+            ApplicationStatus as ApplicationStatus, VerificationStatus as VerificationStatus, FirstApprovalStatus as FirstApprovalStatus, \
+            RandomSelection as RandomSelection, FinalApproval as FinalApproval, Submitted as Submitted, ModifiedOn as ModifiedOn, \
+            CreatedBy as CreatedBy, ModifiedBy as ModifiedBy \
+            """;
+
+    private static final String INITAIL_QUERY = """
+            SELECT ewpv.id as id, ebas.aadharname as Name, ebas.ward as Ward, ebs."name" as SchemeName, ebc.coursename as CourseName, ebm."name" as MachineName, \
+            ewpv.modulename as ModuleName, ebas.applicationnumber as ApplicationNumber, ebas.citytownvillage as City, ebas.zone as Zone, \
+            ewpv.lastmodifiedtime as lastmodifiedtime, ewsv.state as state, \
             """;
 
     // Query to select fields from Address table
@@ -35,13 +51,36 @@ public class SchemeApplicationQueryBuilder {
 
     // From clause with join between SchemeApplication, Address, and User tables
     private static final String FROM_TABLES = """
-            FROM eg_bmc_UserSchemeApplication usa \
-            LEFT JOIN eg_bmc_Address addr ON usa.userid = addr.userid AND usa.tenantid = addr.tenantid \
-            LEFT JOIN eg_user u ON usa.userid = u.id AND usa.tenantid = u.tenantid \
+            FROM eg_bmc_UserSchemeApplication 
             """;
 
+    private static final String FROM_MULTITABLES = """
+            FROM eg_wf_processinstance_v2 ewpv \
+            left join eg_wf_state_v2 ewsv on ewpv.status = ewsv.uuid \
+            left join eg_bmc_application_snapshot ebas on ebas.applicationnumber = ewpv.businessid \
+            left join eg_bmc_schemes ebs on ebs.id = ebas.optedid \
+            left join eg_bmc_machines ebm on ebm.id = ebas.machineid \
+            left join eg_bmc_courses ebc on ebc.id = ebas.courseid \
+            """;
+
+    private static final String BMCMODULE_QUERY = """
+            WHERE ewpv.modulename = 'BMC' \
+            """;
+
+    private static final String RANK_STATUS = """
+            RANK() OVER (PARTITION BY ewpv.businessid ORDER BY ewpv.createdtime DESC) AS rank1 \
+            """;
+
+    private static final String STATUS_QUERY = """
+                                ewpv.businessid IN (SELECT businessid \
+                                FROM (SELECT ewpv.businessid, \
+                                RANK() OVER (PARTITION BY ewpv.businessid ORDER BY ewpv.createdtime DESC) AS rank1 \
+                                FROM eg_wf_processinstance_v2 ewpv) ranked_subquery \
+                                WHERE rank1 = 1) \
+                                """;
+            
     // Order by clause to order results by the ModifiedOn field
-    private static final String ORDERBY_MODIFIEDTIME = "ORDER BY usa.ModifiedOn DESC ";
+    private static final String ORDERBY_MODIFIEDTIME = "ORDER BY ModifiedOn DESC ";
 
     /**
      * Builds the SQL query for searching SchemeApplications based on the given search criteria.
@@ -59,35 +98,153 @@ public class SchemeApplicationQueryBuilder {
         // Add where clause for tenant ID if it is not empty
         if (!ObjectUtils.isEmpty(criteria.getTenantId())) {
             addClauseIfRequired(query, preparedStmtList);
-            query.append(" usa.tenantid = ? ");
+            query.append(" tenantid = ? ");
             preparedStmtList.add(criteria.getTenantId());
         }
 
         // Add where clause for IDs if they are not empty
         if (!CollectionUtils.isEmpty(criteria.getIds())) {
             addClauseIfRequired(query, preparedStmtList);
-            query.append(" usa.id IN ( ").append(createQuery(criteria.getIds())).append(" ) ");
+            query.append(" id IN ( ").append(createQuery(criteria.getIds())).append(" ) ");
             addToPreparedStatement(preparedStmtList, criteria.getIds());
         }
 
         // Add where clause for application status if it is not empty
         if (!ObjectUtils.isEmpty(criteria.getApplicationStatus())) {
             addClauseIfRequired(query, preparedStmtList);
-            query.append(" usa.ApplicationStatus = ? ");
+            query.append(" ApplicationStatus = ? ");
             preparedStmtList.add(criteria.getApplicationStatus());
+        }
+
+        if (!ObjectUtils.isEmpty(criteria.getVerificationStatus())) {
+            addClauseIfRequired(query, preparedStmtList);
+            if(criteria.getVerificationStatus()){
+                query.append(" VerificationStatus = " + String.valueOf(criteria.getVerificationStatus()) + " ");
+            } else {
+                query.append(" VerificationStatus = " + String.valueOf(criteria.getVerificationStatus()) + " ");
+            }
         }
 
         // Add where clause for application number if it is not empty
         if (!ObjectUtils.isEmpty(criteria.getApplicationNumber())) {
             addClauseIfRequired(query, preparedStmtList);
-            query.append(" usa.applicationNumber = ? ");
+            query.append(" applicationNumber = ? ");
             preparedStmtList.add(criteria.getApplicationNumber());
         }
         
         // Append the order by clause to the query
-        query.append(ORDERBY_MODIFIEDTIME);
+        //query.append(ORDERBY_MODIFIEDTIME);
 
         return query.toString();
+    }
+    /** 
+    * @param criteria The search criteria for SchemeApplications.
+     * @param preparedStmtList The list to hold the parameters for the prepared statement.
+     * @return The constructed SQL query.
+     */
+    public String getDashboardApplicationSearchQuery(DashboardCriteria criteria, List<Object> preparedStmtList) {
+        StringBuilder query = new StringBuilder(INITAIL_QUERY);
+        query.append(RANK_STATUS);
+        query.append(FROM_MULTITABLES);
+        query.append(BMCMODULE_QUERY);
+
+        boolean flag = false;
+
+
+        if (!ObjectUtils.isEmpty(criteria.getState())) {
+            
+                switch (String.valueOf(criteria.getState())) {
+                    case "APPROVED":
+                        query.append(" AND ewsv.state = '" + String.valueOf(criteria.getState()) + "' ");
+                        break;
+                    case "APPLIED":
+                        query.append(" AND ewsv.state = '" + String.valueOf(criteria.getState()) + "' AND ");
+                        query.append(STATUS_QUERY);
+                    case "SELECTED":
+                        query.append(" AND ewsv.state = '" + String.valueOf(criteria.getState()) + "' AND ");
+                        query.append(STATUS_QUERY);
+                    case "VERIFIED":
+                        query.append(" AND ewsv.state = '" + String.valueOf(criteria.getState()) + "' AND ");
+                        query.append(STATUS_QUERY);
+                    case "REJECTED":
+                        query.append(" AND ewsv.state = '" + String.valueOf(criteria.getState()) + "' AND ");
+                        query.append(STATUS_QUERY);
+                    default:
+                        break;
+                }
+        }
+
+        if (!ObjectUtils.isEmpty(criteria.getCity())) {
+            
+                query.append(" AND ");
+                query.append(" ebas.citytownvillage = '" + String.valueOf(criteria.getCity()) + "' ");
+            
+        }
+
+        if (!ObjectUtils.isEmpty(criteria.getZone())) {
+            
+                query.append(" AND ");
+                query.append(" ebas.zone = '" + String.valueOf(criteria.getZone()) + "' ");
+            
+        }
+
+       
+        if (!ObjectUtils.isEmpty(criteria.getSchemeId())) {
+            
+                query.append(" AND ");
+                query.append(" ebs.id = " + String.valueOf(criteria.getSchemeId()) + " ");
+            
+        }
+
+        if (!ObjectUtils.isEmpty(criteria.getWard())) {
+            
+                query.append(" AND ");
+                query.append(" ebas.ward = '" + String.valueOf(criteria.getWard()) + "' ");
+            
+        }
+
+        if (!ObjectUtils.isEmpty(criteria.getCourseId())) {
+            
+                query.append(" AND ");
+                query.append(" ebas.courseid = " + String.valueOf(criteria.getCourseId()) + " ");
+            
+        }
+
+        if (!ObjectUtils.isEmpty(criteria.getMachineId())) {
+           
+                query.append(" AND ");
+                query.append(" ebas.machineid = " + String.valueOf(criteria.getMachineId()) + " ");
+            
+        }
+
+        if(!ObjectUtils.isEmpty(criteria.getCreatedDate()) && ObjectUtils.isEmpty(criteria.getEndDate())){
+            
+                query.append(" AND ");
+                query.append(" ewpv.lastmodifiedtime BETWEEN " + getMillies(String.valueOf(criteria.getCreatedDate())) + " AND " + System.currentTimeMillis()+ " ");
+            
+        } else if(!ObjectUtils.isEmpty(criteria.getCreatedDate()) && !ObjectUtils.isEmpty(criteria.getEndDate())){
+            
+                query.append(" AND ");
+                query.append(" ewpv.lastmodifiedtime BETWEEN " + getMillies(String.valueOf(criteria.getCreatedDate())) + " AND " +
+                getMillies(String.valueOf(criteria.getEndDate()))+ " ");
+            
+        }
+        
+        // Append the order by clause to the query
+        query.append(" ORDER BY ewpv.lastmodifiedtime DESC ");
+
+        return query.toString();
+    }
+
+    private long getMillies(String lastmodifieddate){
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        LocalDate localDate = LocalDate.parse(lastmodifieddate, formatter);
+
+        Date date = Date.from(localDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
+        log.info(lastmodifieddate);
+        long millis = date.getTime();
+        log.info(String.valueOf(millis));
+        return millis;
     }
 
     /**

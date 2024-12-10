@@ -18,7 +18,6 @@ import org.springframework.util.CollectionUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import digit.config.BmcConfiguration;
-import digit.repository.SchemeApplicationRepository;
 import digit.repository.ServiceRequestRepository;
 import digit.web.models.BusinessService;
 import digit.web.models.BusinessServiceResponse;

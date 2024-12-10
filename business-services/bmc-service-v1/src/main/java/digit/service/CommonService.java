@@ -10,9 +10,9 @@ import org.springframework.util.CollectionUtils;
 
 import digit.repository.CommonRepository;
 import digit.repository.CommonSearchCriteria;
-import digit.web.models.BankDetails;
+
 import digit.web.models.common.CommonDetails;
-import digit.web.models.scheme.UserBankDetails;
+
 
 @Service
 public class CommonService {

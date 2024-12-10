@@ -1,17 +1,10 @@
 package digit.web.models;
 
-import java.util.List;
-
-import org.hibernate.annotations.Comment;
 import org.springframework.stereotype.Component;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import digit.bmc.model.AadharUser;
 import digit.bmc.model.UserOtherDetails;
 import digit.bmc.model.UserSchemeApplication;
-import digit.web.models.user.QualificationSave;
-import digit.web.models.user.UpdatedDocument;
 import digit.web.models.user.UserAddressDetails;
 import digit.web.models.user.UserSubSchemeMapping;
 import lombok.AllArgsConstructor;

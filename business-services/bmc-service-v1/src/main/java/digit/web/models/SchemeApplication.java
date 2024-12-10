@@ -8,9 +8,6 @@ import org.egov.common.contract.request.User;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import digit.bmc.model.AadharUser;
-import digit.bmc.model.Bank;
-import digit.bmc.model.BankAccount;
-import digit.bmc.model.BankBranch;
 import digit.bmc.model.BmcRegistrationApplication;
 import digit.bmc.model.Caste;
 import digit.bmc.model.Courses;

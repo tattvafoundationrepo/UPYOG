@@ -8,7 +8,6 @@ import org.springframework.stereotype.Component;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import digit.bmc.model.UserSchemeApplication;
-import digit.web.models.user.DocumentDetails;
 import digit.web.models.user.UserSubSchemeMapping;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

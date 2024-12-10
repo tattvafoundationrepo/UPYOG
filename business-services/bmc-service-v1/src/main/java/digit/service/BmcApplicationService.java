@@ -2,12 +2,10 @@ package digit.service;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.stream.Collectors;
 
 import org.egov.common.contract.models.Workflow;
 import org.egov.common.contract.request.RequestInfo;
@@ -33,6 +31,8 @@ import digit.repository.UserSchemeCitizenRepository;
 import digit.validators.SchemeApplicationValidator;
 import digit.web.models.ApplicationSnapshot;
 import digit.web.models.ApplicationSnapshotWraper;
+import digit.web.models.DashboardApplication;
+import digit.web.models.DashboardCriteria;
 import digit.web.models.SchemeApplication;
 import digit.web.models.SchemeApplicationRequest;
 import digit.web.models.SchemeApplicationSearchCriteria;
@@ -42,7 +42,6 @@ import digit.web.models.UserSchemeApplicationRequest;
 import digit.web.models.employee.ApplicationCountRequest;
 import digit.web.models.user.Board;
 import digit.web.models.user.DocumentDetails;
-import digit.web.models.user.InputTest;
 import digit.web.models.user.Qualification;
 import digit.web.models.user.QualificationDetails;
 import digit.web.models.user.QualificationSave;
@@ -103,6 +102,30 @@ public class BmcApplicationService {
         applications.forEach(enrichmentUtil::enrichUserDetailsOnSearch);
 
         // Otherwise return the found applications
+        return applications;
+    }
+
+    public List<DashboardApplication> getAllApplications(RequestInfo requestInfo, DashboardCriteria searchCriteria) {
+        // Validate the search criteria if necessary
+        if (searchCriteria == null) {
+            searchCriteria = new DashboardCriteria(); // Default to an empty criteria to fetch all applications
+        }
+        
+        if(requestInfo == null){
+            requestInfo = new RequestInfo();
+        }
+        // Fetch applications from the database based on the search criteria
+        List<DashboardApplication> applications = schemeApplicationRepository.getDashboardApplications(searchCriteria);
+    
+        // If no applications are found, return an empty list
+        if (CollectionUtils.isEmpty(applications)) {
+            return new ArrayList<>();
+        }
+    
+        // Enrich user details of the fetched applications
+        //applications.forEach(enrichmentUtil::enrichUserDetailsOnSearch);
+    
+        // Return the list of applications
         return applications;
     }
 
@@ -272,6 +295,7 @@ public class BmcApplicationService {
         String userBanksJson = gson.toJson(userDetails.getBankDetail());
         String userQualificationsJson = gson.toJson(qlist);  
         snapshot.setAadharUser(userDetails.getAadharUser());
+        snapshot.getAadharUser().setAadharName(userDetails.getTitle()+". "+snapshot.getAadharUser().getAadharName());
         snapshot.setUserOtherDetails(uod);
         snapshot.setUserAddressDetails(userDetails.getAddress());
         snapshot.setBankDetailsList(userBanksJson);

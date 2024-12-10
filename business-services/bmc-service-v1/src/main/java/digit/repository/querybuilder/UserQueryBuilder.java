@@ -39,13 +39,13 @@ public class UserQueryBuilder {
 
     private static final String FROM_TABLES = """
             from eg_user eu \
-            left join eg_bmc_userbank ebu on ebu.userid = eu.id and ebu.tenantid  = eu.tenantid \
+            left join eg_bmc_userbank ebu on ebu.userid = eu.id and ebu.tenantid  = eu.tenantid and ebu.isactive = true \
             left join eg_bmc_bankbranch ebb on ebb.id = ebu.bankbranchid \
             left join eg_bmc_bank ebb2 on ebb2.id = ebb.bankid \
-            left join eg_bmc_userdocument ebu2 on ebu2.userid  =eu.id and ebu2.tenantid  = eu.tenantid \
+            left join eg_bmc_userdocument ebu2 on ebu2.userid  =eu.id and ebu2.tenantid  = eu.tenantid and ebu2.available = true \
             left join eg_bmc_document ebd  on ebd.id = ebu2.documentid \
             left join eg_address ea on ea.userid = eu.id and ea.tenantid  = eu.tenantid \
-            left join eg_bmc_userqualification ebu3 on ebu3."userID" =  eu.id \
+            left join eg_bmc_userqualification ebu3 on ebu3."userID" =  eu.id and ebu3.available = true \
             left join eg_bmc_qualificationmaster ebq on ebq.id = ebu3."qualificationID" \
             left join eg_bmc_userotherdetails ebu4 on ebu4.userid =  eu.id and ebu4.tenantid  = eu.tenantid \
             left join eg_bmc_aadharuser eba on eba.userid =  eu.id and eba.tenantid  = eu.tenantid \

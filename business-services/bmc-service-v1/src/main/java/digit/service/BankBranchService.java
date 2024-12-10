@@ -5,7 +5,7 @@ import org.springframework.stereotype.Service;
 
 import digit.bmc.model.BankBranch;
 import digit.repository.BankBranchRepository;
-import digit.web.models.SchemeApplicationRequest;
+
 
 @Service
 public class BankBranchService {

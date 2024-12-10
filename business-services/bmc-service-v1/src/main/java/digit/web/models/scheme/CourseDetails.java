@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.ToString;
 
 @Getter
@@ -13,6 +14,7 @@ import lombok.ToString;
 @NoArgsConstructor
 @Builder
 @ToString
+@Setter
 public class CourseDetails {
     private Long courseID;
     private String courseName;
@@ -25,4 +27,5 @@ public class CourseDetails {
     private String courseInstitute;
     private String instituteAddress;
     private Double courseAmount;
+    private Long courseWiseApplicationCount;
 }

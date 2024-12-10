@@ -113,12 +113,6 @@ public class EmployeeService {
             assignments.add(assignment);
             employees.setAssignments(assignments);
 
-
-            employees.setEducation(new ArrayList<>());
-            employees.setTests(new ArrayList<>());
-            employees.setServiceHistory(new ArrayList<>());
-
-
             List<Employees> employees1 = new ArrayList<>();
             employees1.add(employees);
 

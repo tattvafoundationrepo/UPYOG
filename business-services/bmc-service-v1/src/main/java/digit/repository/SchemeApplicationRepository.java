@@ -1,31 +1,37 @@
 package digit.repository;
 
 import java.sql.ResultSet;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.HashMap;
-import java.sql.SQLException;
+
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
-import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 import digit.bmc.model.SchemeCriteria;
 import digit.bmc.model.UserSchemeApplication;
 import digit.bmc.model.VerificationDetails;
+import digit.repository.querybuilder.CountQueryBuilder;
 import digit.repository.querybuilder.EmployeeGetApplicationQueryBuilder;
 import digit.repository.querybuilder.SchemeApplicationQueryBuilder;
 import digit.repository.querybuilder.SchemeBenificiaryBuilder;
-import digit.repository.querybuilder.VerifierQueryBuilder;
+import digit.repository.rowmapper.DashboardApplicationRowMapper;
 import digit.repository.rowmapper.SchemeApplicationRowMapper;
 import digit.repository.rowmapper.SchemeApplicationStatusRowMapper;
 import digit.repository.rowmapper.SchemeBeneficiaryRowMapper;
 import digit.repository.rowmapper.UserSchemeApplicationRowMapper;
 import digit.repository.rowmapper.VerificationDetailsRowMapper;
+import digit.web.models.DashboardApplication;
+import digit.web.models.DashboardCriteria;
 import digit.web.models.SchemeApplication;
 import digit.web.models.SchemeApplicationSearchCriteria;
 import digit.web.models.SchemeApplicationStatus;
@@ -43,12 +49,11 @@ public class SchemeApplicationRepository {
     @Autowired
     private  SchemeApplicationRowMapper rowMapper;
     @Autowired
+    private DashboardApplicationRowMapper dashboardRowMapper;
+    @Autowired
     private SchemeBeneficiaryRowMapper schemeBeneficiaryRowMapper;
     @Autowired
     private SchemeBenificiaryBuilder schemeBenificiaryBuilder;
-    
-    @Autowired
-    private VerifierQueryBuilder verifierQueryBuilder;
     
     @Autowired
     private VerificationDetailsRowMapper verificationDetailsRowMapper;
@@ -58,7 +63,8 @@ public class SchemeApplicationRepository {
     
     @Autowired
     private SchemeApplicationStatusRowMapper schemeApplicationStatusRowMapper;
-   
+    @Autowired
+    private CountQueryBuilder  countQueryBuilder;
 
     // // Constructor-based dependency injection
     // @Inject
@@ -78,7 +84,16 @@ public class SchemeApplicationRepository {
         List<Object> preparedStmtList = new ArrayList<>();
         String query = queryBuilder.getSchemeApplicationSearchQuery(searchCriteria, preparedStmtList);
         log.info("Final query: " + query);
-        return jdbcTemplate.query(query, rowMapper, preparedStmtList.toArray());
+        return jdbcTemplate.query(query, rowMapper);
+    }
+
+    public List<DashboardApplication> getDashboardApplications(DashboardCriteria searchCriteria) {
+        List<Object> preparedStmtList = new ArrayList<>();
+
+
+        String query = queryBuilder.getDashboardApplicationSearchQuery(searchCriteria, preparedStmtList);
+        log.info("Final query: " + query);
+        return jdbcTemplate.query(query, dashboardRowMapper);
     }
 
     public List<SchemeBeneficiaryDetails> initialEligibilityCheck(SchemeBeneficiarySearchCritaria searchCriteria){

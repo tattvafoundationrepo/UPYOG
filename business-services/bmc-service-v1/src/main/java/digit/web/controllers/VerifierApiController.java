@@ -19,9 +19,6 @@ import digit.web.models.VerifierRequest;
 import digit.web.models.VerifierResponse;
 import io.swagger.annotations.ApiParam;
 import jakarta.validation.Valid;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-
 
 @Controller
 @RequestMapping("")
@@ -58,11 +55,5 @@ public class VerifierApiController {
       }
  
     }
-
-    @GetMapping("/health")
-    public  ResponseEntity<String> getMethodName(@RequestParam String param) {
-      return new ResponseEntity<String>("OK", HttpStatus.OK);
-    }
-    
 
 }
