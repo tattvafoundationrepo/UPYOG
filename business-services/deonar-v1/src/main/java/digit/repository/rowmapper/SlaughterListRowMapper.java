@@ -40,7 +40,7 @@ public class SlaughterListRowMapper implements ResultSetExtractor<List<Slaughter
                         .animalAssignmentDetailsList(new ArrayList<>()) 
                         .build();
 
-                shopkeeperMap.put(assigneeId, shopkeeperDetails);
+                shopkeeperMap.put(ddReference, shopkeeperDetails);
             }
 
             AnimalDetail animalAssignmentDetails = AnimalDetail.builder()
