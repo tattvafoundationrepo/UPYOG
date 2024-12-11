@@ -11,6 +11,8 @@ import lombok.ToString;
 public class CommonSearchCriteria {
     @JsonProperty("Option")
     private String option;
+
+    private Integer id;
 }
 
 

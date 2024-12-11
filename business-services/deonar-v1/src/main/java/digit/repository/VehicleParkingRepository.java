@@ -138,10 +138,12 @@ public class VehicleParkingRepository {
             // Night-only charges
             fee = calculateNightCharges(vehicleType, parkedIndDate, parkedInTime, parkedOutDate, parkedOutTime);
         } else if (isDayAndNight) {
+
+            fee+=calculateDayCharges(vehicleType);
             // For vehicles parked for both day and night across multiple days
             if (parkedIndDate.isBefore(parkedOutDate)) {
                 // Day charge for first day (6 AM to 12 AM)
-                if(parkedInTime.isAfter(LocalTime.of(12, 00)) && parkedOutTime.isAfter(parkedInTime)){
+                if(parkedOutTime.isAfter(LocalTime.of(6, 0))){
                     fee += calculateDayCharges(vehicleType);
                 }
                 fee += getDayCount(parkedInTime, parkedIndDate, parkedOutTime, parkedOutDate, false) * calculateDayCharges(vehicleType);
@@ -193,12 +195,13 @@ public class VehicleParkingRepository {
                         // Logic for determining overnight charges based on vehicle type and time parked
                         switch (vehicleType) {
                             case THREE_WHEELER:
-                                if(getDayCount(parkedInTime, parkedInDate, parkedOutTime, parkedOutDate, false) < getDayCount(parkedInTime, parkedInDate, parkedOutTime, parkedOutDate, true)){
-                                    overnightCharges += THREE_WHEELER_OVERNIGHT_MORE_2H;
-                                }
-                                if (hoursParked < 2) {
-                                    overnightCharges = THREE_WHEELER_OVERNIGHT_LESS_2H;
-                                } else if (hoursParked >= 2) {
+                                // if(getDayCount(parkedInTime, parkedInDate, parkedOutTime, parkedOutDate, false) < getDayCount(parkedInTime, parkedInDate, parkedOutTime, parkedOutDate, true)){
+                                //     overnightCharges += THREE_WHEELER_OVERNIGHT_MORE_2H;
+                                // }
+                                if (parkedOutTime.isAfter(LocalTime.of(0, 0)) && parkedOutTime.isBefore(LocalTime.of(2, 0))) {
+                                    overnightCharges += THREE_WHEELER_OVERNIGHT_LESS_2H;
+                                } 
+                                if (hoursParked >= 2) {
                                     overnightCharges += getDayCount(parkedInTime, parkedInDate, parkedOutTime, parkedOutDate, true) * THREE_WHEELER_OVERNIGHT_MORE_2H;
                                 } else {
                                     overnightCharges += getDayCount(parkedInTime, parkedInDate, parkedOutTime, parkedOutDate, true) * THREE_WHEELER_OVERNIGHT_AFTER_6AM;
@@ -206,12 +209,13 @@ public class VehicleParkingRepository {
                                 break;
                 
                             case TWO_WHEELER:
-                                if(getDayCount(parkedInTime, parkedInDate, parkedOutTime, parkedOutDate, false) < getDayCount(parkedInTime, parkedInDate, parkedOutTime, parkedOutDate, true)){
-                                    overnightCharges += TWO_WHEELER_OVERNIGHT_MORE_2H;
-                                }
-                                if (hoursParked < 2) {
-                                    overnightCharges = TWO_WHEELER_OVERNIGHT_LESS_2H;
-                                } else if (hoursParked >= 2) {
+                                // if(getDayCount(parkedInTime, parkedInDate, parkedOutTime, parkedOutDate, false) < getDayCount(parkedInTime, parkedInDate, parkedOutTime, parkedOutDate, true)){
+                                //     overnightCharges += TWO_WHEELER_OVERNIGHT_MORE_2H;
+                                // }
+                                if (parkedOutTime.isAfter(LocalTime.of(0, 0)) && parkedOutTime.isBefore(LocalTime.of(2, 0))) {
+                                    overnightCharges += TWO_WHEELER_OVERNIGHT_LESS_2H;
+                                } 
+                                 if (hoursParked >= 2) {
                                     overnightCharges += getDayCount(parkedInTime, parkedInDate, parkedOutTime, parkedOutDate, true)  * TWO_WHEELER_OVERNIGHT_MORE_2H;
                                 } else {
                                     overnightCharges += getDayCount(parkedInTime, parkedInDate, parkedOutTime, parkedOutDate, true) * TWO_WHEELER_OVERNIGHT_AFTER_6AM;
@@ -242,6 +246,9 @@ public class VehicleParkingRepository {
 
         // Count exact day time (day and night periods)
         long[] dayAndNightCounts = countExactDayTime(start, end);
+
+        System.out.println("Days : " + dayAndNightCounts[0]);
+        System.out.println("Nights : " + dayAndNightCounts[1]);
 
 
         if(flag){

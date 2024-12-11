@@ -1,5 +1,8 @@
 package digit.web.controllers;
 
+import java.util.List;
+
+import org.egov.common.contract.models.RequestInfoWrapper;
 import org.egov.common.contract.response.ResponseInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -14,6 +17,9 @@ import digit.util.ResponseInfoFactory;
 import digit.web.models.Slaughter;
 import digit.web.models.SlaughterRequest;
 import digit.web.models.SlaughterResponse;
+import digit.web.models.SlaughterUnit;
+import digit.web.models.SlaughterUnitRequest;
+import digit.web.models.SlaughterUnitShiftResponse;
 
 @Controller
 public class AnimalSlaughterController {
@@ -34,6 +40,24 @@ public class AnimalSlaughterController {
                     .createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
             SlaughterResponse res = SlaughterResponse.builder()
                     .details(common)
+                    .responseInfo(responseInfo)
+                    .build();
+            return new ResponseEntity<>(res, HttpStatus.OK);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(ERR_MSG, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
+    @PostMapping("/animal/slaughter/_shifts")
+    public ResponseEntity<Object> getAnimalSlaughterunitShift(@RequestBody SlaughterUnitRequest request) {
+        try {
+            List<SlaughterUnit> common = service.getSlaughterUnitShifts(request);
+            ResponseInfo responseInfo = responseInfoFactory
+                    .createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
+            SlaughterUnitShiftResponse res = SlaughterUnitShiftResponse.builder()
+                    .unit(common)
                     .responseInfo(responseInfo)
                     .build();
             return new ResponseEntity<>(res, HttpStatus.OK);

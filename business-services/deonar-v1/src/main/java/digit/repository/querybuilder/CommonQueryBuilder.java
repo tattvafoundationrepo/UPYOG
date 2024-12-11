@@ -2,6 +2,7 @@ package digit.repository.querybuilder;
 
 import java.util.List;
 
+import org.apache.commons.lang.ObjectUtils;
 import org.springframework.stereotype.Component;
 
 import digit.repository.CommonSearchCriteria;
@@ -16,8 +17,6 @@ public class CommonQueryBuilder {
             """;
 
     private static final String ORDERBY_NAME = " ORDER BY name DESC ";
-
-
 
     private static final String STAKEHOLDER_VIEW_QUERY = """
             select stakeholdername as name , stakeholderid as id, licencenumber, animalid , animaltype
@@ -85,7 +84,7 @@ public class CommonQueryBuilder {
                 break;
             case "slaughterunit":
                 query.append("eg_deonar_slaughter_unit as tbl");
-                break;    
+                break;
             default:
                 query.append("(Select 0 as id, 'No Record found'  as name) as tbl ");
                 break;
@@ -94,6 +93,14 @@ public class CommonQueryBuilder {
         return query.toString();
     }
 
-    
+    public String getSlaughterUnitShift(CommonSearchCriteria commonSearchCriteria, List<Object> preparedStmtList) {
+        String sql = """    
+            select opentime , closetime from eg_deonar_slaughter_unit_shift edsus 
+            where edsus.slaughterunitid =?
+ 
+                                """;
+        preparedStmtList.add(commonSearchCriteria.getId());
+         return sql;                       
+    }
 
 }

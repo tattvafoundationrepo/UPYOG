@@ -80,15 +80,14 @@ public class CollectionQueryBuilder {
         return query.toString();
     }
 
-
     public String getWashingFee(CollectionSearchCriteria criteria, List<Object> preparedStmtList) {
         final String WASHINGFEE_QUERY = """
-            SELECT
-                vehicletype,
-                vehiclenumber,
-                totalwashingfee
-                FROM eg_deonar_vwashingfee
-            """;
+                SELECT
+                    vehicletype,
+                    vehiclenumber,
+                    totalwashingfee
+                    FROM eg_deonar_vwashingfee
+                """;
         StringBuilder query = new StringBuilder(WASHINGFEE_QUERY);
         if (criteria.getSearch() != null) {
             addClauseIfRequired(query, preparedStmtList);
@@ -98,19 +97,57 @@ public class CollectionQueryBuilder {
         return query.toString();
     }
 
-
-
     public String getSlaughterFee(CollectionSearchCriteria criteria, List<Object> preparedStmtList) {
-        final String SLAUGHTERFEE_QUERY = """
+        final String SLAUGHTERFEE_QUERY_OLD = """
                  SELECT ddreference,assigneelic,animal,animalcount,feevalue,totalslaughterFee
                     FROM eg_deonar_vslaughterfee
                 """;
-        StringBuilder query = new StringBuilder(SLAUGHTERFEE_QUERY);
+
+        final String SLAUGHTERFEE_QUERY_NEW = """
+
+                        SELECT DISTINCT
+                    v.ddreference,
+                    a.assigneelic,
+                    a.assigneeid,
+                    d.name AS animal,
+                    COUNT(a.animaltypeid) OVER (PARTITION BY v.ddreference, a.animaltypeid) AS animalcount,
+                    (SELECT charges
+                     FROM eg_deonar_vslaughterunitcharges
+                     WHERE animaltypeid = a.animaltypeid
+                       AND name = ?
+                       AND opentime = ?
+                       AND closetime = ?) AS feevalue,
+                    SUM(
+                        (SELECT charges
+                         FROM eg_deonar_vslaughterunitcharges
+                         WHERE animaltypeid = a.animaltypeid
+                           AND name = 'slaughter unit normal'
+                           AND opentime = '12:00 AM'
+                           AND closetime = '6:00 AM')
+                    ) OVER (PARTITION BY v.ddreference) AS totalslaughterfee
+                FROM eg_deonar_vmainshopkeeper a
+                JOIN eg_deonar_animal_removal b
+                    ON b.arrivalid::text = a.arrivalid::text
+                    AND b.animaltypeid = a.animaltypeid
+                    AND b.tokennum = a.token
+                    AND b.removalid = 1
+                JOIN eg_deonar_vcurrentassignmentlist v
+                    ON v.animaltypeid = a.animaltypeid
+                    AND a.token = v.token
+                    AND a.arrivalid::text = v.arrivalid::text
+                LEFT JOIN eg_deonar_animal_type d
+                    ON d.id = a.animaltypeid
+                ORDER BY v.ddreference;
+
+                                """;
+
+        StringBuilder query = new StringBuilder(SLAUGHTERFEE_QUERY_NEW);
         if (criteria.getSearch() != null) {
             addClauseIfRequired(query, preparedStmtList);
             query.append(" ddreference = ? ");
             preparedStmtList.add(criteria.getSearch());
         }
+        
         return query.toString();
     }
 
@@ -128,23 +165,22 @@ public class CollectionQueryBuilder {
         }
         return query.toString();
 
-
     }
 
     public String getWeighingFee(CollectionSearchCriteria criteria, List<Object> preparedStmtList) {
 
         final String WEIGHING_FEE_QUERY = """
-            SELECT *
-            FROM eg_deonar_vweighingfee
-            """;
-    StringBuilder query = new StringBuilder(WEIGHING_FEE_QUERY);
-    if (criteria.getSearch() != null) {
-        addClauseIfRequired(query, preparedStmtList);
-        query.append(" ddreference = ? ");
-        preparedStmtList.add(criteria.getSearch());
-    }
-    return query.toString();
-      
+                SELECT *
+                FROM eg_deonar_vweighingfee
+                """;
+        StringBuilder query = new StringBuilder(WEIGHING_FEE_QUERY);
+        if (criteria.getSearch() != null) {
+            addClauseIfRequired(query, preparedStmtList);
+            query.append(" ddreference = ? ");
+            preparedStmtList.add(criteria.getSearch());
+        }
+        return query.toString();
+
     }
 
 }

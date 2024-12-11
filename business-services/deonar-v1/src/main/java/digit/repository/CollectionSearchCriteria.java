@@ -12,4 +12,6 @@ import lombok.ToString;
 public class CollectionSearchCriteria {
     @JsonProperty("Search")
     private String search;
+
+    
 }
