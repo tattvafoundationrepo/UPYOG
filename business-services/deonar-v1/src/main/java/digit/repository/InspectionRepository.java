@@ -95,8 +95,7 @@ public class InspectionRepository {
     
         return finalList;
     }
-    
-    
+
 
    
     
