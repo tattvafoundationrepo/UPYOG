@@ -55,5 +55,7 @@ public class SecurityCheckDetails {
     private String permissionDate; 
 
     private Long stakeholderId;
+
+    private String ddreference;
 }
 
