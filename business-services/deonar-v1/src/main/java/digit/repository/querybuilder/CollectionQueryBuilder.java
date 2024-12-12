@@ -162,13 +162,13 @@ public class CollectionQueryBuilder {
     public String getTradingFeeQuery(CollectionSearchCriteria criteria, List<Object> preparedStmtList) {
 
         final String REMOVALFEE_QUERY = """
-                SELECT arrivalid,animal,animalcount,feevalue,totalstablefee
+                SELECT ddreference,arrivalid,animal,animalcount,feevalue,totalstablefee
                 FROM eg_deonar_vtradingfee
                 """;
         StringBuilder query = new StringBuilder(REMOVALFEE_QUERY);
         if (criteria.getSearch() != null) {
             addClauseIfRequired(query, preparedStmtList);
-            query.append(" arrivalid = ? ");
+            query.append(" ddreference = ? ");
             preparedStmtList.add(criteria.getSearch());
         }
         return query.toString();

@@ -58,4 +58,3 @@ public class SecurityCheckDetails {
 
     private String ddreference;
 }
-

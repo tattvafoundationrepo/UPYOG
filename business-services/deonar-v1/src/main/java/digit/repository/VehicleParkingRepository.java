@@ -143,7 +143,7 @@ public class VehicleParkingRepository {
             // For vehicles parked for both day and night across multiple days
             if (parkedIndDate.isBefore(parkedOutDate)) {
                 // Day charge for first day (6 AM to 12 AM)
-                if(parkedOutTime.isAfter(LocalTime.of(6, 0))){
+                if(parkedOutTime.isAfter(LocalTime.of(6, 0)) && parkedOutTime.isBefore(parkedInTime)){
                     fee += calculateDayCharges(vehicleType);
                 }
                 fee += getDayCount(parkedInTime, parkedIndDate, parkedOutTime, parkedOutDate, false) * calculateDayCharges(vehicleType);
@@ -197,29 +197,39 @@ public class VehicleParkingRepository {
                             case THREE_WHEELER:
                                 // if(getDayCount(parkedInTime, parkedInDate, parkedOutTime, parkedOutDate, false) < getDayCount(parkedInTime, parkedInDate, parkedOutTime, parkedOutDate, true)){
                                 //     overnightCharges += THREE_WHEELER_OVERNIGHT_MORE_2H;
-                                // }
-                                if (parkedOutTime.isAfter(LocalTime.of(0, 0)) && parkedOutTime.isBefore(LocalTime.of(2, 0))) {
-                                    overnightCharges += THREE_WHEELER_OVERNIGHT_LESS_2H;
-                                } 
+                                // }                      
                                 if (hoursParked >= 2) {
-                                    overnightCharges += getDayCount(parkedInTime, parkedInDate, parkedOutTime, parkedOutDate, true) * THREE_WHEELER_OVERNIGHT_MORE_2H;
-                                } else {
-                                    overnightCharges += getDayCount(parkedInTime, parkedInDate, parkedOutTime, parkedOutDate, true) * THREE_WHEELER_OVERNIGHT_AFTER_6AM;
-                                }
+                                    if (parkedOutTime.isAfter(LocalTime.of(0, 0)) && parkedOutTime.isBefore(LocalTime.of(2, 0))) {
+                                        overnightCharges += THREE_WHEELER_OVERNIGHT_LESS_2H;
+                                    }
+                                    if(getDayCount(parkedInTime, parkedInDate, parkedOutTime, parkedOutDate, true) > 1){
+                                        overnightCharges += getDayCount(parkedInTime, parkedInDate, parkedOutTime, parkedOutDate, true) * THREE_WHEELER_OVERNIGHT_MORE_2H;
+                                    } else if(parkedInTime.isBefore(LocalTime.of(23, 59, 59, 99999)) && parkedOutTime.isAfter(LocalTime.of(2, 0))){
+                                        overnightCharges += getDayCount(parkedInTime, parkedInDate, parkedOutTime, parkedOutDate, true)  * THREE_WHEELER_OVERNIGHT_MORE_2H;
+                                    }
+                                } 
+                                // else {
+                                //     overnightCharges += getDayCount(parkedInTime, parkedInDate, parkedOutTime, parkedOutDate, true) * THREE_WHEELER_OVERNIGHT_AFTER_6AM;
+                                // }
                                 break;
                 
                             case TWO_WHEELER:
                                 // if(getDayCount(parkedInTime, parkedInDate, parkedOutTime, parkedOutDate, false) < getDayCount(parkedInTime, parkedInDate, parkedOutTime, parkedOutDate, true)){
                                 //     overnightCharges += TWO_WHEELER_OVERNIGHT_MORE_2H;
-                                // }
-                                if (parkedOutTime.isAfter(LocalTime.of(0, 0)) && parkedOutTime.isBefore(LocalTime.of(2, 0))) {
-                                    overnightCharges += TWO_WHEELER_OVERNIGHT_LESS_2H;
+                                // } 
+                                 if (hoursParked >= 2 ) {
+                                    if (parkedOutTime.isAfter(LocalTime.of(0, 0)) && parkedOutTime.isBefore(LocalTime.of(2, 0))) {
+                                        overnightCharges += TWO_WHEELER_OVERNIGHT_LESS_2H;
+                                    }
+                                    if(getDayCount(parkedInTime, parkedInDate, parkedOutTime, parkedOutDate, true) > 1){
+                                        overnightCharges += getDayCount(parkedInTime, parkedInDate, parkedOutTime, parkedOutDate, true)  * TWO_WHEELER_OVERNIGHT_MORE_2H;
+                                    } else if(parkedInTime.isBefore(LocalTime.of(23, 59, 59, 99999)) && parkedOutTime.isAfter(LocalTime.of(2, 0))){
+                                        overnightCharges += getDayCount(parkedInTime, parkedInDate, parkedOutTime, parkedOutDate, true)  * TWO_WHEELER_OVERNIGHT_MORE_2H;
+                                    }
                                 } 
-                                 if (hoursParked >= 2) {
-                                    overnightCharges += getDayCount(parkedInTime, parkedInDate, parkedOutTime, parkedOutDate, true)  * TWO_WHEELER_OVERNIGHT_MORE_2H;
-                                } else {
-                                    overnightCharges += getDayCount(parkedInTime, parkedInDate, parkedOutTime, parkedOutDate, true) * TWO_WHEELER_OVERNIGHT_AFTER_6AM;
-                                }
+                                // else {
+                                //     overnightCharges += getDayCount(parkedInTime, parkedInDate, parkedOutTime, parkedOutDate, true) * TWO_WHEELER_OVERNIGHT_AFTER_6AM;
+                                // }
                                 break;
                 
                             default:
