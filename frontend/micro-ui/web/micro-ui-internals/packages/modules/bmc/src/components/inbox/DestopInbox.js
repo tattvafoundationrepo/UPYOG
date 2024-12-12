@@ -8,6 +8,7 @@ import SearchApplication from "./search";
 import CustomTable from "../CustomTable";
 import InteractiveCharts from "../InteractiveCharts";
 import { useEffect } from "react";
+import useBMCCommon from "@upyog/digit-ui-libraries/src/hooks/bmc/useBMCCommon";
 
 
 const DesktopInbox = ({ tableConfig, filterComponent, ...props }) => {
@@ -17,7 +18,6 @@ const DesktopInbox = ({ tableConfig, filterComponent, ...props }) => {
   const [sortParams, setSortParams] = useState({});
   const [getApplicationData, setGetApplicationData] = useState([]);
 
-
   const GetCell = (value) => <span className="cell-text">{t(value)}</span>;
   const GetSlaCell = (value) => {
     return value == "INACTIVE" ? <span className="sla-cell-error">{t(value) || ""}</span> : <span className="sla-cell-success">{t(value) || ""}</span>;
@@ -26,17 +26,31 @@ const DesktopInbox = ({ tableConfig, filterComponent, ...props }) => {
 
   const [FilterComponent, setComp] = useState(() => Digit.ComponentRegistryService?.getComponent(filterComponent));
 
-  
+  const { fetchBMCCommon } = useBMCCommon();
+const { data: schemeBMCData } = fetchBMCCommon();
 
-  const applicationFunction = (data) => {
+useEffect(() => {
+  if (schemeBMCData) {
+    
+    const appData = schemeBMCData?.applications || [];
 
-    if (data) {
-      setGetApplicationData(data.applications);
-    }
-  };
+    
+    const formattedApplications = appData.map((app) => ({
+      id: app.ApplicationNumber || "N/A",
+      name: app.Name || "N/A",
+      schemeName:app.SchemeName || "N/A",
+      machineName: app.MachineName || "N/A",
+      courseName: app.courseName || "N/A",
+      courseName:app.CourseNAme|| "N/A",
+      data:app.CreatedDate || "N/A",
+      status:app.state || "N/A",
+      city: app.City || "N/A",
+      zone: app.Zone || "N/A",
+    }));
 
-
-  Digit.Hooks.bmc.useBMCInboxApplicationStatus({}, { select: applicationFunction });
+    setGetApplicationData(formattedApplications);
+  }
+}, [schemeBMCData]);
 
 
   const columns = React.useMemo(() => {
@@ -116,38 +130,38 @@ const DesktopInbox = ({ tableConfig, filterComponent, ...props }) => {
     {
       Header: t("BMC_ApplicationNumber"),
       accessor: "ApplicationNumber",
-      Cell: ({ value }) => t(value) || "N/A",
+      Cell: ({ row }) => t(row.original.id) || "N/A",
     },
     {
       Header: t("Name"),
       accessor: "Name",
-      Cell: ({ value }) => t(value) || "N/A",
+      Cell: ({ row }) => t(row.original.name) || "N/A",
     },
     {
       Header: t("BMC_SchemeName"),
       accessor: "SchemeName",
-      Cell: ({ value }) => t(value) || "N/A",
+      Cell: ({ row }) => t(row.original.schemeName) || "N/A",
     },
     {
       Header: t("BMC_MachineName"),
       accessor: "MachineName",
-      Cell: ({ value }) => t(value) || "N/A",
+      Cell: ({ row }) => t(row.original.machineName) || "N/A",
     },
     {
       Header: t("BMC_CourseName"),
       accessor: "CourseName",
-      Cell: ({ value }) => t(value) || "N/A",
+      Cell: ({ row }) => t(row.original.courseName) || "N/A",
     },
 
     {
       Header: t("BMC_LastModifiedDate"),
       accessor: "CreatedDate",
-      Cell: ({ value }) => t(value) || "N/A",
+      Cell: ({ row }) => t(row.original.data) || "N/A",
     },
     {
       Header: t("BMC_CurrentStatus"),
       accessor: "state",
-      Cell: ({ value }) => t(value) || "N/A",
+      Cell: ({ row }) => t(row.original.status) || "N/A",
     },
 
     // {

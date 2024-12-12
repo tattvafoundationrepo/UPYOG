@@ -114,8 +114,8 @@ const Slaughtering = () => {
           animalTypeId: slaughterAnimalListData?.[0]?.animalTypeId,
           token: slaughterAnimalListData?.[0]?.token,
           slaughtering: slaughteringValue,
-          slaughterUnit: formData?.slaughterUnit?.id,
-          slaughterType: formData?.slaughterType?.code,
+          // slaughterUnit: formData?.slaughterUnit?.id,
+          // slaughterType: formData?.slaughterType?.code,
         },
       };
       saveSlaughterData.mutate(payload, {
@@ -252,7 +252,7 @@ const Slaughtering = () => {
                 />
               </div>
               <div className="bmc-row-card">
-                <HealthStatDropdownField
+                {/* <HealthStatDropdownField
                   name="slaughterType"
                   label="DEONAR_SLAUGHTER_TYPE"
                   control={control}
@@ -267,7 +267,7 @@ const Slaughtering = () => {
                   data={data}
                   setData={setData}
                   options={SlaughterUnitData}
-                />
+                /> */}
                 <div className="bmc-col3-card">
                   <LabelFieldPair>
                     <CardLabel className="bmc-label">{t("DEONAR_Slaughter")}</CardLabel>

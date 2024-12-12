@@ -50,14 +50,18 @@ const useCollectionPoint = ({ value }) => {
       queryClient.invalidateQueries("ParkingDetails");
     },
   });
+  // const fetchSlaughterCollectionFee = (data, config = {}) => {
+  //   return useQuery(["SlaughterFee", data], () => DeonarService.getCollectionSlaughterFee(data), {
+  //     ...config,
+  //     onSuccess: (data) => {
+  //       console.log(data, "SlaughterFee collection data");
+  //     },
+  //     // enabled: value === "slaughter",
+  //   });
+  // };
+
   const fetchSlaughterCollectionFee = (data, config = {}) => {
-    return useQuery(["SlaughterFee", data], () => DeonarService.getCollectionSlaughterFee(data), {
-      ...config,
-      onSuccess: (data) => {
-        console.log(data, "SlaughterFee collection data");
-      },
-      // enabled: value === "slaughter",
-    });
+    return useMutation((data) => DeonarService.getCollectionSlaughterFee(data), config);
   };
 
   const fetchWashingCollectionFee = (data, config = {}) => {

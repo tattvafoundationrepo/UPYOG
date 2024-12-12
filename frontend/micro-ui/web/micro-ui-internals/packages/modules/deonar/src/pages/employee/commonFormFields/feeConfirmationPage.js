@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import CustomTable from "../commonFormFields/customTable";
 
 const FeeConfirmationPage = ({
+  id,
   label = "",
   fields = [],
   values = {},
@@ -35,6 +36,7 @@ const FeeConfirmationPage = ({
 
   return (
     <div
+    id={id}
       style={{
         border: "3px dotted #ccc", // Dotted border for a bill-like appearance
         padding: "20px",

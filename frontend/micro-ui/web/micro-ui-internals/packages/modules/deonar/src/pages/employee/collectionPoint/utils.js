@@ -250,10 +250,7 @@ export const createDynamicColumns = (handleUUIDClick, tableType) => {
           </span>
         ),
       },
-      {
-        Header: "Deonar_Arrival_Id",
-        accessor: "arrivalId",
-      },
+     
       {
         Header: "DEONAR_SHOPKEEPER_NAME",
         accessor: "shopkeeperName",
@@ -261,6 +258,10 @@ export const createDynamicColumns = (handleUUIDClick, tableType) => {
       {
         Header: "DEONAR_LICENSE_NUMBER",
         accessor: "licenceNumber",
+      },
+      {
+        Header: "Deonar_Arrival_Id",
+        accessor: "arrivalId",
       },
     ];
   }
@@ -274,17 +275,17 @@ export const createDynamicColumns = (handleUUIDClick, tableType) => {
         isVisible: false,
       },
       {
-        Header: "DEONAR_ARRIVAL_UUID",
-        accessor: "entryUnitId",
+        Header: "Deonar_DD_Reference",
+        accessor: "ddReference",
         Cell: ({ row }) => (
-          <span onClick={() => handleUUIDClick(row.original.entryUnitId)} style={{ cursor: "pointer", color: "blue" }}>
-            {row.original.entryUnitId}
+          <span onClick={() => handleUUIDClick(row.original.ddReference)} style={{ cursor: "pointer", color: "blue" }}>
+            {row.original.ddReference}
           </span>
         ),
       },
       {
-        Header: "DEONAR_TRADER_NAME",
-        accessor: "traderName",
+        Header: "DEONAR_SHOPKEEPER_NAME",
+        accessor: "shopkeeperName",
       },
       {
         Header: "DEONAR_LICENSE_NUMBER",
@@ -293,6 +294,10 @@ export const createDynamicColumns = (handleUUIDClick, tableType) => {
       {
         Header: "DEONAR_PERMISSION_NUMBER",
         accessor: "importPermission",
+      },
+      {
+        Header: "Deonar_Arrival_Id",
+        accessor: "entryUnitId",
       },
       {
         Header: "ARRIVAL_DATE_FIELD",
@@ -322,10 +327,7 @@ export const createDynamicColumns = (handleUUIDClick, tableType) => {
           </span>
         ),
       },
-      {
-        Header: "DEONAR_ARRIVAL_UUID",
-        accessor: "arrivalId",
-      },
+
       {
         Header: "DEONAR_TRADER_NAME",
         accessor: "traderName",
@@ -333,6 +335,10 @@ export const createDynamicColumns = (handleUUIDClick, tableType) => {
       {
         Header: "DEONAR_LICENSE_NUMBER",
         accessor: "licenceNumber",
+      },
+      {
+        Header: "DEONAR_ARRIVAL_UUID",
+        accessor: "arrivalId",
       },
       {
         Header: "ARRIVAL_DATE_FIELD",
@@ -404,10 +410,7 @@ export const createDynamicColumns = (handleUUIDClick, tableType) => {
           </span>
         ),
       },
-      {
-        Header: "Deonar_Arrival_Id",
-        accessor: "arrivalId",
-      },
+
       {
         Header: "DEONAR_SHOPKEEPER_NAME",
         accessor: "shopkeeperName",
@@ -415,6 +418,10 @@ export const createDynamicColumns = (handleUUIDClick, tableType) => {
       {
         Header: "DEONAR_LICENSE_NUMBER",
         accessor: "licenceNumber",
+      },
+      {
+        Header: "Deonar_Arrival_Id",
+        accessor: "arrivalId",
       },
     ];
   }
@@ -554,6 +561,11 @@ const paymentMethodOptions = [
   { label: "UPI", value: "UPI" },
 ];
 
+const slaughterTypeOptions = [
+  { label: "Normal", value: "Normal" },
+  { label: "Emergency", value: "Emergency" },
+];
+
 export const feeConfigs = {
   arrival: {
     fields: [
@@ -591,28 +603,22 @@ export const feeConfigs = {
       paymentMethod: paymentMethodOptions,
     },
   },
-  slaughter: {
-    fields: [
-      // { type: "dropdown", label: "Slaughter Type", name: "slaughterType", required: false },
-      // { type: "dropdown", label: "Slaughter Unit", name: "slaughterUnit", required: false },
-      // { type: "input", label: "Number of Animals", name: "numberOfAnimals", required: false },
-      { type: "dropdown", label: "Payment Mode", name: "paymentMethod", required: true },
-      { type: "input", label: "Reference Number", name: "transactionId", required: true },
-    ],
-    options: {
-      paymentMethod: paymentMethodOptions,
-      slaughterUnit: [
-        { label: "Slaughter Unit 1", value: "SU1" },
-        { label: "Slaughter Unit 2", value: "SU2" },
-        { label: "Slaughter Unit 3", value: "SU3" },
-      ],
-      slaughterType: [
-        { label: "Slaughter Type 1", value: "ST1" },
-        { label: "Slaughter Type 2", value: "ST2" },
-        { label: "Slaughter Type 3", value: "ST3" },
-      ],
-    },
-  },
+  // slaughter: {
+  //   fields: [
+  //     { type: "dropdown", label: "Slaughter Unit Type", name: "slaughterType", required: true },
+  //     { type: "dropdown", label: "Slaughter Unit", name: "slaughterUnit", required: true },
+  //     { type: "dropdown", label: "Unit Shift", name: "unitShift", required: true },
+  //     // { type: "input", label: "Slaughter Unit Charge", name: "slaughterUnitCharge", required: false },
+  //     { type: "dropdown", label: "Payment Mode", name: "paymentMethod", required: true },
+  //     { type: "input", label: "Reference Number", name: "transactionId", required: true },
+  //   ],
+  //   options: {
+  //     paymentMethod: paymentMethodOptions,
+  //     slaughterType: slaughterTypeOptions,
+  //     slaughterUnit: [],
+  //     unitShift: [],
+  //   },
+  // },
   washing: {
     fields: [
       { type: "dropdown", label: "Payment Mode", name: "paymentMethod", required: true },
@@ -912,4 +918,41 @@ export const toastMessages = {
     success: "Penalty Charge saved successfully!",
     error: "Failed to save Penalty Charge.",
   },
+};
+
+// Function to handle printing an element
+export const handlePrint = (elementId) => {
+  const element = document.getElementById(elementId);
+  if (!element) {
+    console.error("Element not found");
+    return;
+  }
+
+  const printWindow = window.open("", "_blank");
+  if (printWindow) {
+    printWindow.document.write("<html><head><title>Print</title></head><body>");
+    printWindow.document.write(element.outerHTML);
+    printWindow.document.write("</body></html>");
+    printWindow.document.close();
+    printWindow.print();
+  }
+};
+
+// Function to handle downloading an element as an HTML file
+export const handleDownload = (elementId, fileName = "download.html") => {
+  const element = document.getElementById(elementId);
+  console.log("Element:", element); // Check if the element is found
+  if (!element) {
+    console.error("Element not found");
+    return;
+  }
+
+  const htmlContent = element.outerHTML;
+  const blob = new Blob([htmlContent], { type: "text/html" });
+  const downloadLink = document.createElement("a");
+  downloadLink.href = URL.createObjectURL(blob);
+  downloadLink.download = fileName;
+  document.body.appendChild(downloadLink);
+  downloadLink.click();
+  document.body.removeChild(downloadLink);
 };

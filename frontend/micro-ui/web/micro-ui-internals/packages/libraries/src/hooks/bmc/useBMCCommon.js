@@ -30,12 +30,40 @@
 
 
 
-import { useQuery } from "react-query";
+// import { useQuery } from "react-query";
 
+// import SchemeService from "../../services/elements/Scheme";
+
+// export const useBMCDataCommon = (data, config = {}) => {
+//   return useQuery(["ApplicationStatus", data], () => SchemeService.getAllinboxApplications(data), config);
+// };
+
+// export default useBMCDataCommon;
+
+// src/hooks/useBMCCommon.js
+import { useQuery, useMutation, useQueryClient } from "react-query";
 import SchemeService from "../../services/elements/Scheme";
 
-export const useBMCDataCommon = (data, config = {}) => {
-  return useQuery(["ApplicationStatus", data], () => SchemeService.getAllinboxApplications(data), config);
+
+const useBMCCommon = () => {
+  const queryClient = useQueryClient();
+
+  // Fetching data
+  const fetchBMCCommon = (data, config = {}) => {
+    return useQuery(["BMCInbox", data], () => SchemeService.getAllinboxApplications(data), {
+      ...config,
+      onSuccess: (data) => {
+        
+      },
+    });
+  };
+
+
+  return {
+    fetchBMCCommon,
+    
+  };
 };
 
-export default useBMCDataCommon;
+export default useBMCCommon;
+

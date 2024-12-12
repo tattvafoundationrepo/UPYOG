@@ -26,7 +26,7 @@ const QualificationCard = ({ tenantId, onUpdate, initialRows = [], AddOption = t
   const [isDisabled, setIsDisabled] = useState(false)
   const [documents, setDocuments] = useState([])
   const [qualifications, setQualifications] = useState([]);
-  const [isEditing, setIsEditing] = useState(false); // To track edit mode
+  const [isEditing, setIsEditing] = useState(false); 
   const [selectedRow, setSelectedRow] = useState(null);
   const [isMobileView, setIsMobileView] = useState(window.innerWidth < 769);
 
@@ -183,6 +183,7 @@ const QualificationCard = ({ tenantId, onUpdate, initialRows = [], AddOption = t
       onSuccess: () => {
         // Remove the document from rows state
         setRows((prevRows) => prevRows.filter((row) => row.qualification.id !== id));
+        window.location.reload();
       },
       onError: (error) => {
         console.error("Failed to delete document row:", error);

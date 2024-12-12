@@ -248,7 +248,7 @@ const Urls = {
     getUserDetails: "/bmc-service-v1/user/_get",
     saveUserDetails: "/bmc-service-v1/user/_save",
     getAllApplications: "/bmc-service-v1/application/_status",
-    getAllBMCInboxApplication:"/bmc-service-v1/application/_getAll"
+    getAllBMCInboxApplication:"/bmc-service-v1/bmc/application/_getAll",
   },
 
   banksDetails: {
@@ -287,6 +287,7 @@ const Urls = {
     getCollectionWeighingList: "/deonar-v1/get/weighing/_list",
     fetchWeighingCollectionFee: "/deonar-v1/collection/fee/weighing/_get",
     saveSlaughterListData: "/deonar-v1/animal/slaughter/_save",
+    getSlaughterUnit: "/deonar-v1/animal/slaughter/_shifts",
   },
   access_control: "/access/v1/actions/mdms/_get",
   billgenie: "/egov-searcher",

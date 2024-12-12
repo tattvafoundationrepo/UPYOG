@@ -1,13 +1,110 @@
 import { ActionBar, ApplyFilterBar, CloseSvg, Dropdown, RadioButtons, RemoveableTag, SubmitBar } from "@upyog/digit-ui-react-components";
 import React, { useEffect, useState } from "react";
+import { Controller, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 
 const Filter = ({ searchParams, onFilterChange, onSearch, removeParam, ...props }) => {
+  const { t } = useTranslation()
+  const {
+    control,
+    trigger,
+    clearErrors,
+    formState: { isValid },
+    getValues,
+  } = useForm({
+    defaultValues: {
+      schemeHead: "",
+      scheme: "",
+      details: "",
+    },
+    mode: "onChange",
+  });
+  const [schemeHeads, setSchemeHeads] = useState([]);
+  const [schemes, setSchemes] = useState([]);
+  const [details, setDetails] = useState([]);
+  const [selectedSchemeHead, setSelectedSchemeHead] = useState("");
+  const [selectedScheme, setSelectedScheme] = useState("");
+  const [selectedDetail, setSelectedDetail] = useState("");
+  const [selectedType, setSelectedType] = useState("");
+
+  const getSchemes = { SchemeSearchCriteria: { Status: 1, sla: 30 } };
+  const { data: SCHEME_DATA } = Digit.Hooks.bmc.useSchemesGet(getSchemes);
+
+
+  useEffect(() => {
+    if (SCHEME_DATA && SCHEME_DATA.SchemeDetails) {
+      const groupedSchemeHeads = [];
+      const schemeHeadMap = new Map();
+
+      SCHEME_DATA.SchemeDetails.forEach((event) => {
+        event.schemeshead.forEach((schemeHead) => {
+          if (!schemeHeadMap.has(schemeHead.schemeHead)) {
+            schemeHeadMap.set(schemeHead.schemeHead, {
+              schemeHead: schemeHead.schemeHead,
+              schemeheadDesc: schemeHead.schemeheadDesc,
+              schemeHeadApplicationCount: schemeHead?.schemeHeadApplicationCount || 0,
+              schemeDetails: [...schemeHead.schemeDetails],
+            });
+          } else {
+            const existingSchemeHead = schemeHeadMap.get(schemeHead.schemeHead);
+            existingSchemeHead.schemeDetails.push(...schemeHead.schemeDetails);
+          }
+        });
+      });
+
+      schemeHeadMap.forEach((value) => groupedSchemeHeads.push(value));
+      setSchemeHeads(groupedSchemeHeads);
+    }
+  }, [SCHEME_DATA]);
+
+  const handleSchemeHeadChange = (selected) => {
+    setSelectedSchemeHead(selected.value);
+    setSelectedScheme("");
+    setSelectedDetail("");
+    setSelectedType("");
+    setDetails([]);
+    clearErrors("schemeHead");
+    const selectedSchemeDetails = schemeHeads.find((head) => head.schemeHead === selected.value)?.schemeDetails || [];
+    setSchemes(selectedSchemeDetails);
+  };
+
+  const handleSchemeChange = (selected) => {
+    setSelectedScheme(selected.value);
+    setSelectedDetail("");
+    setSelectedType("");
+
+    const selectedScheme = schemes.find((scheme) => scheme.schemeID === selected.value);
+    const details = [...(selectedScheme.courses || []), ...(selectedScheme.machines || [])];
+    setDetails(details);
+    clearErrors("scheme");
+  };
+
+
+  const schemeHeadOptions = schemeHeads.map((head) => ({
+    value: head.schemeHead,
+    label: `${(head.schemeHead)} `,
+  }));
+
+  const schemeOptions = schemes.map((scheme) => ({
+    value: scheme.schemeID,
+    label: `${(scheme.schemeName)} `,
+  }));
+
+  const detailOptions = details.map((detail) => ({
+    value: detail.machID || detail.courseID,
+    label: `${t(detail.machName || detail.courseName)} (${detail.machID ? detail.machineWiseApplicationCount || 0 : detail.courseWiseApplicationCount || 0
+      })`,
+    type: detail.machID ? "machine" : "course",
+  }));
+
+
+  useEffect(() => {
+    trigger(); // Validate the form on mount to show errors if fields are empty
+  }, [trigger]);
 
   const [filters, onSelectFilterRoles] = useState(searchParams?.filters?.role || { role: [] });
   const [_searchParams, setSearchParams] = useState(() => searchParams);
   const [selectedRoles, onSelectFilterRolessetSelectedRole] = useState(null);
-  const { t } = useTranslation();
   const tenantIds = Digit.SessionStorage.get("BMC_TENANTS");
 
   function onSelectRoles(value, type) {
@@ -55,6 +152,8 @@ const Filter = ({ searchParams, onFilterChange, onSearch, removeParam, ...props 
   const [isActive, setIsactive] = useState(() => {
     return { isActive: true };
   });
+
+
 
   useEffect(() => {
     if (tenantId.code) {
@@ -119,7 +218,28 @@ const Filter = ({ searchParams, onFilterChange, onSearch, removeParam, ...props 
     return (
       <div>
         <div className="filter-label">{lable}</div>
-        {<Dropdown option={options} selected={selected} select={(value) => select(value, key)} optionKey={optionKey} />}
+        {<Controller
+          control={control}
+          name="scheme"
+          rules={{ required: t("CORE_COMMON_REQUIRED_ERRMSG") }}
+          render={({ value, onChange, onBlur }) => (
+            <div>
+              <Dropdown
+                placeholder={t("Select Scheme")}
+                selected={schemeOptions.find((option) => option.value === value)}
+                select={(option) => {
+                  onChange(option.value);
+                  handleSchemeChange(option);
+                }}
+                onBlur={onBlur}
+                option={schemeOptions}
+                optionKey="label"
+                t={t}
+                disabled={!selectedSchemeHead}
+              />
+            </div>
+          )}
+        />}
         <div className="tag-container">
           {filters?.role?.length > 0 &&
             filters?.role?.map((value, index) => {
@@ -129,6 +249,41 @@ const Filter = ({ searchParams, onFilterChange, onSearch, removeParam, ...props 
       </div>
     );
   };
+  //-------------------------------------------------------
+  const getAll = Digit.Hooks.bmc.useBMCDataCommon();
+  const handleApply = () => {
+  console.log('check 01')
+
+    const payload = {
+      DashboardCriteria: {
+        state: "VERIFIED",
+        courseid: null,
+        machineid: null,
+        ward: null,
+        zone: null,
+        city: null,
+        schemeId: 1,
+        createddate: null,
+        enddate: null
+      },
+    };
+
+    getAll.mutate(payload, {
+      onSuccess: () => {
+        console.log('all API called+++++++++++++++++++++++')
+      },
+      onError: (error) => { },
+    });
+  };
+
+  // function handleApply() {
+
+
+
+
+  // }
+
+
   return (
     <React.Fragment>
       <div className="filter">
@@ -159,7 +314,8 @@ const Filter = ({ searchParams, onFilterChange, onSearch, removeParam, ...props 
               </span>
             )}
             {props.type === "mobile" && (
-              <span onClick={props.onClose}>
+              <span onClick={props.onClose}>BMC_WELFARE_APPLICATIONS
+
                 <CloseSvg />
               </span>
             )}
@@ -177,12 +333,37 @@ const Filter = ({ searchParams, onFilterChange, onSearch, removeParam, ...props 
             </div> */}
             <div>
               <div className="filter-label">{t("BMC_SCHEME")}</div>
-              <Dropdown
-                option={Digit.Utils.locale.convertToLocaleData(data?.MdmsRes?.["common-masters"]?.Department, 'COMMON_MASTERS_DEPARTMENT')}
-                selected={departments}
-                select={setDepartments}
-                optionKey={"i18text"}
-                t={t}
+              <Controller
+                control={control}
+                name="schemeHead"
+                rules={{ required: t("CORE_COMMON_REQUIRED_ERRMSG") }}
+                render={({ value, onChange, onBlur }) => (
+                  <div>
+                    <Dropdown
+                      placeholder={t("Select Scheme Head")}
+                      selected={value}
+                      defaultValue={""}
+                      select={(selectedValue) => {
+                        const isValid = schemeHeadOptions.some((option) => option.value === selectedValue.value);
+
+                        if (isValid) {
+                          onChange(selectedValue);
+                          handleSchemeHeadChange(selectedValue);
+                        } else {
+                          onChange("");
+                          setSelectedScheme("");
+                          setSelectedDetail("");
+                          setDetails([]);
+                          clearErrors("schemeHead");
+                        }
+                      }}
+                      onBlur={onBlur}
+                      option={schemeHeadOptions}
+                      optionKey="label"
+                      t={t}
+                    />
+                  </div>
+                )}
               />
             </div>
             <div>
@@ -206,12 +387,18 @@ const Filter = ({ searchParams, onFilterChange, onSearch, removeParam, ...props 
                 selectedOption={isActive}
                 optionsKey="name"
                 options={[
-                  { code: true, name: t("BMC_APPROVED") },
-                  { code: false, name: t("BMC_NOT_APPROVED") },
+                  { code: true, name: t("BMC_APPLIED") },
+                  { code: false, name: t("BMC_APPROVED") },
+                  { code: false, name: t("BMC_VERIFIED") },
+                  { code: false, name: t("BMC_SELECTED") },
+                  { code: false, name: t("BMC_REJECTED") },
+
+
+
                 ]}
               />
               {props.type !== "mobile" && <div>
-                <SubmitBar onSubmit={() => onFilterChange(_searchParams)} label={t("BMC_COMMON_APPLY")} />
+                <SubmitBar onSubmit={handleApply} label={t("BMC_COMMON_APPLY")} />
               </div>}
             </div>
           </div>

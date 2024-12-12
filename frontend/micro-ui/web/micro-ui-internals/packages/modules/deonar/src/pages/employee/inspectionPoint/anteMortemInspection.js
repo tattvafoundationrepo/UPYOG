@@ -184,7 +184,7 @@ const AnteMortemInspectionPage = () => {
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
   const { fetchEntryFeeDetailsbyUUID } = useDeonarCommon();
-  const { data: fetchedData, isLoading: inspectionLoading } = fetchEntryFeeDetailsbyUUID({ inspectionid: inspectionId });
+  const { data: fetchedData } = fetchEntryFeeDetailsbyUUID({ inspectionid: inspectionId });
 
   useEffect(() => {
     const selectedInspectionId = inspectionTypes.find((item) => item.label === radioValueCheck)?.value;
@@ -323,6 +323,7 @@ const AnteMortemInspectionPage = () => {
       }
     }
   };
+
   const saveAnteMortemInspection = Digit.Hooks.deonar.useInspectionPointSave();
 
   const showToast = (type, message, duration = 5000) => {
@@ -431,7 +432,7 @@ const AnteMortemInspectionPage = () => {
             )}
           </div>
           <div className="bmc-card-row">
-            {isLoading && radioValueCheck ? (
+            {isLoader && radioValueCheck ? (
               <Loader />
             ) : inspectionTableData && radioValueCheck && inspectionTableData.length === 0 ? (
               <div className="">
@@ -467,7 +468,7 @@ const AnteMortemInspectionPage = () => {
         </div>
       </div>
 
-      {modalInspectionType === inspectionTypes[0].label && radioValueCheck.label === "Ante-Mortem Inspection" && (
+      {modalInspectionType === inspectionTypes[0].label && radioValueCheck === "Ante-Mortem Inspection" && (
         <AnimalInspectionModal
           isModalOpen={isModalOpen}
           toggleModal={toggleModal}
@@ -493,7 +494,7 @@ const AnteMortemInspectionPage = () => {
         />
       )}
 
-      {modalInspectionType === inspectionTypes[0].label && radioValueCheck.label === "Re-Ante Mortem Inspection" && (
+      {modalInspectionType === inspectionTypes[0].label && radioValueCheck === "Re-Ante Mortem Inspection" && (
         <AnimalInspectionModal
           isModalOpen={isModalOpen}
           toggleModal={toggleModal}
@@ -519,7 +520,7 @@ const AnteMortemInspectionPage = () => {
         />
       )}
 
-      {modalInspectionType === inspectionTypes[0].label && radioValueCheck.label === "Before Slaughter Inspection" && (
+      {modalInspectionType === inspectionTypes[0].label && radioValueCheck === "Before Slaughter Inspection" && (
         <BeforeSlauhterInspectionModal
           isModalOpen={isModalOpen}
           toggleModal={toggleModal}
@@ -545,7 +546,7 @@ const AnteMortemInspectionPage = () => {
         />
       )}
 
-      {modalInspectionType === inspectionTypes[0].label && radioValueCheck.label === "Post-Mortem Inspection" && (
+      {modalInspectionType === inspectionTypes[0].label && radioValueCheck === "Post-Mortem Inspection" && (
         <PostMortemInspectionModal
           isModalOpen={isModalOpen}
           toggleModal={toggleModal}

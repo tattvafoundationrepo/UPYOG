@@ -359,6 +359,17 @@ const DeonarService = {
       userService: true,
     });
   },
+
+  getSlaughterUnit: (data) => {
+    return Request({
+      data: data,
+      url: Urls.deonar_security_check.getSlaughterUnit,
+      useCache: false,
+      method: "POST",
+      auth: true,
+      userService: true,
+    });
+  },
 };
 
 export default DeonarService;

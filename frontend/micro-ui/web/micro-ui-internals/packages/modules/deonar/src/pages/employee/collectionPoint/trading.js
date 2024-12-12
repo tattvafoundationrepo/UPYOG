@@ -14,6 +14,97 @@ import SubmitButtonField from "../commonFormFields/submitBtn";
 import { Toast } from "@upyog/digit-ui-react-components";
 import ConfirmationDialog from "../commonFormFields/confirmationDialog";
 
+export const DawanWalaColumns = (handleUUIDClick) => [
+  {
+    Header: "ID",
+    accessor: "id",
+    Cell: ({ row }) => row.index + 1,
+    getHeaderProps: (column) => ({
+      style: {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center", // or any other styles you want
+      },
+    }),
+    isVisible: false,
+  },
+  {
+    Header: "Deonar_DD_Reference",
+    accessor: "ddReference",
+    sortable: true,
+    Cell: ({ row }) => (
+      <span onClick={() => handleUUIDClick(row.original.ddReference)} style={{ cursor: "pointer", color: "blue" }}>
+        {row.original.ddReference}
+      </span>
+    ),
+    isVisible: true,
+  },
+  {
+    Header: "DEONAR_SHOPKEEPER_NAME",
+    accessor: "shopkeeperName",
+    getHeaderProps: (column) => ({
+      style: {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center", // or any other styles you want
+      },
+    }),
+    isVisible: true,
+  },
+  {
+    Header: "DEONAR_LICENSE_NUMBER",
+    accessor: "licenceNumber",
+    getHeaderProps: (column) => ({
+      style: {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center", // or any other styles you want
+      },
+    }),
+    isVisible: true,
+  },
+  {
+    Header: "DEONAR_PERMISSION_NUMBER",
+    accessor: "importPermission",
+    getHeaderProps: (column) => ({
+      style: {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center", // or any other styles you want
+      },
+    }),
+    isVisible: true,
+  },
+  {
+    Header: "Deonar_Arrival_Id",
+    accessor: "entryUnitId",
+  },
+  {
+    Header: "ARRIVAL_DATE_FIELD",
+    accessor: "dateOfArrival",
+    getHeaderProps: (column) => ({
+      style: {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center", // or any other styles you want
+      },
+    }),
+    isVisible: true,
+  },
+  {
+    Header: "ARRIVAL_TIME_FIELD",
+    accessor: "timeOfArrival",
+    getHeaderProps: (column) => ({
+      style: {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center", // or any other styles you want
+      },
+    }),
+    isVisible: true,
+  },
+];
+
 const S = () => {
   const { t } = useTranslation();
 
@@ -334,14 +425,13 @@ const S = () => {
               {isMobileView && animalCount.map((data, index) => <TableCard data={data} key={index} fields={fields} onUUIDClick={handleUUIDClick} />)}
               <CustomTable
                 t={t}
-                columns={columns(handleUUIDClick)}
+                columns={DawanWalaColumns(handleUUIDClick)}
                 data={animalCount}
                 manualPagination={false}
                 tableClassName={"deonar-scrollable-table"}
                 totalRecords={totalRecords}
                 autoSort={false}
                 isLoadingRows={isLoading}
-               
               />
               {isModalOpen && (
                 <CustomModal isOpen={isModalOpen} onClose={toggleModal} selectedUUID={selectedUUID} style={{ width: "100%" }}>

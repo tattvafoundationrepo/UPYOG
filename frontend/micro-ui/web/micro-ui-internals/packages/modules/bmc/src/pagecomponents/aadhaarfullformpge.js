@@ -11,15 +11,14 @@ import Title from "../components/title";
 import { Toast } from "@upyog/digit-ui-react-components";
 import DocumentCard from "../components/DocumentCard";
 import UserOthersDetails from "../components/userOthersDetails";
+import { useQueryClient } from "react-query";
 
 const AadhaarFullFormPage = () => {
   const tenantId = Digit.SessionStorage.get("CITIZEN.COMMON.HOME.CITY")?.code || Digit.ULBService.getCurrentTenantId();
   const userDetails = Digit.UserService.getUser();
   const { t } = useTranslation();
   const history = useHistory();
-
   const [userDetail, setUserDetail] = useState({});
-
   const [updatedPersonalDetails, setupdatedPersonalDetails] = useState({});
   const [updatedQualifications, setupdatedQualifications] = useState([]);
   const [updatedDisability, setupdatedDisability] = useState({});
@@ -27,9 +26,44 @@ const AadhaarFullFormPage = () => {
   const [updatedBank, setupdatedBank] = useState([]);
   const [updatedDocument, setupdatedDocument] = useState([]);
   const [updateOthersDetails, setupdatedOthersDetails] = useState({});
-
   const [isButtonDisabled, setIsButtonDisabled] = useState(true);
   const [toast, setToast] = useState(null);
+  const [qualificationLength, setQualificationLength] = useState()
+  const [bankLength, setBankLength] = useState()
+  const [documentLength, setDocumentLength] = useState()
+
+
+  useEffect(() => {
+    if (userDetail?.UserQualification?.length <= 1) {
+      if (userDetail?.UserQualification[0]?.percentage === 0) {
+        setQualificationLength(0);
+      } else {
+        setQualificationLength(userDetail?.UserQualification?.length);
+      }
+    } else {
+      setQualificationLength(userDetail?.UserQualification?.length);
+        console.log("user qualification found");
+    }
+    if(userDetail?.UserBank?.length <= 1){
+      if(userDetail?.UserBank[0]?.branchId === 0){
+        setBankLength(0);
+      } else {
+        setBankLength(userDetail?.UserBank?.length);
+      }
+    }else {
+      setBankLength(userDetail?.UserBank?.length);
+    }
+    if(userDetail?.documentDetails?.length <= 1){
+      if(userDetail?.documentDetails[0]?.available === false){
+        setDocumentLength(0);
+      } else {
+        setDocumentLength(userDetail?.documentDetails?.length);
+      }
+    } else {
+      setDocumentLength(userDetail?.documentDetails?.length);
+    }
+  }, [userDetail]);
+  
 
   const userFunction = (data) => {
     if (data && data.UserDetails && data.UserDetails.length > 0) {
@@ -62,14 +96,17 @@ const AadhaarFullFormPage = () => {
       updatedAddress.district,
       updatedAddress.street,
       updatedAddress.city,
-      
+      updatedBank,
     ];
     const isFormValid = requiredFields.every((field) => field !== null && field !== "" && field !== undefined);
-    setIsButtonDisabled(!isFormValid);
+    const hasRequiredDetails = qualificationLength > 0 && bankLength > 0 && documentLength > 0;
+    setIsButtonDisabled(!(isFormValid && hasRequiredDetails));
   };
 
   const handleQualificationsUpdate = (updatedQualifications) => {
     setupdatedQualifications(updatedQualifications);
+    window.location.reload();
+    
   };
 
   const handlePersonalDetailUpdate = useCallback((updatedPersonalDetails) => {
@@ -82,8 +119,11 @@ const AadhaarFullFormPage = () => {
     validateForm();
   }, []);
 
+
   const handleBankUpdate = useCallback((updatedBank) => {
     setupdatedBank(updatedBank);
+    window.location.reload();
+
   }, []);
 
   const handleAddressUpdate = useCallback((updatedAddress) => {
@@ -93,6 +133,7 @@ const AadhaarFullFormPage = () => {
 
   const handleDocumentUpdate = useCallback((updatedDocument) => {
     setupdatedDocument(updatedDocument);
+    window.location.reload();
   }, []);
 
   const handleOtherDetailsUpdate = useCallback((updateOthersDetails) => {
@@ -148,8 +189,9 @@ const AadhaarFullFormPage = () => {
     updatedBank,
     updatedDocument,
     updateOthersDetails,
+     
+    
   ]);
-
 
   return (
     <React.Fragment>
@@ -159,7 +201,7 @@ const AadhaarFullFormPage = () => {
         <PersonalDetailCard onUpdate={handlePersonalDetailUpdate} initialRows={userDetail} tenantId={tenantId} AllowEdit={true} />
         <AddressDetailCard onUpdate={handleAddressUpdate} initialRows={userDetail} tenantId={tenantId} AllowEdit={true} />
         <DisabilityCard onUpdate={handleDisabilityUpdate} initialRows={userDetail.divyang} tenantId={tenantId} AllowEdit={true} />
-        <DocumentCard onUpdate={handleDocumentUpdate} initialRows={userDetail.documentDetails} tenantId={tenantId} AllowEdit={true} ></DocumentCard>
+        <DocumentCard onUpdate={handleDocumentUpdate} initialRows={userDetail.documentDetails} tenantId={tenantId} AllowEdit={true}></DocumentCard>
         <UserOthersDetails onUpdate={handleOtherDetailsUpdate} initialRows={userDetail.UserOtherDetails} tenantId={tenantId} AllowEdit={true} />
         <QualificationCard
           onUpdate={handleQualificationsUpdate}
@@ -169,7 +211,7 @@ const AadhaarFullFormPage = () => {
           AllowRemove={true}
         />
         <BankDetails initialRows={userDetail.UserBank || []} tenantId={tenantId} AddOption={true} AllowRemove={true} onUpdate={handleBankUpdate} />
-        <div className="bmc-card-row" style={{ paddingBottom: "1rem", display:'flex', gap:'10px', justifyContent: "end" }}>
+        <div className="bmc-card-row" style={{ paddingBottom: "1rem", display: "flex", gap: "10px", justifyContent: "end" }}>
           <button
             className="bmc-card-button-cancel"
             onClick={() => history.push("/digit-ui/citizen/bmc/bmc-home")}
@@ -180,18 +222,22 @@ const AadhaarFullFormPage = () => {
           <button
             className="bmc-card-button"
             onClick={goNext}
-            style={{ borderBottom: "3px solid black", marginRight: "1rem", backgroundColor: isButtonDisabled ? "grey" : "#f47738", cursor: isButtonDisabled ? "not-allowed" : "pointer" }}
+            style={{
+              borderBottom: "3px solid black",
+              marginRight: "1rem",
+              backgroundColor: isButtonDisabled ? "grey" : "#f47738",
+              cursor: isButtonDisabled ? "not-allowed" : "pointer",
+            }}
             disabled={isButtonDisabled}
           >
             {t("BMC_Confirm")}
           </button>
-
         </div>
       </div>
       {toast && (
         <Toast
           error={toast.key === "error"}
-          label={t(toast.key === t("success") ? t("BMC_USER_SAVED_SUCCESSFULLY") : toast.action)}
+          label={t(toast.key === "success" ? "BMC_USER_SAVED_SUCCESSFULLY" : toast.action)}
           onClose={() => setToast(null)}
           style={{ maxWidth: "670px" }}
         />

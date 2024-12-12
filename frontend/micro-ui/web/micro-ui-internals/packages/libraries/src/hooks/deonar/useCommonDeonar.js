@@ -146,6 +146,11 @@ const useDeonarCommon = () => {
     return useMutation((data) => DeonarService.saveSlaughterListData(data), config);
   };
 
+
+  const fetchSlaughterUnit = (data, config = {}) => {
+    return useQuery(["fetchSlaughterUnit", data], () => DeonarService.getSlaughterUnit(data, config));
+  };
+
   return {
     fetchDeonarCommon,
     saveDeonarDetails,
@@ -160,7 +165,8 @@ const useDeonarCommon = () => {
     fetchHelkariList,
     fetchGatePassSearchData,
     saveGatePassData,
-    saveSlaughterListData
+    saveSlaughterListData,
+    fetchSlaughterUnit
   };
 };
 

@@ -13,6 +13,9 @@ import SubmitButtonField from "../commonFormFields/submitBtn";
 import FeeConfirmationPage from "../commonFormFields/feeConfirmationPage";
 import useDeonarCommon from "@upyog/digit-ui-libraries/src/hooks/deonar/useCommonDeonar";
 import useCollectionPoint from "@upyog/digit-ui-libraries/src/hooks/deonar/useCollectionPoint";
+// import { jsPDF } from "jspdf";
+// import html2canvas from "html2canvas";
+import SearchButtonField from "../commonFormFields/searchBtn";
 
 const radioOptions = [
   { label: "Entry Collection Fee", value: "arrival", feeType: 1 },
@@ -54,6 +57,18 @@ const FeeCollection = () => {
   const [feeCollectionResponse, setFeeCollectionResponse] = useState(null);
   const [isSubmitButtonDisabled, setIsSubmitButtonDisabled] = useState(true);
   const [isSubmissionComplete, setIsSubmissionComplete] = useState(false);
+
+  // const [refreshCollectionFeeCard, setRefreshCollectionFeeCard] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const [isLoader, setIsLoader] = useState(false);
+
+  const [slaughterData, setSlaughterData] = useState([]);
+
+  const [dynamicOptions, setDynamicOptions] = useState({
+    slaughterUnit: [],
+    unitShift: [],
+  });
 
   const getDynamicDefaultValues = (selectedRadioValue) => {
     const baseDefaultValues = {
@@ -113,7 +128,7 @@ const FeeCollection = () => {
 
   const collectionFeeCardRef = useRef(null);
 
-  const { fetchEntryFeeDetailsbyUUID, fetchStablingList, fetchTradingList } = useDeonarCommon();
+  const { fetchEntryFeeDetailsbyUUID, fetchStablingList, fetchTradingList, fetchDeonarCommon, fetchSlaughterUnit } = useDeonarCommon();
   const {
     fetchEntryCollectionFee,
     fetchStablingCollectionFee,
@@ -154,15 +169,106 @@ const FeeCollection = () => {
     },
     selectedRadioValue,
   });
-  const { data: slaughterData } = fetchSlaughterCollectionFee({ Search: { Search: selectedUUID } });
   const { data: removalFeeData } = fetchRemovalCollectionFee({ Search: { Search: selectedUUID } });
   const { data: RemovalListData } = fetchRemovalList({ forCollection: true });
-  const savePrakingData = Digit.Hooks.deonar.useSavePrakingDetail();
   const { data: fetchedTradingData } = fetchTradingList({ forCollection: true });
   const { data: tradingFeeData } = fetchTradingCollectionFee({ Search: { Search: selectedUUID } });
   const { data: PenaltiesData } = fetchPenaltiesList({});
   const { data: weighingData } = fetchweighingList({});
   const { data: weighingFeeData } = fetchweighingFee({ Search: { Search: selectedUUID } });
+
+  const useFetchOptions = (optionType) => {
+    const { data } = fetchDeonarCommon({
+      CommonSearchCriteria: {
+        Option: optionType,
+      },
+    });
+    return data
+      ? data.CommonDetails.map((item) => ({
+          name: item.name,
+          id: item.id,
+        }))
+      : [];
+  };
+
+  const slaughterUnitData = useFetchOptions("slaughterunit");
+
+  const useFetchShiftOptions = () => {
+    const slaughterUnitId = slaughterUnitData[0]?.id;
+    const { data } = fetchSlaughterUnit({ slaughterUnitId });
+
+    return (
+      data?.unit?.map((shift) => ({
+        label: `${shift.openTime} - ${shift.closeTime}`,
+      })) || []
+    );
+  };
+
+  const slaughterUnitShiftData = useFetchShiftOptions({});
+
+  useEffect(() => {
+    if (slaughterUnitData && Array.isArray(slaughterUnitData)) {
+      setDynamicOptions((prevOptions) => {
+        const newOptions = slaughterUnitData.map((unit) => ({
+          label: unit.name,
+          value: unit.id,
+        }));
+
+        // Compare to avoid unnecessary state updates
+        if (JSON.stringify(prevOptions.slaughterUnit) === JSON.stringify(newOptions)) {
+          return prevOptions; // No update needed
+        }
+
+        return {
+          ...prevOptions,
+          slaughterUnit: newOptions,
+        };
+      });
+    }
+  }, [slaughterUnitData]); // Add slaughterUnitData to dependency array
+
+  useEffect(() => {
+    if (Array.isArray(slaughterUnitShiftData) && slaughterUnitShiftData.length > 0) {
+      setDynamicOptions((prevOptions) => {
+        const newOptions = slaughterUnitShiftData.map((shift) => ({
+          label: shift.label, // This should be formatted as 'openTime - closeTime'
+        }));
+
+        // Compare to avoid unnecessary state updates
+        if (JSON.stringify(prevOptions.unitShift) === JSON.stringify(newOptions)) {
+          return prevOptions;
+        }
+
+        return {
+          ...prevOptions,
+          unitShift: newOptions,
+        };
+      });
+    }
+  }, [slaughterUnitShiftData]);
+
+  const handleSearchData = fetchSlaughterCollectionFee();
+
+  const handleSearch = () => {
+    const selectedSlaughterUnit = dynamicOptions.slaughterUnit.find(
+      (item) => item.value === dynamicOptions.slaughterUnit[0]?.value || item.id === dynamicOptions.slaughterUnit[0]?.id // Or however you determine the correct unit
+    );
+
+    const payload = {
+      Search: {
+        Search: selectedUUID, // Your original reference number
+        slaughterUnit: selectedSlaughterUnit.label,
+        openTime: dynamicOptions.unitShift[0].label.split(" - ")[0],
+        closeTime: dynamicOptions.unitShift[0].label.split(" - ")[1],
+      },
+    };
+
+    handleSearchData.mutate(payload, {
+      onSuccess: (data) => {
+        setSlaughterData(data);
+      },
+    });
+  };
 
   useEffect(() => {
     setTableColumns(collectionDynamicColumns[radioOptions[0].value]);
@@ -199,10 +305,27 @@ const FeeCollection = () => {
 
   useEffect(() => {
     if (SlaughterListData) {
-      setSlaughterList(SlaughterListData.slaughterLists || []);
+      setSlaughterList(SlaughterListData?.slaughterLists || []);
       setTotalRecords();
     }
   }, [SlaughterListData]);
+
+  useEffect(() => {
+    if (slaughterData) {
+      const details = slaughterData?.Details || [];
+      const mappedDetails = details.flatMap((detailItem) =>
+        detailItem.details.map((item) => ({
+          animalType: item?.animal,
+          animalCount: item?.count,
+          animalFee: item?.fee,
+          totalFee: item?.totalFee,
+          total: detailItem?.total,
+        }))
+      );
+      setSlaughterList(mappedDetails); // This should now contain all the animal, count, fee, totalFee data
+      setTotalRecords(mappedDetails.length); // Update the total records
+    }
+  }, [slaughterData]);
 
   useEffect(() => {
     if (RemovalListData) {
@@ -225,53 +348,271 @@ const FeeCollection = () => {
     }
   }, [weighingData]);
 
-  // useEffect(() => {
-  //   switch (selectedRadioValue) {
-  //     case "arrival":
-  //       setAnimalCount(animalCount);
-  //       break;
-  //     case "stabling":
-  //       setStablingListData(stablingListData);
-  //       break;
-  //     case "trading":
-  //       setTradingListData(tradingListData);
-  //       break;
-  //     case "parking":
-  //       setParkingDetails(parkingDetails);
-  //       break;
-  //     case "washing":
-  //       setParkingDetails(parkingDetails);
-  //       break;
-  //     case "slaughter":
-  //       setSlaughterList(slaughterList);
-  //       break;
-  //     case "removal":
-  //       return removalListData;
-  //     case "penalty":
-  //       return penaltyListData;
-  //     case "weighing":
-  //       return weighingListData;
-  //     default:
-  //       setAnimalCount(animalCount);
-  //       setStablingListData(stablingListData);
-  //       setParkingDetails(parkingDetails);
-  //       setSlaughterList(slaughterList);
-  //       setRemovalListData(removalListData);
-  //       setPenaltyListData(penaltyListData);
-  //       setWeighingListData(weighingListData);
-  //       break;
+  const downloadFileName = `${radioOptions.find((option) => option.value === selectedRadioValue)?.label} Fee Collection Report`;
+
+  // const generatePDF = (data) => {
+  //   if (!data.length) return;
+
+  //   // Determine the headers and rows based on the data structure
+  //   let headers, rows;
+
+  //   if (data[0].details) {
+  //     // For complex structures like entry, stabling, slaughter, removal
+  //     headers = ['Animal Type', 'Count', 'Fee', 'Total Fee'];
+  //     rows = data.flatMap(item =>
+  //       item.details.map(detail => ({
+  //         'Animal Type': detail.animal,
+  //         'Count': detail.count,
+  //         'Fee': detail.fee,
+  //         'Total Fee': detail.totalFee
+  //       }))
+  //     );
+  //   } else if (data[0].vehiclenumber) {
+  //     // For parking and washing
+  //     headers = ['Vehicle Number', 'Vehicle Type', 'Parking Date', 'Parking Time', 'Departure Date', 'Departure Time', 'Total Hours', 'Total'];
+  //     rows = data.map(item => ({
+  //       'Vehicle Number': item.vehiclenumber,
+  //       'Vehicle Type': item.vehicletype,
+  //       'Parking Date': item.parkingdate,
+  //       'Parking Time': item.parkingtime,
+  //       'Departure Date': item.departuredate,
+  //       'Departure Time': item.departuretime,
+  //       'Total Hours': item.totalhours,
+  //       'Total': item.total
+  //     }));
+  //   } else if (data[0].total) {
+  //     // For weighing and penalty
+  //     headers = Object.keys(data[0]);
+  //     rows = data;
+  //   } else {
+  //     console.warn("Unsupported data structure for PDF generation");
+  //     return;
   //   }
-  // }, [
-  //   selectedRadioValue,
-  //   animalCount,
-  //   parkingDetails,
-  //   slaughterList,
-  //   stablingListData,
-  //   removalListData,
-  //   tradingListData,
-  //   penaltyListData,
-  //   weighingListData,
-  // ]);
+
+  //   const printWindow = window.open("", "", "height=600,width=800");
+
+  //   const htmlContent = `
+  //     <!DOCTYPE html>
+  //     <html>
+  //       <head>
+  //         <title>${downloadFileName}</title>
+  //         <style>
+  //           body {
+  //             font-family: Arial, sans-serif;
+  //             margin: 20px;
+  //           }
+  //           table {
+  //             width: 100%;
+  //             border-collapse: collapse;
+  //             margin-bottom: 20px;
+  //           }
+  //           th, td {
+  //             border: 1px solid #ddd;
+  //             padding: 12px 8px;
+  //             text-align: left;
+  //           }
+  //           th {
+  //             background-color: #f4f4f4;
+  //             font-weight: bold;
+  //           }
+  //           tr:nth-child(even) {
+  //             background-color: #f9f9f9;
+  //           }
+  //           .header {
+  //             font-size: 24px;
+  //             margin-bottom: 20px;
+  //           }
+  //           .footer {
+  //             margin-top: 20px;
+  //             font-size: 12px;
+  //             color: #666;
+  //           }
+  //           @media print {
+  //             body { margin: 0; padding: 20px; }
+  //             .no-print { display: none; }
+  //           }
+  //         </style>
+  //       </head>
+  //       <body>
+  //         <div class="header">${downloadFileName}</div>
+  //         <table>
+  //           <thead>
+  //             <tr>${headers.map((header) => `<th>${header}</th>`).join("")}</tr>
+  //           </thead>
+  //           <tbody>
+  //             ${rows
+  //               .map(
+  //                 (row) => `
+  //               <tr>
+  //                 ${headers.map((header) => `<td>${row[header] || ""}</td>`).join("")}
+  //               </tr>
+  //             `
+  //               )
+  //               .join("")}
+  //           </tbody>
+  //         </table>
+  //         <div class="footer">Generated on ${new Date().toLocaleString()}</div>
+  //         <div class="no-print">
+  //           <button onclick="window.print();window.close()"
+  //             style="padding: 10px 20px; background-color: #4a90e2; color: white;
+  //             border: none; border-radius: 4px; cursor: pointer; margin-top: 20px;">
+  //             Download PDF
+  //           </button>
+  //         </div>
+  //       </body>
+  //     </html>
+  //   `;
+
+  //   printWindow.document.write(htmlContent);
+  //   printWindow.document.close();
+  // };
+
+  const generatePDF = (data) => {
+    // Handle different data types
+    let receiptData = {};
+
+    // Convert array or object to a flat object if needed
+    if (Array.isArray(data)) {
+      receiptData = data[0] || {};
+    } else if (typeof data === "object" && data !== null) {
+      receiptData = data;
+    } else {
+      console.warn("Unsupported data structure for PDF generation");
+      return;
+    }
+
+    const downloadFileName = "Payment Receipt";
+    const printWindow = window.open("", "", "height=600,width=800");
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>${downloadFileName}</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              max-width: 600px;
+              margin: 0 auto;
+              padding: 20px;
+              line-height: 1.6;
+            }
+            .receipt {
+              border: 2px solid #333;
+              padding: 20px;
+              background-color: #f9f9f9;
+            }
+            .receipt-header {
+              text-align: center;
+              border-bottom: 1px solid #ddd;
+              padding-bottom: 10px;
+              margin-bottom: 20px;
+            }
+            .receipt-header h1 {
+              margin: 0;
+              color: #333;
+            }
+            .receipt-details {
+              margin-bottom: 20px;
+            }
+            .receipt-details div {
+              display: flex;
+              justify-content: space-between;
+              margin-bottom: 10px;
+              border-bottom: 1px dotted #ddd;
+              padding-bottom: 5px;
+            }
+            .receipt-details .label {
+              font-weight: bold;
+              color: #555;
+            }
+            .receipt-details .value {
+              text-align: right;
+              color: #333;
+            }
+            .receipt-footer {
+              text-align: center;
+              margin-top: 20px;
+              font-size: 0.8em;
+              color: #666;
+            }
+            @media print {
+              body { margin: 0; padding: 10px; }
+              .no-print { display: none; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="receipt">
+            <div class="receipt-header">
+              <h1>${downloadFileName}</h1>
+            </div>
+            <div class="receipt-details">
+              ${Object.entries(receiptData)
+                .filter(([key]) => !["audit"].includes(key.toLowerCase()))
+                .map(
+                  ([key, value]) => `
+                  <div>
+                    <span class="label">${key.charAt(0).toUpperCase() + key.slice(1)}</span>
+                    <span class="value">${formatReceiptValue(value)}</span>
+                  </div>
+                `
+                )
+                .join("")}
+            </div>
+            <div class="receipt-footer">
+              Generated on ${new Date().toLocaleString()}
+            </div>
+          </div>
+          <div class="no-print">
+            <button onclick="window.print();window.close()" 
+              style="display: block; width: 200px; margin: 20px auto; padding: 10px; 
+              background-color: #4a90e2; color: white; border: none; border-radius: 4px; cursor: pointer;">
+              Download Receipt
+            </button>
+          </div>
+        </body>
+      </html>
+    `;
+
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
+  };
+
+  // Helper function to format receipt values
+  const formatReceiptValue = (value) => {
+    // Handle null or undefined
+    if (value === null || value === undefined) return "N/A";
+
+    // Handle objects (like audit)
+    if (typeof value === "object") {
+      // For nested objects, return a formatted string
+      return Object.entries(value)
+        .map(([k, v]) => `${k}: ${v}`)
+        .join(", ");
+    }
+
+    // Convert other types to string
+    return String(value);
+  };
+  const handlePDFDownload = (e) => {
+    e.stopPropagation();
+    if (isDownloading) return;
+    try {
+      setIsDownloading(true);
+      // Use the tableData or feeCollectionResponse as the data for PDF
+      const downloadData = feeCollectionResponse || tableData;
+      // if (!downloadData) {
+      //   console.warn("No data available for download");
+      //   return;
+      // }
+      generatePDF(downloadData);
+    } catch (error) {
+      console.error("Error downloading PDF:", error);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   const getTableData = () => {
     switch (selectedRadioValue) {
@@ -436,99 +777,94 @@ const FeeCollection = () => {
       setToast({ key: "error", message: "No UUID selected" });
       return;
     }
-  
+    setIsLoader(true);
     try {
       const payload = generatePayload(formData, selectedRadioValue, selectedUUID, tableData);
       const collectionResponse = await saveCollectionEntryFee(payload);
-      if (selectedRadioValue === "parking") {
-        const parkingPayload = generateParkingPayload(selectedUUID);
-        savePrakingData.mutate(parkingPayload);
-      }
-  
+
       if (collectionResponse?.Details && collectionResponse?.ResponseInfo?.status === "successful") {
         setFeeCollectionResponse(collectionResponse?.Details);
         setToast({ key: "success", message: "Entry fee saved successfully!" });
         setSubmittedData(formData);
-        
-        // Keep the confirmation page open
-        // setIsConfirmationPage(false);
-        setIsSubmissionComplete(true);
-  
-        // Reset only form values, keep other states intact
-        reset(getDynamicDefaultValues(selectedRadioValue));
-        
-        // Remove the paid UUID from the table data
-        updateTableDataAfterPayment(selectedUUID);
-  
-        // Clear selected UUID to force reselection
-        setSelectedUUID(null);
-        setTableData([]);
+        // setRefreshCollectionFeeCard(true);
+        // reset(getDynamicDefaultValues(selectedRadioValue));
+        // updateTableDataAfterPayment(selectedUUID);
+        // setSelectedUUID(null);
+        // setTableData([]);
       } else {
         setToast({ key: "error", message: "An unexpected response was received." });
       }
     } catch (error) {
       console.error("Error occurred during save process:", error);
       setToast({ key: "error", message: "An error occurred while saving the fee." });
+    } finally {
+      setIsLoader(false);
     }
   };
-  
+
+  // useEffect(() => {
+  //   if (refreshCollectionFeeCard) {
+  //     setRefreshCollectionFeeCard(false);
+  //   }
+  // }, [refreshCollectionFeeCard]);
+
   // New function to update table data after payment
   const updateTableDataAfterPayment = (paidUUID) => {
     let updatedTableData;
     switch (selectedRadioValue) {
       case "arrival":
-        updatedTableData = animalCount.filter(item => item.entryUnitId !== paidUUID);
+        updatedTableData = animalCount.filter((item) => item.entryUnitId !== paidUUID);
         setAnimalCount(updatedTableData);
         break;
       case "stabling":
-        updatedTableData = stablingListData.filter(item => item.entryUnitId !== paidUUID);
+        updatedTableData = stablingListData.filter((item) => item.entryUnitId !== paidUUID);
         setStablingListData(updatedTableData);
         break;
       case "trading":
-        updatedTableData = tradingListData.filter(item => item.entryUnitId !== paidUUID);
+        updatedTableData = tradingListData.filter((item) => item.entryUnitId !== paidUUID);
         setTradingListData(updatedTableData);
         break;
       case "parking":
-        updatedTableData = parkingDetails.filter(item => item.vehicleNumber !== paidUUID);
+        updatedTableData = parkingDetails.filter((item) => item.vehicleNumber !== paidUUID);
         setParkingDetails(updatedTableData);
         break;
       case "washing":
-        updatedTableData = parkingDetails.filter(item => item.vehicleNumber !== paidUUID);
+        updatedTableData = parkingDetails.filter((item) => item.vehicleNumber !== paidUUID);
         setParkingDetails(updatedTableData);
         break;
       case "slaughter":
-        updatedTableData = slaughterList.filter(item => item.entryUnitId !== paidUUID);
+        updatedTableData = slaughterList.filter((item) => item.entryUnitId !== paidUUID);
         setSlaughterList(updatedTableData);
         break;
       case "removal":
-        updatedTableData = removalListData.filter(item => item.entryUnitId !== paidUUID);
+        updatedTableData = removalListData.filter((item) => item.entryUnitId !== paidUUID);
         setRemovalListData(updatedTableData);
         break;
       case "penalty":
-        updatedTableData = penaltyListData.filter(item => item.penaltyReference !== paidUUID);
+        updatedTableData = penaltyListData.filter((item) => item.penaltyReference !== paidUUID);
         setPenaltyListData(updatedTableData);
         break;
       case "weighing":
-        updatedTableData = weighingListData.filter(item => item.entryUnitId !== paidUUID);
+        updatedTableData = weighingListData.filter((item) => item.entryUnitId !== paidUUID);
         setWeighingListData(updatedTableData);
         break;
     }
   };
-  
+
   // Modify useEffect for table data to reset when selectedRadioValue changes
   useEffect(() => {
     const updatedTableData = getTableData();
     setTableData(updatedTableData);
   }, [
-    selectedRadioValue, 
-    animalCount, 
-    stablingListData, 
-    tradingListData, 
-    parkingDetails, 
-    slaughterList, 
-    removalListData, 
-    penaltyListData, 
-    weighingListData
+    selectedRadioValue,
+    animalCount,
+    stablingListData,
+    tradingListData,
+    parkingDetails,
+    slaughterList,
+    removalListData,
+    penaltyListData,
+    weighingListData,
   ]);
 
   const handleFieldChange = (fieldName, value) => {
@@ -703,7 +1039,7 @@ const FeeCollection = () => {
     vehicleData,
     ParkingData,
     selectedRadioValue,
-    slaughterData,
+    // slaughterData,
     selectedUUID,
     stablingData,
     removalFeeData,
@@ -722,6 +1058,12 @@ const FeeCollection = () => {
   }, [toast]);
 
   const tableData1 = useMemo(() => getTableData(), []);
+
+  const shouldDisplaySearchButton = (selectedUUID, context) => {
+    return context === "slaughter" && selectedUUID;
+  };
+
+  const context = "slaughter";
 
   return (
     <React.Fragment>
@@ -770,7 +1112,6 @@ const FeeCollection = () => {
                   sortBy={["entryUnitId:asc"]}
                   autoSort={false}
                   isLoadingRows={isLoading}
-                 
                 />
               </div>
             </div>
@@ -798,9 +1139,14 @@ const FeeCollection = () => {
                     {fields1.length > 0 && (
                       <>
                         <CollectionFeeCard
+                          // key={refreshCollectionFeeCard ? Date.now() : "static-key"}
                           label={`${radioOptions.find((option) => option.value === selectedRadioValue)?.label} Details`}
                           fields={feeConfigs[selectedRadioValue].fields}
-                          options={feeConfigs[selectedRadioValue].options}
+                          // options={feeConfigs[selectedRadioValue].options}
+                          options={{
+                            ...feeConfigs[selectedRadioValue].options,
+                            ...dynamicOptions,
+                          }}
                           control={control}
                           allowEdit={true}
                           Tablecolumns={tableColumns}
@@ -809,6 +1155,7 @@ const FeeCollection = () => {
                           tableData={tableData}
                           onFieldChange={handleFieldChange}
                         />
+
                         <div style={{ paddingBottom: "20px", display: "flex", gap: "12px", alignItems: "center", padding: "0 16px" }}>
                           <h3 style={{ fontWeight: "600", fontSize: "20px" }}>Total Amount Payable : </h3>
                           <span
@@ -825,7 +1172,18 @@ const FeeCollection = () => {
                             <div>₹</div>
                             <div>{tableData.length > 0 ? tableData[0].total : 0}</div>
                           </span>
-                          {selectedUUID && <SubmitButtonField control={control} disabled={isSubmitButtonDisabled || isSubmissionComplete} />}
+                          {selectedUUID && selectedRadioValue === "slaughter" && shouldDisplaySearchButton(selectedUUID, context) && (
+                            <SearchButtonField onSearch={handleSearch} />
+                          )}
+                          {selectedUUID && (
+                            <SubmitButtonField
+                              control={control}
+                              isLoading={isLoader}
+                              disabled={
+                                isSubmitButtonDisabled || isSubmissionComplete || !(formData?.transactionId === "N/A" || !!formData?.transactionId)
+                              }
+                            />
+                          )}
                         </div>
                       </>
                     )}
@@ -842,6 +1200,25 @@ const FeeCollection = () => {
                 {selectedUUID ? (
                   !isConfirmationPage && (
                     <div style={{ flex: 1, paddingLeft: "20px" }}>
+                      {/* {feeCollectionResponse && ( */}
+                      <button
+                        type="button"
+                        onClick={handlePDFDownload}
+                        className="print-pdf-button"
+                        style={{
+                          padding: "6px 10px",
+                          background: "#a82227",
+                          borderRadius: "8px",
+                          display: "flex",
+                          alignItems: "center",
+                          color: "white",
+                          fontWeight: "600",
+                          border: "none",
+                        }}
+                      >
+                        Print/Download PDF
+                      </button>
+                      {/* )} */}
                       <FeeConfirmationPage
                         label={`${radioOptions.find((option) => option.value === selectedRadioValue)?.label} Confirmation`}
                         // fields={fields}

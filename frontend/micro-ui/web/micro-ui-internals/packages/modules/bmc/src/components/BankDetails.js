@@ -187,6 +187,7 @@ const BankDetailsForm = ({ tenantId, onUpdate, initialRows = [], AddOption = tru
     removeRows.mutate(payload, {
       onSuccess: () => {
         setRows((prevRows) => prevRows.filter((row) => row.accountNumber !== id));
+        window.location.reload();
       },
       onError: (error) => {
         console.error("Failed to delete document row:", error);
