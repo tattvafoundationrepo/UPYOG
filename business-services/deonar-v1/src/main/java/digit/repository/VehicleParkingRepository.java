@@ -247,8 +247,8 @@ public class VehicleParkingRepository {
         // Count exact day time (day and night periods)
         long[] dayAndNightCounts = countExactDayTime(start, end);
 
-        System.out.println("Days : " + dayAndNightCounts[0]);
-        System.out.println("Nights : " + dayAndNightCounts[1]);
+        // System.out.println("Days : " + dayAndNightCounts[0]);
+        // System.out.println("Nights : " + dayAndNightCounts[1]);
 
 
         if(flag){

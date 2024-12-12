@@ -13,5 +13,10 @@ public class CollectionSearchCriteria {
     @JsonProperty("Search")
     private String search;
 
+    private String slaughterUnit;
+
+    private String openTime;
+    private String closeTime;
+
     
 }

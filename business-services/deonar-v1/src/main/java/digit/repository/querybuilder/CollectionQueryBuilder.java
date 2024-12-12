@@ -121,9 +121,9 @@ public class CollectionQueryBuilder {
                         (SELECT charges
                          FROM eg_deonar_vslaughterunitcharges
                          WHERE animaltypeid = a.animaltypeid
-                           AND name = 'slaughter unit normal'
-                           AND opentime = '12:00 AM'
-                           AND closetime = '6:00 AM')
+                           AND name = ?
+                           AND opentime = ?
+                           AND closetime = ?)
                     ) OVER (PARTITION BY v.ddreference) AS totalslaughterfee
                 FROM eg_deonar_vmainshopkeeper a
                 JOIN eg_deonar_animal_removal b
@@ -137,14 +137,22 @@ public class CollectionQueryBuilder {
                     AND a.arrivalid::text = v.arrivalid::text
                 LEFT JOIN eg_deonar_animal_type d
                     ON d.id = a.animaltypeid
-                ORDER BY v.ddreference;
+                
 
                                 """;
 
         StringBuilder query = new StringBuilder(SLAUGHTERFEE_QUERY_NEW);
+        
+        if (criteria.getSlaughterUnit() != null && criteria.getOpenTime() != null && criteria.getCloseTime() != null ) {
+            preparedStmtList.add(criteria.getSlaughterUnit().toLowerCase());
+            preparedStmtList.add(criteria.getOpenTime());
+            preparedStmtList.add(criteria.getCloseTime());
+            preparedStmtList.add(criteria.getSlaughterUnit().toLowerCase());
+            preparedStmtList.add(criteria.getOpenTime());
+            preparedStmtList.add(criteria.getCloseTime());
+        }
         if (criteria.getSearch() != null) {
-            addClauseIfRequired(query, preparedStmtList);
-            query.append(" ddreference = ? ");
+            query.append(" where  v.ddreference = ? ORDER BY v.ddreference ");
             preparedStmtList.add(criteria.getSearch());
         }
         
