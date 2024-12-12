@@ -603,22 +603,22 @@ export const feeConfigs = {
       paymentMethod: paymentMethodOptions,
     },
   },
-  // slaughter: {
-  //   fields: [
-  //     { type: "dropdown", label: "Slaughter Unit Type", name: "slaughterType", required: true },
-  //     { type: "dropdown", label: "Slaughter Unit", name: "slaughterUnit", required: true },
-  //     { type: "dropdown", label: "Unit Shift", name: "unitShift", required: true },
-  //     // { type: "input", label: "Slaughter Unit Charge", name: "slaughterUnitCharge", required: false },
-  //     { type: "dropdown", label: "Payment Mode", name: "paymentMethod", required: true },
-  //     { type: "input", label: "Reference Number", name: "transactionId", required: true },
-  //   ],
-  //   options: {
-  //     paymentMethod: paymentMethodOptions,
-  //     slaughterType: slaughterTypeOptions,
-  //     slaughterUnit: [],
-  //     unitShift: [],
-  //   },
-  // },
+  slaughter: {
+    fields: [
+      { type: "dropdown", label: "Slaughter Unit Type", name: "slaughterType", required: true },
+      { type: "dropdown", label: "Slaughter Unit", name: "slaughterUnit", required: true },
+      { type: "dropdown", label: "Unit Shift", name: "unitShift", required: true },
+      // { type: "input", label: "Slaughter Unit Charge", name: "slaughterUnitCharge", required: false },
+      { type: "dropdown", label: "Payment Mode", name: "paymentMethod", required: true },
+      { type: "input", label: "Reference Number", name: "transactionId", required: true },
+    ],
+    options: {
+      paymentMethod: paymentMethodOptions,
+      slaughterType: slaughterTypeOptions,
+      slaughterUnit: [],
+      unitShift: [],
+    },
+  },
   washing: {
     fields: [
       { type: "dropdown", label: "Payment Mode", name: "paymentMethod", required: true },
