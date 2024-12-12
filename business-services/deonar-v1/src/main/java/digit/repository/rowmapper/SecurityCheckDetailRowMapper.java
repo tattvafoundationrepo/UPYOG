@@ -1,6 +1,7 @@
 package digit.repository.rowmapper;
 
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -21,10 +22,19 @@ public class SecurityCheckDetailRowMapper implements ResultSetExtractor<List<Sec
         Map<String, SecurityCheckDetails> map = new LinkedHashMap<>();
 
         while (rs.next()) {
-            String arrivalId = rs.getString("arrivalid");
-            if (arrivalId == null) continue;  // Skip if arrivalId is null
+            String ddreference = null;
 
-            SecurityCheckDetails details = map.get(arrivalId);
+            if (isColumnPresent(rs, "ddreference")) {
+                ddreference = rs.getString("ddreference");
+            }
+        
+            String arrivalId = rs.getString("arrivalid");
+            String uniqueKey = (ddreference != null) ? ddreference : arrivalId;
+            
+
+            if (arrivalId == null) continue;  
+
+            SecurityCheckDetails details = map.get(uniqueKey);
 
             if (details == null) {
                 details = SecurityCheckDetails.builder()
@@ -41,10 +51,12 @@ public class SecurityCheckDetailRowMapper implements ResultSetExtractor<List<Sec
                     .stakeholderTypeName(rs.getString("stakeholdertypename"))
                     .licenceNumber(rs.getString("licencenumber"))
                     .registrationNumber(rs.getString("registrationnumber"))
-                    .validToDate(rs.getDate("validtodate").toLocalDate().toString())  // Correct date handling  
+                    .validToDate(rs.getDate("validtodate").toLocalDate().toString())
+                    .ddreference(ddreference)  // Correct date handling  
                     .animalDetails(new ArrayList<>())
                     .build();
-                map.put(arrivalId, details);
+                    
+                 map.put(uniqueKey, details);
             }
 
             AnimalDetail animalDetail = AnimalDetail.builder()
@@ -59,4 +71,20 @@ public class SecurityCheckDetailRowMapper implements ResultSetExtractor<List<Sec
 
         return new ArrayList<>(map.values());
     }
+
+
+    private boolean isColumnPresent(ResultSet rs, String columnName) {
+    try {
+        ResultSetMetaData metaData = rs.getMetaData();
+        int columnCount = metaData.getColumnCount();
+        for (int i = 1; i <= columnCount; i++) {
+            if (metaData.getColumnName(i).equalsIgnoreCase(columnName)) {
+                return true;
+            }
+        }
+    } catch (SQLException e) {
+        
+    }
+    return false; 
+}
 }
