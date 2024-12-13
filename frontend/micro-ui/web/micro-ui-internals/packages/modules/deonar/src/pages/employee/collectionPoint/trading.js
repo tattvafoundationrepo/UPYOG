@@ -30,18 +30,18 @@ export const DawanWalaColumns = (handleUUIDClick) => [
   },
   {
     Header: "Deonar_DD_Reference",
-    accessor: "ddReference",
+    accessor: "ddreference",
     sortable: true,
     Cell: ({ row }) => (
-      <span onClick={() => handleUUIDClick(row.original.ddReference)} style={{ cursor: "pointer", color: "blue" }}>
-        {row.original.ddReference}
+      <span onClick={() => handleUUIDClick(row.original.ddreference)} style={{ cursor: "pointer", color: "blue" }}>
+        {row.original.ddreference}
       </span>
     ),
     isVisible: true,
   },
   {
     Header: "DEONAR_SHOPKEEPER_NAME",
-    accessor: "shopkeeperName",
+    accessor: "traderName",
     getHeaderProps: (column) => ({
       style: {
         display: "flex",
@@ -262,7 +262,7 @@ const S = () => {
       const securityCheckDetails = fetchedData.SecurityCheckDetails;
       const mappedAnimalCount = securityCheckDetails.flatMap((detail) =>
         detail.animalDetails.map((animal) => ({
-          arrivalId: detail.entryUnitId,
+          arrivalId: detail.ddreference,
           animalTypeId: animal.animalTypeId,
           animalType: animal.animalType,
           count: animal.token,

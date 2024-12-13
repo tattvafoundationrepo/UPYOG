@@ -424,7 +424,7 @@ const SecurityCheckPage = ({ optionalFields = false, maxAllowedCount = 100 }) =>
                   }}
                 />
               </div>
-              <div className="bmc-card-row" style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "20px" }}>
+              <div className="bmc-card-row" style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "20px", padding:"0px" }}>
                 <GenericFormInput
                   placeholder={t("LICENSE_NUMBER")}
                   control={control}
@@ -432,11 +432,11 @@ const SecurityCheckPage = ({ optionalFields = false, maxAllowedCount = 100 }) =>
                   name={"licenceNumber"}
                   key={"licenceNumber"}
                 />
-                <VehicleNumberField control={control} setData={setData} data={data} style={{ width: "100%" }} />
+                <VehicleNumberField control={control} setData={setData} data={data} style={{ width: "100%", padding: "0px" }} />
               </div>
               <div className="bmc-card-row" style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                <ImportPermissionDateField control={control} setData={setData} data={data} style={{ width: "100%" }} />
-                <ImportPermissionNumberField control={control} setData={setData} data={data} style={{ width: "100%" }} />
+                <ImportPermissionDateField control={control} setData={setData} data={data} style={{ width: "100%", padding: "0px" }} />
+                <ImportPermissionNumberField control={control} setData={setData} data={data} style={{ width: "100%", padding: "0px" }} />
               </div>
             </div>
             <div className="bmc-row-card-header" style={{ width: "50%" }}>

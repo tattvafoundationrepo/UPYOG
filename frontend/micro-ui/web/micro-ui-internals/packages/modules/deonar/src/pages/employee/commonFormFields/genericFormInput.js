@@ -11,6 +11,7 @@ const GenericFormInput = ({
   fetchData, // Function to fetch data from API
   readOnly = false,
   customValidation,
+  style
 }) => {
   const { t } = useTranslation();
   const [apiValue, setApiValue] = useState("");
@@ -24,7 +25,7 @@ const GenericFormInput = ({
   }, [fetchData]);
 
   return (
-    <div className="bmc-col3-card" style={{ width: "100%" }}>
+    <div className="bmc-col3-card" style={{ width: "100%", padding: "0px", maxHeight: "511px" , overflowY: "auto", }}>
       <LabelFieldPair>
         <CardLabel>{placeholder}</CardLabel>
         <Controller

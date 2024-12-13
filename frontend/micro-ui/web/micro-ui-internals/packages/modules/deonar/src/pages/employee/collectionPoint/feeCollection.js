@@ -1106,7 +1106,7 @@ const FeeCollection = () => {
                   t={t}
                   columns={customTableColumns}
                   data={getTableData()}
-                  tableClassName={"deonar-scrollable-table"}
+                  tableClassName={"deonar-custom-scroll"}
                   manualPagination={false}
                   totalRecords={totalRecords}
                   sortBy={["entryUnitId:asc"]}
