@@ -17,6 +17,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import digit.service.CommonService;
 import digit.util.ResponseInfoFactory;
 import digit.web.models.BankDetailsResponse;
+import digit.web.models.BoundaryResponse;
 import digit.web.models.common.CommonDetails;
 import digit.web.models.common.CommonRequest;
 import digit.web.models.common.CommonResponse;
@@ -66,6 +67,15 @@ public class CommonApiController {
         ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request, true);
         BankDetailsResponse res = BankDetailsResponse.builder()
   //              .details(details)
+                .responseInfo(responseInfo)
+                .build();
+        return new ResponseEntity<>(res, HttpStatus.OK);
+    }
+
+    @PostMapping("/common/boundary/_get")
+    public ResponseEntity<BoundaryResponse> getBoundary(@RequestBody RequestInfo request) {
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request, true);
+        BoundaryResponse res = BoundaryResponse.builder()
                 .responseInfo(responseInfo)
                 .build();
         return new ResponseEntity<>(res, HttpStatus.OK);

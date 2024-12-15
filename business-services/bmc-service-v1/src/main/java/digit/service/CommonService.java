@@ -10,7 +10,7 @@ import org.springframework.util.CollectionUtils;
 
 import digit.repository.CommonRepository;
 import digit.repository.CommonSearchCriteria;
-
+import digit.web.models.Boundary;
 import digit.web.models.common.CommonDetails;
 
 
@@ -26,6 +26,12 @@ public class CommonService {
             return new ArrayList<>();
         return common;
     }
- 
+
+    public List<Boundary> getboundary(RequestInfo requestInfo){
+        List<Boundary> boundary = commonRepository.getboundary(requestInfo);
+        if (CollectionUtils.isEmpty(boundary))
+            return new ArrayList<>();
+        return boundary;
+    }
 
 }

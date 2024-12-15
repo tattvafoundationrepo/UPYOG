@@ -2,6 +2,7 @@ package digit.repository.querybuilder;
 
 import java.util.List;
 
+import org.egov.common.contract.request.RequestInfo;
 import org.springframework.stereotype.Component;
 
 import digit.repository.CommonSearchCriteria;
@@ -16,6 +17,12 @@ public class CommonQueryBuilder {
             """;
 
     private static final String ORDERBY_NAME = " ORDER BY name DESC ";
+
+    private static final String BOUNDARY_QUERY = """
+            SELECT
+            id, pincode, district, latitude, longitude, subwardno, officename, wardname, wardno, statename, divisionname
+            FROM eg_bmc_boundary 
+            """;
 
     public String getSchemeSearchQuery(CommonSearchCriteria criteria, List<Object> preparedStmtList) {
         StringBuilder query = new StringBuilder(BASE_QUERY);
@@ -50,6 +57,16 @@ public class CommonQueryBuilder {
         } else {
             query.append(" AND ");
         }
+    }
+
+    public String getBoundaryQuery(RequestInfo requestInfo, List<Object> preparedStmtList) {
+        StringBuilder query = new StringBuilder(BOUNDARY_QUERY);
+        String searchfor = requestInfo.getUserInfo().getTenantId();
+        addClauseIfRequired(query, preparedStmtList);
+        query.append(" tenantid = ? ");
+        preparedStmtList.add(searchfor);
+        query.append(" ORDER BY pincode,wardname,officename");
+        return query.toString();
     }
 
 }
