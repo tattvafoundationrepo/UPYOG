@@ -6,6 +6,7 @@ import org.egov.common.contract.request.RequestInfo;
 import org.springframework.stereotype.Component;
 
 import digit.repository.CommonSearchCriteria;
+import digit.web.models.common.BaundrySearchRequest;
 
 @Component
 public class CommonQueryBuilder {
@@ -59,9 +60,9 @@ public class CommonQueryBuilder {
         }
     }
 
-    public String getBoundaryQuery(RequestInfo requestInfo, List<Object> preparedStmtList) {
+    public String getBoundaryQuery(BaundrySearchRequest requestInfo, List<Object> preparedStmtList) {
         StringBuilder query = new StringBuilder(BOUNDARY_QUERY);
-        String searchfor = requestInfo.getUserInfo().getTenantId();
+        String searchfor = requestInfo.getTenantId();
         addClauseIfRequired(query, preparedStmtList);
         query.append(" tenantid = ? ");
         preparedStmtList.add(searchfor);
