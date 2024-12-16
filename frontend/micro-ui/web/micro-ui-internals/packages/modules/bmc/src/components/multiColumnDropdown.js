@@ -170,8 +170,8 @@ const MultiColumnDropdown = ({
                 display: "grid",
                 fontWeight: "bold",
                 gridTemplateColumns: `repeat(${displayKeys.length}, 1fr)`,
-                // width: `${displayKeys.length * 150}px`, // Adjust width dynamically (e.g., 150px per column)
-                // minWidth: "75px", // Ensure a minimum width for single-column cases
+                width: `${displayKeys.length * 150}px`, // Adjust width dynamically (e.g., 150px per column)
+                minWidth: "75px", // Ensure a minimum width for single-column cases
               }}
               // style={{ display: "grid", gridTemplateColumns: `repeat(${displayKeys.length}, 1fr)`, fontWeight: "bold" }}
             >

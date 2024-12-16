@@ -110,9 +110,8 @@ const DocumentCard = ({ tenantId, onUpdate, initialRows = [], AllowEdit = true, 
     removeRows.mutate(payload, {
       onSuccess: () => {
         setRows((prevRows) => prevRows.filter((row) => row.document.id !== id));
-        window.location.reload();
       },
-      onError: (error) => {},
+      onError: (error) =>{},
     });
   };
 

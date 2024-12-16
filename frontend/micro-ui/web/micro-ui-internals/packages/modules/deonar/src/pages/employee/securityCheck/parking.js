@@ -165,7 +165,7 @@ const ParkingFeePage = () => {
     elements: [
       {
         type: "p",
-        text: "Add Parking Details",
+        text: t("Add Parking Details"),
         style: { textDecoration: "underline", cursor: "pointer" },
         onClick: "onAddClickFunction",
       },

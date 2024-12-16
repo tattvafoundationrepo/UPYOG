@@ -158,7 +158,7 @@ const SecurityCheckPage = ({ optionalFields = false, maxAllowedCount = 100 }) =>
   const handleSelect = (e, selectedOptions) => {
     const selectedArray = Array.isArray(selectedOptions) ? selectedOptions : [selectedOptions];
     if (formModified) {
-      const confirmSwitch = window.confirm("You have unsaved changes. Switching the trader will discard all data. Do you want to continue?");
+      const confirmSwitch = window.confirm(t("You have unsaved changes. Switching the trader will discard all data. Do you want to continue?"));
       if (!confirmSwitch) {
         return;
       }
@@ -268,7 +268,7 @@ const SecurityCheckPage = ({ optionalFields = false, maxAllowedCount = 100 }) =>
   const customHandleGenerateRows = (currentRow, rows, setRows, setCurrentRow, onRowsUpdate) => {
     const inputValue = parseInt(currentRow.inputValue);
     if (!currentRow.dropdownValue || isNaN(inputValue) || inputValue <= 0) {
-      alert("Please select an animal type and enter a valid number.");
+      alert(t("Please select an animal type and enter a valid number."));
       return;
     }
     const currentAnimalCount = tableData.filter((token) => token.animalId === currentRow.dropdownValue.value).length;
@@ -397,7 +397,7 @@ const SecurityCheckPage = ({ optionalFields = false, maxAllowedCount = 100 }) =>
     <React.Fragment>
       <div className="bmc-card-full">
         <form onSubmit={handleSubmit(onSubmit)}>
-          <MainFormHeader title={"DEONAR_ARRIVAL_DETAILS"} />
+          <MainFormHeader title={t("DEONAR_ARRIVAL_DETAILS")} />
           <div className="bmc-card-row" style={{ display: "flex", gap: "10px" }}>
             <div className="bmc-row-card-header" style={{ display: "flex", flexDirection: "column", width: "50%" }}>
               <div className="bmc-card-row">
@@ -417,10 +417,10 @@ const SecurityCheckPage = ({ optionalFields = false, maxAllowedCount = 100 }) =>
                   autoCloseOnSelect={true}
                   showColumnHeaders={true}
                   headerMappings={{
-                    label: "Name",
-                    licenceNumber: "License Number",
-                    mobileNumber: "Mobile Number",
-                    Registration_Number: "Registration Number",
+                    label: t("Name"),
+                    licenceNumber: t("License Number"),
+                    mobileNumber: t("Mobile Number"),
+                    Registration_Number: t("Registration Number"),
                   }}
                 />
               </div>
@@ -473,13 +473,13 @@ const SecurityCheckPage = ({ optionalFields = false, maxAllowedCount = 100 }) =>
                 dropdownLabel="Animal Type"
                 generateLabel={t("Generate Token")}
                 showMappedRows={false}
-                generateButtonLabel="Generate"
+                generateButtonLabel={t("Generate")}
                 handleGenerateRows={customHandleGenerateRows}
                 handleAddRow={customHandleAddRow}
                 maxAllowedCount={maxAllowedCount}
                 showAddIcon={false}
                 allowRemove={false}
-                message="Token generated successfully"
+                message={t("Token generated successfully")}
                 messageDuration={3000}
               />
               {/* <div className="bmc-card-row" style={{ textAlign: "end", paddingBottom: "1rem" }}>

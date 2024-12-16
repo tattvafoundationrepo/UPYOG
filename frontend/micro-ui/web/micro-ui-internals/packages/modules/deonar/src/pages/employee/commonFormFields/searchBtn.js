@@ -15,7 +15,7 @@ const SearchButtonField = ({ onSearch, disabled }) => {
           style={{ borderBottom: "3px solid black", backgroundColor: disabled ? "gray" : "#f47738", cursor: disabled ? "not-allowed" : "pointer" }}
           onClick={onSearch}
         >
-          {t("BMC_Search")}
+          {t("Deonar_Search")}
         </button>
       </div>
     </div>

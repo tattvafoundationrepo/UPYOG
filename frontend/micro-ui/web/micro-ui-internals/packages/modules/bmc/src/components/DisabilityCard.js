@@ -5,7 +5,7 @@ import { Controller, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import ToggleSwitch from "./Toggle";
 
-const DisabilityCard = ({ tenantId, onUpdate, initialRows = {}, AllowEdit = false, ...props}) => {
+const DisabilityCard = ({ tenantId, onUpdate, initialRows = {}, AllowEdit = false, ...props }) => {
   const { t } = useTranslation();
   const [isEditable, setIsEditable] = useState(AllowEdit);
   const [focusIndex, setFocusIndex] = useState({ index: -1, type: "" });
@@ -22,7 +22,7 @@ const DisabilityCard = ({ tenantId, onUpdate, initialRows = {}, AllowEdit = fals
   const {
     control,
     watch,
-    formState: { errors, isValid },
+    formState: { errors, isValid, dirtyFields },
     trigger,
     setValue,
     clearErrors,
@@ -103,8 +103,8 @@ const DisabilityCard = ({ tenantId, onUpdate, initialRows = {}, AllowEdit = fals
     if (initialRows) {
       const processeddata = processSingleData(initialRows, headerLocale);
       if (processeddata) {
-        setValue("divyangcardid", processeddata.divyangcardid || "");
-        setValue("disabilitytype", processeddata.disabilitytype || "");
+        setValue("divyangcardid", processeddata.divyangcardid, { shouldValidate: true } || "");
+        setValue("disabilitytype", processeddata.disabilitytype,  { shouldValidate: true } || "");
         setRangeValue(processeddata.divyangpercent || 0);
 
         // Clear errors for fields that received initial values
@@ -113,7 +113,9 @@ const DisabilityCard = ({ tenantId, onUpdate, initialRows = {}, AllowEdit = fals
         if (processeddata.divyangpercent) clearErrors("divyangpercent");
       }
     }
-  }, [initialRows, setValue, headerLocale, clearErrors]);
+  }, [initialRows, setValue, headerLocale]);
+  
+  
 
   const handleToggle = () => {
     setIsEditable(!isEditable);
@@ -150,7 +152,7 @@ const DisabilityCard = ({ tenantId, onUpdate, initialRows = {}, AllowEdit = fals
                   <div>
                     <TextInput 
                       disabled={!isEditable} 
-                      readOnly 
+                      readOnly={false}
                       value={props.value || ""} 
                       autoFocus={focusIndex.index === props.name}
                       onChange={(e) => {
@@ -167,7 +169,7 @@ const DisabilityCard = ({ tenantId, onUpdate, initialRows = {}, AllowEdit = fals
               />
             </LabelFieldPair>
           </div>
-         
+
           <div className="bmc-col3-card">
             <LabelFieldPair>
               <CardLabel className="bmc-label">{t("BMC_DISABILITY_TYPE")}&nbsp;{errors.disabilitytype && <sup style={{ color: "red", fontSize: "x-small" }}>{errors.disabilitytype.message}</sup>}</CardLabel>

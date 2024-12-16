@@ -3,12 +3,10 @@ import { useTranslation } from "react-i18next";
 import MainFormHeader from "../commonFormFields/formMainHeading";
 import CustomTable from "../commonFormFields/customTable";
 import TableCard from "../commonFormFields/tableCard";
-import { CardLabel, LabelFieldPair, Toast, Dropdown } from "@upyog/digit-ui-react-components";
+import { CardLabel, LabelFieldPair, Toast, Dropdown, CheckBox } from "@upyog/digit-ui-react-components";
 import { Controller, useForm } from "react-hook-form";
 import useCollectionPoint from "@upyog/digit-ui-libraries/src/hooks/deonar/useCollectionPoint";
 import SubmitButtonField from "../commonFormFields/submitBtn";
-import HealthStatDropdownField from "../commonFormFields/healthStatDropdown";
-import { slaughterType, slaughterUnit } from "../../../constants/dummyData";
 import useDeonarCommon from "@upyog/digit-ui-libraries/src/hooks/deonar/useCommonDeonar";
 import { generateTokenNumber } from "../collectionPoint/utils";
 
@@ -20,13 +18,11 @@ const Slaughtering = () => {
   const [toast, setToast] = useState(null);
   const [totalRecords, setTotalRecords] = useState(0);
   const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768);
+  const [selectedRows, setSelectedRows] = useState([]);
   const [slaughtering, setSlaughtering] = useState([
     { code: "1", name: "YES" },
     { code: "2", name: "NO" },
   ]);
-  const [data, setData] = useState({});
-  const [slaughterTypeOptions, setSlaughterTypeOptions] = useState([]);
-  const [slaughterUnitOptions, setSlaughterUnitOptions] = useState([]);
 
   const {
     control,
@@ -45,7 +41,7 @@ const Slaughtering = () => {
 
   const { fetchSlaughterCollectionList } = useCollectionPoint({});
   const { data: SlaughterListData } = fetchSlaughterCollectionList({});
-  const { fetchDeonarCommon, saveSlaughterListData } = useDeonarCommon();
+  const { saveSlaughterListData } = useDeonarCommon();
 
   const handleUUIDClick = (ddReference) => {
     setSelectedUUID(ddReference);
@@ -66,31 +62,6 @@ const Slaughtering = () => {
     }
   };
 
-  useEffect(() => {
-    setSlaughterTypeOptions(slaughterType.map((item) => ({ name: item.name })));
-    setSlaughterUnitOptions(slaughterUnit.map((item) => ({ name: item.name })));
-  }, []);
-
-  const useFetchOptions = (optionType) => {
-    const { data } = fetchDeonarCommon({
-      CommonSearchCriteria: {
-        Option: optionType,
-      },
-    });
-    return data
-      ? data.CommonDetails.map((item) => ({
-          name: item.name,
-          id: item.id,
-        }))
-      : [];
-  };
-
-  const SlaughterUnitData = useFetchOptions("slaughterunit");
-
-  useEffect(() => {
-    setSlaughterUnitOptions(SlaughterUnitData.map((item) => item.name || []));
-  }, []);
-
   const saveSlaughterData = saveSlaughterListData();
 
   const showToast = (type, message, duration = 5000) => {
@@ -103,21 +74,37 @@ const Slaughtering = () => {
   const onSubmit = async (formData) => {
     const selectedSlaughter = slaughterList.find((item) => item.ddReference === selectedUUID);
 
+    // const slaughterDetails = slaughterAnimalListData.map((item) => ({
+    //   animalTypeId: item.animalTypeId,
+    //   token: item.token,
+    // }))
+
+    const slaughterDetails = slaughterAnimalListData.filter((item) =>
+      selectedRows.includes(item.animalTokenNumber)
+    ).map((item) => ({
+      animalTypeId: item.animalTypeId,
+      token: item.token,
+    }));
+
     if (selectedSlaughter) {
       const slaughteringValue = formData?.slaughtering?.name === "YES" ? true : false;
+      // const selectedTokens = slaughterAnimalListData
+      //   .filter((animal) => selectedRows.includes(animal.animalTokenNumber))
+      //   .map((animal) => animal.token);
+
       const payload = {
         slaughterDetails: {
           arrivalId: selectedSlaughter?.arrivalId,
           ddReference: selectedSlaughter?.ddReference,
           shopkeeperName: selectedSlaughter?.shopkeeperName,
           licenceNumber: selectedSlaughter?.licenceNumber,
-          animalTypeId: slaughterAnimalListData?.[0]?.animalTypeId,
-          token: slaughterAnimalListData?.[0]?.token,
+          // animalTypeId: slaughterAnimalListData?.[0]?.animalTypeId,
+          // token: selectedTokens,
+          details:slaughterDetails,
           slaughtering: slaughteringValue,
-          // slaughterUnit: formData?.slaughterUnit?.id,
-          // slaughterType: formData?.slaughterType?.code,
         },
       };
+
       saveSlaughterData.mutate(payload, {
         onSuccess: (data) => {
           reset({
@@ -125,16 +112,27 @@ const Slaughtering = () => {
             slaughterType: {},
             slaughterUnit: {},
           });
-          console.log("Form successfully submitted:", data);
+          setSelectedRows([]);
           showToast("success", t("DEONAR_SLAUGHTERING_DATA_SUBMITTED_SUCCESSFULY"));
         },
         onError: (error) => {
-          console.log("Error", error);
           showToast("error", t("DEONAR_SLAUGHTERING_DATA_NOT_SUBMITTED_SUCCESSFULY"));
         },
       });
     }
   };
+
+  const handleRowCheckboxChange = (ddReference) => {
+    setSelectedRows((prevSelectedRows) => {
+      if (prevSelectedRows.includes(ddReference)) {
+        return prevSelectedRows.filter((row) => row !== ddReference);
+      } else {
+        return [...prevSelectedRows, ddReference];
+      }
+    });
+  };
+
+  const currentRows = slaughterAnimalListData;
 
   useEffect(() => {
     if (SlaughterListData) {
@@ -152,13 +150,13 @@ const Slaughtering = () => {
 
   const Tablecolumns = [
     {
-      Header: "ID",
+      Header: t("ID"),
       accessor: "id",
       Cell: ({ row }) => row.index + 1,
       isVisible: false,
     },
     {
-      Header: "Deonar_DD_Reference",
+      Header: t("Deonar_DD_Reference"),
       accessor: "ddReference",
       Cell: ({ row }) => (
         <span onClick={() => handleUUIDClick(row.original.ddReference)} style={{ cursor: "pointer", color: "blue" }}>
@@ -167,27 +165,48 @@ const Slaughtering = () => {
       ),
     },
     {
-      Header: "Deonar_Arrival_Id",
-      accessor: "arrivalId",
-    },
-    {
-      Header: "DEONAR_SHOPKEEPER_NAME",
+      Header: t("DEONAR_SHOPKEEPER_NAME"),
       accessor: "shopkeeperName",
     },
     {
-      Header: "DEONAR_LICENSE_NUMBER",
+      Header: t("DEONAR_LICENSE_NUMBER"),
       accessor: "licenceNumber",
+    },
+    {
+      Header: t("DEONAR_ARRIVAL_UUID"),
+      accessor: "arrivalId",
     },
   ];
 
   const tableColumnsAnimal = [
     {
-      Header: "Animal Type",
+      Header: (
+        <CheckBox
+          onChange={(e) => {
+            if (e.target.checked) {
+              setSelectedRows(currentRows.map((row) => row.animalTokenNumber));
+            } else {
+              setSelectedRows([]);
+            }
+          }}
+          checked={currentRows.length > 0 && currentRows.length === selectedRows.length}
+        />
+      ),
+      accessor: "checkbox",
+      Cell: ({ row }) => {
+        const isChecked = selectedRows.includes(row.original.animalTokenNumber);
+        return <CheckBox checked={isChecked} onChange={() => handleRowCheckboxChange(row.original.animalTokenNumber)} />;
+      },
+      disableSortBy: true,
+    },
+
+    {
+      Header: t("Animal Type"),
       accessor: "animalType",
       disableSortBy: true,
     },
     {
-      Header: "Token",
+      Header: t("Animal Token"),
       accessor: "animalTokenNumber",
       disableSortBy: true,
     },
@@ -197,7 +216,7 @@ const Slaughtering = () => {
     <React.Fragment>
       <div className="bmc-card-full">
         <form onSubmit={handleSubmit(onSubmit)}>
-          <MainFormHeader title={"DEONAR_SLAUGHTERING"} />
+          <MainFormHeader title={t("DEONAR_SLAUGHTERING")} />
           <div className="bmc-card-row">
             <div className="bmc-row-card-header">
               {isMobileView &&
@@ -206,10 +225,10 @@ const Slaughtering = () => {
                     data={data}
                     key={index}
                     fields={[
-                      { key: "ddReference", label: "Arrival UUID", isClickable: true },
-                      { key: "shopkeeperName", label: "Trader Name" },
-                      { key: "licenceNumber", label: "License Number" },
-                      { key: "arrivalId", label: "Arrival Id" },
+                      { key: "ddReference", label: t("Deonar_DD_Reference"), isClickable: true },
+                      { key: "shopkeeperName", label: t("DEONAR_TRADER_NAME") },
+                      { key: "licenceNumber", label: t("DEONAR_LICENSE_NUMBER") },
+                      { key: "arrivalId", label: t("DEONAR_ARRIVAL_UUID") },
                     ]}
                     onUUIDClick={handleUUIDClick}
                   />
@@ -249,25 +268,14 @@ const Slaughtering = () => {
                   data={slaughterAnimalListData}
                   manualPagination={false}
                   tableClassName={"deonar-scrollable-table"}
+                  getCellProps={() => ({
+                    style: {
+                      fontSize: "14px",
+                    },
+                  })}
                 />
               </div>
               <div className="bmc-row-card">
-                {/* <HealthStatDropdownField
-                  name="slaughterType"
-                  label="DEONAR_SLAUGHTER_TYPE"
-                  control={control}
-                  data={data}
-                  setData={setData}
-                  options={slaughterTypeOptions}
-                />
-                <HealthStatDropdownField
-                  name="slaughterUnit"
-                  label="DEONAR_SLAUGHTER_UNIT"
-                  control={control}
-                  data={data}
-                  setData={setData}
-                  options={SlaughterUnitData}
-                /> */}
                 <div className="bmc-col3-card">
                   <LabelFieldPair>
                     <CardLabel className="bmc-label">{t("DEONAR_Slaughter")}</CardLabel>

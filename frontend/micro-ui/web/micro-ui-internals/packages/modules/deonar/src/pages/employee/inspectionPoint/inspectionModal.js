@@ -54,6 +54,20 @@ export const AnimalInspectionModal = ({
       <form>
         <React.Fragment>
           <div className="bmc-card-row">
+            <div style={{ paddingBottom: "20px", display: "flex", gap: "12px", alignItems: "center" }}>
+              <h3 style={{ fontWeight: "600", fontSize: "20px" }}>{t("Active Animal Token Number")}: </h3>
+              <span
+                style={{
+                  fontWeight: "bold",
+                  backgroundColor: "rgb(204, 204, 204)",
+                  borderRadius: "10px",
+                  padding: "8px",
+                  fontSize: "22px",
+                }}
+              >
+                {localData?.animal}
+              </span>
+            </div>
             <Header>{t("Animal_Characterstics_General")}</Header>
 
             <div className="bmc-col3-card">
@@ -521,6 +535,20 @@ export const BeforeSlauhterInspectionModal = ({
       <form>
         <React.Fragment>
           <div className="bmc-card-row">
+            <div style={{ paddingBottom: "20px", display: "flex", gap: "12px", alignItems: "center" }}>
+              <h3 style={{ fontWeight: "600", fontSize: "20px" }}>{t("Active Animal Token Number")}: </h3>
+              <span
+                style={{
+                  fontWeight: "bold",
+                  backgroundColor: "rgb(204, 204, 204)",
+                  borderRadius: "10px",
+                  padding: "8px",
+                  fontSize: "22px",
+                }}
+              >
+                {localData?.animal}
+              </span>
+            </div>
             <Header>{t("Animal_Characterstics_General")}</Header>
             <div className="bmc-col3-card">
               <LabelFieldPair>
@@ -1028,6 +1056,20 @@ export const PostMortemInspectionModal = ({
       <form>
         <React.Fragment>
           <div className="bmc-card-row">
+            <div style={{ paddingBottom: "20px", display: "flex", gap: "12px", alignItems: "center" }}>
+              <h3 style={{ fontWeight: "600", fontSize: "20px" }}>{t("Active Animal Token Number")}: </h3>
+              <span
+                style={{
+                  fontWeight: "bold",
+                  backgroundColor: "rgb(204, 204, 204)",
+                  borderRadius: "10px",
+                  padding: "8px",
+                  fontSize: "22px",
+                }}
+              >
+                {localData?.animal}
+              </span>
+            </div>
             <Header>{t("Animal_Characterstics_General")}</Header>
 
             <div className="bmc-col3-card">

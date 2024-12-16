@@ -4,18 +4,38 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Controller, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import ToggleSwitch from "./Toggle";
+import MultiColumnDropdown from "./multiColumnDropdown";
 
-const AddressDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = false, tenantId}) => {
+const AddressDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = false, tenantId }) => {
   const { t } = useTranslation();
   const [isEditable, setIsEditable] = useState(AllowEdit);
   const headerLocale = useMemo(() => Digit.Utils.locale.getTransformedLocale(tenantId), [tenantId]);
   const pincode = Digit.SessionStorage.get("CITIZEN.COMMON.HOME.CITY")?.pincode || Digit.ULBService.getCurrentTenantId();
+  const [options, setOptions] = useState([]);
+  const [selectedOption, setSelectedOption] = useState([]);
 
   const RequiredFieldMessage = ({ fieldValue }) => {
     if (!fieldValue || (typeof fieldValue === 'object' && !fieldValue.name)) {
       return <p style={{ color: 'red', fontSize: '12px', marginTop: '-10px' }}>This is required field *</p>;
     }
     return null;
+  };
+  const handleSelect = (e, selectedOptions) => {
+    const selectedArray = Array.isArray(selectedOptions) ? selectedOptions : [selectedOptions];
+    if (selectedArray.length > 0) {
+      const selectedPincode = selectedArray[0];
+      // setSelectedTrader(selectedTrader);
+      // setSelectedOption(selectedArray);
+      // setPreviousOption(selectedArray);
+      // setValue("licenceNumber", selectedTrader.licenceNumber);
+      // setAnimalTypes(selectedTrader.animalTypes || []);
+      // setFormModified(false);
+    } else {
+      // setSelectedTrader(null);
+      // setSelectedOption([]);
+      // setValue("licenceNumber", "");
+      // setAnimalTypes([]);
+    }
   };
 
   const {
@@ -48,91 +68,96 @@ const AddressDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = false, tena
   const [blocks, setBlocks] = useState([]);
   const [wards, setWards] = useState([]);
 
-  Digit.Hooks.bmc.useLocation(tenantId, "Zone", {
+  // Digit.Hooks.bmc.useLocation(tenantId, "Zone", {
+  //   select: (data) => {
+  //     const zonesData = [];
+  //     const blocksData = [];
+  //     const wardsData = [];
+
+  //     data?.TenantBoundary[0]?.boundary.forEach((zone) => {
+  //       zonesData.push({
+  //         code: zone.code,
+  //         name: zone.name,
+  //         i18nKey: `${headerLocale}_ADMIN_${zone.code}`,
+  //       });
+
+  //       zone.children.forEach((block) => {
+  //         blocksData.push({
+  //           code: block.code,
+  //           name: block.name,
+  //           zoneCode: zone.code,
+  //           i18nKey: `${headerLocale}_ADMIN_${block.code}`,
+  //         });
+
+  //         block.children.forEach((ward) => {
+  //           wardsData.push({
+  //             code: ward.code,
+  //             name: ward.name,
+  //             zoneCode: zone.code,
+  //             blockCode: block.code,
+  //             i18nKey: `${headerLocale}_ADMIN_${ward.code}`,
+  //           });
+  //         });
+  //       });
+  //     });
+
+  //     setZones(zonesData);
+  //     setBlocks(blocksData);
+  //     setWards(wardsData);
+
+  //     return {
+  //       zonesData,
+  //       blocksData,
+  //       wardsData,
+  //     };
+  //   },
+  // });
+  Digit.Hooks.bmc.useLocation({'tenantid':tenantId}, "", {
     select: (data) => {
-      const zonesData = [];
-      const blocksData = [];
-      const wardsData = [];
-
-      data?.TenantBoundary[0]?.boundary.forEach((zone) => {
-        zonesData.push({
-          code: zone.code,
-          name: zone.name,
-          i18nKey: `${headerLocale}_ADMIN_${zone.code}`,
-        });
-
-        zone.children.forEach((block) => {
-          blocksData.push({
-            code: block.code,
-            name: block.name,
-            zoneCode: zone.code,
-            i18nKey: `${headerLocale}_ADMIN_${block.code}`,
-          });
-
-          block.children.forEach((ward) => {
-            wardsData.push({
-              code: ward.code,
-              name: ward.name,
-              zoneCode: zone.code,
-              blockCode: block.code,
-              i18nKey: `${headerLocale}_ADMIN_${ward.code}`,
-            });
-          });
-        });
-      });
-
-      setZones(zonesData);
-      setBlocks(blocksData);
-      setWards(wardsData);
-
-      return {
-        zonesData,
-        blocksData,
-        wardsData,
-      };
+      setOptions(data["Bank Details"]);
     },
   });
-
+  
   const selectedWard = watch("wardName");
   const [filteredBlocks, setFilteredBlocks] = useState([]);
   const [filteredZones, setFilteredZones] = useState([]);
 
-  useEffect(() => {
-    if (selectedWard && selectedWard.code) {
-      const selectedBlockCode = wards.find((ward) => ward.code === selectedWard.code)?.blockCode;
-      const selectedZoneCode = wards.find((ward) => ward.code === selectedWard.code)?.zoneCode;
+  // useEffect(() => {
+  //   if (selectedWard && selectedWard.code) {
+  //     const selectedBlockCode = wards.find((ward) => ward.code === selectedWard.code)?.blockCode;
+  //     const selectedZoneCode = wards.find((ward) => ward.code === selectedWard.code)?.zoneCode;
 
-      if (selectedBlockCode) {
-        const filteredBlocks = blocks.filter((block) => block.code === selectedBlockCode);
-        setFilteredBlocks(filteredBlocks);
-        setValue("blockName", filteredBlocks[0]?.name || ""); // Automatically set the block name text field
-      } else {
-        setFilteredBlocks([]);
-        setValue("blockName", ""); // Reset block text field
-      }
+  //     if (selectedBlockCode) {
+  //       const filteredBlocks = blocks.filter((block) => block.code === selectedBlockCode);
+  //       setFilteredBlocks(filteredBlocks);
+  //       setValue("blockName", filteredBlocks[0]?.name || ""); // Automatically set the block name text field
+  //     } else {
+  //       setFilteredBlocks([]);
+  //       setValue("blockName", ""); // Reset block text field
+  //     }
 
-      if (selectedZoneCode) {
-        const filteredZones = zones.filter((zone) => zone.code === selectedZoneCode);
-        setFilteredZones(filteredZones);
-        setValue("zoneName", filteredZones[0]?.name || ""); // Automatically set the zone name text field
-      } else {
-        setFilteredZones([]);
-        setValue("zoneName", ""); // Reset zone text field
-      }
-    } else {
-      setFilteredBlocks([]);
-      setFilteredZones([]);
-    }
-  }, [wards, blocks, zones, selectedWard, setValue]);
+  //     if (selectedZoneCode) {
+  //       const filteredZones = zones.filter((zone) => zone.code === selectedZoneCode);
+  //       setFilteredZones(filteredZones);
+  //       setValue("zoneName", filteredZones[0]?.name || ""); // Automatically set the zone name text field
+  //     } else {
+  //       setFilteredZones([]);
+  //       setValue("zoneName", ""); // Reset zone text field
+  //     }
+  //   } else {
+  //     setFilteredBlocks([]);
+  //     setFilteredZones([]);
+  //   }
+  // }, [wards, blocks, zones, selectedWard, setValue]);
 
-  useEffect(() => {
-    if (!selectedWard) {
-      setFilteredBlocks([]);
-      setFilteredZones([]);
-      setValue("blockName", ""); // Reset block text field
-      setValue("zoneName", ""); // Reset zone text field
-    }
-  }, [selectedWard, setValue]);
+  // useEffect(() => {
+  //   if (!selectedWard) {
+  //     setFilteredBlocks([]);
+  //     setFilteredZones([]);
+  //     setValue("blockName", ""); // Reset block text field
+  //     setValue("zoneName", ""); // Reset zone text field
+  //   }
+  // }, [selectedWard, setValue]);
 
   const formValuesRef = useRef(getValues());
   const formValues = watch();
@@ -168,13 +193,13 @@ const AddressDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = false, tena
       setValue("city", initialRows?.address?.city || "");
       setValue("pinCode", initialRows?.address?.pinCode || "");
 
-      const zonedata = zones.find((zone) => zone.code === initialRows?.UserOtherDetails?.zone) || "";
-      const blockdata = blocks.find((block) => block.code === initialRows?.UserOtherDetails?.block) || "";
-      const warddata = wards.find((ward) => ward.code === initialRows?.UserOtherDetails?.ward) || "";
+      // const zonedata = zones.find((zone) => zone.code === initialRows?.UserOtherDetails?.zone) || "";
+      // const blockdata = blocks.find((block) => block.code === initialRows?.UserOtherDetails?.block) || "";
+      // const warddata = wards.find((ward) => ward.code === initialRows?.UserOtherDetails?.ward) || "";
 
-      setValue("zoneName", zonedata?.name || "");
-      setValue("blockName", blockdata?.name || "");
-      setValue("wardName", warddata || null);
+      // setValue("zoneName", zonedata?.name || "");
+      // setValue("blockName", blockdata?.name || "");
+      // setValue("wardName", warddata || null);
 
       if (initialRows?.address?.house) clearErrors("house");
       if (initialRows?.address?.street) clearErrors("street");
@@ -185,9 +210,9 @@ const AddressDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = false, tena
       if (initialRows?.address?.state) clearErrors("state");
       if (initialRows?.address?.city) clearErrors("city");
       if (initialRows?.address?.pinCode) clearErrors("pinCode");
-      if (zonedata) clearErrors("zoneName");
-      if (blockdata) clearErrors("blockName");
-      if (warddata) clearErrors("wardName");
+      // if (zonedata) clearErrors("zoneName");
+      // if (blockdata) clearErrors("blockName");
+      // if (warddata) clearErrors("wardName");
     }
   }, [initialRows, setValue, headerLocale, clearErrors, zones, blocks, wards]);
 
@@ -319,103 +344,45 @@ const AddressDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = false, tena
         <div className="bmc-card-row">
           <div className="bmc-col3-card">
             <LabelFieldPair>
-              <CardLabel className="bmc-label">{t("BMC_CITY")}&nbsp;{errors.city && <sup style={{ color: "red", fontSize: "x-small" }}>{errors.city.message}</sup>}</CardLabel>
+              <CardLabel className="bmc-label">
+                {t("BMC_PINCODE")}&nbsp;{errors.wardName && <sup style={{ color: "red", fontSize: "x-small" }}>{errors.wardName.message}</sup>}
+              </CardLabel>
               <Controller
                 control={control}
-                name={"city"}
+                name="pinCode"
                 rules={{ required: t("CORE_COMMON_REQUIRED_ERRMSG") }}
                 render={(props) => (
                   <div>
-                    <TextInput
-                      disabled={!isEditable}
-                      readOnly={!isEditable}
-                      value={props.value}
-                      onChange={(e) => props.onChange(e.target.value)}
-                      onBlur={props.onBlur}
-                      optionKey="i18nKey"
-                      t={t}
-                    />
-
+                    {isEditable ? (
+                      <MultiColumnDropdown
+                        options={options}
+                        selected={selectedOption}
+                        onSelect={handleSelect}
+                        // defaultLabel="Select or Search"
+                        displayKeys={["pincode", "district", "statename", "officename", "subwardno", "wardname", "divisionname"]}
+                        placeholder="Select or Search"
+                        optionsKey="value"
+                        defaultUnit="Options"
+                        autoCloseOnSelect={true}
+                        showColumnHeaders={true}
+                        headerMappings={{
+                          pincode: t("BMC_PINCODE"),
+                          district: t("BMC_DISTRICT"),
+                          officename: t("BMC_SUBDISTRICT"),
+                          statename: t("BMC_STATE"),
+                          subwardno: t("BMC_WARD_NAME"),
+                          wardname: t("BMC_BLOCKNAME"),
+                          divisionname: t("BMC_ZONENAME")
+                        }}
+                      />) : (
+                      <TextInput disabled={!isEditable} readOnly={!isEditable} value={props?.value?.value} />
+                    )}
                   </div>
                 )}
               />
             </LabelFieldPair>
           </div>
-          <div className="bmc-col3-card">
-            <LabelFieldPair>
-              <CardLabel className="bmc-label">{t("BMC_SUBDISTRICT")}&nbsp;{errors.subDistrict && <sup style={{ color: "red", fontSize: "x-small" }}>{errors.subDistrict.message}</sup>}</CardLabel>
-              <Controller
-                control={control}
-                name={"subDistrict"}
-                rules={{ required: t("CORE_COMMON_REQUIRED_ERRMSG") }}
-                render={(props) => (
-                  <div>
-                    <TextInput
-                      disabled={!isEditable}
-                      readOnly={!isEditable}
-                      value={props.value}
-                      onChange={(e) => props.onChange(e.target.value)}
-                      onBlur={props.onBlur}
-                      optionKey="i18nKey"
-                      t={t}
-                    />
-
-                  </div>
-                )}
-              />
-            </LabelFieldPair>
-          </div>
-          <div className="bmc-col3-card">
-            <LabelFieldPair>
-              <CardLabel className="bmc-label">{t("BMC_DISTRICT")}&nbsp;{errors.district && <sup style={{ color: "red", fontSize: "x-small" }}>{errors.district.message}</sup>}</CardLabel>
-              <Controller
-                control={control}
-                name={"district"}
-                rules={{ required: t("CORE_COMMON_REQUIRED_ERRMSG") }}
-                render={(props) => (
-                  <div>
-                    <TextInput
-                      disabled={!isEditable}
-                      readOnly={!isEditable}
-                      value={props.value}
-                      onChange={(e) => props.onChange(e.target.value)}
-                      onBlur={props.onBlur}
-                      optionKey="i18nKey"
-                      t={t}
-                    />
-
-                  </div>
-                )}
-              />
-            </LabelFieldPair>
-          </div>
-          <div className="bmc-col3-card">
-            <LabelFieldPair>
-              <CardLabel className="bmc-label">{t("BMC_STATE")}&nbsp;{errors.state && <sup style={{ color: "red", fontSize: "x-small" }}>{errors.state.message}</sup>}</CardLabel>
-              <Controller
-                control={control}
-                name={"state"}
-                rules={{ required: t("CORE_COMMON_REQUIRED_ERRMSG") }}
-                render={(props) => (
-                  <div>
-                    <TextInput
-                      disabled={!isEditable}
-                      readOnly={!isEditable}
-                      value={props.value}
-                      onChange={(e) => props.onChange(e.target.value)}
-                      onBlur={props.onBlur}
-                      optionKey="i18nKey"
-                      t={t}
-                    />
-
-                  </div>
-                )}
-              />
-            </LabelFieldPair>
-          </div>
-        </div>
-        <div className="bmc-card-row">
-          <div className="bmc-col3-card">
+          {/* <div className="bmc-col3-card">
             <LabelFieldPair>
               <CardLabel className="bmc-label">{t("BMC_PINCODE")}&nbsp;{errors.pinCode && <sup style={{ color: "red", fontSize: "x-small" }}>{errors.pinCode.message}</sup>}</CardLabel>
               <Controller
@@ -439,13 +406,11 @@ const AddressDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = false, tena
                     ) : (
                       <TextInput disabled={!isEditable} readOnly={!isEditable} value={props?.value?.value} />
                     )}
-                                        {/* <RequiredFieldMessage fieldValue={props.value} /> */}
-
                   </div>
                 )}
               />
             </LabelFieldPair>
-          </div>
+          </div> */}
           <div className="bmc-col3-card">
             <LabelFieldPair>
               <CardLabel className="bmc-label">{t("BMC_WARD_NAME")}&nbsp;{errors.wardName && <sup style={{ color: "red", fontSize: "x-small" }}>{errors.wardName.message}</sup>}</CardLabel>
@@ -455,22 +420,7 @@ const AddressDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = false, tena
                 rules={{ required: t("CORE_COMMON_REQUIRED_ERRMSG") }}
                 render={(props) => (
                   <div>
-                    {isEditable ? (
-                      <Dropdown
-                        placeholder={t("SELECT SUBWARD")}
-                        selected={props.value}
-                        select={(ward) => props.onChange(ward)}
-                        onBlur={props.onBlur}
-                        option={wards}
-                        optionKey="name"
-                        t={t}
-                        isMandatory={true}
-                        className="employee-select-wrap bmc-form-field"
-                      />
-                    ) : (
-                      <TextInput disabled={!isEditable} readOnly={!isEditable} value={props.value?.name || ""} />
-                    )}
-
+                      <TextInput disabled readOnly value={props.value?.name || ""} />
                   </div>
                 )}
               />
@@ -505,6 +455,105 @@ const AddressDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = false, tena
             </LabelFieldPair>
           </div>
         </div>
+        <div className="bmc-card-row">
+          <div className="bmc-col3-card">
+            <LabelFieldPair>
+              <CardLabel className="bmc-label">{t("BMC_CITY")}&nbsp;{errors.city && <sup style={{ color: "red", fontSize: "x-small" }}>{errors.city.message}</sup>}</CardLabel>
+              <Controller
+                control={control}
+                name={"city"}
+                rules={{ required: t("CORE_COMMON_REQUIRED_ERRMSG") }}
+                render={(props) => (
+                  <div>
+                    <TextInput
+                      disabled 
+                      readOnly
+                      value={props.value}
+                      onChange={(e) => props.onChange(e.target.value)}
+                      onBlur={props.onBlur}
+                      optionKey="i18nKey"
+                      t={t}
+                    />
+
+                  </div>
+                )}
+              />
+            </LabelFieldPair>
+          </div>
+          <div className="bmc-col3-card">
+            <LabelFieldPair>
+              <CardLabel className="bmc-label">{t("BMC_SUBDISTRICT")}&nbsp;{errors.subDistrict && <sup style={{ color: "red", fontSize: "x-small" }}>{errors.subDistrict.message}</sup>}</CardLabel>
+              <Controller
+                control={control}
+                name={"subDistrict"}
+                rules={{ required: t("CORE_COMMON_REQUIRED_ERRMSG") }}
+                render={(props) => (
+                  <div>
+                    <TextInput
+                      disabled 
+                      readOnly
+                      value={props.value}
+                      onChange={(e) => props.onChange(e.target.value)}
+                      onBlur={props.onBlur}
+                      optionKey="i18nKey"
+                      t={t}
+                    />
+
+                  </div>
+                )}
+              />
+            </LabelFieldPair>
+          </div>
+          <div className="bmc-col3-card">
+            <LabelFieldPair>
+              <CardLabel className="bmc-label">{t("BMC_DISTRICT")}&nbsp;{errors.district && <sup style={{ color: "red", fontSize: "x-small" }}>{errors.district.message}</sup>}</CardLabel>
+              <Controller
+                control={control}
+                name={"district"}
+                rules={{ required: t("CORE_COMMON_REQUIRED_ERRMSG") }}
+                render={(props) => (
+                  <div>
+                    <TextInput
+                      disabled 
+                      readOnly
+                      value={props.value}
+                      onChange={(e) => props.onChange(e.target.value)}
+                      onBlur={props.onBlur}
+                      optionKey="i18nKey"
+                      t={t}
+                    />
+
+                  </div>
+                )}
+              />
+            </LabelFieldPair>
+          </div>
+          <div className="bmc-col3-card">
+            <LabelFieldPair>
+              <CardLabel className="bmc-label">{t("BMC_STATE")}&nbsp;{errors.state && <sup style={{ color: "red", fontSize: "x-small" }}>{errors.state.message}</sup>}</CardLabel>
+              <Controller
+                control={control}
+                name={"state"}
+                rules={{ required: t("CORE_COMMON_REQUIRED_ERRMSG") }}
+                render={(props) => (
+                  <div>
+                    <TextInput
+                      disabled 
+                      readOnly
+                      value={props.value}
+                      onChange={(e) => props.onChange(e.target.value)}
+                      onBlur={props.onBlur}
+                      optionKey="i18nKey"
+                      t={t}
+                    />
+
+                  </div>
+                )}
+              />
+            </LabelFieldPair>
+          </div>
+        </div>
+
       </form>
     </React.Fragment>
   );

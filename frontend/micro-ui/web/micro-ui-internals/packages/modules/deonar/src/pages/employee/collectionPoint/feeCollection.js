@@ -1200,25 +1200,28 @@ const FeeCollection = () => {
                 {selectedUUID ? (
                   !isConfirmationPage && (
                     <div style={{ flex: 1, paddingLeft: "20px" }}>
-                      {/* {feeCollectionResponse && ( */}
                       <button
                         type="button"
                         onClick={handlePDFDownload}
                         className="print-pdf-button"
                         style={{
                           padding: "6px 10px",
-                          background: "#a82227",
+                          background: !feeCollectionResponse ? "grey" : "#a82227",
                           borderRadius: "8px",
                           display: "flex",
                           alignItems: "center",
                           color: "white",
                           fontWeight: "600",
                           border: "none",
+                          cursor: feeCollectionResponse ? "pointer" : "not-allowed",
+                          
                         }}
+                        disabled={!feeCollectionResponse}
                       >
+                        
+
                         Print/Download PDF
                       </button>
-                      {/* )} */}
                       <FeeConfirmationPage
                         label={`${radioOptions.find((option) => option.value === selectedRadioValue)?.label} Confirmation`}
                         // fields={fields}

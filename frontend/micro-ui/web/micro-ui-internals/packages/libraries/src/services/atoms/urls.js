@@ -230,6 +230,7 @@ const Urls = {
     get: "/bmc-service-v1/common/_get",
     getBanks: "/bmc-service-v1/bank/_get",
     getDeonarCommon: "/deonar-v1/common/_get",
+    getBoundry: "/bmc-service-v1/common/boundary/_get",
   },
 
   schemes: {

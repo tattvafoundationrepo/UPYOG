@@ -1028,3 +1028,205 @@
 .bmc-modal .popup-module-main {
   padding: 0;
 }
+
+.multi-column-dropdown-wrap {
+  position: relative;
+  font-size: 16px;
+  line-height: 20px;
+  --text-opacity:1;
+  color: #0b0c0c;
+  color: rgba(11, 12, 12, var(--text-opacity));
+  width: 100%; }
+  .multi-column-dropdown-wrap .master, .multi-column-dropdown-wrap .master-active {
+    position: relative;
+    --border-opacity:1;
+    border: 1px solid #464646;
+    border-color: rgba(70, 70, 70, var(--border-opacity));
+    height: 2rem;
+    width: 100%; }
+    .multi-column-dropdown-wrap .master input[type=text], .multi-column-dropdown-wrap .master .checkbox-wrap .input-emp[type=text], .checkbox-wrap .multi-column-dropdown-wrap .master .input-emp[type=text], .multi-column-dropdown-wrap .master-active input[type=text], .multi-column-dropdown-wrap .master-active .checkbox-wrap .input-emp[type=text], .checkbox-wrap .multi-column-dropdown-wrap .master-active .input-emp[type=text] {
+      position: absolute;
+      top: 0;
+      left: 0;
+      padding-left: 8px;
+      min-height: 100%;
+      min-width: 100%;
+      opacity: 0; }
+      .multi-column-dropdown-wrap .master input[type=text]:focus, .multi-column-dropdown-wrap .master .checkbox-wrap .input-emp[type=text]:focus, .checkbox-wrap .multi-column-dropdown-wrap .master .input-emp[type=text]:focus, .multi-column-dropdown-wrap .master-active input[type=text]:focus, .multi-column-dropdown-wrap .master-active .checkbox-wrap .input-emp[type=text]:focus, .checkbox-wrap .multi-column-dropdown-wrap .master-active .input-emp[type=text]:focus {
+        outline: 2px solid transparent;
+        outline-offset: 2px; }
+    .multi-column-dropdown-wrap .master .label, .multi-column-dropdown-wrap .master-active .label {
+      display: -webkit-box;
+      display: -ms-flexbox;
+      display: flex;
+      -webkit-box-pack: justify;
+      -ms-flex-pack: justify;
+      justify-content: space-between;
+      padding-left: 8px;
+      width: 100%;
+      height: 100%; }
+      .multi-column-dropdown-wrap .master .label svg, .multi-column-dropdown-wrap .master-active .label svg {
+        height: 2rem;
+        width: 2rem; }
+    .multi-column-dropdown-wrap .master:hover, .multi-column-dropdown-wrap .master-active:hover {
+      --border-opacity:1;
+      border: 1px solid #a82227;
+      border-color: rgba(168, 34, 39, var(--border-opacity)); }
+  .multi-column-dropdown-wrap .master-active {
+    border-width: 1px;
+    --border-opacity:1;
+    border-color: #a82227;
+    border-color: rgba(168, 34, 39, var(--border-opacity)); }
+    .multi-column-dropdown-wrap .master-active input[type=text], .multi-column-dropdown-wrap .master-active .checkbox-wrap .input-emp[type=text], .checkbox-wrap .multi-column-dropdown-wrap .master-active .input-emp[type=text] {
+      opacity: 1; }
+    .multi-column-dropdown-wrap .master-active .label {
+      display: none; }
+  .multi-column-dropdown-wrap .server {
+    -webkit-box-shadow: 0 8px 10px 1px rgba(0, 0, 0, 0.14), 0 3px 14px 2px rgba(0, 0, 0, 0.12), 0 5px 5px -3px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 8px 10px 1px rgba(0, 0, 0, 0.14), 0 3px 14px 2px rgba(0, 0, 0, 0.12), 0 5px 5px -3px rgba(0, 0, 0, 0.2);
+    top: 35px;
+    max-height: 20vmax;
+    overflow: scroll;
+    position: absolute;
+    min-width: 100%;
+    z-index: 20; }
+    .multi-column-dropdown-wrap .server div {
+      display: -webkit-box;
+      display: -ms-flexbox;
+      display: flex;
+      width: 100%;
+      background-color: #fff;
+      background-color: rgba(255, 255, 255, var(--bg-opacity)); }
+      .multi-column-dropdown-wrap .server div:hover {
+        background-color: #eee;
+        background-color: rgba(238, 238, 238, var(--bg-opacity)); }
+      .multi-column-dropdown-wrap .server div input, .multi-column-dropdown-wrap .server div .checkbox-wrap .input-emp, .checkbox-wrap .multi-column-dropdown-wrap .server div .input-emp {
+        height: 44px;
+        position: absolute;
+        min-width: 100%;
+        opacity: 0;
+        z-index: 20;
+        cursor: pointer; }
+      .multi-column-dropdown-wrap .server div p {
+        padding: 12px;
+        font-size: 16px;
+        line-height: 20px;
+        --text-opacity:1;
+        color: #0b0c0c;
+        color: rgba(11, 12, 12, var(--text-opacity)); }
+      .multi-column-dropdown-wrap .server div .custom-checkbox, .multi-column-dropdown-wrap .server div .checkbox-wrap .custom-checkbox-emp, .checkbox-wrap .multi-column-dropdown-wrap .server div .custom-checkbox-emp {
+        height: 25px;
+        width: 25px;
+        --border-opacity:1;
+        border: 1px solid #464646;
+        border-color: rgba(70, 70, 70, var(--border-opacity));
+        margin: 8px; }
+        .multi-column-dropdown-wrap .server div .custom-checkbox svg, .multi-column-dropdown-wrap .server div .checkbox-wrap .custom-checkbox-emp svg, .checkbox-wrap .multi-column-dropdown-wrap .server div .custom-checkbox-emp svg {
+          opacity: 0;
+          z-index: 10; }
+      .multi-column-dropdown-wrap .server div input:checked ~ .custom-checkbox, .multi-column-dropdown-wrap .server div .checkbox-wrap .input-emp:checked ~ .custom-checkbox, .checkbox-wrap .multi-column-dropdown-wrap .server div .input-emp:checked ~ .custom-checkbox, .multi-column-dropdown-wrap .server div .checkbox-wrap input:checked ~ .custom-checkbox-emp, .checkbox-wrap .multi-column-dropdown-wrap .server div input:checked ~ .custom-checkbox-emp, .multi-column-dropdown-wrap .server div .checkbox-wrap .input-emp:checked ~ .custom-checkbox-emp, .checkbox-wrap .multi-column-dropdown-wrap .server div .input-emp:checked ~ .custom-checkbox-emp, .multi-column-dropdown-wrap .server div input:hover ~ .custom-checkbox, .multi-column-dropdown-wrap .server div .checkbox-wrap .input-emp:hover ~ .custom-checkbox, .checkbox-wrap .multi-column-dropdown-wrap .server div .input-emp:hover ~ .custom-checkbox, .multi-column-dropdown-wrap .server div .checkbox-wrap input:hover ~ .custom-checkbox-emp, .checkbox-wrap .multi-column-dropdown-wrap .server div input:hover ~ .custom-checkbox-emp, .multi-column-dropdown-wrap .server div .checkbox-wrap .input-emp:hover ~ .custom-checkbox-emp, .checkbox-wrap .multi-column-dropdown-wrap .server div .input-emp:hover ~ .custom-checkbox-emp {
+        border-width: 1px;
+        --border-opacity:1;
+        border-color: #a82227;
+        border-color: rgba(168, 34, 39, var(--border-opacity)); }
+      .multi-column-dropdown-wrap .server div input:checked ~ .custom-checkbox svg, .multi-column-dropdown-wrap .server div .checkbox-wrap .input-emp:checked ~ .custom-checkbox svg, .checkbox-wrap .multi-column-dropdown-wrap .server div .input-emp:checked ~ .custom-checkbox svg, .multi-column-dropdown-wrap .server div .checkbox-wrap input:checked ~ .custom-checkbox-emp svg, .checkbox-wrap .multi-column-dropdown-wrap .server div input:checked ~ .custom-checkbox-emp svg, .multi-column-dropdown-wrap .server div .checkbox-wrap .input-emp:checked ~ .custom-checkbox-emp svg, .checkbox-wrap .multi-column-dropdown-wrap .server div .input-emp:checked ~ .custom-checkbox-emp svg {
+        opacity: 1; }
+
+.select-wrap {
+  margin-bottom: 24px;
+  position: relative;
+  max-width: 540px; }
+  .select-wrap .select {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 2rem;
+    --border-opacity:1;
+    border: 1px solid #464646;
+    border-color: rgba(70, 70, 70, var(--border-opacity)); }
+    .select-wrap .select input[type=text], .select-wrap .select .checkbox-wrap .input-emp[type=text], .checkbox-wrap .select-wrap .select .input-emp[type=text] {
+      width: calc(100% - 32px);
+      background-color: initial;
+      position: absolute;
+      z-index: 10;
+      width: 100%;
+      height: 100%;
+      outline: 2px solid transparent;
+      outline-offset: 2px;
+      padding-left: 8px; }
+    .select-wrap .select input[type=text], .select-wrap .select .checkbox-wrap .input-emp[type=text], .checkbox-wrap .select-wrap .select .input-emp[type=text], .select-wrap .select p {
+      --text-opacity:1;
+      color: #0b0c0c;
+      color: rgba(11, 12, 12, var(--text-opacity));
+      font-size: 16px;
+      line-height: 20px; }
+    .select-wrap .select p {
+      padding-top: 9px;
+      float: left;
+      margin-left: 8px; }
+    .select-wrap .select img, .select-wrap .select svg {
+      float: right;
+      height: 2rem;
+      width: 2rem;  }
+    .select-wrap .select svg {
+      position: absolute;
+      right: 0; }
+  .select-wrap .select-active {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 2rem;
+    --border-opacity:1;
+    border: 1px solid #a82227;
+    border-color: rgba(168, 34, 39, var(--border-opacity)); }
+    .select-wrap .select-active input[type=text], .select-wrap .select-active .checkbox-wrap .input-emp[type=text], .checkbox-wrap .select-wrap .select-active .input-emp[type=text] {
+      width: calc(100% - 32px);
+      background-color: initial;
+      position: absolute;
+      z-index: 10;
+      width: 100%;
+      height: 100%;
+      outline: 2px solid transparent;
+      outline-offset: 2px;
+      padding-left: 8px; }
+    .select-wrap .select-active input[type=text], .select-wrap .select-active .checkbox-wrap .input-emp[type=text], .checkbox-wrap .select-wrap .select-active .input-emp[type=text], .select-wrap .select-active p {
+      --text-opacity:1;
+      color: #0b0c0c;
+      color: rgba(11, 12, 12, var(--text-opacity));
+      font-size: 16px;
+      line-height: 20px; }
+    .select-wrap .select-active p {
+      float: left;
+      margin-left: 8px;
+      padding-top: 9px; }
+    .select-wrap .select-active img, .select-wrap .select-active svg {
+      float: right;
+      height: 2rem;
+      width: 2rem;}
+    .select-wrap .select-active svg {
+      position: absolute;
+      right: 0; }
+  .select-wrap .options-card {
+    width: 100% !important;
+    -webkit-box-shadow: 0 8px 10px 1px rgba(0, 0, 0, 0.14), 0 3px 14px 2px rgba(0, 0, 0, 0.12), 0 5px 5px -3px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 8px 10px 1px rgba(0, 0, 0, 0.14), 0 3px 14px 2px rgba(0, 0, 0, 0.12), 0 5px 5px -3px rgba(0, 0, 0, 0.2);
+    position: absolute;
+    z-index: 20;
+    margin-top: 4px;
+    --bg-opacity:1;
+    background-color: #fff;
+    background-color: rgba(255, 255, 255, var(--bg-opacity)); }
+    .select-wrap .options-card p {
+      padding-top: 14px;
+      width: 100%;
+      height: 2rem;
+      padding-left: 8px;
+      --text-opacity:1;
+      color: #0b0c0c;
+      color: rgba(11, 12, 12, var(--text-opacity));
+      font-size: 16px;
+      line-height: 20px; }
+      .select-wrap .options-card p:hover {
+        --bg-opacity:1;
+        background-color: #eee;
+        background-color: rgba(238, 238, 238, var(--bg-opacity)); }

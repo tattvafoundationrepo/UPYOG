@@ -174,12 +174,12 @@ const StablingFeePage = () => {
   };
 
   const fields = [
-    { key: "entryUnitId", label: "Arrival UUID", isClickable: true },
-    { key: "traderName", label: "Trader Name" },
-    { key: "licenceNumber", label: "License Number" },
-    { key: "vehicleNumber", label: "Vehicle Number" },
-    { key: "dateOfArrival", label: "Arrival Date" },
-    { key: "timeOfArrival", label: "Arrival Time" },
+    { key: "entryUnitId", label: t("DEONAR_ARRIVAL_UUID"), isClickable: true },
+    { key: "traderName", label: t("DEONAR_TRADER_NAME") },
+    { key: "licenceNumber", label: t("DEONAR_LICENSE_NUMBER") },
+    { key: "vehicleNumber", label: t("Deonar_Vehicle_Number") },
+    { key: "dateOfArrival", label: t("ARRIVAL_DATE_FIELD") },
+    { key: "timeOfArrival", label: t("ARRIVAL_TIME_FIELD") },
   ];
 
   useEffect(() => {
@@ -285,9 +285,9 @@ const StablingFeePage = () => {
   };
 
   const isVisibleColumns = [
-    { Header: "Animal Type", accessor: "animalType" },
+    { Header: t("Animal Type"), accessor: "animalType" },
     {
-      Header: "Animal Token",
+      Header: t("Animal Token"),
       accessor: "count",
       Cell: ({ row }) => {
         const animalType = row.original.animalType;
@@ -297,7 +297,7 @@ const StablingFeePage = () => {
     },
     {
       accessor: "animalDetails",
-      Header: "Assign Gawal",
+      Header: t("Assign Gawal"),
       Cell: ({ row }) => {
         const index = row.index;
         const animalType = row.original.animalType.toLowerCase();
@@ -311,16 +311,16 @@ const StablingFeePage = () => {
             options={filteredGawalDropdown}
             selected={selectedOption[row.index] || []}
             onSelect={(e, selected) => handleSelect(row.index, selected)}
-            placeholder="Select Gawal"
+            placeholder={t("Select Gawal")}
             displayKeys={["label", "licenceNumber", "mobileNumber"]}
             optionsKey="value"
             defaultUnit="Options"
             autoCloseOnSelect={true}
             showColumnHeaders={true}
             headerMappings={{
-              label: "Name",
-              licenceNumber: "License",
-              mobileNumber: "Mobile Number",
+              label: t("Name"),
+              licenceNumber: t("License"),
+              mobileNumber: t("Mobile Number"),
             }}
           />
         );
@@ -328,7 +328,7 @@ const StablingFeePage = () => {
     },
     {
       accessor: "brokerDetails",
-      Header: "Assign Broker",
+      Header: t("Assign Broker"),
       Cell: ({ row }) => {
         const animalType = row.original.animalType.toLowerCase();
         const filteredBrokerDropdown = brokerData.filter((broker) => broker.animalTypes.toLowerCase().includes(animalType));
@@ -338,16 +338,16 @@ const StablingFeePage = () => {
             options={filteredBrokerDropdown}
             selected={brokerOption[row.index] || []}
             onSelect={(e, selected) => handleBrokerSelect(row.index, selected)}
-            placeholder="Select Broker"
+            placeholder={t("Select Broker")}
             displayKeys={["label", "licenceNumber", "mobileNumber"]}
             optionsKey="value"
             defaultUnit="Options"
             autoCloseOnSelect={true}
             showColumnHeaders={true}
             headerMappings={{
-              label: "Broker Name",
-              licenceNumber: "License Number",
-              mobileNumber: "Mobile Number",
+              label: t("Broker Name"),
+              licenceNumber: t("License"),
+              mobileNumber: t("Mobile Number"),
             }}
           />
         );
@@ -411,7 +411,7 @@ const StablingFeePage = () => {
       });
     } catch (error) {
       console.error("Error submitting form:", error);
-      setToast({ key: "error", action: "Form submission failed" });
+      setToast({ key: "error", action: t("Form submission failed") });
     }
   };
 
@@ -506,7 +506,7 @@ const StablingFeePage = () => {
               {isMobileView && animalCount.map((data, index) => <TableCard data={data} key={index} fields={fields} onUUIDClick={handleUUIDClick} />)}
               <CustomTable
                 t={t}
-                columns={columns(handleUUIDClick)}
+                columns={columns(handleUUIDClick, t)}
                 data={animalCount}
                 manualPagination={false}
                 tableClassName={"deonar-scrollable-table"}
@@ -522,7 +522,7 @@ const StablingFeePage = () => {
                     <div style={{ marginBottom: "20px" }}>
                       <label style={{ display: "flex", alignItems: "center", gap: "10px", justifyContent: "center" }}>
                         <input type="checkbox" checked={isGlobalGawalEnabled} onChange={handleGlobalGawalToggle} />
-                        <h3 style={{ fontWeight: "500", fontSize: "16px" }}>Apply selected Gawal for all animals</h3>
+                        <h3 style={{ fontWeight: "500", fontSize: "16px" }}>{t("Apply selected Gawal for all animals")}</h3>
                       </label>
                       <MultiColumnDropdown
                         options={applicableGawals}
@@ -533,9 +533,9 @@ const StablingFeePage = () => {
                         optionsKey="value"
                         autoCloseOnSelect={true}
                         headerMappings={{
-                          label: "Name",
-                          licenceNumber: "License",
-                          mobileNumber: "Mobile Number",
+                          label: t("Name"),
+                          licenceNumber: t("License"),
+                          mobileNumber: t("Mobile Number"),
                         }}
                       />
                     </div>
@@ -543,26 +543,26 @@ const StablingFeePage = () => {
                     <div style={{ marginBottom: "20px" }}>
                       <label style={{ display: "flex", alignItems: "center", gap: "10px", justifyContent: "center" }}>
                         <input type="checkbox" checked={isGlobalBrokerEnabled} onChange={handleGlobalBrokerToggle} />
-                        <h3 style={{ fontWeight: "500", fontSize: "16px" }}>Apply selected Broker for all animals</h3>
+                        <h3 style={{ fontWeight: "500", fontSize: "16px" }}>{t("Apply selected Broker for all animals")}</h3>
                       </label>
                       <MultiColumnDropdown
                         options={brokerData}
                         selected={globalBroker ? [globalBroker] : []}
                         onSelect={(e, selected) => handleGlobalBrokerSelect(selected)}
-                        placeholder="Select Broker"
+                        placeholder={t("Select Broker")}
                         displayKeys={["label", "licenceNumber", "mobileNumber"]}
                         optionsKey="value"
                         autoCloseOnSelect={true}
                         headerMappings={{
-                          label: "Broker Name",
-                          licenceNumber: "License Number",
-                          mobileNumber: "Mobile Number",
+                          label: t("Broker Name"),
+                          licenceNumber: t("License Number"),
+                          mobileNumber: t("Mobile Number"),
                         }}
                       />
                     </div>
                   </div>
                   {/* </div> */}
-                  <div className="bmc-card-row">
+                  <div className="bmc-card-row" style={{overflowY:"auto", maxHeight:"290px"}}>
                     {/* <div className="bmc-row-card-header" style={{ overflowY: "auto", maxHeight: "300px" }}> */}
                     {/* {isMobileView && data.map((data, index) => <TableCard data={data} key={index} fields={fields} onUUIDClick={handleUUIDClick} />)} */}
                     <CustomTable
@@ -574,6 +574,7 @@ const StablingFeePage = () => {
                       tableClassName={"deonar-scrollable-table"}
                       autoSort={false}
                       isLoadingRows={isLoading}
+                      
                     />
                     {/* </div> */}
                   </div>
@@ -601,7 +602,7 @@ const StablingFeePage = () => {
       {toast && (
         <Toast
           error={toast.key === "error"}
-          label={t(toast.key === "success" ? "STABLING_DATA_SAVED_SUCCESSFULLY" : toast.action)}
+          label={t(toast.key === "success" ? t("STABLING_DATA_SAVED_SUCCESSFULLY") : toast.action)}
           onClose={() => setToast(null)}
           style={{ maxWidth: "670px" }}
         />

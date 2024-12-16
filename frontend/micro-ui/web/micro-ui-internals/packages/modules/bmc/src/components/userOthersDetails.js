@@ -94,6 +94,7 @@ const UserOthersDetails = ({ onUpdate, initialRows = {}, AllowEdit = true, tenan
                           optionKey="label"
                           t={t}
                           isMandatory={true}
+                          className="employee-select-wrap bmc-form-field"
                         />
                       ) : (
                         <TextInput disabled={!isEditable} readOnly={!isEditable} value={props?.value || ""} />

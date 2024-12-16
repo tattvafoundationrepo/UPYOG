@@ -148,12 +148,12 @@ const Trading = () => {
   };
 
   const fields = [
-    { key: "entryUnitId", label: "Arrival UUID", isClickable: true },
-    { key: "traderName", label: "Trader Name" },
-    { key: "licenceNumber", label: "License Number" },
-    { key: "vehicleNumber", label: "Vehicle Number" },
-    { key: "dateOfArrival", label: "Arrival Date" },
-    { key: "timeOfArrival", label: "Arrival Time" },
+    { key: "entryUnitId", label: t("DEONAR_ARRIVAL_UUID"), isClickable: true },
+    { key: "traderName", label: t("DEONAR_TRADER_NAME") },
+    { key: "licenceNumber", label: t("DEONAR_LICENSE_NUMBER") },
+    { key: "vehicleNumber", label: t("Deonar_Vehicle_Number") },
+    { key: "dateOfArrival", label: t("ARRIVAL_DATE_FIELD") },
+    { key: "timeOfArrival", label: t("ARRIVAL_TIME_FIELD") },
   ];
 
   useEffect(() => {
@@ -203,15 +203,15 @@ const Trading = () => {
   };
 
   const dropdownOptions = [
-    { label: "SLAUGHTER_IN_ABBATOIR", value: "test1", id: 1 },
-    { label: "RELIGIOUS_PERSONAL_PURPOSE", value: "test2", id: 2 },
-    { label: "SALSETTE_REMOVAL", value: "test3", id: 3 },
+    { label: t("SLAUGHTER_IN_ABBATOIR"), value: "test1", id: 1 },
+    { label: t("RELIGIOUS_PERSONAL_PURPOSE"), value: "test2", id: 2 },
+    { label: t("SALSETTE_REMOVAL"), value: "test3", id: 3 },
   ];
 
   const isAfterStablingVisibleColumns = [
-    { Header: "Animal Type", accessor: "animalType" },
+    { Header: t("Animal Type"), accessor: "animalType" },
     {
-      Header: "Animal Token",
+      Header: t("Animal Token"),
       accessor: "count",
       Cell: ({ row }) => {
         const animalType = row.original.animalType;
@@ -221,7 +221,7 @@ const Trading = () => {
     },
     {
       accessor: "shopKeeperDetails",
-      Header: "Assign Shopkeeper",
+      Header: t("Assign Shopkeeper"),
       Cell: ({ row }) => (
         <MultiColumnDropdown
           options={shopKeeper}
@@ -234,21 +234,21 @@ const Trading = () => {
           autoCloseOnSelect={true}
           showColumnHeaders={true}
           headerMappings={{
-            label: "Name",
-            licenceNumber: "License",
-            mobileNumber: "Mobile Number",
+            label: t("Name"),
+              licenceNumber: t("License"),
+              mobileNumber: t("Mobile Number"),
           }}
         />
       ),
     },
     {
       accessor: "deonarRemovalTypeDetails",
-      Header: "Deonar Removal Type",
+      Header: t("Deonar Removal Type"),
       Cell: ({ row }) => {
         const filteredOptions =
           row.original.tradable && row.original.stable
             ? dropdownOptions
-            : dropdownOptions.filter((option) => option.label === "SLAUGHTER_IN_ABBATOIR");
+            : dropdownOptions.filter((option) => option.label === t("SLAUGHTER_IN_ABBATOIR"));
 
         return (
           <MultiColumnDropdown
@@ -262,7 +262,7 @@ const Trading = () => {
             autoCloseOnSelect={true}
             showColumnHeaders={true}
             headerMappings={{
-              label: "Type",
+              label: t("Type"),
             }}
           />
         );
@@ -272,7 +272,7 @@ const Trading = () => {
 
   const onSubmit = async (formData) => {
     if (!isValid) {
-      setToast({ key: "error", action: "Please fill in all required fields." });
+      setToast({ key: "error", action: t("Please fill in all required fields.") });
       return;
     }
     try {
@@ -382,7 +382,7 @@ const Trading = () => {
     <React.Fragment>
       <div className="bmc-card-full">
         <form onSubmit={handleSubmit(onSubmit)}>
-          <MainFormHeader title={"DEONAR_TRADING"} />
+          <MainFormHeader title={t("DEONAR_TRADING")} />
           {/* <div className="bmc-row-card-header"> */}
           <div className="bmc-card-row">
             {/* <StablingTypeOptionsField setStablingFormType={setStablingFormType} control={control} data={data} setData={setData} /> */}
@@ -391,7 +391,7 @@ const Trading = () => {
 
               <CustomTable
                 t={t}
-                columns={columns(handleUUIDClick)}
+                columns={columns(handleUUIDClick, t)}
                 data={animalCount}
                 manualPagination={false}
                 tableClassName={"deonar-scrollable-table"}
@@ -408,25 +408,25 @@ const Trading = () => {
                         <div style={{ marginBottom: "20px" }}>
                           <label style={{ display: "flex", alignItems: "center", gap: "10px", justifyContent: "center" }}>
                             <input type="checkbox" checked={isGlobalShopkeeperEnabled} onChange={handleGlobalShopkeeperToggle} />
-                            <h3 style={{ fontWeight: "500", fontSize: "16px" }}>Apply selected Shopkeeper for all animals</h3>
+                            <h3 style={{ fontWeight: "500", fontSize: "16px" }}>{t("Apply selected Shopkeeper for all animals")}</h3>
                           </label>
                           <MultiColumnDropdown
                             options={shopKeeper}
                             selected={globalShopkeeper ? [globalShopkeeper] : []}
                             onSelect={(e, selected) => handleGlobalShopkeeperSelect(selected)}
-                            defaultLabel="Select Shopkeeper"
+                            defaultLabel={t("Select Shopkeeper")}
                             displayKeys={["label", "licenceNumber", "mobileNumber"]}
                             optionsKey="value"
                             autoCloseOnSelect={true}
                             headerMappings={{
-                              label: "Name",
-                              licenceNumber: "License Number",
-                              mobileNumber: "Mobile Number",
+                              label: t("Name"),
+                              licenceNumber: t("License"),
+                              mobileNumber: t("Mobile Number"),
                             }}
                           />
                         </div>
                         <div className="no-uuid-message">
-                          {showIndividualMessage && <p style={{ fontSize: "20px" }}>Note - You can select the Stakeholders individually also.</p>}
+                          {showIndividualMessage && <p style={{ fontSize: "20px" }}>{t("Note - You can select the Stakeholders individually also.")}</p>}
                         </div>
                         {/* </div> */}
                       </div>
@@ -463,7 +463,7 @@ const Trading = () => {
       {toast && (
         <Toast
           error={toast.key === "error"}
-          label={t(toast.key === "success" ? "TRADING_DATA_SAVED_SUCCESSFULLY" : toast.action)}
+          label={t(toast.key === "success" ? t("TRADING_DATA_SAVED_SUCCESSFULLY") : toast.action)}
           onClose={() => setToast(null)}
           style={{ maxWidth: "670px" }}
         />

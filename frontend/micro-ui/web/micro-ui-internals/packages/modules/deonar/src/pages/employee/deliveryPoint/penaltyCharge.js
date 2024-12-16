@@ -103,12 +103,12 @@ const PenaltyCharge = () => {
     <React.Fragment>
       <div className="bmc-card-full">
         <form onSubmit={handleSubmit(onSubmit)}>
-          <MainFormHeader title={"DEONAR_PENALTY_CHARGE"} />
+          <MainFormHeader title={t("DEONAR_PENALTY_CHARGE")} />
           <div className="bmc-row-card-header">
             <div className="bmc-card-row">
               <HealthStatDropdownField
                 name="typeOfPenalty"
-                label="DEONAR_TYPE_OF_PENALTY"
+                label={t("DEONAR_TYPE_OF_PENALTY")}
                 control={control}
                 data={data}
                 setData={setData}

@@ -166,6 +166,16 @@ const SchemeService = {
       auth: true,
       userService: true,
     })
+  },
+  getPincode: (data) => {
+    return Request({
+      data: data,
+      url: Urls.common.getBoundry,
+      useCache: false,
+      method: "POST",
+      auth: true,
+      userService: true,
+    });
   }
 };
 

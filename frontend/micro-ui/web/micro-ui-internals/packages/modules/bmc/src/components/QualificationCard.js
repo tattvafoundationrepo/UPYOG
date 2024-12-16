@@ -183,7 +183,6 @@ const QualificationCard = ({ tenantId, onUpdate, initialRows = [], AddOption = t
       onSuccess: () => {
         // Remove the document from rows state
         setRows((prevRows) => prevRows.filter((row) => row.qualification.id !== id));
-        window.location.reload();
       },
       onError: (error) => {
         console.error("Failed to delete document row:", error);

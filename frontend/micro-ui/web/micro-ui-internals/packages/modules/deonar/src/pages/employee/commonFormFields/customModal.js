@@ -1,16 +1,56 @@
 import React from "react";
 import { CloseSvg } from "@upyog/digit-ui-react-components";
+import { useTranslation } from "react-i18next";
 
 const CustomModal = ({ isOpen, onClose, title, selectedUUID, children, style }) => {
+  const { t } = useTranslation();
   if (!isOpen) return null;
 
   return (
-    <div className="deonar-modal-overlay" onClick={onClose}>
-      <div className="deonar-modal-content" onClick={(e) => e.stopPropagation()} style={style}>
-        <div className="deonar-modal-header">
+    <div
+      className="deonar-modal-overlay"
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        width: "100vw",
+        height: "100vh",
+        backgroundColor: "rgba(0, 0, 0, 0.5)",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        zIndex: 1000,
+        overflow: "hidden",
+     
+      }}
+      onClick={onClose}
+    >
+      <div
+        className="deonar-modal-content"
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          backgroundColor: "#fff",
+          borderRadius: "8px",
+          padding: "20px",
+          maxWidth: "90%", // Ensures the modal is responsive horizontally
+          maxHeight: "90vh", // Ensures the modal doesn't overflow vertically
+          overflowY: "auto", // Adds scrolling if content overflows vertically
+          // width: "500px", // Default width
+          ...style, // Allows custom styling if passed
+        }}
+      >
+        <div
+          className="deonar-modal-header"
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "20px",
+          }}
+        >
           {selectedUUID ? (
-            <div style={{ paddingBottom: "20px", display: "flex", gap: "12px", alignItems: "center" }}>
-              <h3 style={{ fontWeight: "600", fontSize: "20px" }}>Active Arrival UUID: </h3>
+            <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+              <h3 style={{ fontWeight: "600", fontSize: "20px" }}>{t("Active Arrival UUID")}:</h3>
               <span
                 style={{
                   fontWeight: "bold",
@@ -33,8 +73,9 @@ const CustomModal = ({ isOpen, onClose, title, selectedUUID, children, style }) 
               borderRadius: "8px",
               cursor: "pointer",
             }}
+            onClick={onClose}
           >
-            <CloseSvg onClick={onClose} fill="#505A5F" />
+            <CloseSvg fill="#505A5F" />
           </div>
         </div>
         <div className="deonar-modal-body">{children}</div>

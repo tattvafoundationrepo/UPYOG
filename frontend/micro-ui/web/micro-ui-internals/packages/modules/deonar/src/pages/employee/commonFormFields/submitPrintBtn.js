@@ -149,7 +149,7 @@ const SubmitPrintButtonFields = ({ submit, print, isValid }) => {
           disabled={!isSaved}
           onClick={handlePrintClick}
         >
-          {t("BMC_PRINT")}
+          {t("Deonar_PRINT")}
         </button>
         <button
           type="submit"
@@ -158,7 +158,7 @@ const SubmitPrintButtonFields = ({ submit, print, isValid }) => {
           disabled={!isValid}
           onClick={handleSaveClick}
         >
-          {t("BMC_SAVE")}
+          {t("Deonar_SAVE")}
         </button>
       </div>
     </div>

@@ -2,7 +2,7 @@ import React, { Fragment, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useForm } from "react-hook-form";
 import MainFormHeader from "../commonFormFields/formMainHeading";
-import { columns, generateTokenNumber } from "./utils";
+import { helkariColumns, generateTokenNumber } from "./utils";
 import useDeonarCommon from "@upyog/digit-ui-libraries/src/hooks/deonar/useCommonDeonar";
 import CustomModal from "../commonFormFields/customModal";
 import CustomTable from "../commonFormFields/customTable";
@@ -11,98 +11,6 @@ import MultiColumnDropdown from "../commonFormFields/multiColumnDropdown";
 import SubmitButtonField from "../commonFormFields/submitBtn";
 import { Toast } from "@upyog/digit-ui-react-components";
 import ConfirmationDialog from "../commonFormFields/confirmationDialog";
-
-export const helkariColumns = (handleUUIDClick) => [
-  {
-    Header: "ID",
-    accessor: "id",
-    Cell: ({ row }) => row.index + 1,
-    getHeaderProps: (column) => ({
-      style: {
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center", // or any other styles you want
-      },
-    }),
-    isVisible: false,
-  },
-  {
-    Header: "Deonar_DD_Reference",
-    accessor: "ddreference",
-    sortable: true,
-    Cell: ({ row }) => (
-      <span onClick={() => handleUUIDClick(row.original.ddreference)} style={{ cursor: "pointer", color: "blue" }}>
-        {row.original.ddreference}
-      </span>
-    ),
-    isVisible: true,
-  },
-  {
-    Header: "DEONAR_SHOPKEEPER_NAME",
-    accessor: "traderName",
-    getHeaderProps: (column) => ({
-      style: {
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center", // or any other styles you want
-      },
-    }),
-    isVisible: true,
-  },
-
-  {
-    Header: "DEONAR_LICENSE_NUMBER",
-    accessor: "licenceNumber",
-    getHeaderProps: (column) => ({
-      style: {
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center", // or any other styles you want
-      },
-    }),
-    isVisible: true,
-  },
-  {
-    Header: "DEONAR_PERMISSION_NUMBER",
-    accessor: "importPermission",
-    getHeaderProps: (column) => ({
-      style: {
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center", // or any other styles you want
-      },
-    }),
-    isVisible: true,
-  },
-  {
-    Header: "Deonar_Arrival_Id",
-    accessor: "entryUnitId",
-  },
-  {
-    Header: "ARRIVAL_DATE_FIELD",
-    accessor: "dateOfArrival",
-    getHeaderProps: (column) => ({
-      style: {
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center", // or any other styles you want
-      },
-    }),
-    isVisible: true,
-  },
-  {
-    Header: "ARRIVAL_TIME_FIELD",
-    accessor: "timeOfArrival",
-    getHeaderProps: (column) => ({
-      style: {
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center", // or any other styles you want
-      },
-    }),
-    isVisible: true,
-  },
-];
 
 const Helkari = () => {
   const { t } = useTranslation();
@@ -233,12 +141,12 @@ const Helkari = () => {
   };
 
   const fields = [
-    { key: "entryUnitId", label: "Arrival UUID", isClickable: true },
-    { key: "traderName", label: "Trader Name" },
-    { key: "licenceNumber", label: "License Number" },
-    { key: "vehicleNumber", label: "Vehicle Number" },
-    { key: "dateOfArrival", label: "Arrival Date" },
-    { key: "timeOfArrival", label: "Arrival Time" },
+    { key: "entryUnitId", label: t("DEONAR_ARRIVAL_UUID"), isClickable: true },
+    { key: "traderName", label: t("DEONAR_TRADER_NAME") },
+    { key: "licenceNumber", label: t("DEONAR_LICENSE_NUMBER") },
+    { key: "vehicleNumber", label: t("Deonar_Vehicle_Number") },
+    { key: "dateOfArrival", label: t("ARRIVAL_DATE_FIELD") },
+    { key: "timeOfArrival", label: t("ARRIVAL_TIME_FIELD") },
   ];
 
   useEffect(() => {
@@ -278,9 +186,9 @@ const Helkari = () => {
   };
 
   const isAfterStablingVisibleColumns = [
-    { Header: "Animal Type", accessor: "animalType" },
+    { Header: t("Animal Type"), accessor: "animalType" },
     {
-      Header: "Animal Token",
+      Header: t("Animal Token"),
       accessor: "count",
       Cell: ({ row }) => {
         const animalType = row.original.animalType;
@@ -290,22 +198,22 @@ const Helkari = () => {
     },
     {
       accessor: "helkariDetails",
-      Header: "Assign Helkari",
+      Header: t("Assign Helkari"),
       Cell: ({ row }) => (
         <MultiColumnDropdown
           options={helkari} // Use appropriate options for Helkari
           selected={helkariOption[row.index] || []}
           onSelect={(e, selected) => handleHelkariSelect(row.index, selected)}
-          defaultLabel="Select Helkari"
+          defaultLabel={t("Select Helkari")}
           displayKeys={["label", "licenceNumber", "mobileNumber"]}
           optionsKey="value"
           defaultUnit="Options"
           autoCloseOnSelect={true}
           showColumnHeaders={true}
           headerMappings={{
-            label: "Name",
-            licenceNumber: "License",
-            mobileNumber: "Mobile Number",
+            label: t("Name"),
+            licenceNumber: t("License"),
+            mobileNumber: t("Mobile Number"),
           }}
         />
       ),
@@ -411,13 +319,13 @@ const Helkari = () => {
     <React.Fragment>
       <div className="bmc-card-full">
         <form onSubmit={handleSubmit(onSubmit)}>
-          <MainFormHeader title={"DEONAR_HELKARI"} />
+          <MainFormHeader title={t("DEONAR_HELKARI")} />
           <div className="bmc-card-row">
             <div className="bmc-row-card-header">
               {isMobileView && animalCount.map((data, index) => <TableCard data={data} key={index} fields={fields} onUUIDClick={handleUUIDClick} />)}
               <CustomTable
                 t={t}
-                columns={helkariColumns(handleUUIDClick)}
+                columns={helkariColumns(handleUUIDClick, t)}
                 data={animalCount}
                 manualPagination={false}
                 tableClassName={"deonar-scrollable-table"}
@@ -434,20 +342,20 @@ const Helkari = () => {
                           <div style={{ flex: 1, marginBottom: "20px" }}>
                             <label style={{ display: "flex", gap: "10px" }}>
                               <input type="checkbox" checked={isGlobalHelkariEnabled} onChange={handleGlobalHelkariToggle} />
-                              <h3 style={{ fontWeight: "500", fontSize: "16px" }}>Apply selected Helkari for all animals</h3>
+                              <h3 style={{ fontWeight: "500", fontSize: "16px" }}>{t("Apply selected Helkari for all animals")}</h3>
                             </label>
                             <MultiColumnDropdown
                               options={applicableHelkari} // Ensure you have this data populated
                               selected={globalHelkari ? [globalHelkari] : []}
                               onSelect={(e, selected) => handleGlobalHelkariSelect(selected)}
-                              defaultLabel="Select Helkari"
+                              defaultLabel={t("Select Helkari")}
                               displayKeys={["label", "licenceNumber", "mobileNumber"]}
                               optionsKey="value"
                               autoCloseOnSelect={true}
                               headerMappings={{
-                                label: "Name",
-                                licenceNumber: "License",
-                                mobileNumber: "Mobile Number",
+                                label: t("Name"),
+                                licenceNumber: t("License"),
+                                mobileNumber: t("Mobile Number"),
                               }}
                             />
                           </div>
@@ -455,7 +363,7 @@ const Helkari = () => {
                       </div>
 
                       <div className="no-uuid-message" style={{ flex: 1 }}>
-                        {showIndividualMessage && <p style={{ fontSize: "20px" }}>Note - You can select the Helkari individually also.</p>}
+                        {showIndividualMessage && <p style={{ fontSize: "20px" }}>{t("Note - You can select the Helkari individually also.")}</p>}
                       </div>
                     </div>
                     <div className="bmc-card-row">
@@ -490,7 +398,7 @@ const Helkari = () => {
       {toast && (
         <Toast
           error={toast.key === "error"}
-          label={t(toast.key === "success" ? "TRADING_DATA_SAVED_SUCCESSFULLY" : toast.action)}
+          label={t(toast.key === "success" ? t("HELKARI_DATA_SAVED_SUCCESSFULLY") : toast.action)}
           onClose={() => setToast(null)}
           style={{ maxWidth: "670px" }}
         />

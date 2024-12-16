@@ -39,7 +39,7 @@ const SubmitButtonField = ({ disabled }) => {
             cursor: disabled ? "not-allowed" : "pointer",
           }}
         >
-          {t("BMC_SAVE")}
+          {t("Deonar_SAVE")}
         </button>
       </div>
     </div>

@@ -1,20 +1,42 @@
 // // utils.js
-import { Dropdown } from "@upyog/digit-ui-react-components";
-import CustomChip from "../commonFormFields/deonarChip";
 
 import React, { useEffect, useState } from "react";
-import CustomModal from "../commonFormFields/customModal";
 import GenericAddRow from "../commonFormFields/genericAddRow";
 import { useTranslation } from "react-i18next";
 
-export const deColumns = [
+// export const deColumns = [
+//   {
+//     header: "ID",
+//     key: "id",
+//     render: (value, row, handleUUIDClick, index) => index + 1, // Display the sequence number
+//   },
+//   {
+//    Header: t("DEONAR_ARRIVAL_UUID"),
+//     sortable: true,
+//     key: "entryUnitId",
+//     render: (value, row, handleUUIDClick) => (
+//       <span onClick={() => handleUUIDClick(value)} style={{ cursor: "pointer", color: "blue" }}>
+//         {value}
+//       </span>
+//     ),
+//   },
+//   { Header: t("DEONAR_TRADER_NAME"), key: "traderName" },
+//   { Header: t("DEONAR_LICENSE_NUMBER"), key: "licenceNumber" },
+//   { header: "DEONAR_VEHICLE_NUMBER", key: "vehicleNumber" },
+//   {Header: t("ARRIVAL_DATE_FIELD"), key: "dateOfArrival" },
+//   { Header: t("ARRIVAL_TIME_FIELD"), key: "timeOfArrival" },
+//   { Header: t("DEONAR_PERMISSION_NUMBER"), key: "importPermission" },
+//   { header: "DEONAR_STAKEHOLDER", key: "stakeholderTypeName" },
+// ];
+
+export const deColumns = ({ t }) => [
   {
-    header: "ID",
+    header: t("ID"),
     key: "id",
     render: (value, row, handleUUIDClick, index) => index + 1, // Display the sequence number
   },
   {
-    header: "DEONAR_ARRIVAL_UUID",
+    header: t("DEONAR_ARRIVAL_UUID"),
     sortable: true,
     key: "entryUnitId",
     render: (value, row, handleUUIDClick) => (
@@ -23,36 +45,18 @@ export const deColumns = [
       </span>
     ),
   },
-  { header: "DEONAR_TRADER_NAME", key: "traderName" },
-  { header: "DEONAR_LICENSE_NUMBER", key: "licenceNumber" },
-  { header: "DEONAR_VEHICLE_NUMBER", key: "vehicleNumber" },
-  { header: "ARRIVAL_DATE_FIELD", key: "dateOfArrival" },
-  { header: "ARRIVAL_TIME_FIELD", key: "timeOfArrival" },
-  { header: "DEONAR_PERMISSION_NUMBER", key: "importPermission" },
-  { header: "DEONAR_STAKEHOLDER", key: "stakeholderTypeName" },
-  // {
-  //   key: "animalDetails",
-  //   header: "ANIMAL_DETAILS",
-  //   render: (animalDetails) => {
-  //     if (Array.isArray(animalDetails) && animalDetails.length > 0) {
-  //       return (
-  //         <div className="bmc-chip">
-  //           <div className="dropdownStyles">
-  //             {animalDetails.map((animal, index) => (
-  //               <CustomChip key={index} text={`${animal.animalType}: ${animal.count}`} style={{ backgroundColor: "#d1e7dd", color: "#0f5132" }} />
-  //             ))}
-  //           </div>
-  //         </div>
-  //       );
-  //     }
-  //     return "-";
-  //   },
-  // },
+  { header: t("DEONAR_TRADER_NAME"), key: "traderName" },
+  { header: t("DEONAR_LICENSE_NUMBER"), key: "licenceNumber" },
+  { header: t("DEONAR_VEHICLE_NUMBER"), key: "vehicleNumber" },
+  { header: t("ARRIVAL_DATE_FIELD"), key: "dateOfArrival" },
+  { header: t("ARRIVAL_TIME_FIELD"), key: "timeOfArrival" },
+  { header: t("DEONAR_PERMISSION_NUMBER"), key: "importPermission" },
+  { header: t("DEONAR_STAKEHOLDER"), key: "stakeholderTypeName" },
 ];
 
-export const columns = (handleUUIDClick) => [
+export const columns = (handleUUIDClick, t) => [
   {
-    Header: "ID",
+    Header: t("ID"),
     accessor: "id",
     Cell: ({ row }) => row.index + 1,
     getHeaderProps: (column) => ({
@@ -65,7 +69,7 @@ export const columns = (handleUUIDClick) => [
     isVisible: false,
   },
   {
-    Header: "DEONAR_ARRIVAL_UUID",
+    Header: t("DEONAR_ARRIVAL_UUID"),
     accessor: "entryUnitId",
     sortable: true,
     Cell: ({ row }) => (
@@ -76,7 +80,7 @@ export const columns = (handleUUIDClick) => [
     isVisible: true,
   },
   {
-    Header: "DEONAR_TRADER_NAME",
+    Header: t("DEONAR_TRADER_NAME"),
     accessor: "traderName",
     getHeaderProps: (column) => ({
       style: {
@@ -88,7 +92,7 @@ export const columns = (handleUUIDClick) => [
     isVisible: true,
   },
   {
-    Header: "DEONAR_LICENSE_NUMBER",
+    Header: t("DEONAR_LICENSE_NUMBER"),
     accessor: "licenceNumber",
     getHeaderProps: (column) => ({
       style: {
@@ -100,7 +104,7 @@ export const columns = (handleUUIDClick) => [
     isVisible: true,
   },
   {
-    Header: "DEONAR_PERMISSION_NUMBER",
+    Header: t("DEONAR_PERMISSION_NUMBER"),
     accessor: "importPermission",
     getHeaderProps: (column) => ({
       style: {
@@ -112,7 +116,7 @@ export const columns = (handleUUIDClick) => [
     isVisible: true,
   },
   {
-    Header: "ARRIVAL_DATE_FIELD",
+    Header: t("ARRIVAL_DATE_FIELD"),
     accessor: "dateOfArrival",
     getHeaderProps: (column) => ({
       style: {
@@ -124,7 +128,7 @@ export const columns = (handleUUIDClick) => [
     isVisible: true,
   },
   {
-    Header: "ARRIVAL_TIME_FIELD",
+    Header: t("ARRIVAL_TIME_FIELD"),
     accessor: "timeOfArrival",
     getHeaderProps: (column) => ({
       style: {
@@ -135,13 +139,6 @@ export const columns = (handleUUIDClick) => [
     }),
     isVisible: true,
   },
-
-  // Table Column Configuration
-  // {
-  //   accessor: "animalDetails",
-  //   Header: "ANIMAL_DETAILS",
-  //   Cell: ({ row }) => <AnimalDetailsCell row={row} />
-  // }
 ];
 
 export const createDynamicColumns = (handleUUIDClick, tableType) => {
@@ -250,7 +247,7 @@ export const createDynamicColumns = (handleUUIDClick, tableType) => {
           </span>
         ),
       },
-     
+
       {
         Header: "DEONAR_SHOPKEEPER_NAME",
         accessor: "shopkeeperName",
@@ -260,7 +257,7 @@ export const createDynamicColumns = (handleUUIDClick, tableType) => {
         accessor: "licenceNumber",
       },
       {
-        Header: "Deonar_Arrival_Id",
+        Header: "DEONAR_ARRIVAL_UUID",
         accessor: "arrivalId",
       },
     ];
@@ -296,7 +293,7 @@ export const createDynamicColumns = (handleUUIDClick, tableType) => {
         accessor: "importPermission",
       },
       {
-        Header: "Deonar_Arrival_Id",
+        Header: "DEONAR_ARRIVAL_UUID",
         accessor: "entryUnitId",
       },
       {
@@ -368,10 +365,6 @@ export const createDynamicColumns = (handleUUIDClick, tableType) => {
           </span>
         ),
       },
-      // {
-      //   Header: "DEONAR_Penalty_Unit",
-      //   accessor: "unit",
-      // },
       {
         Header: "DEONAR_StakeHolder_NAME",
         accessor: "stakeholderName",
@@ -380,10 +373,6 @@ export const createDynamicColumns = (handleUUIDClick, tableType) => {
         Header: "DEONAR_LICENSE_NUMBER",
         accessor: "licenceNumber",
       },
-      // {
-      //   Header: "ARRIVAL_Penalty_Amount",
-      //   accessor: "amount",
-      // },
     ];
   }
   if (tableType === "weighing") {
@@ -420,7 +409,7 @@ export const createDynamicColumns = (handleUUIDClick, tableType) => {
         accessor: "licenceNumber",
       },
       {
-        Header: "Deonar_Arrival_Id",
+        Header: "DEONAR_ARRIVAL_UUID",
         accessor: "arrivalId",
       },
     ];
@@ -428,6 +417,189 @@ export const createDynamicColumns = (handleUUIDClick, tableType) => {
 
   return baseColumns;
 };
+
+export const helkariColumns = (handleUUIDClick, t) => [
+  {
+    Header: t("ID"),
+    accessor: "id",
+    Cell: ({ row }) => row.index + 1,
+    getHeaderProps: (column) => ({
+      style: {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center", // or any other styles you want
+      },
+    }),
+    isVisible: false,
+  },
+  {
+    Header: t("Deonar_DD_Reference"),
+    accessor: "ddreference",
+    sortable: true,
+    Cell: ({ row }) => (
+      <span onClick={() => handleUUIDClick(row.original.ddreference)} style={{ cursor: "pointer", color: "blue" }}>
+        {row.original.ddreference}
+      </span>
+    ),
+    isVisible: true,
+  },
+  {
+    Header: t("DEONAR_SHOPKEEPER_NAME"),
+    accessor: "traderName",
+    getHeaderProps: (column) => ({
+      style: {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center", // or any other styles you want
+      },
+    }),
+    isVisible: true,
+  },
+
+  {
+    Header: t("DEONAR_LICENSE_NUMBER"),
+    accessor: "licenceNumber",
+    getHeaderProps: (column) => ({
+      style: {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center", // or any other styles you want
+      },
+    }),
+    isVisible: true,
+  },
+  {
+    Header: t("DEONAR_PERMISSION_NUMBER"),
+    accessor: "importPermission",
+    getHeaderProps: (column) => ({
+      style: {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center", // or any other styles you want
+      },
+    }),
+    isVisible: true,
+  },
+  {
+    Header: t("DEONAR_ARRIVAL_UUID"),
+    accessor: "entryUnitId",
+  },
+  {
+    Header: t("ARRIVAL_DATE_FIELD"),
+    accessor: "dateOfArrival",
+    getHeaderProps: (column) => ({
+      style: {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center", // or any other styles you want
+      },
+    }),
+    isVisible: true,
+  },
+  {
+    Header: t("ARRIVAL_TIME_FIELD"),
+    accessor: "timeOfArrival",
+    getHeaderProps: (column) => ({
+      style: {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center", // or any other styles you want
+      },
+    }),
+    isVisible: true,
+  },
+];
+
+export const DawanWalaColumns = (handleUUIDClick) => [
+  {
+    Header: "ID",
+    accessor: "id",
+    Cell: ({ row }) => row.index + 1,
+    getHeaderProps: (column) => ({
+      style: {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center", // or any other styles you want
+      },
+    }),
+    isVisible: false,
+  },
+  {
+    Header: "Deonar_DD_Reference",
+    accessor: "ddreference",
+    sortable: true,
+    Cell: ({ row }) => (
+      <span onClick={() => handleUUIDClick(row.original.ddreference)} style={{ cursor: "pointer", color: "blue" }}>
+        {row.original.ddreference}
+      </span>
+    ),
+    isVisible: true,
+  },
+  {
+    Header: "DEONAR_SHOPKEEPER_NAME",
+    accessor: "traderName",
+    getHeaderProps: (column) => ({
+      style: {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center", // or any other styles you want
+      },
+    }),
+    isVisible: true,
+  },
+  {
+    Header: "DEONAR_LICENSE_NUMBER",
+    accessor: "licenceNumber",
+    getHeaderProps: (column) => ({
+      style: {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center", // or any other styles you want
+      },
+    }),
+    isVisible: true,
+  },
+  {
+    Header: "DEONAR_PERMISSION_NUMBER",
+    accessor: "importPermission",
+    getHeaderProps: (column) => ({
+      style: {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center", // or any other styles you want
+      },
+    }),
+    isVisible: true,
+  },
+  {
+    Header: "Deonar_Arrival_Id",
+    accessor: "entryUnitId",
+  },
+  {
+    Header: "ARRIVAL_DATE_FIELD",
+    accessor: "dateOfArrival",
+    getHeaderProps: (column) => ({
+      style: {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center", // or any other styles you want
+      },
+    }),
+    isVisible: true,
+  },
+  {
+    Header: "ARRIVAL_TIME_FIELD",
+    accessor: "timeOfArrival",
+    getHeaderProps: (column) => ({
+      style: {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center", // or any other styles you want
+      },
+    }),
+    isVisible: true,
+  },
+];
 
 export function generateDynamicData(length, startId = 1) {
   const traderNames = [
@@ -487,48 +659,6 @@ export const useDebounce = (value, delay) => {
   return debouncedValue;
 };
 
-// const AnimalDetailsCell = ({ row }) => {
-//   const [isModalOpen, setIsModalOpen] = useState(false);
-
-//   const handleChipClick = () => {
-//     setIsModalOpen(true);
-//   };
-
-//   const handleCloseModal = () => {
-//     setIsModalOpen(false);
-//   };
-
-//   const animalDetails = row.original.animalDetails;
-
-//   return (
-//     <div>
-//       {/* Display single clickable chip */}
-//       <CustomChip
-//         text="View"
-//         onClick={handleChipClick}
-//         style={{ cursor: 'pointer', backgroundColor: '#d1e7dd', color: '#0f5132' }}
-//       />
-
-//       {/* Modal to show animal details as chips */}
-//       <CustomModal isOpen={isModalOpen} onClose={handleCloseModal} title={'Animal Details'}>
-//         <div className="animal-details-chips">
-//           {animalDetails && animalDetails.length > 0 ? (
-//             animalDetails.map((animal, index) => (
-//               <CustomChip
-//                 key={index}
-//                 text={`${animal.animalType}: ${animal.count}`}
-//                 style={{ backgroundColor: '#e0f7fa', color: '#00695c', margin: '5px' }}
-//               />
-//             ))
-//           ) : (
-//             <p>No animal details available</p>
-//           )}
-//         </div>
-//       </CustomModal>
-//     </div>
-//   );
-// };
-
 export const visibleColumns = [
   { Header: "Animal Type", accessor: "animalType" },
   { Header: "Animal Token", accessor: "count" },
@@ -537,16 +667,6 @@ export const visibleColumns = [
     Header: "Gawal Details",
     Cell: ({ row }) => <GenericAddRow />,
   },
-
-  // {
-  //   Header: "Actions",
-  //   accessor: "action",
-  //   Cell: ({ row }) => (
-  //     <span onClick={() => handleUUIDClick(row.original.employeeCode)} style={{ cursor: "pointer", color: "blue" }}>
-  //       <RemoveIcon />
-  //     </span>
-  //   ),
-  // },
 ];
 
 export const generateTokenNumber = (animalName, index) => {
@@ -569,7 +689,7 @@ const slaughterTypeOptions = [
 export const feeConfigs = {
   arrival: {
     fields: [
-      { type: "dropdown", label: "Payment Mode", name: "paymentMethod", required: true },
+      { type: "dropdown", label: ("Payment Mode"), name: "paymentMethod", required: true },
       { type: "input", label: "Reference Number", name: "transactionId", required: true },
     ],
     options: {
@@ -640,11 +760,7 @@ export const feeConfigs = {
   },
   weighing: {
     fields: [
-      // { type: "dropdown", label: "Deonar type of Animal", name: "weighingType", required: false },
-      // { type: "input", label: "Deonar carcass weight", name: "days", required: false },
-      // { type: "input", label: "Deonar Kena Weight", name: "days", required: false },
       { type: "dropdown", label: "Payment Mode", name: "paymentMethod", required: true },
-      // { type: "input", label: "Enter Amount", name: "feePerDay", required: true },
       { type: "input", label: "Reference Number", name: "transactionId", required: true },
     ],
     options: {
@@ -660,7 +776,6 @@ export const feeConfigs = {
       paymentMethod: paymentMethodOptions,
     },
   },
-  // Add configurations for other fee types here
 };
 
 export const collectionDynamicColumns = {
@@ -761,11 +876,6 @@ export const collectionDynamicColumns = {
       accessor: "totalhours",
       disableSortBy: true,
     },
-    // {
-    //   Header: "Total Parking Fee",
-    //   accessor: "total",
-    //   disableSortBy: true,
-    // },
   ],
   slaughter: [
     {

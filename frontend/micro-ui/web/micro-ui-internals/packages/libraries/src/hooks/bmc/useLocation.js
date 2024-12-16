@@ -1,5 +1,6 @@
 import { useQuery } from 'react-query';
 import { LocationService } from "../../services/elements/Location";
+import SchemeService from '../../services/elements/Scheme';
 
 const useLocation = (tenantId, locationType, config = {}) => {
     switch(locationType) {
@@ -12,7 +13,7 @@ const useLocation = (tenantId, locationType, config = {}) => {
         case 'Zone':
             return useQuery(["ZONE_DETAILS", tenantId ], () => LocationService.getZones(tenantId), config);
         default:
-            break
+            return useQuery(["PINCODE_DETAILS", tenantId ], () => SchemeService.getPincode(tenantId), config);
     } 
 }
 

@@ -203,9 +203,9 @@ const GatePass = () => {
                   autoCloseOnSelect={true}
                   showColumnHeaders={true}
                   headerMappings={{
-                    label: "Name",
-                    licenceNumber: "License Number",
-                    mobileNumber: "Mobile Number",
+                    label: t("Name"),
+                    licenceNumber: t("License"),
+                    mobileNumber: t("Mobile Number"),
                   }}
                 />
               </div>
@@ -245,23 +245,21 @@ const GatePass = () => {
                 </div>
 
                 <div className="bmc-card-row" style={{ borderBottom: "2px solid #ddd", paddingBottom: "10px", marginBottom: "20px" }}>
-                  <div className="">
-                    <div className="bmc-col2-card">
-                      <Label>
-                        {t("DEONAR_RECEIVERNAME")}: {data.receiverName || "N/A"}
-                      </Label>
-                      <Label>
-                        {t("DEONAR_RECEIVERCONTACT")}: {data.receiverContact || "N/A"}
-                      </Label>
-                    </div>
+                  <div className="bmc-col2-card">
+                    <Label>
+                      {t("DEONAR_RECEIVERNAME")}: {data.receiverName || "N/A"}
+                    </Label>
+                    <Label>
+                      {t("DEONAR_RECEIVERCONTACT")}: {data.receiverContact || "N/A"}
+                    </Label>
+                  </div>
+                  <div className="bmc-col2-card">
                     <Label>
                       {t("DEONAR_SHOPKEEPER")}: {globalShopkeeper?.label ? globalShopkeeper?.label : "N/A"}
                     </Label>
-                    <div className="bmc-col2-card">
-                      <Label>
-                        {t("DEONAR_VEHICLENUMBER")}: {data.vehicleNumber || "N/A"}
-                      </Label>
-                    </div>
+                    <Label>
+                      {t("DEONAR_VEHICLENUMBER")}: {data.vehicleNumber || "N/A"}
+                    </Label>
                   </div>
                 </div>
 

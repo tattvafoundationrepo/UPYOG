@@ -47,6 +47,7 @@ const FeeConfirmationPage = ({
         backgroundColor: "#fff",
         fontFamily: "Arial, sans-serif",
         boxShadow: "0px 0px 10px rgba(0, 0, 0, 0.1)",
+        maxHeight:'517px'
       }}
     >
       {/* Bill Header */}
@@ -123,7 +124,7 @@ const FeeConfirmationPage = ({
       {/* Bill Summary / Footer */}
       <div style={{ borderTop: "2px solid #ddd", paddingTop: "10px", marginTop: "20px", textAlign: "center" }}>
         <p style={{ fontWeight: "bold", fontSize: "18px" }}>Total: ₹ {feevalue || "0"}</p>
-        <p style={{ fontSize: "14px", marginTop: "10px" }}>Thank you for your payment!</p>
+        {/* <p style={{ fontSize: "14px", marginTop: "10px" }}>Thank you for your payment!</p> */}
       </div>
     </div>
   );

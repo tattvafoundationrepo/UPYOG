@@ -393,9 +393,9 @@ const AnteMortemInspectionPage = () => {
                     <h3 className="bmc-title">{t("Inspection Point")}</h3>
                     <RadioButtons
                       t={t}
-                      label="Inspection Point"
+                      label={t("Inspection Point")}
                       options={inspectionTypes.map((type) => type.label)}
-                      style={{ display: "flex", marginTop: "10px", flexDirection: "column" }}
+                      style={{ display: "flex", marginTop: "45px", flexDirection: "column" }}
                       selectedOption={radioValueCheck}
                       onSelect={handleRadioChange}
                     />
@@ -407,7 +407,7 @@ const AnteMortemInspectionPage = () => {
             <div className="bmc-row-card-header" style={{ width: "80%" }}>
               <CustomTable
                 t={t}
-                columns={columns(handleUUIDClick)}
+                columns={columns(handleUUIDClick, t)}
                 data={ArrivalData}
                 disableSort={false}
                 autoSort={false}
@@ -428,7 +428,7 @@ const AnteMortemInspectionPage = () => {
                 </span>
               </div>
             ) : (
-              <Header style={{ color: "red" }}>{`${t(" Arrival UUID")} - ${t("Please Select Arrival UUID from Above Table")}`}</Header>
+              <Header style={{ color: "red" }}>{`${t("Arrival UUID")} - ${t("Please Select Arrival UUID from Above Table")}`}</Header>
             )}
           </div>
           <div className="bmc-card-row">
@@ -443,7 +443,7 @@ const AnteMortemInspectionPage = () => {
                 t={t}
                 columns={[
                   {
-                    Header: "Edit",
+                    Header: t("Edit"),
                     accessor: "edit",
                     Cell: ({ row }) => {
                       const editable = row.original.editable;
@@ -507,7 +507,7 @@ const AnteMortemInspectionPage = () => {
           approxAgeOptions={approxAgeOptions}
           bodyColorOptions={bodyColorOptions}
           pregnancyOptions={pregnancyOptions}
-          Options={opinionOptions}
+          opinionOptions={opinionOptions}
           eyesOptions={eyesOptions}
           nostrilOptions={nostrilOptions}
           muzzleOptions={muzzleOptions}
