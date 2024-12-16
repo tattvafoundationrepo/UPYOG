@@ -134,10 +134,11 @@ const MultiColumnDropdown = ({
   };
 
   return (
-    <div className="multi-column-dropdown-wrap" ref={dropdownRef}>
+    <div className="multi-select-dropdown-wrap" ref={dropdownRef}>
       <div className={`master${active ? `-active` : ""}`}>
         <input
-          className={`${className || ""} cursorPointer`}
+          // className={`${className || ""} cursorPointer`}
+          className="cursorPointer"
           type="text"
           ref={inputRef}
           onFocus={() => {
