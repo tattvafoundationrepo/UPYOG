@@ -13,6 +13,7 @@ import digit.web.models.Slaughter;
 import digit.web.models.SlaughterRequest;
 import digit.web.models.SlaughterUnit;
 import digit.web.models.SlaughterUnitRequest;
+import digit.web.models.security.AnimalDetail;
 
 @Service
 public class AnimalSlaughterService {
@@ -33,9 +34,12 @@ public class AnimalSlaughterService {
                 .createdTime(epochTime)
                 .lastModifiedTime(epochTime)
                 .build();
-
-        request.setAudit(audit);
-        producer.push("topic_deonar_slaughtered_animals", request);
+        for (AnimalDetail details : request.getSlaughterDetails().getDetails()) {
+            request.setAudit(audit);
+            request.getSlaughterDetails().setAnimalTypeId(details.getAnimalTypeId().intValue());
+            request.getSlaughterDetails().setToken(details.getCount());
+            producer.push("topic_deonar_slaughtered_animals", request);
+        }
         return request.getSlaughterDetails();
 
     }

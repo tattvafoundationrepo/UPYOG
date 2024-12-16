@@ -1,5 +1,8 @@
 package digit.web.models;
 
+import java.util.List;
+
+import digit.web.models.security.AnimalDetail;
 import lombok.Builder;
 import lombok.Data;
 
@@ -17,5 +20,6 @@ public class Slaughter {
     private Boolean slaughtering;      
     private Integer slaughterUnit;     
     private String slaughterType; 
+    private List<AnimalDetail> details;
 
 }
