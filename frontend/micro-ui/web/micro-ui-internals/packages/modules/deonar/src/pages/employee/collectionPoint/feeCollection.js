@@ -1118,7 +1118,7 @@ const FeeCollection = () => {
           </div>
 
           <div style={{ display: "flex", gap: "10px", float: "inline-end", width: "100%" }}>
-            <div className="bmc-col-large-header" style={{ width: "100%" }}>
+            <div className="bmc-col-large-header" style={{ width: "50%" }}>
               <div className="bmc-row-card-header" style={{ display: "flex", flexDirection: "column", gap: "45px" }}>
                 {selectedUUID ? (
                   <>
@@ -1195,7 +1195,7 @@ const FeeCollection = () => {
                 )}
               </div>
             </div>
-            <div className="bmc-col-large-header" style={{ width: "100%" }}>
+            <div className="bmc-col-large-header" style={{ width: "50%" }}>
               <div className="bmc-row-card-header">
                 {selectedUUID ? (
                   !isConfirmationPage && (
