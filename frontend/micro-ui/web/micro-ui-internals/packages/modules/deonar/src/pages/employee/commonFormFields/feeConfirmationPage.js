@@ -62,7 +62,7 @@ const FeeConfirmationPage = ({
           <CustomTable
             t={t}
             columns={Tablecolumns}
-            tableClassName=" deonar-scrollable-table"
+            tableClassName=" deonar-custom-scroll"
             data={tableData}
             disableSort={false}
             autoSort={false}
