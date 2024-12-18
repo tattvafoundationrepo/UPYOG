@@ -79,6 +79,9 @@ public class InspectionDetails {
 
     @JsonProperty("opinion")
     private String opinion;
+   
+    @JsonProperty("opinionId")
+    private Integer opinionId;
 
     @JsonProperty("other")
     private String other;
