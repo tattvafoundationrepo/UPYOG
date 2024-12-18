@@ -55,10 +55,7 @@ public class InspectionRowMapper implements ResultSetExtractor<List<InspectionDe
                 detailsBuilder.other(rs.getString("other"));
             }
             
-            // if (hasColumn(rs, "result")) {
-            //     detailsBuilder.jsonStringReport(rs.getString("result"));
-            // }
-             
+           
             InspectionDetails details = detailsBuilder.build();
             
             if (hasColumn(rs, "result")) {
@@ -69,20 +66,12 @@ public class InspectionRowMapper implements ResultSetExtractor<List<InspectionDe
                 }
             }
 
-            // if (hasColumn(rs, "report")) {
-            //     try {
-            //         mapJsonToInspectionDetails(rs.getString("report"), details);
-            //     } catch (Exception e) {
-            //         e.printStackTrace();
-            //     }
-            // }
-
-            if (hasColumn(rs, "animaltypeid") && hasColumn(rs, "tokenno") && hasColumn(rs, "flag")) {
+            if (hasColumn(rs, "animaltypeid") && hasColumn(rs, "token") ) {
                 AnimalDetail animalDetail = AnimalDetail.builder()
                         .animalType(getAnimalType(rs.getLong("animaltypeid")))
-                        .count(rs.getInt("tokenno"))
+                        .count(rs.getInt("token"))
                         .animalTypeId(rs.getLong("animaltypeid"))
-                        .editable(rs.getBoolean("flag"))
+                        .editable(true)
                         .build();
                 details.setAnimalDetail(animalDetail);
             }
