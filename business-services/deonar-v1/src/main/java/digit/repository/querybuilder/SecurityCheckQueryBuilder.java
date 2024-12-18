@@ -90,10 +90,10 @@ public class SecurityCheckQueryBuilder {
             query.append("select distinct * from eg_deonar_Ins_List_2_Stakeholder ");
         }
         if (criteria.getInspectionId() == 3) {
-            query.append("select * from eg_deonar_vlistforpremortem ");
+            query.append("select distinct * from eg_deonar_Ins_List_3_Stakeholder ");
         }
         if (criteria.getInspectionId() == 4) {
-            query.append("select * from eg_deonar_vlistforpostmortem ");
+            query.append("select distinct * from eg_deonar_ins_list_4 ");
         }
         return query.toString();
     }

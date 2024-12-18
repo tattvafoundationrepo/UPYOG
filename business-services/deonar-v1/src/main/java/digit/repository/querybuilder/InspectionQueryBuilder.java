@@ -27,11 +27,12 @@ public class InspectionQueryBuilder {
             """; // where arrivalid = '1734504626390';
 
     private static final String PREMORTEM_DEFAULT_DETAILS = """
-            select * from eg_deonar_vpremortemdefaultsave
+            select distinct * from eg_deonar_Ins_List_3 A
+            left join eg_deonar_inspection_opinion c on A.opinion = c.id
             """;
 
     private static final String POSTMORTEM_DEFAULT_DETAILS = """
-            select * from eg_deonar_vpostmortemdefaultsave
+            select distinct * from eg_deonar_ins_list_4
             """;
 
     public String getSearchQuery(InspectionSearchCriteria criteria, List<Object> preparedStmtList) {
