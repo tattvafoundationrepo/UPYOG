@@ -22,7 +22,7 @@ import lombok.Setter;
 public class BoundaryResponse {
     @JsonProperty("ResponseInfo")
     private ResponseInfo responseInfo;
-    @JsonProperty("Bank Details")
+    @JsonProperty("BoundaryDetails")
     private List<Boundary> details;
 
 }
