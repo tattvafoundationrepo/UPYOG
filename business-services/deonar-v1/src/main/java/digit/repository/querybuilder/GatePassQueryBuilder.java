@@ -3,7 +3,6 @@ package digit.repository.querybuilder;
 import java.util.List;
 
 import org.springframework.stereotype.Component;
-import org.springframework.util.ObjectUtils;
 
 import digit.web.models.GatePassSearchCriteria;
 

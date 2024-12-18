@@ -84,10 +84,10 @@ public class SecurityCheckQueryBuilder {
         StringBuilder query = new StringBuilder();
         // preparedStmtList.add(criteria.getInspectionId());
         if (criteria.getInspectionId() == 1) {
-            query.append("select * from eg_deonar_vlistforantemortem ");
+            query.append("select distinct * from eg_deonar_Ins_List_1_Stakeholder ");
         }
         if (criteria.getInspectionId() == 2) {
-            query.append("select * from  eg_deonar_vlistforreantemortem ");
+            query.append("select distinct * from eg_deonar_Ins_List_2_Stakeholder ");
         }
         if (criteria.getInspectionId() == 3) {
             query.append("select * from eg_deonar_vlistforpremortem ");

@@ -13,6 +13,8 @@ public class CommonSearchCriteria {
     private String option;
 
     private Integer id;
+
+    private Integer inspectionTypeId ;
 }
 
 

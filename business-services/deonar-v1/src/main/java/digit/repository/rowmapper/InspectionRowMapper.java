@@ -39,43 +39,43 @@ public class InspectionRowMapper implements ResultSetExtractor<List<InspectionDe
             if (hasColumn(rs, "inspectionid")) {
                 detailsBuilder.inspectionId(rs.getLong("inspectionid"));
             }
-            if (hasColumn(rs, "resultremark")) {
-                detailsBuilder.resultremark(rs.getString("resultremark"));
+            if (hasColumn(rs, "defaultremark")) {
+                detailsBuilder.resultremark(rs.getString("defaultremark"));
             }
             if (hasColumn(rs, "id")) {
                 detailsBuilder.inspectionDetailId(rs.getLong("id"));
             }
-            if (hasColumn(rs, "inspectiontype")) {
-                detailsBuilder.inspectionId(rs.getLong("inspectiontype"));
+            if (hasColumn(rs, "type")) {
+                detailsBuilder.inspectionId(rs.getLong("type"));
             }
-            if (hasColumn(rs, "opinion")) {
-                detailsBuilder.opinion(rs.getString("opinion"));
+            if (hasColumn(rs, "name")) {
+                detailsBuilder.opinion(rs.getString("name"));
             }
             if (hasColumn(rs, "other")) {
                 detailsBuilder.other(rs.getString("other"));
             }
             
-            if (hasColumn(rs, "jsonStringReport")) {
-                detailsBuilder.jsonStringReport(rs.getString("jsonStringReport"));
-            }
+            // if (hasColumn(rs, "result")) {
+            //     detailsBuilder.jsonStringReport(rs.getString("result"));
+            // }
              
             InspectionDetails details = detailsBuilder.build();
             
-            if (hasColumn(rs, "jsonStringReport")) {
+            if (hasColumn(rs, "result")) {
                 try {
-                    mapJsonToInspectionDetails(rs.getString("jsonStringReport"), details);
+                    mapJsonToInspectionDetails(rs.getString("result"), details);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
 
-            if (hasColumn(rs, "report")) {
-                try {
-                    mapJsonToInspectionDetails(rs.getString("report"), details);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
+            // if (hasColumn(rs, "report")) {
+            //     try {
+            //         mapJsonToInspectionDetails(rs.getString("report"), details);
+            //     } catch (Exception e) {
+            //         e.printStackTrace();
+            //     }
+            // }
 
             if (hasColumn(rs, "animaltypeid") && hasColumn(rs, "tokenno") && hasColumn(rs, "flag")) {
                 AnimalDetail animalDetail = AnimalDetail.builder()

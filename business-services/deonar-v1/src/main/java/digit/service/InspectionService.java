@@ -151,7 +151,7 @@ public class InspectionService {
         
         
         List<InspectionDetails> details = new ArrayList<>();
-        Long id = repository.getArrivalId(criteria.getEntryUnitId(), criteria.getInspectionType());
+        String id = repository.getArrivalId(criteria.getEntryUnitId(), criteria.getInspectionType());
         if (id != null) {
             criteria.setIsInitialCheck(true);
             details = repository.getInspectionDetails(criteria);

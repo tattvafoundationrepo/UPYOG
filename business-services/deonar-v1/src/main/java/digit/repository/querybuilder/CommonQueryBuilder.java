@@ -2,8 +2,8 @@ package digit.repository.querybuilder;
 
 import java.util.List;
 
-import org.apache.commons.lang.ObjectUtils;
 import org.springframework.stereotype.Component;
+import org.springframework.util.ObjectUtils;
 
 import digit.repository.CommonSearchCriteria;
 
@@ -85,10 +85,19 @@ public class CommonQueryBuilder {
             case "slaughterunit":
                 query.append("eg_deonar_slaughter_unit as tbl");
                 break;
+            case "opinion":
+                query.append("eg_deonar_inspection_opinion ");
+                break;    
             default:
                 query.append("(Select 0 as id, 'No Record found'  as name) as tbl ");
                 break;
         }
+        if(!ObjectUtils.isEmpty(criteria.getInspectionTypeId())){
+            addClauseIfRequired(query, preparedStmtList);
+            query.append(" \"InspectionType\" = ? ");
+            preparedStmtList.add(criteria.getInspectionTypeId());
+        }
+
         query.append(ORDERBY_NAME);
         return query.toString();
     }
@@ -101,6 +110,15 @@ public class CommonQueryBuilder {
                                 """;
         preparedStmtList.add(commonSearchCriteria.getId());
          return sql;                       
+    }
+
+    private void addClauseIfRequired(StringBuilder query, List<Object> preparedStmtList) {
+
+        if (preparedStmtList.isEmpty()) {
+            query.append(" WHERE ");
+        } else {
+            query.append(" AND ");
+        }
     }
 
 }

@@ -44,12 +44,13 @@ public class InspectionRepository {
         return jdbcTemplate.queryForObject(sql, String.class, type, animaltypeid);
     }
 
-    public Long getArrivalId(String arrivalId,Long type) {
+    public String getArrivalId(String arrivalId,Long type) {
         String sql = "SELECT edi.arrivalid " +
                 "FROM eg_deonar_inspection edi " +
                 "WHERE edi.arrivalid = ? and edi.inspectiontype = ?";
+        log.info("Executing security check search with query: {}", sql);        
         try {
-            return jdbcTemplate.queryForObject(sql, Long.class, arrivalId,type);
+            return jdbcTemplate.queryForObject(sql, String.class, arrivalId,type);
         } catch (EmptyResultDataAccessException e) {
             return null; 
         }

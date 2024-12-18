@@ -22,69 +22,62 @@ public class SecurityCheckDetailRowMapper implements ResultSetExtractor<List<Sec
         Map<String, SecurityCheckDetails> map = new LinkedHashMap<>();
 
         while (rs.next()) {
-            String ddreference = null;
-
-            if (isColumnPresent(rs, "ddreference")) {
-                ddreference = rs.getString("ddreference");
-            }
-        
-            String arrivalId = rs.getString("arrivalid");
-            String uniqueKey = (ddreference != null) ? ddreference : arrivalId;
-            
+            String ddreference = isColumnPresent(rs, "ddreference") ? rs.getString("ddreference") : null;
+            String arrivalId = isColumnPresent(rs, "arrivalid") ? rs.getString("arrivalid") : null;
 
             if (arrivalId == null) continue;  
 
+            String uniqueKey = (ddreference != null) ? ddreference : arrivalId;
             SecurityCheckDetails details = map.get(uniqueKey);
 
             if (details == null) {
                 details = SecurityCheckDetails.builder()
                     .entryUnitId(arrivalId)
-                    .importPermission(rs.getString("importpermission"))
-                    .stakeholderId(rs.getLong("stakeholderid"))
-                    .traderName(rs.getString("stakeholdername"))
-                    .dateOfArrival(rs.getDate("dateofarrival").toLocalDate().toString())  // Correct date handling
-                    .timeOfArrival(rs.getTime("timeofarrival").toLocalTime().toString())  // Correct time handling
-                    .permissionDate(rs.getDate("permissiondate").toLocalDate().toString())
-                    .vehicleNumber(rs.getString("vehiclenumber"))
-                    .mobileNumber(rs.getLong("mobilenumber"))
-                    .email(rs.getString("email"))
-                    .stakeholderTypeName(rs.getString("stakeholdertypename"))
-                    .licenceNumber(rs.getString("licencenumber"))
-                    .registrationNumber(rs.getString("registrationnumber"))
-                    .validToDate(rs.getDate("validtodate").toLocalDate().toString())
-                    .ddreference(ddreference)  // Correct date handling  
+                    .importPermission(isColumnPresent(rs, "importpermission") ? rs.getString("importpermission") : null)
+                    .stakeholderId(isColumnPresent(rs, "stakeholderid") ? rs.getLong("stakeholderid") : null)
+                    .traderName(isColumnPresent(rs, "stakeholdername") ? rs.getString("stakeholdername") : null)
+                    .dateOfArrival(isColumnPresent(rs, "dateofarrival") ? rs.getDate("dateofarrival").toLocalDate().toString() : null)
+                    .timeOfArrival(isColumnPresent(rs, "timeofarrival") ? rs.getTime("timeofarrival").toLocalTime().toString() : null)
+                    .permissionDate(isColumnPresent(rs, "permissiondate") ? rs.getDate("permissiondate").toLocalDate().toString() : null)
+                    .vehicleNumber(isColumnPresent(rs, "vehiclenumber") ? rs.getString("vehiclenumber") : null)
+                    .mobileNumber(isColumnPresent(rs, "mobilenumber") ? rs.getLong("mobilenumber") : null)
+                    .email(isColumnPresent(rs, "email") ? rs.getString("email") : null)
+                    .stakeholderTypeName(isColumnPresent(rs, "stakeholdertypename") ? rs.getString("stakeholdertypename") : null)
+                    .licenceNumber(isColumnPresent(rs, "licencenumber") ? rs.getString("licencenumber") : null)
+                    .registrationNumber(isColumnPresent(rs, "registrationnumber") ? rs.getString("registrationnumber") : null)
+                    .validToDate(isColumnPresent(rs, "validtodate") ? rs.getDate("validtodate").toLocalDate().toString() : null)
+                    .ddreference(ddreference)
                     .animalDetails(new ArrayList<>())
                     .build();
-                    
-                 map.put(uniqueKey, details);
+                
+                map.put(uniqueKey, details);
             }
 
             AnimalDetail animalDetail = AnimalDetail.builder()
-                .animalTypeId(rs.getLong("animaltypeid"))
-                .animalType(rs.getString("animaltype"))
-                .count(rs.getInt("token"))
-                .tradable(rs.getBoolean("tradable"))
-                .stable(rs.getBoolean("stable"))
+                .animalTypeId(isColumnPresent(rs, "animaltypeid") ? rs.getLong("animaltypeid") : null)
+                .animalType(isColumnPresent(rs, "animaltype") ? rs.getString("animaltype") : null)
+                .count(isColumnPresent(rs, "token") ? rs.getInt("token") : null)
+                .tradable(isColumnPresent(rs, "tradable") ? rs.getBoolean("tradable") : false)
+                .stable(isColumnPresent(rs, "stable") ? rs.getBoolean("stable") : false)
                 .build();
+            
             details.getAnimalDetails().add(animalDetail);
         }
 
         return new ArrayList<>(map.values());
     }
 
-
     private boolean isColumnPresent(ResultSet rs, String columnName) {
-    try {
-        ResultSetMetaData metaData = rs.getMetaData();
-        int columnCount = metaData.getColumnCount();
-        for (int i = 1; i <= columnCount; i++) {
-            if (metaData.getColumnName(i).equalsIgnoreCase(columnName)) {
-                return true;
+        try {
+            ResultSetMetaData metaData = rs.getMetaData();
+            int columnCount = metaData.getColumnCount();
+            for (int i = 1; i <= columnCount; i++) {
+                if (metaData.getColumnName(i).equalsIgnoreCase(columnName)) {
+                    return true;
+                }
             }
-        }
-    } catch (SQLException e) {
-        
+        } catch (SQLException e) {
+                    }
+        return false; 
     }
-    return false; 
-}
 }

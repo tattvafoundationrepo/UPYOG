@@ -14,12 +14,17 @@ public class InspectionQueryBuilder {
             """;
 
     private static final String ANTEMORTEM_DEFAULT_DETAILS = """
-            select * from eg_deonar_vantemortemdefaultsave
-            """;
+                      Select *
+            from eg_deonar_default_inspection_record A
+            left join  eg_deonar_Ins_List_1 b on A.animaltypeid=b.animaltypeid
+            left join eg_deonar_inspection_opinion c on A.opinion = c.id
+
+                        """; // where type =1 and arrivalid = '1734505310153';
 
     private static final String RE_ANTEMORTEM_DEFAULT_DETAILS = """
-            select * from eg_deonar_vreantemortemdefaultsave
-            """;
+            select distinct * from eg_deonar_Ins_List_2 A
+            left join eg_deonar_inspection_opinion c on A.opinion = c.id
+            """; // where arrivalid = '1734504626390';
 
     private static final String PREMORTEM_DEFAULT_DETAILS = """
             select * from eg_deonar_vpremortemdefaultsave
@@ -30,36 +35,34 @@ public class InspectionQueryBuilder {
             """;
 
     public String getSearchQuery(InspectionSearchCriteria criteria, List<Object> preparedStmtList) {
-        
-        StringBuilder query  = new StringBuilder();
-        if(criteria.getIsInitialCheck() == true){
-             query = new StringBuilder(BASE_QUERY2);
+
+        StringBuilder query = new StringBuilder();
+        if (criteria.getIsInitialCheck() == true) {
+            query = new StringBuilder(BASE_QUERY2);
+        } else {
+            int inpectionType = criteria.getInspectionType().intValue();
+
+            switch (inpectionType) {
+
+                case 1:
+                    query.append(ANTEMORTEM_DEFAULT_DETAILS);
+                    break;
+
+                case 2:
+                    query.append(RE_ANTEMORTEM_DEFAULT_DETAILS);
+                    break;
+
+                case 3:
+                    query.append(PREMORTEM_DEFAULT_DETAILS);
+                    break;
+
+                case 4:
+                    query.append(POSTMORTEM_DEFAULT_DETAILS);
+                    break;
+
+            }
+
         }
-        else{
-         int inpectionType = criteria.getInspectionType().intValue();
-         
-         switch(inpectionType) {
-
-            case 1 :
-               query.append(ANTEMORTEM_DEFAULT_DETAILS);
-               break;
-
-            case  2 :
-               query.append(RE_ANTEMORTEM_DEFAULT_DETAILS);
-               break;   
-
-            case  3 : 
-               query.append(PREMORTEM_DEFAULT_DETAILS);
-               break;  
-               
-            case  4 : 
-               query.append(POSTMORTEM_DEFAULT_DETAILS);
-               break;
-
-         }
-
-        }
-        
 
         if (criteria.getEntryUnitId() != null) {
             addClauseIfRequired(query, preparedStmtList);
@@ -68,7 +71,7 @@ public class InspectionQueryBuilder {
         }
         if (criteria.getInspectionType() != null && criteria.getIsInitialCheck() == true) {
             addClauseIfRequired(query, preparedStmtList);
-            query.append(" inspectiontype = ? ");
+            query.append(" type = ? ");
             preparedStmtList.add(criteria.getInspectionType());
         }
         if (criteria.getAnimalTypeId() != null) {
