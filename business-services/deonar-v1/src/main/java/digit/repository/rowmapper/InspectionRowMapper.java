@@ -30,6 +30,8 @@ public class InspectionRowMapper implements ResultSetExtractor<List<InspectionDe
     @Override
     public List<InspectionDetails> extractData(ResultSet rs) throws SQLException, DataAccessException {
         List<InspectionDetails> detailsList = new ArrayList<>();
+         
+        System.out.println(rs.getFetchSize());
         while (rs.next()) {
             InspectionDetails.InspectionDetailsBuilder detailsBuilder = InspectionDetails.builder();
 
@@ -51,10 +53,16 @@ public class InspectionRowMapper implements ResultSetExtractor<List<InspectionDe
             if (hasColumn(rs, "name")) {
                 detailsBuilder.opinion(rs.getString("name"));
             }
+            if (hasColumn(rs, "opinion")) {
+                detailsBuilder.opinionId(rs.getInt("opinion"));
+            }
             if (hasColumn(rs, "other")) {
                 detailsBuilder.other(rs.getString("other"));
             }
-            
+            if (hasColumn(rs, "result")) {
+                detailsBuilder.jsonStringReport(rs.getString("result"));
+            }
+
            
             InspectionDetails details = detailsBuilder.build();
             
@@ -65,6 +73,16 @@ public class InspectionRowMapper implements ResultSetExtractor<List<InspectionDe
                     e.printStackTrace();
                 }
             }
+
+
+            if (hasColumn(rs, "report")) {
+                try {
+                    mapJsonToInspectionDetails(rs.getString("report"), details);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            
 
             if (hasColumn(rs, "animaltypeid") && hasColumn(rs, "token") ) {
                 AnimalDetail animalDetail = AnimalDetail.builder()
