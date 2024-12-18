@@ -46,6 +46,9 @@ public class InspectionQueryBuilder {
 
                 case 1:
                     query.append(ANTEMORTEM_DEFAULT_DETAILS);
+                    addClauseIfRequired(query, preparedStmtList);
+                    query.append(" type = ? ");
+                    preparedStmtList.add(1);
                     break;
 
                 case 2:
@@ -71,8 +74,8 @@ public class InspectionQueryBuilder {
         }
         if (criteria.getInspectionType() != null && criteria.getIsInitialCheck() == true) {
             addClauseIfRequired(query, preparedStmtList);
-            query.append(" type = ? ");
-            preparedStmtList.add(criteria.getInspectionType());
+            query.append(" inspectiontype = ? ");
+            preparedStmtList.add(1);
         }
         if (criteria.getAnimalTypeId() != null) {
             addClauseIfRequired(query, preparedStmtList);
@@ -96,4 +99,3 @@ public class InspectionQueryBuilder {
     }
 
 }
-
