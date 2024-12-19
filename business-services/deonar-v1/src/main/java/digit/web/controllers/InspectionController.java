@@ -57,6 +57,18 @@ public class InspectionController {
         }
     }
 
+    
+    @PostMapping("/inspection/submit")
+    public ResponseEntity<Object> submitInspection(@RequestBody InspectionSearchCriteria criteria ){
+        try {
+            inspectionService.submitInspectionDetails(criteria);
+            return new ResponseEntity<>("Record Submitted", HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(new InspectionRequest(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
   
 
 }

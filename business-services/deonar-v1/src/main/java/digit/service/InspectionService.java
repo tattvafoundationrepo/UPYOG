@@ -185,6 +185,12 @@ public class InspectionService {
         return details;
     }
 
+    public void submitInspectionDetails(InspectionSearchCriteria criteria) {
+
+        producer.push("update-Submit-flag", criteria);
+
+    }
+
    
 
 
