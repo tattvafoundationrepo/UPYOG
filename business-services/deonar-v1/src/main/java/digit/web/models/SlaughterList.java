@@ -22,5 +22,7 @@ public class SlaughterList {
     private List<AnimalDetail> animalAssignmentDetailsList;
     private String ddReference;
 
-
+    private String purchaseDate;
+    private String purchaseTime;
+    
 }

@@ -47,7 +47,7 @@ public class SecurityCheckQueryBuilder {
             """;
     private static final String BASE_QUERY_SLAUGHTER_LIST = """
 
-             select * from eg_deonar_vslaughterlist
+             select  * from eg_deonar_list_slaughter
             """;
     private static final String BASE_QUERY_DAWANWALA_ASSIGNMENT_LIST = """
 
@@ -93,7 +93,7 @@ public class SecurityCheckQueryBuilder {
             query.append("select distinct * from eg_deonar_Ins_List_3_Stakeholder ");
         }
         if (criteria.getInspectionId() == 4) {
-            query.append("select distinct * from eg_deonar_ins_list_4 ");
+            query.append("select distinct * from eg_deonar_ins_list_4_stakeholder ");
         }
         return query.toString();
     }

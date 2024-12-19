@@ -25,7 +25,7 @@ public class SlaughterListRowMapper implements ResultSetExtractor<List<Slaughter
 
         while (rs.next()) {
             String ddReference = rs.getString("ddreference");
-            String assigneeId = rs.getString("assigneeid");
+            String assigneeId = rs.getString("stakeholderid");
             String arrivalId = rs.getString("arrivalid");
 
             SlaughterList shopkeeperDetails = shopkeeperMap.get(ddReference);
@@ -33,23 +33,25 @@ public class SlaughterListRowMapper implements ResultSetExtractor<List<Slaughter
                 shopkeeperDetails = SlaughterList.builder()
                         .ddReference(ddReference)
                         .stakeholderId(assigneeId)
-                        .shopkeeperName(rs.getString("shopkeeper"))
-                        .licenceNumber(rs.getString("licence"))
-                        .mobileNumber(rs.getString("mobile"))
+                        .shopkeeperName(rs.getString("stakeholdername"))
+                        .licenceNumber(rs.getString("licencenumber"))
+                        .mobileNumber(rs.getString("mobilenumber"))
                         .arrivalId(arrivalId)
                         .animalAssignmentDetailsList(new ArrayList<>()) 
+                        .purchaseDate(rs.getString("purchasedate"))
+                        .purchaseTime(rs.getString("purchasetime"))
                         .build();
 
                 shopkeeperMap.put(ddReference, shopkeeperDetails);
             }
 
-            AnimalDetail animalAssignmentDetails = AnimalDetail.builder()
-                    .animalTypeId(rs.getLong("animaltypeid"))
-                    .count(rs.getInt("token"))
-                    .animalType(rs.getString("animal"))
-                    .build();
+             AnimalDetail animalAssignmentDetails = AnimalDetail.builder()
+                     .animalTypeId(rs.getLong("animaltypeid"))
+                     .count(rs.getInt("token"))
+                     .animalType(rs.getString("animal"))
+                     .build();
 
-            shopkeeperDetails.getAnimalAssignmentDetailsList().add(animalAssignmentDetails);
+             shopkeeperDetails.getAnimalAssignmentDetailsList().add(animalAssignmentDetails);
         }
 
         return new ArrayList<>(shopkeeperMap.values());

@@ -3,7 +3,6 @@ package digit.service;
 import java.util.List;
 
 import org.egov.common.contract.models.AuditDetails;
-import org.egov.common.contract.models.RequestInfoWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
