@@ -58,6 +58,17 @@ const FeeCollection = () => {
   const [isSubmitButtonDisabled, setIsSubmitButtonDisabled] = useState(true);
   const [isSubmissionComplete, setIsSubmissionComplete] = useState(false);
 
+  const [isStablingSelected, setIsStablingSelected] = useState(false);
+  const [isTradingSelected, setIsTradingSelected] = useState(false);
+  const [isRemovalSelected, setIsRemovalSelected] = useState(false);
+  const [isWeighingSelected, setIsWeighingSelected] = useState(false);
+  const [isSlaughterSelected, setIsSlaughterSelected] = useState(false);
+  const [isParkingSelected, setIsParkingSelected] = useState(false);
+  const [isRemovalFeeSelected, SetIsRemovalFeeSelected] = useState(false);
+  isShiftSelected
+  const [isShiftSelected, SetIsShiftSelected] = useState(false);
+
+
   // const [refreshCollectionFeeCard, setRefreshCollectionFeeCard] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
 
@@ -148,20 +159,33 @@ const FeeCollection = () => {
   // const { fetchEntryCollectionFee, fetchStablingCollectionFee } = useCollectionPoint({});
   const { data: entryData } = fetchEntryCollectionFee({ Search: { Search: selectedUUID } });
   const { data: fetchedData, isLoading } = fetchEntryFeeDetailsbyUUID({ forCollection: true });
-  const { data: fetchedStablingData } = fetchStablingList({ forCollection: true });
+  const { data: fetchedStablingData } = fetchStablingList(
+    { forCollection: true },
+    { executeOnRadioSelect: isStablingSelected, executeOnLoad: false, enabled: isStablingSelected }
+  );
   const { data: stablingData } = fetchStablingCollectionFee({ Search: { Search: selectedUUID } });
   const { data: parkingDetailsData } = fetchParkingCollectionDetails(
     {},
     {}, // Additional config if needed
     selectedRadioValue === "parking" // Pass the enabled condition here
   );
-  const { data: SlaughterListData } = fetchSlaughterCollectionList({ forCollection: true });
-  const { data: ParkingData } = fetchParkingCollectionFee({
-    vehicleParking: {
-      vehicleType: selectedVehicleId,
-      vehicleNumber: selectedUUID,
+  const { data: SlaughterListData } = fetchSlaughterCollectionList(
+    { forCollection: true },
+    { executeOnLoad: false, executeOnRadioSelect: isSlaughterSelected, enabled: isSlaughterSelected }
+  );
+  const { data: ParkingData } = fetchParkingCollectionFee(
+    {
+      vehicleParking: {
+        vehicleType: selectedVehicleId,
+        vehicleNumber: selectedUUID,
+      },
     },
-  });
+    {
+      executeOnLoad: false,
+      executeOnRadioSelect: isParkingSelected,
+      enabled: isParkingSelected,
+    }
+  );
   const { data: vehicleData } = fetchWashingCollectionFee({
     vehicleParking: {
       vehicleType: selectedVehicleId,
@@ -169,12 +193,25 @@ const FeeCollection = () => {
     },
     selectedRadioValue,
   });
-  const { data: removalFeeData } = fetchRemovalCollectionFee({ Search: { Search: selectedUUID } });
-  const { data: RemovalListData } = fetchRemovalList({ forCollection: true });
-  const { data: fetchedTradingData } = fetchTradingList({ forCollection: true });
+  const { data: removalFeeData } = fetchRemovalCollectionFee(
+    { Search: { Search: selectedUUID } },
+    {
+      executeOnLoad: false,
+      executeOnRadioSelect: isRemovalFeeSelected,
+      enabled: isRemovalFeeSelected,
+    }
+  );
+  const { data: RemovalListData } = fetchRemovalList(
+    { forCollection: true },
+    { executeOnLoad: false, executeOnRadioSelect: isRemovalSelected, enabled: isRemovalSelected }
+  );
+  const { data: fetchedTradingData } = fetchTradingList(
+    { forCollection: true },
+    { executeOnLoad: false, executeOnRadioSelect: isTradingSelected, enabled: isTradingSelected }
+  );
   const { data: tradingFeeData } = fetchTradingCollectionFee({ Search: { Search: selectedUUID } });
   const { data: PenaltiesData } = fetchPenaltiesList({});
-  const { data: weighingData } = fetchweighingList({});
+  const { data: weighingData } = fetchweighingList({ executeOnLoad: false, executeOnRadioSelect: isWeighingSelected, enabled: isWeighingSelected });
   const { data: weighingFeeData } = fetchweighingFee({ Search: { Search: selectedUUID } });
 
   const useFetchOptions = (optionType) => {
@@ -195,7 +232,7 @@ const FeeCollection = () => {
 
   const useFetchShiftOptions = () => {
     const slaughterUnitId = slaughterUnitData[0]?.id;
-    const { data } = fetchSlaughterUnit({ slaughterUnitId });
+    const { data } = fetchSlaughterUnit({ slaughterUnitId }, {executeOnLoad: false, executeOnRadioSelect: isShiftSelected, enabled: isShiftSelected });
 
     return (
       data?.unit?.map((shift) => ({
@@ -322,8 +359,8 @@ const FeeCollection = () => {
           total: detailItem?.total,
         }))
       );
-      setSlaughterList(mappedDetails); // This should now contain all the animal, count, fee, totalFee data
-      setTotalRecords(mappedDetails.length); // Update the total records
+      setSlaughterList(mappedDetails);
+      setTotalRecords(mappedDetails.length);
     }
   }, [slaughterData]);
 
@@ -350,123 +387,6 @@ const FeeCollection = () => {
 
   const downloadFileName = `${radioOptions.find((option) => option.value === selectedRadioValue)?.label} Fee Collection Report`;
 
-  // const generatePDF = (data) => {
-  //   if (!data.length) return;
-
-  //   // Determine the headers and rows based on the data structure
-  //   let headers, rows;
-
-  //   if (data[0].details) {
-  //     // For complex structures like entry, stabling, slaughter, removal
-  //     headers = ['Animal Type', 'Count', 'Fee', 'Total Fee'];
-  //     rows = data.flatMap(item =>
-  //       item.details.map(detail => ({
-  //         'Animal Type': detail.animal,
-  //         'Count': detail.count,
-  //         'Fee': detail.fee,
-  //         'Total Fee': detail.totalFee
-  //       }))
-  //     );
-  //   } else if (data[0].vehiclenumber) {
-  //     // For parking and washing
-  //     headers = ['Vehicle Number', 'Vehicle Type', 'Parking Date', 'Parking Time', 'Departure Date', 'Departure Time', 'Total Hours', 'Total'];
-  //     rows = data.map(item => ({
-  //       'Vehicle Number': item.vehiclenumber,
-  //       'Vehicle Type': item.vehicletype,
-  //       'Parking Date': item.parkingdate,
-  //       'Parking Time': item.parkingtime,
-  //       'Departure Date': item.departuredate,
-  //       'Departure Time': item.departuretime,
-  //       'Total Hours': item.totalhours,
-  //       'Total': item.total
-  //     }));
-  //   } else if (data[0].total) {
-  //     // For weighing and penalty
-  //     headers = Object.keys(data[0]);
-  //     rows = data;
-  //   } else {
-  //     console.warn("Unsupported data structure for PDF generation");
-  //     return;
-  //   }
-
-  //   const printWindow = window.open("", "", "height=600,width=800");
-
-  //   const htmlContent = `
-  //     <!DOCTYPE html>
-  //     <html>
-  //       <head>
-  //         <title>${downloadFileName}</title>
-  //         <style>
-  //           body {
-  //             font-family: Arial, sans-serif;
-  //             margin: 20px;
-  //           }
-  //           table {
-  //             width: 100%;
-  //             border-collapse: collapse;
-  //             margin-bottom: 20px;
-  //           }
-  //           th, td {
-  //             border: 1px solid #ddd;
-  //             padding: 12px 8px;
-  //             text-align: left;
-  //           }
-  //           th {
-  //             background-color: #f4f4f4;
-  //             font-weight: bold;
-  //           }
-  //           tr:nth-child(even) {
-  //             background-color: #f9f9f9;
-  //           }
-  //           .header {
-  //             font-size: 24px;
-  //             margin-bottom: 20px;
-  //           }
-  //           .footer {
-  //             margin-top: 20px;
-  //             font-size: 12px;
-  //             color: #666;
-  //           }
-  //           @media print {
-  //             body { margin: 0; padding: 20px; }
-  //             .no-print { display: none; }
-  //           }
-  //         </style>
-  //       </head>
-  //       <body>
-  //         <div class="header">${downloadFileName}</div>
-  //         <table>
-  //           <thead>
-  //             <tr>${headers.map((header) => `<th>${header}</th>`).join("")}</tr>
-  //           </thead>
-  //           <tbody>
-  //             ${rows
-  //               .map(
-  //                 (row) => `
-  //               <tr>
-  //                 ${headers.map((header) => `<td>${row[header] || ""}</td>`).join("")}
-  //               </tr>
-  //             `
-  //               )
-  //               .join("")}
-  //           </tbody>
-  //         </table>
-  //         <div class="footer">Generated on ${new Date().toLocaleString()}</div>
-  //         <div class="no-print">
-  //           <button onclick="window.print();window.close()"
-  //             style="padding: 10px 20px; background-color: #4a90e2; color: white;
-  //             border: none; border-radius: 4px; cursor: pointer; margin-top: 20px;">
-  //             Download PDF
-  //           </button>
-  //         </div>
-  //       </body>
-  //     </html>
-  //   `;
-
-  //   printWindow.document.write(htmlContent);
-  //   printWindow.document.close();
-  // };
-
   const generatePDF = (data) => {
     // Handle different data types
     let receiptData = {};
@@ -488,82 +408,199 @@ const FeeCollection = () => {
       <!DOCTYPE html>
       <html>
         <head>
-          <title>${downloadFileName}</title>
+          <title></title>
           <style>
-            body {
-              font-family: Arial, sans-serif;
-              max-width: 600px;
-              margin: 0 auto;
-              padding: 20px;
-              line-height: 1.6;
-            }
-            .receipt {
-              border: 2px solid #333;
-              padding: 20px;
-              background-color: #f9f9f9;
-            }
-            .receipt-header {
-              text-align: center;
-              border-bottom: 1px solid #ddd;
-              padding-bottom: 10px;
-              margin-bottom: 20px;
-            }
-            .receipt-header h1 {
-              margin: 0;
-              color: #333;
-            }
-            .receipt-details {
-              margin-bottom: 20px;
-            }
-            .receipt-details div {
-              display: flex;
-              justify-content: space-between;
-              margin-bottom: 10px;
-              border-bottom: 1px dotted #ddd;
-              padding-bottom: 5px;
-            }
-            .receipt-details .label {
-              font-weight: bold;
-              color: #555;
-            }
-            .receipt-details .value {
-              text-align: right;
-              color: #333;
-            }
-            .receipt-footer {
-              text-align: center;
-              margin-top: 20px;
-              font-size: 0.8em;
-              color: #666;
-            }
-            @media print {
-              body { margin: 0; padding: 10px; }
-              .no-print { display: none; }
-            }
+            .receipt-container {
+             width: 600px;
+             height: 600px;
+             margin: 20px auto;
+             font-family: Arial, sans-serif;
+             color: #333;
+             border: 1px solid #ccc;
+             padding: 20px;
+             background-color: #fafafa;
+           }
+
+            .header-title,
+            .sub-title {
+             text-align: center;
+             margin: 0;
+             font-size: 18px;
+           }
+
+            .details-section p {
+             margin: 10px 0;
+             font-size: 14px;
+           }
+
+          /* .from-label {
+           float: right;
+          } */
+
+          .amount-table {
+           width: 40%;
+           border-collapse: collapse;
+           margin-top: 20px;
+           float: right;
+          }
+
+         .amount-table th,
+         .amount-table td {
+          border: 1px solid #000;
+          height: 30px;
+        }
+
+        .total-label {
+         text-align: left;
+        }
+
+       .total-placeholder {
+        text-align: center;
+       }
+
+         .footer-section {
+         margin-top: 30px;
+         }
+
+         .for-record {
+         font-weight: bold;
+        }
+
+        .slaughterhouses-label {
+         text-align: right;
+         margin-right: 50px;
+        font-size: 12px;
+       }
+
+
+        .container {
+         display: flex;
+        justify-content: space-between;
+        align-items: flex-start; 
+        /* gap: 20px;  */
+        margin: 20px;
+        padding: 10px;
+        box-sizing: border-box;
+        flex-wrap: wrap;
+       }
+
+
+      .left-section {
+       flex: 3; 
+       min-width: 200px;
+       font-size: 16px;
+       font-weight: 500;
+       }
+
+
+     .right-section {
+      flex: 1; 
+      min-width: 200px;
+      overflow-x: auto; 
+      }
+
+     .amount-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .amount-table th,
+    .amount-table td {
+     border: 1px solid #ccc;
+     padding: 8px;
+     text-align: center;
+     }
+
+    .amount-table th {
+     background-color: #f2f2f2;
+     font-weight: bold;
+    }
+
+
+
+    @media screen and (max-width: 768px) {
+     .container {
+     flex-direction: column; 
+    }
+
+    .left-section,
+     .right-section {
+    width: 100%;
+  }
+}
+ 
           </style>
         </head>
         <body>
-          <div class="receipt">
-            <div class="receipt-header">
-              <h1>${downloadFileName}</h1>
-            </div>
-            <div class="receipt-details">
-              ${Object.entries(receiptData)
-                .filter(([key]) => !["audit"].includes(key.toLowerCase()))
-                .map(
-                  ([key, value]) => `
-                  <div>
-                    <span class="label">${key.charAt(0).toUpperCase() + key.slice(1)}</span>
-                    <span class="value">${formatReceiptValue(value)}</span>
-                  </div>
-                `
-                )
-                .join("")}
-            </div>
-            <div class="receipt-footer">
-              Generated on ${new Date().toLocaleString()}
-            </div>
-          </div>
+           <div class="receipt-container">
+             <h3 class="header-title">
+             Brihanmumbai Municipal Corporation
+           </h3>
+         <h4 class="sub-title">Deonar Slaughterhouse</h4>
+         <div style="text-align: right;font-weight: bold; margin-top: 10px;">0000101</div>
+
+        <div style ="display: flex; justify-content: space-between; margin-top: 20px;">
+        <span style ="font-weight: bold;">Non-refundable fees</span>
+          <span class="fee-placeholder">Date..........20</span>
+      </div>
+
+      <div class="details-section">
+        <p>
+          Mr./Ms..................................................................................................................... <span>From.............. Rs.</span>
+        </p>
+        <p>
+          This amount was received as entry-fee for the animals shown below.
+        </p>
+      </div>
+      <div class="container">
+     
+      <div class="left-section">
+        <p>Name of the broker.................................</p>
+        <p>Name of the shepherd............................</p>
+      </div>
+
+     
+      <div class="right-section">
+        <table class="amount-table">
+          <thead>
+            <tr>
+              <th>Rs.</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td></td>
+              <td></td>
+            </tr>
+            <tr>
+              <td></td>
+              <td></td>
+            </tr>
+            <tr>
+              <td></td>
+              <td></td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td class="total-label">Total</td>
+              <td style="text-align: center;">...</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+      <div class="footer-section">
+        <p class="for-record">For Record</p>
+        <p class="slaughterhouses-label">General Manager</p>
+        <p class="slaughterhouses-label">( Deonar Slaughterhouses)</p>
+        <p>
+          CA(R)69 & 79-BMPP-55951-2022-23-210 BKS.(100X2)
+        </p>
+      </div>
+    </div>
+  
           <div class="no-print">
             <button onclick="window.print();window.close()" 
               style="display: block; width: 200px; margin: 20px auto; padding: 10px; 
@@ -696,9 +733,18 @@ const FeeCollection = () => {
     setSelectedRadioValue(value);
     setIsConfirmationPage(false);
     setTableColumns(collectionDynamicColumns[value]);
+
     setCustomTableColumns(createDynamicColumns(handleUUIDClick, value));
     setTableData([]);
     setSelectedUUID("");
+    setIsStablingSelected(value === "stabling");
+    setIsTradingSelected(value === "trading");
+    setIsRemovalSelected(value === "removal");
+    setIsWeighingSelected(value === "weighing");
+    setIsSlaughterSelected(value === "slaughter");
+    setIsParkingSelected(value === "parking");
+    SetIsRemovalFeeSelected(value === "removal");
+    SetIsShiftSelected(value === "slaughter");
   };
 
   const generatePayload = (formData, selectedRadioValue, selectedUUID, tableData) => {
@@ -784,6 +830,7 @@ const FeeCollection = () => {
 
       if (collectionResponse?.Details && collectionResponse?.ResponseInfo?.status === "successful") {
         setFeeCollectionResponse(collectionResponse?.Details);
+        console.log(feeCollectionResponse, "setfeecollectionnnnnnn");
         setToast({ key: "success", message: "Entry fee saved successfully!" });
         setSubmittedData(formData);
         // setRefreshCollectionFeeCard(true);
@@ -1064,6 +1111,7 @@ const FeeCollection = () => {
   };
 
   const context = "slaughter";
+  console.log(feeCollectionResponse, "fee collection response");
 
   return (
     <React.Fragment>
@@ -1085,7 +1133,7 @@ const FeeCollection = () => {
                     }}
                   >
                     <div className="bmc-card-row">
-                      <h3 className="bmc-title">Collection Point</h3>
+                      <h3 className="bmc-title">{t("Collection Point")}</h3>
                       <RadioButtons
                         t={t}
                         label="Collection Point"
@@ -1118,7 +1166,7 @@ const FeeCollection = () => {
           </div>
 
           <div style={{ display: "flex", gap: "10px", float: "inline-end", width: "100%" }}>
-            <div className="bmc-col-large-header" style={{ width: "50%" }}>
+            <div className="bmc-col-large-header" style={{ width: "100%" }}>
               <div className="bmc-row-card-header" style={{ display: "flex", flexDirection: "column", gap: "45px" }}>
                 {selectedUUID ? (
                   <>
@@ -1195,7 +1243,7 @@ const FeeCollection = () => {
                 )}
               </div>
             </div>
-            <div className="bmc-col-large-header" style={{ width: "50%" }}>
+            <div className="bmc-col-large-header" style={{ width: "100%" }}>
               <div className="bmc-row-card-header">
                 {selectedUUID ? (
                   !isConfirmationPage && (
@@ -1214,12 +1262,9 @@ const FeeCollection = () => {
                           fontWeight: "600",
                           border: "none",
                           cursor: feeCollectionResponse ? "pointer" : "not-allowed",
-                          
                         }}
                         disabled={!feeCollectionResponse}
                       >
-                        
-
                         Print/Download PDF
                       </button>
                       <FeeConfirmationPage

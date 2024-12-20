@@ -25,6 +25,7 @@ const App = ({ path, stateCode, userType, tenants }) => {
   const FeeCollection = Digit.ComponentRegistryService?.getComponent("FeeCollection");
   const Slaughtering = Digit.ComponentRegistryService?.getComponent("Slaughtering");
   const Helkari = Digit.ComponentRegistryService?.getComponent("Helkari");
+  const Stakeholder = Digit.ComponentRegistryService?.getComponent("Stakeholder");
   const Inbox = Digit?.ComponentRegistryService?.getComponent('DEONARInbox');
   const mobileView = innerWidth <= 640;
   const tenantId = Digit.ULBService.getCurrentTenantId();
@@ -73,6 +74,7 @@ const App = ({ path, stateCode, userType, tenants }) => {
         <PrivateRoute path={`${path}/weighingcharge`} component={WeighingCharge} />
         <PrivateRoute path={`${path}/penaltyCharge`} component={PenaltyCharge} />
         <PrivateRoute path={`${path}/gatePass`} component={GatePass} />
+        <PrivateRoute path={`${path}/stakeholder`} component={Stakeholder} />
         <PrivateRoute path={`${path}/helkari`} component={Helkari} />
         <PrivateRoute path={`${path}/inbox`} component={() => (
               <Inbox parentRoute={path} businessService="deonar" filterComponent="DEONAR_INBOX_FILTER" initialStates={inboxInitialState} isInbox={true} />

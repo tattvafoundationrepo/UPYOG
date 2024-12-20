@@ -23,6 +23,7 @@ const Slaughtering = () => {
     { code: "1", name: "YES" },
     { code: "2", name: "NO" },
   ]);
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
   const {
     control,
@@ -30,7 +31,7 @@ const Slaughtering = () => {
     handleSubmit,
     getValues,
     reset,
-    formState: { errors },
+    formState: { errors, isDirty },
   } = useForm({
     defaultValues: {
       slaughter: "",
@@ -40,7 +41,7 @@ const Slaughtering = () => {
   });
 
   const { fetchSlaughterCollectionList } = useCollectionPoint({});
-  const { data: SlaughterListData } = fetchSlaughterCollectionList({});
+  const { data: SlaughterListData } = fetchSlaughterCollectionList({}, { executeOnLoad: true });
   const { saveSlaughterListData } = useDeonarCommon();
 
   const handleUUIDClick = (ddReference) => {
@@ -79,12 +80,12 @@ const Slaughtering = () => {
     //   token: item.token,
     // }))
 
-    const slaughterDetails = slaughterAnimalListData.filter((item) =>
-      selectedRows.includes(item.animalTokenNumber)
-    ).map((item) => ({
-      animalTypeId: item.animalTypeId,
-      token: item.token,
-    }));
+    const slaughterDetails = slaughterAnimalListData
+      .filter((item) => selectedRows.includes(item.animalTokenNumber))
+      .map((item) => ({
+        animalTypeId: item.animalTypeId,
+        token: item.token,
+      }));
 
     if (selectedSlaughter) {
       const slaughteringValue = formData?.slaughtering?.name === "YES" ? true : false;
@@ -100,7 +101,7 @@ const Slaughtering = () => {
           licenceNumber: selectedSlaughter?.licenceNumber,
           // animalTypeId: slaughterAnimalListData?.[0]?.animalTypeId,
           // token: selectedTokens,
-          details:slaughterDetails,
+          details: slaughterDetails,
           slaughtering: slaughteringValue,
         },
       };
@@ -114,6 +115,7 @@ const Slaughtering = () => {
           });
           setSelectedRows([]);
           showToast("success", t("DEONAR_SLAUGHTERING_DATA_SUBMITTED_SUCCESSFULY"));
+          setIsSubmitted(true);
         },
         onError: (error) => {
           showToast("error", t("DEONAR_SLAUGHTERING_DATA_NOT_SUBMITTED_SUCCESSFULY"));
@@ -217,7 +219,7 @@ const Slaughtering = () => {
       <div className="bmc-card-full">
         <form onSubmit={handleSubmit(onSubmit)}>
           <MainFormHeader title={t("DEONAR_SLAUGHTERING")} />
-          <div className="bmc-card-row">
+          <div className="bmc-card-row" style={{ overflowY: "auto", maxHeight: "511px" }}>
             <div className="bmc-row-card-header">
               {isMobileView &&
                 slaughterList.map((data, index) => (
@@ -245,7 +247,7 @@ const Slaughtering = () => {
             </div>
           </div>
 
-          {selectedUUID && (
+          {selectedUUID && !isSubmitted && (
             <div className="bmc-row-card-header">
               <div style={{ paddingBottom: "20px", display: "flex", gap: "12px", alignItems: "center" }}>
                 <h3 style={{ fontWeight: "600", fontSize: "20px" }}>{t("ACTIVE_DD_REFERENCENO")}: </h3>
@@ -275,33 +277,9 @@ const Slaughtering = () => {
                   })}
                 />
               </div>
-              <div className="bmc-row-card">
-                <div className="bmc-col3-card">
-                  <LabelFieldPair>
-                    <CardLabel className="bmc-label">{t("DEONAR_Slaughter")}</CardLabel>
-                    <Controller
-                      control={control}
-                      name="slaughtering"
-                      render={(props) => (
-                        <Dropdown
-                          value={props.value}
-                          selected={props.value}
-                          select={(value) => {
-                            props.onChange(value);
-                          }}
-                          onBlur={props.onBlur}
-                          optionKey="name"
-                          option={slaughtering}
-                          placeholder={t("DEONAR_Slaughter")}
-                          t={t}
-                        />
-                      )}
-                    />
-                  </LabelFieldPair>
-                </div>
+             
                 <SubmitButtonField control={control} />
               </div>
-            </div>
           )}
         </form>
       </div>

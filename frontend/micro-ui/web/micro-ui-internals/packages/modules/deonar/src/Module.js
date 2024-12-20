@@ -23,6 +23,7 @@ import S from "./pages/employee/collectionPoint/s";
 import FeeCollection from "./pages/employee/collectionPoint/feeCollection";
 import Slaughtering from "./pages/employee/collectionPoint/slaughtering";
 import Helkari from "./pages/employee/collectionPoint/helkari";
+import Stakeholder from "./pages/employee/collectionPoint/stakeholder";
 import InboxFilter from "./components/InboxFilter";
 import DEONARInbox from "./pages/employee/Inbox";
 
@@ -73,6 +74,7 @@ const componentsToRegister = {
   S,
   Slaughtering,
   Helkari,
+  Stakeholder,
   DEONAR_INBOX_FILTER: (props) => <InboxFilter {...props} />,
   DEONARInbox
 };

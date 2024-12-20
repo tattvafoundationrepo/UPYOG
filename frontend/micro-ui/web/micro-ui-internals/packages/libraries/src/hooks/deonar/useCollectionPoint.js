@@ -75,12 +75,17 @@ const useCollectionPoint = ({ value }) => {
   };
 
   const fetchParkingCollectionFee = (data, config = {}) => {
+    const { 
+      enabled = true,
+      executeOnLoad = false,
+      executeOnRadioSelect = false
+    } = config;
     return useQuery(["ParkingFee", data], () => DeonarService.getCollectionParkingFee(data), {
+      enabled: enabled && (executeOnLoad || executeOnRadioSelect),
       ...config,
       onSuccess: (data) => {
         console.log(data, "Parking collection data");
       },
-      // enabled: value === "parking",
     });
   };
   const fetchParkingCollectionDetails = (data, config = {}, enabled = true) => {
@@ -98,27 +103,44 @@ const useCollectionPoint = ({ value }) => {
   };
 
   const fetchSlaughterCollectionList = (data, config = {}) => {
+    const { 
+      enabled = true,
+      executeOnLoad = false,
+      executeOnRadioSelect = false
+    } = config;
     return useQuery(["SlaughterList", data], () => DeonarService.getCollectionSlaughterList(data), {
+      enabled: enabled && (executeOnLoad || executeOnRadioSelect),
       ...config,
       onSuccess: (data) => {
         console.log(data, "SlaughterList collection data");
       },
-      // enabled: value === "slaughter",
     });
   };
 
   const fetchRemovalList = (data, config = {}) => {
+    const { 
+      enabled = true,
+      executeOnLoad = false,
+      executeOnRadioSelect = false
+    } = config;
     return useQuery(["RemovalList", data], () => DeonarService.getCollectionRemovalList(data), {
+      enabled: enabled && (executeOnLoad || executeOnRadioSelect),
       ...config,
       onSuccess: (data) => {
         console.log(data, "RemovalList collection data");
       },
-      // enabled: value === "removal",
     });
   };
 
+
   const fetchRemovalCollectionFee = (data, config = {}) => {
+    const { 
+      enabled = true,
+      executeOnLoad = false,
+      executeOnRadioSelect = false
+    } = config;
     return useQuery(["removalFee", data], () => DeonarService.getCollectionRemovalFee(data), {
+      enabled: enabled && (executeOnLoad || executeOnRadioSelect),
       ...config,
       onSuccess: (data) => {
         console.log(data, "removalFee collection data");
@@ -148,7 +170,13 @@ const useCollectionPoint = ({ value }) => {
   };
 
   const fetchweighingList = (data, config = {}) => {
+    const { 
+      enabled = true,
+      executeOnLoad = false,
+      executeOnRadioSelect = false
+    } = config;
     return useQuery(["weighingList", data], () => DeonarService.getCollectionWeighingList(data), {
+      enabled: enabled && (executeOnLoad || executeOnRadioSelect),
       ...config,
       onSuccess: (data) => {
         console.log(data, "weighingList collection data");
@@ -158,12 +186,17 @@ const useCollectionPoint = ({ value }) => {
   };
 
   const fetchweighingFee = (data, config = {}) => {
+    const { 
+      enabled = true,
+      executeOnLoad = false,
+      executeOnRadioSelect = false
+    } = config;
     return useQuery(["weighingFee", data], () => DeonarService.fetchWeighingCollectionFee(data), {
+      enabled: enabled && (executeOnLoad || executeOnRadioSelect),
       ...config,
       onSuccess: (data) => {
         console.log(data, "weighing collection data");
       },
-      // enabled: value === "weighing",
     });
   };
 

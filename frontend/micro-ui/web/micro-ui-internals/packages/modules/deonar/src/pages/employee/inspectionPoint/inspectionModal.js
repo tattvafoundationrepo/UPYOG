@@ -49,6 +49,10 @@ export const AnimalInspectionModal = ({
 
   if (!selectedAnimal) return null;
 
+  const opinionNameToId = Object.fromEntries(opinionOptions.map((option) => [option.name, option.value]));
+
+  const opinionNames = opinionOptions.map((option) => option.name);
+
   return (
     <CustomModal isOpen={isModalOpen} onClose={toggleModal} fullScreen>
       <form>
@@ -403,13 +407,15 @@ export const AnimalInspectionModal = ({
                 <CardLabel className="bmc-label">{t("DEONAR_OPINION")}</CardLabel>
                 <Controller
                   control={control}
-                  name="opinion"
+                  name="opinionId"
                   render={(props) => (
                     <Dropdown
-                      option={opinionOptions}
-                      select={(value) => {
-                        handleChange("opinion", value);
-                        props.onChange(value);
+                      option={opinionNames}
+                      select={(selectedName) => {
+                        const selectedId = opinionNameToId[selectedName];
+                        handleChange("opinionId", selectedId);
+                        handleChange("opinion", selectedName);
+                        props.onChange(selectedId);
                       }}
                       selected={localData?.opinion}
                       t={t}
@@ -529,6 +535,10 @@ export const BeforeSlauhterInspectionModal = ({
     toggleModal();
   };
   if (!selectedAnimal) return null;
+
+  const opinionNameToId = Object.fromEntries(opinionOptions.map((option) => [option.name, option.value]));
+
+  const opinionNames = opinionOptions.map((option) => option.name);
 
   return (
     <CustomModal isOpen={isModalOpen} onClose={toggleModal} fullScreen>
@@ -908,13 +918,15 @@ export const BeforeSlauhterInspectionModal = ({
                 <CardLabel className="bmc-label">{t("DEONAR_OPINION")}</CardLabel>
                 <Controller
                   control={control}
-                  name="opinion"
+                  name="opinionId"
                   render={(props) => (
                     <Dropdown
-                      option={opinionOptions}
-                      select={(value) => {
-                        handleChange("opinion", value);
-                        props.onChange(value);
+                      option={opinionNames}
+                      select={(selectedName) => {
+                        const selectedId = opinionNameToId[selectedName];
+                        handleChange("opinionId", selectedId);
+                        handleChange("opinion", selectedName);
+                        props.onChange(selectedId);
                       }}
                       selected={localData?.opinion}
                       t={t}
@@ -1051,6 +1063,11 @@ export const PostMortemInspectionModal = ({
   };
 
   if (!selectedAnimal) return null;
+
+  const opinionNameToId = Object.fromEntries(opinionOptions.map((option) => [option.name, option.value]));
+
+  const opinionNames = opinionOptions.map((option) => option.name);
+
   return (
     <CustomModal isOpen={isModalOpen} onClose={toggleModal} fullScreen>
       <form>
@@ -1363,13 +1380,15 @@ export const PostMortemInspectionModal = ({
                 <CardLabel className="bmc-label">{t("DEONAR_OPINION")}</CardLabel>
                 <Controller
                   control={control}
-                  name="opinion"
+                  name="opinionId"
                   render={(props) => (
                     <Dropdown
-                      option={opinionOptions}
-                      select={(value) => {
-                        handleChange("opinion", value);
-                        props.onChange(value);
+                      option={opinionNames}
+                      select={(selectedName) => {
+                        const selectedId = opinionNameToId[selectedName];
+                        handleChange("opinionId", selectedId);
+                        handleChange("opinion", selectedName);
+                        props.onChange(selectedId);
                       }}
                       selected={localData?.opinion}
                       t={t}

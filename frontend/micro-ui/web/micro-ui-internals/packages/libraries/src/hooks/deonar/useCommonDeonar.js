@@ -96,29 +96,64 @@ const useDeonarCommon = () => {
     }
   );
 
-  const fetchTradingList = (data, config = {}) => {
-    return useQuery(["TradingFee", data], () => DeonarService.getTradingList(data), {
-      ...config,
-      onSuccess: (data) => {
-        console.log(data, "Trading collection data");
-      },
-      enabled: true,
-    });
-  };
+  // const fetchTradingList = (data, config = {}) => {
+  //   return useQuery(["TradingFee", data], () => DeonarService.getTradingList(data), {
+  //     ...config,
+  //     onSuccess: (data) => {
+  //       console.log(data, "Trading collection data");
+  //     },
+  //     enabled: true,
+  //   });
+  // };
 
-  const fetchStablingList = (data, config = {}) => {
-    return useQuery(["StablingFee", data], () => DeonarService.getStablingList(data), {
-      ...config,
-      onSuccess: (data) => {
-        console.log(data, "Stabling collection data");
-      },
-      enabled: true,
-    });
-  };
+  // const fetchStablingList = (data, config = {}) => {
+  //   return useQuery(["StablingFee", data], () => DeonarService.getStablingList(data), {
+  //     ...config,
+  //     onSuccess: (data) => {
+  //       console.log(data, "Stabling collection data");
+  //     },
+  //     enabled: true,
+  //   });
+  // };
 
   // const fetchDawanwalaList = (data, config = {}) => {
   //   return useQuery(["fetchDawanwalaList", data], () => DeonarService.getDawanwalaList(data, config));
   // };
+
+  const fetchTradingList = (data, options = {}) => {
+    const { 
+      enabled = true,
+      executeOnLoad = false,
+      executeOnRadioSelect = false
+    } = options;
+
+    return useQuery(["TradingFee", data], () => DeonarService.getTradingList(data), {
+      enabled: enabled && (executeOnLoad || executeOnRadioSelect),
+      ...options,
+      onSuccess: (data) => {
+        console.log(data, "Trading collection data");
+        options.onSuccess && options.onSuccess(data);
+      },
+    });
+  };
+
+  // Similar modifications for other fetch methods...
+  const fetchStablingList = (data, options = {}) => {
+    const { 
+      enabled = true,
+      executeOnLoad = false,
+      executeOnRadioSelect = false
+    } = options;
+
+    return useQuery(["StablingFee", data], () => DeonarService.getStablingList(data), {
+      enabled: enabled && (executeOnLoad || executeOnRadioSelect),
+      ...options,
+      onSuccess: (data) => {
+        console.log(data, "Stabling collection data");
+        options.onSuccess && options.onSuccess(data);
+      },
+    });
+  };
 
   const fetchDawanwalaList = (data, config = {}) => {
     return useQuery(["DeonarStablingDetails", data], () => DeonarService.getDawanwalaList(data), {
@@ -147,8 +182,28 @@ const useDeonarCommon = () => {
   };
 
 
-  const fetchSlaughterUnit = (data, config = {}) => {
-    return useQuery(["fetchSlaughterUnit", data], () => DeonarService.getSlaughterUnit(data, config));
+  const fetchSlaughterUnit = (data, options = {}) => {
+    const { 
+      enabled = true,
+      executeOnLoad = false,
+      executeOnRadioSelect = false
+    } = options;
+    return useQuery(["fetchSlaughterUnit", data], () => DeonarService.getSlaughterUnit(data), {
+      enabled: enabled && (executeOnLoad || executeOnRadioSelect),
+      ...options,
+      onSuccess: (data) => {
+        console.log(data, "Slaughhter unit data");
+        options.onSuccess && options.onSuccess(data);
+      },
+    });
+  };
+  //   return useQuery(["fetchSlaughterUnit", data], (data), {
+
+  //   } => DeonarService.getSlaughterUnit(data, config));
+  // };
+
+  const saveInspectionDetailsData = (data, config = {}) => {
+    return useMutation((data) => DeonarService.saveInspectionData(data), config);
   };
 
   return {
@@ -166,7 +221,8 @@ const useDeonarCommon = () => {
     fetchGatePassSearchData,
     saveGatePassData,
     saveSlaughterListData,
-    fetchSlaughterUnit
+    fetchSlaughterUnit,
+    saveInspectionDetailsData,
   };
 };
 

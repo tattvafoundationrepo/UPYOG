@@ -1,4 +1,4 @@
-import { AddIcon, Dropdown, RemoveIcon, TextInput } from "@upyog/digit-ui-react-components";
+import { AddIcon, Dropdown, RemoveIcon, TextInput, Toast } from "@upyog/digit-ui-react-components";
 import React, { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
@@ -29,6 +29,7 @@ const QualificationCard = ({ tenantId, onUpdate, initialRows = [], AddOption = t
   const [isEditing, setIsEditing] = useState(false); 
   const [selectedRow, setSelectedRow] = useState(null);
   const [isMobileView, setIsMobileView] = useState(window.innerWidth < 769);
+  const [toast, setToast] = useState('')
 
   const processQualificationData = (items, headerLocale) => {
     if (items.length === 0) return [];
@@ -134,6 +135,7 @@ const QualificationCard = ({ tenantId, onUpdate, initialRows = [], AddOption = t
             percentage: doc.percentage,
           })),
         ]);
+        setToastWithTimeout("success", t('QUALIFICATION ADDED SUCCESSFULLY'))
 
         // Close the modal
         toggleModal();
@@ -159,6 +161,13 @@ const QualificationCard = ({ tenantId, onUpdate, initialRows = [], AddOption = t
       },
     });
   };
+  const setToastWithTimeout = (key, action) => {
+    setToast({ key, action });
+  
+    setTimeout(() => {
+      setToast(null);
+    }, 3000);
+  };
 
   const removeRows = Digit.Hooks.bmc.useRemoveDocuments()
 
@@ -183,6 +192,8 @@ const QualificationCard = ({ tenantId, onUpdate, initialRows = [], AddOption = t
       onSuccess: () => {
         // Remove the document from rows state
         setRows((prevRows) => prevRows.filter((row) => row.qualification.id !== id));
+        setToastWithTimeout("success", t('QUALIFICATION REMOVED SUCCESSFULLY'))
+
       },
       onError: (error) => {
         console.error("Failed to delete document row:", error);
@@ -205,14 +216,14 @@ const QualificationCard = ({ tenantId, onUpdate, initialRows = [], AddOption = t
   const visibleColumns = (handleOnClick) => [
     {
       Header: t("QUALIFICATION"),
-      accessor: "qualification.i18nKey",Cell: ({ value }) => t(value) || t("N/A"),
+      accessor: t("qualification.i18nKey"),
       sortable: true,
       Cell: ({ row }) => (
         <span
           onClick={AllowEdit ? () => handleOnClick(row.original.qualification.qualification) : null}
           style={{ cursor: AllowEdit ? "pointer" : "default", color: AllowEdit ? "red" : "black" }}
         >
-          {row.original.qualification.qualification}
+          {t(row.original.qualification.i18nKey)}
         </span>
       ),
       isVisible: true,
@@ -240,20 +251,21 @@ const QualificationCard = ({ tenantId, onUpdate, initialRows = [], AddOption = t
   const fields = [
     {
       key: "qualification.i18nKey",
-      label: "QUALIFICATION",
-      display: (data) => data.qualification.qualification || "N/A", // Safely access nested value
+      label: t("QUALIFICATION"),
+      display: (data) => t(data.qualification.i18nKey) || "N/A", // Safely access nested value
     },
     {
       key: "yearOfPassing.value",
-      label: "BMC_YEAR_OF_PASSING",
+      label: t("BMC_YEAR_OF_PASSING"),
     },
+    { label: t("BMC_BOARD"), key: "board.value" },
     {
       key: "percentage",
-      label: "BMC_PERCENTAGE",
+      label: t("BMC_PERCENTAGE"),
     },
     {
       key: "action",
-      label: "Actions",
+      label: t("Actions"),
       display: (data) => (
         <button
           onClick={() => removeQualificationRow(data?.qualification?.id)}
@@ -267,7 +279,7 @@ const QualificationCard = ({ tenantId, onUpdate, initialRows = [], AddOption = t
             fontSize: "14px",
           }}
         >
-          Delete
+          {t("Delete")}
         </button>
       ),
     },
@@ -377,14 +389,14 @@ const QualificationCard = ({ tenantId, onUpdate, initialRows = [], AddOption = t
             setIsEditing(false); // Reset edit mode on close
             reset(initialDefaultValues); // Reset form values
           }}
-          title={<h1 className="heading-m">{isEditing ? t("Edit Qualification") : t("Add Qualification")}</h1>}
+          title={<h1 style={{marginLeft:'0px'}} className="heading-m">{isEditing ? t("Edit Qualification") : t("Add Qualification")}</h1>}
           actionCancelLabel={t("Cancel")}
           actionCancelOnSubmit={() => {
             toggleModal();
             setIsEditing(false); // Reset edit mode on cancel
             reset(initialDefaultValues); // Reset form values
           }}
-          actionSaveLabel={t(isEditing ? "Update" : "Submit")}
+          actionSaveLabel={t(isEditing ? t("Update") : t("Submit"))}
           actionSaveOnSubmit={handleSubmit(isEditing ? updateRow : addRow)}
           formId="modal-action"
         >
@@ -507,6 +519,14 @@ const QualificationCard = ({ tenantId, onUpdate, initialRows = [], AddOption = t
           </div>
         </CustomModal>
       </div>
+      {toast && (
+        <Toast
+          error={toast.key === "error"}
+          label={t(toast.action)}
+          onClose={() => setToast(null)}
+          style={{ maxWidth: "670px" }}
+        />
+      )}
     </React.Fragment>
   );
 };

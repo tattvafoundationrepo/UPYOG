@@ -222,11 +222,11 @@ const InspectionTableHeader = ({ inspectionType, openModal }) => {
           //     </span>
           //   ),
           // },
-          {
-            Header: t("Deonar_Slaughter_Receipt_Number"),
-            accessor: "slaughterReceiptNumber",
-            disableSortBy: true,
-          },
+          // {
+          //   Header: t("Deonar_Slaughter_Receipt_Number"),
+          //   accessor: "slaughterReceiptNumber",
+          //   disableSortBy: true,
+          // },
           {
             Header: t("Deonar_Animal_Token_Number"),
             accessor: "animal",
@@ -329,11 +329,11 @@ const InspectionTableHeader = ({ inspectionType, openModal }) => {
           //     </span>
           //   ),
           // },
-          {
-            Header: t("Deonar_Slaughter_Receipt_Number"),
-            accessor: "slaughterReceiptNumber",
-            disableSortBy: true,
-          },
+          // {
+          //   Header: t("Deonar_Slaughter_Receipt_Number"),
+          //   accessor: "slaughterReceiptNumber",
+          //   disableSortBy: true,
+          // },
           {
             Header: t("Deonar_Animal_Token_Number"),
             accessor: "animal",

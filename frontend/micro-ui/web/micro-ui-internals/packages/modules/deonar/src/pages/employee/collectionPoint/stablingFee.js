@@ -60,6 +60,14 @@ const StablingFeePage = () => {
   const { submitForm, isSubmitting, response, error } = useSubmitForm(COLLECTION_POINT_ENDPOINT);
 
   const { searchDeonarCommon, saveStablingDetails, fetchStablingList, invalidateDeonarDetails } = useDeonarCommon();
+  const { data: fetchedData, isLoading } = fetchStablingList(
+    { forCollection: true },
+    {
+      executeOnLoad: true,
+      executeOnRadioSelect: false,
+    }
+  );
+
   const useFetchOptions = (optionType) => {
     const { data } = searchDeonarCommon({
       CommonSearchCriteria: {
@@ -82,8 +90,6 @@ const StablingFeePage = () => {
 
   const gawalData1 = useFetchOptions("gawal");
   const brokerData1 = useFetchOptions("broker");
-
-  const { data: fetchedData, isLoading } = fetchStablingList();
 
   useEffect(() => {
     if (fetchedData) {
@@ -296,7 +302,7 @@ const StablingFeePage = () => {
       },
     },
     {
-      accessor: "animalDetails",
+      accessor: t("animalDetails"),
       Header: t("Assign Gawal"),
       Cell: ({ row }) => {
         const index = row.index;
@@ -562,7 +568,7 @@ const StablingFeePage = () => {
                     </div>
                   </div>
                   {/* </div> */}
-                  <div className="bmc-card-row" style={{overflowY:"auto", maxHeight:"290px"}}>
+                  <div className="bmc-card-row" style={{overflowY:"auto", maxHeight:"511px"}}>
                     {/* <div className="bmc-row-card-header" style={{ overflowY: "auto", maxHeight: "300px" }}> */}
                     {/* {isMobileView && data.map((data, index) => <TableCard data={data} key={index} fields={fields} onUUIDClick={handleUUIDClick} />)} */}
                     <CustomTable
@@ -574,7 +580,6 @@ const StablingFeePage = () => {
                       tableClassName={"deonar-scrollable-table"}
                       autoSort={false}
                       isLoadingRows={isLoading}
-                      
                     />
                     {/* </div> */}
                   </div>

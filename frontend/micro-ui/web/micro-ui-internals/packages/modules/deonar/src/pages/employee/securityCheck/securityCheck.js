@@ -444,7 +444,7 @@ const SecurityCheckPage = ({ optionalFields = false, maxAllowedCount = 100 }) =>
                 <CustomTable
                   t={t}
                   columns={Tablecolumns}
-                  tableClassName=" deonar-scrollable-table"
+                  tableClassName="deonar-scrollable-table"
                   data={tableData}
                   disableSort={false}
                   autoSort={false}

@@ -76,7 +76,9 @@ const Trading = () => {
   const dawanwalaData = useFetchOptions("dawanwala");
   const shopkeeperData = useFetchOptions("shopkeeper");
 
-  const { data: fetchedData, isLoading } = fetchTradingList({});
+  // const { data: fetchedData, isLoading } = fetchTradingList({});
+  const { data: fetchedData, isLoading } = fetchTradingList({ forCollection: true }, { executeOnLoad: true, executeOnRadioSelect: false });
+
 
   useEffect(() => {
     if (fetchedData) {
@@ -384,7 +386,7 @@ const Trading = () => {
         <form onSubmit={handleSubmit(onSubmit)}>
           <MainFormHeader title={t("DEONAR_TRADING")} />
           {/* <div className="bmc-row-card-header"> */}
-          <div className="bmc-card-row">
+          <div className="bmc-card-row" style={{overflowY:"auto", maxHeight:"511px"}}>
             {/* <StablingTypeOptionsField setStablingFormType={setStablingFormType} control={control} data={data} setData={setData} /> */}
             <div className="bmc-row-card-header">
               {isMobileView && animalCount.map((data, index) => <TableCard data={data} key={index} fields={fields} onUUIDClick={handleUUIDClick} />)}

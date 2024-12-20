@@ -95,6 +95,11 @@ const DEONARCard = () => {
       roles: ["SUPERUSER","DEONAR_GENERIC"]
     },
     {
+      label: t("Stake Holder"),
+      link: `/digit-ui/employee/deonar/stakeholder`,
+      roles: ["SUPERUSER","DEONAR_GENERIC"]
+    },
+    {
       label: t("INBOX"),
       link: `/digit-ui/employee/deonar/inbox`,
       roles: ["SUPERUSER","DEONAR_GENERIC"]

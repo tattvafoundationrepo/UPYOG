@@ -10,6 +10,7 @@ import { abdominalCavity, pelvicCavity, specimenCollection, thoracicCavity, visi
 import InspectionTableHeader from "./tableHeader";
 import { generateTokenNumber } from "../collectionPoint/utils";
 import { AnimalInspectionModal, BeforeSlauhterInspectionModal, PostMortemInspectionModal } from "./inspectionModal";
+import SubmitButtonField from "../commonFormFields/submitBtn";
 
 const inspectionTypes = [
   { label: "Ante-Mortem Inspection", value: 1 },
@@ -60,6 +61,7 @@ const AnteMortemInspectionPage = () => {
   const [isLoader, setIsLoader] = useState(false);
   const [inspectionId, setInspectionId] = useState(1);
   const [animalQuarters, setAnimalQuarters] = useState([{ name: "1" }, { name: "2" }, { name: "3" }, { name: "4" }]);
+  const [opinionOptionId, setOpinionOptionId] = useState(inspectionTypes[0].value);
 
   const {
     control,
@@ -86,6 +88,7 @@ const AnteMortemInspectionPage = () => {
       nostrils: "",
       muzzle: "",
       opinion: "",
+      opinionId: "",
       approxAge: "",
       visibleMucusMembrane: "",
       thoracicCavity: "",
@@ -116,7 +119,8 @@ const AnteMortemInspectionPage = () => {
       setValue("eyes", inspectionTableData[0]?.eyes || "Swollen");
       setValue("nostrils", inspectionTableData[0]?.nostrils || "Other");
       setValue("muzzle", inspectionTableData[0]?.muzzle || "Scabs");
-      setValue("opinion", inspectionTableData[0]?.opinion || "Fit for slaughter");
+      setValue("opinion", inspectionTableData[0]?.opinion || "");
+      setValue("opinionId", inspectionTableData[0]?.opinionId || "");
       setValue("approxAge", inspectionTableData[0]?.["approxAge"] || ">3m");
       setValue("visibleMucusMembrane", inspectionTableData[0]?.["visibleMucusMembrane"] || "Yes");
       setValue("thoracicCavity", inspectionTableData[0]?.["thoracicCavity"] || "Yes");
@@ -165,8 +169,8 @@ const AnteMortemInspectionPage = () => {
       setAppetiteOptions(data2?.deonar?.appetite?.map((option) => option.name) || []);
       setNostrilOptions(data2?.deonar?.nostrils?.map((option) => option.name) || []);
       setMuzzleOptions(data2?.deonar?.muzzle?.map((option) => option.name) || []);
-      setOpinionOptions(data2?.deonar?.AnteMortemInspectionOpinion?.map((option) => option.name) || []);
-      setPostMertemOpinion(data2?.deonar?.PostmortemInspectionOpinion?.map((option) => option.name) || []);
+      // setOpinionOptions(data2?.deonar?.AnteMortemInspectionOpinion?.map((option) => option.name) || []);
+      // setPostMertemOpinion(data2?.deonar?.PostmortemInspectionOpinion?.map((option) => option.name) || []);
       setApproxAgeOptions(data2?.deonar?.approxAge?.map((option) => option.name) || []);
     }
   }, [data2, isLoading]);
@@ -183,8 +187,31 @@ const AnteMortemInspectionPage = () => {
 
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
-  const { fetchEntryFeeDetailsbyUUID } = useDeonarCommon();
+  const { fetchEntryFeeDetailsbyUUID, fetchDeonarCommon, saveInspectionDetailsData } = useDeonarCommon();
   const { data: fetchedData } = fetchEntryFeeDetailsbyUUID({ inspectionid: inspectionId });
+  const InspectionDetailsData = saveInspectionDetailsData();
+
+  const useFetchOptions = () => {
+    const { data } = fetchDeonarCommon({
+      CommonSearchCriteria: {
+        inspectionTypeId: opinionOptionId,
+        Option: "opinion",
+      },
+    });
+
+    return data
+      ? data.CommonDetails.map((item) => ({
+          name: item.name,
+          value: item.id,
+        }))
+      : [];
+  };
+
+  const opinionOption = useFetchOptions();
+
+  useEffect(() => {
+    setOpinionOptions(opinionOption?.map((item) => item?.name || []));
+  }, []);
 
   useEffect(() => {
     const selectedInspectionId = inspectionTypes.find((item) => item.label === radioValueCheck)?.value;
@@ -217,6 +244,7 @@ const AnteMortemInspectionPage = () => {
       const animalTypeId = animalDetail?.animalTypeId || null;
       const animalTokenNumber = animalDetail?.token || null;
       const animalType = animalDetail?.animalType || "Unknown";
+      const opinionId = inspection.opinionId;
       const animal = generateTokenNumber(animalType, animalTokenNumber);
       if (processedAnimalTokens.has(animal)) {
         return;
@@ -228,6 +256,7 @@ const AnteMortemInspectionPage = () => {
         animal: animal,
         editable: animalDetail?.editable || false,
         animalTokenNumber: animalTokenNumber,
+        opinionId: opinionId,
         species: inspection.species || "",
         breed: inspection.breed || "",
         sex: inspection.sex || "",
@@ -297,6 +326,7 @@ const AnteMortemInspectionPage = () => {
     reset();
     setSelectedAnimal(null);
     showToast("notify", `Switched to ${value}`);
+    setOpinionOptionId(inspectionTypes.find((item) => item.label === value)?.value);
 
     const selectedInspectionType = inspectionTypes.find((item) => item.label === value);
     if (selectedInspectionType) {
@@ -326,8 +356,25 @@ const AnteMortemInspectionPage = () => {
 
   const saveAnteMortemInspection = Digit.Hooks.deonar.useInspectionPointSave();
 
-  const showToast = (type, message, duration = 5000) => {
-    setToast({ key: type, action: message });
+  const handleInspectionDetail = () => {
+    const payload = {
+      entryUnitId: selectedUUID,
+      inspectionType: inspectionTypes.find((item) => item.label === radioValueCheck)?.value,
+    };
+    InspectionDetailsData.mutate(payload, {
+      onSuccess: (data) => {
+        showToast("success", "YOU_HAVE_SAVED_THE_INSPECTION_DATA_REPORT_SUCCESSFULY");
+        console.log(data, "Inspection details data");
+      },
+      onError: (error) => {
+        console.error("Error fetching new table data:", error);
+        setIsLoader(false);
+      },
+    });
+  };
+
+  const showToast = (type, action, duration = 5000) => {
+    setToast({ key: type, action });
     setTimeout(() => {
       setToast(null);
     }, duration);
@@ -389,7 +436,7 @@ const AnteMortemInspectionPage = () => {
                     position: "relative", // Ensure proper positioning
                   }}
                 >
-                  <div className="bmc-card-row">
+                  <div className="bmc-card-row" style={{ overflowY: "auto", maxHeight: "511px" }}>
                     <h3 className="bmc-title">{t("Inspection Point")}</h3>
                     <RadioButtons
                       t={t}
@@ -428,7 +475,7 @@ const AnteMortemInspectionPage = () => {
                 </span>
               </div>
             ) : (
-              <Header style={{ color: "red" }}>{`${t("Arrival UUID")} - ${t("Please Select Arrival UUID from Above Table")}`}</Header>
+              <Header style={{ color: "red" }}>{`${t("Arrival UUID - Please Select Arrival UUID from Above Table.")}`}</Header>
             )}
           </div>
           <div className="bmc-card-row">
@@ -439,30 +486,45 @@ const AnteMortemInspectionPage = () => {
                 <strong>{t("Data is not Available.")}</strong>
               </div>
             ) : (
-              <CustomTable
-                t={t}
-                columns={[
-                  {
-                    Header: t("Edit"),
-                    accessor: "edit",
-                    Cell: ({ row }) => {
-                      const editable = row.original.editable;
-                      return editable ? (
-                        <span onClick={() => openModal(row.original)}>
-                          <EditIcon style={{ cursor: "pointer" }} />
-                        </span>
-                      ) : null;
+              <React.Fragment>
+                <CustomTable
+                  t={t}
+                  columns={[
+                    {
+                      Header: t("Edit"),
+                      accessor: "edit",
+                      Cell: ({ row }) => {
+                        const editable = row.original.editable;
+                        return editable ? (
+                          <span onClick={() => openModal(row.original)}>
+                            <EditIcon style={{ cursor: "pointer" }} />
+                          </span>
+                        ) : null;
+                      },
                     },
-                  },
-                  ...Tablecolumns,
-                ]}
-                tableClassName={"deonar-custom-scroll"}
-                data={inspectionTableData && inspectionTableData.length === 0 ? null : inspectionTableData}
-                disableSort={false}
-                autoSort={false}
-                manualPagination={false}
-                onAddClickFunction={() => openModal(inspectionTypes[0].label)}
-              />
+                    ...Tablecolumns,
+                  ]}
+                  tableClassName={"deonar-custom-scroll"}
+                  data={inspectionTableData && inspectionTableData.length === 0 ? null : inspectionTableData}
+                  disableSort={false}
+                  autoSort={false}
+                  manualPagination={false}
+                  onAddClickFunction={() => openModal(inspectionTypes[0].label)}
+                  showAddButton={true}
+                  buttonText={t("Submit")}
+                  onAddClick={handleInspectionDetail}
+                />
+                {/* <div style={{ float: "right", paddingBottom: "1rem", textAlign: "end" }}>
+                  <button
+                    className="bmc-card-button"
+                    style={{ borderBottom: "3px solid black", outline: "none" }}
+                    type="submit"
+                    onClick={handleInspectionDetail}
+                  >
+                    {t("Submit")}
+                  </button>
+                </div> */}
+              </React.Fragment>
             )}
           </div>
         </div>
@@ -481,7 +543,7 @@ const AnteMortemInspectionPage = () => {
           approxAgeOptions={approxAgeOptions}
           bodyColorOptions={bodyColorOptions}
           pregnancyOptions={pregnancyOptions}
-          opinionOptions={opinionOptions}
+          opinionOptions={opinionOption}
           eyesOptions={eyesOptions}
           nostrilOptions={nostrilOptions}
           muzzleOptions={muzzleOptions}
@@ -507,7 +569,7 @@ const AnteMortemInspectionPage = () => {
           approxAgeOptions={approxAgeOptions}
           bodyColorOptions={bodyColorOptions}
           pregnancyOptions={pregnancyOptions}
-          opinionOptions={opinionOptions}
+          opinionOptions={opinionOption}
           eyesOptions={eyesOptions}
           nostrilOptions={nostrilOptions}
           muzzleOptions={muzzleOptions}
@@ -533,7 +595,7 @@ const AnteMortemInspectionPage = () => {
           approxAgeOptions={approxAgeOptions}
           bodyColorOptions={bodyColorOptions}
           pregnancyOptions={pregnancyOptions}
-          opinionOptions={opinionOptions}
+          opinionOptions={opinionOption}
           eyesOptions={eyesOptions}
           nostrilOptions={nostrilOptions}
           muzzleOptions={muzzleOptions}
@@ -559,7 +621,7 @@ const AnteMortemInspectionPage = () => {
           approxAgeOptions={approxAgeOptions}
           bodyColorOptions={bodyColorOptions}
           pregnancyOptions={pregnancyOptions}
-          opinionOptions={postMertemOpinion}
+          opinionOptions={opinionOption}
           visibleMucusMembraneOptions={visibleMucusMembraneOptions}
           thoracicCavityOptions={thoracicCavityOptions}
           abdominalCavityOptions={abdominalCavityOptions}
@@ -570,14 +632,7 @@ const AnteMortemInspectionPage = () => {
           selectedAnimal={selectedAnimal}
         />
       )}
-      {toast && (
-        <Toast
-          error={toast.key === t("error")}
-          label={t(toast.key === t("success") ? t("DEONAR_INSPECTION_DATA_UPDATED_SUCCESSFULY") : toast.action)}
-          onClose={() => setToast(null)}
-          style={{ maxWidth: "670px" }}
-        />
-      )}
+      {toast && <Toast error={toast.key === t("error")} label={t(toast.action)} onClose={() => setToast(null)} style={{ maxWidth: "670px" }} />}
     </React.Fragment>
   );
 };

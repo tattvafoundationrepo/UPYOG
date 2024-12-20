@@ -2,6 +2,8 @@ import { ActionBar, ApplyFilterBar, CloseSvg, Dropdown, RadioButtons, Removeable
 import React, { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
+import useBMCCommon from "@upyog/digit-ui-libraries/src/hooks/bmc/useBMCCommon";
+
 
 const Filter = ({ searchParams, onFilterChange, onSearch, removeParam, ...props }) => {
   const { t } = useTranslation()
@@ -250,38 +252,46 @@ const Filter = ({ searchParams, onFilterChange, onSearch, removeParam, ...props 
     );
   };
   //-------------------------------------------------------
-  const getAll = Digit.Hooks.bmc.useBMCDataCommon();
-  const handleApply = () => {
-  console.log('check 01')
+  const { fetchBMCCommon } = useBMCCommon();
+  const { data: schemeBMCData } = fetchBMCCommon(); const handleApply = () => {
+    console.log('check 01')
 
     const payload = {
-      DashboardCriteria: {
-        state: "VERIFIED",
-        courseid: null,
-        machineid: null,
-        ward: null,
-        zone: null,
-        city: null,
-        schemeId: 1,
-        createddate: null,
-        enddate: null
-      },
+      state: isActive?.code === true ? "APPLIED" : 
+              isActive?.code === false && filters.role[0]?.name === "VERIFIED" ? "VERIFIED" :
+              isActive?.code === false && filters.role[0]?.name === "APPROVED" ? "APPROVED" :
+              isActive?.code === false && filters.role[0]?.name === "SELECTED" ? "SELECTED" :
+              isActive?.code === false && filters.role[0]?.name === "REJECTED" ? "REJECTED" : 
+              null,
+      courseid: selectedDetail && detailOptions.find(d => d.value === selectedDetail)?.type === "course" 
+                ? selectedDetail 
+                : null,
+      machineid: selectedDetail && detailOptions.find(d => d.value === selectedDetail)?.type === "machine" 
+                 ? selectedDetail 
+                 : null,
+      schemeId: selectedScheme ? selectedScheme : 1, 
+      ward: null,
+      zone: null, 
+      city: null, 
+      createddate: null, 
+      enddate: null
     };
-
-    getAll.mutate(payload, {
-      onSuccess: () => {
-        console.log('all API called+++++++++++++++++++++++')
+  
+    console.log('Filtering payload:', payload);
+  
+    schemeBMCData.mutate(payload, {
+      onSuccess: (filteredData) => {
+        console.log('Filtered API data:', filteredData);
+        // You might want to update parent component state or trigger a re-render
+        onFilterChange(filteredData);
       },
-      onError: (error) => { },
+      onError: (error) => {
+        console.error('Error filtering data:', error);
+        // Handle error - maybe show a toast or error message
+      },
     });
   };
 
-  // function handleApply() {
-
-
-
-
-  // }
 
 
   return (

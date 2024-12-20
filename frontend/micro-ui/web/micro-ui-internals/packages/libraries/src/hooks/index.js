@@ -301,6 +301,7 @@ import useSaveDocument from "./bmc/saveDocuments"
 import useSaveQualification from "./bmc/saveQualification";
 import useSaveBankDetails from "./bmc/saveBankDetails";
 import useBMCInboxApplicationStatus from "./bmc/useBMCCommon"
+import useBmcScheme from "./bmc/useBmcScheme";
 
 const pgr = {
   useComplaintDetails,
@@ -571,7 +572,9 @@ const bmc = {
   useSaveDocument,
   useSaveBankDetails,
   useSaveQualification,
-  useBMCInboxApplicationStatus
+  useBMCInboxApplicationStatus,
+  useBmcScheme,
+  
 };
 
 const deonar = {

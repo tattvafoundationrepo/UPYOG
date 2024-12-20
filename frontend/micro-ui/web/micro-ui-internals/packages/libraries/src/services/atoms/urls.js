@@ -289,6 +289,7 @@ const Urls = {
     fetchWeighingCollectionFee: "/deonar-v1/collection/fee/weighing/_get",
     saveSlaughterListData: "/deonar-v1/animal/slaughter/_save",
     getSlaughterUnit: "/deonar-v1/animal/slaughter/_shifts",
+    saveInspectionData: "/deonar-v1/inspection/submit",
   },
   access_control: "/access/v1/actions/mdms/_get",
   billgenie: "/egov-searcher",

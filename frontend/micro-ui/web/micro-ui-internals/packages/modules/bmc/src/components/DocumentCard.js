@@ -4,7 +4,7 @@ import CustomTable from "./CustomTable";
 import CustomModal from "./CustomModal";
 
 import { Controller, useForm } from "react-hook-form";
-import { TextInput, Dropdown, CardLabel, LabelFieldPair, RemoveIcon } from "@upyog/digit-ui-react-components";
+import { TextInput, Dropdown, CardLabel, LabelFieldPair, RemoveIcon, Toast } from "@upyog/digit-ui-react-components";
 import TableCard from "@tattvafoundation/digit-ui-module-deonar/src/pages/employee/commonFormFields/tableCard";
 
 const DocumentCard = ({ tenantId, onUpdate, initialRows = [], AllowEdit = true, AddOption = true, AllowRemove = true, isLoading }) => {
@@ -22,6 +22,7 @@ const DocumentCard = ({ tenantId, onUpdate, initialRows = [], AllowEdit = true, 
   const [selectedRow, setSelectedRow] = useState(null);
 
   const [isMobileView, setIsMobileView] = useState(window.innerWidth < 769);
+  const [toast, setToast] = useState('')
 
   const initialDefaultValues = useMemo(
     () => ({
@@ -95,23 +96,29 @@ const DocumentCard = ({ tenantId, onUpdate, initialRows = [], AllowEdit = true, 
 
   const removeDocumentRow = (id) => {
     const documentToRemove = rows.find((item) => item.document.id === id);
-
+  
     if (!documentToRemove) {
       return;
     }
-
+  
     const payload = {
       removalcriteria: {
         id: documentToRemove.document.id,
         option: "document",
       },
     };
-
+  
     removeRows.mutate(payload, {
       onSuccess: () => {
         setRows((prevRows) => prevRows.filter((row) => row.document.id !== id));
+  
+        setToastWithTimeout("success", t("DOCUMENT REMOVED SUCCESSFULLY"));
       },
-      onError: (error) =>{},
+      onError: (error) => {
+        console.error("Failed to remove document:", error);
+  
+        setToastWithTimeout("error", t("FAILED TO REMOVE DOCUMENT. PLEASE TRY AGAIN!"));
+      },
     });
   };
 
@@ -138,13 +145,19 @@ const DocumentCard = ({ tenantId, onUpdate, initialRows = [], AllowEdit = true, 
 
     saveDocumentData.mutate(newRow, {
       onSuccess: (response) => {
+
+        
         setRows((prevRows) => [
           ...prevRows,
           ...newRow.updatedDocument.map((doc) => ({
             document: doc.document,
             documentNo: doc.documentNo,
           })),
+
         ]);
+        
+        setToastWithTimeout("success", t("DOCUMENT ADDED SUCCESSFULLY"));
+
 
         toggleModal();
 
@@ -158,12 +171,22 @@ const DocumentCard = ({ tenantId, onUpdate, initialRows = [], AllowEdit = true, 
               documentNo: doc.documentNo,
             })),
           ]);
+          
         }
       },
       onError: (error) => {
         console.error("Failed to save document:", error);
+        setToastWithTimeout("error", t("Please fill all the required fields !"));
+
       },
     });
+  };
+  const setToastWithTimeout = (key, action) => {
+    setToast({ key, action });
+  
+    setTimeout(() => {
+      setToast(null);
+    }, 3000);
   };
 
   const userFunction = (data) => {
@@ -178,7 +201,7 @@ const DocumentCard = ({ tenantId, onUpdate, initialRows = [], AllowEdit = true, 
   const visibleColumns = (handleOnClick) => [
     {
       Header: t("BMC_DOCUMENT"),
-      accessor: "document",
+      accessor: t("document"),
       sortable: true,
       Cell: ({ row }) => (
         <span
@@ -188,7 +211,7 @@ const DocumentCard = ({ tenantId, onUpdate, initialRows = [], AllowEdit = true, 
             color: AllowEdit ? "red" : "black",
           }}
         >
-          {row.original.document.document}
+          {t(row.original.document.i18nKey) || row.original.document.document}
         </span>
       ),
       isVisible: true,
@@ -214,16 +237,16 @@ const DocumentCard = ({ tenantId, onUpdate, initialRows = [], AllowEdit = true, 
   const fields = [
     {
       key: "document",
-      label: "BMC_ADD_DOCUMENT",
-      display: (data) => data.document?.document || "N/A", // Safely access nested value
+      label: t("BMC_ADD_DOCUMENT"),
+      display: (data) => t(data.document?.i18nKey) || "N/A", // Safely access nested value
     },
     {
       key: "documentNo",
-      label: "BMC_DOCUMENTNO",
+      label: t("BMC_DOCUMENTNO"),
     },
     {
       key: "action",
-      label: "Actions",
+      label: t("Actions"),
       display: (data) => (
         <button
           onClick={() => removeDocumentRow(data.document?.id)}
@@ -237,7 +260,7 @@ const DocumentCard = ({ tenantId, onUpdate, initialRows = [], AllowEdit = true, 
             fontSize: "14px",
           }}
         >
-          Delete
+          {t("Delete")}
         </button>
       ),
     },
@@ -345,14 +368,14 @@ const DocumentCard = ({ tenantId, onUpdate, initialRows = [], AllowEdit = true, 
               setIsEditing(false);
               reset(initialDefaultValues);
             }}
-            title={<h1 className="heading-m">{isEditing ? t("Edit Document Details") : t("Add Document Details")}</h1>}
+            title={<h1 style={{marginLeft:'0px'}} className="heading-m">{isEditing ? t("Edit Document Details") : t("Add Document Details")}</h1>}
             actionCancelLabel={t("Cancel")}
             actionCancelOnSubmit={() => {
               toggleModal();
               setIsEditing(false);
               reset(initialDefaultValues);
             }}
-            actionSaveLabel={t(isEditing && AllowEdit ? "Update" : "Submit")}
+            actionSaveLabel={t(isEditing && AllowEdit ? t("Update") : t("Submit"))}
             actionSaveOnSubmit={handleSubmit(isEditing && AllowEdit ? updateRow : addRow)}
             formId="modal-action"
           >
@@ -409,6 +432,14 @@ const DocumentCard = ({ tenantId, onUpdate, initialRows = [], AllowEdit = true, 
           </CustomModal>
         </div>
       </div>
+      {toast && (
+        <Toast
+          error={toast.key === "error"}
+          label={t(toast.action)}
+          onClose={() => setToast(null)}
+          style={{ maxWidth: "670px" }}
+        />
+      )}
     </div>
   );
 };

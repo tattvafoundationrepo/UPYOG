@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { SearchField, Table, TextInput, Loader } from "@upyog/digit-ui-react-components";
+import { useTranslation } from "react-i18next";
 
 const CustomTable = ({
   columns = [],
@@ -33,6 +34,9 @@ const CustomTable = ({
   pdfButtonText = "PDF",
   excelButtonText = "Excel",
   customDownloadButtonStyles = {},
+  showAddButton = false,
+  buttonText = "Add Employee",
+  onAddClick,
   ...rest
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -45,6 +49,7 @@ const CustomTable = ({
   );
   const [isDownloading, setIsDownloading] = useState(false);
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false); // State for dropdown
+  const { t } = useTranslation();
 
   useEffect(() => {
     setFilteredData(data);
@@ -330,7 +335,11 @@ const CustomTable = ({
           )}
           {renderElements()}
 
-          {showTotalRecords && <p>Total Records: {sortedData.length}</p>}
+          {showTotalRecords && (
+            <p>
+              {t("Total Records")}: {sortedData.length}
+            </p>
+          )}
         </div>
       </div>
 
@@ -362,6 +371,14 @@ const CustomTable = ({
         })}
         {...rest}
       />
+
+      {showAddButton && (
+        <div style={{ paddingBottom: "1rem" }}>
+          <button onClick={onAddClick} className="bmc-card-button" style={{ borderBottom: "3px solid black", outline: "none" }} type="submit">
+            {buttonText}
+          </button>
+        </div>
+      )}
 
       {isLoadingRows && (
         <div className="loader-overlay" style={{ position: "relative" }}>

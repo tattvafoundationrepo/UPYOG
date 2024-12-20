@@ -1,4 +1,4 @@
-import { AddIcon, CardLabel, Header, LabelFieldPair, RemoveIcon, TextInput } from "@upyog/digit-ui-react-components";
+import { AddIcon, CardLabel, Header, LabelFieldPair, RemoveIcon, TextInput, Toast } from "@upyog/digit-ui-react-components";
 import React, { useEffect, useState, useMemo } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
@@ -39,6 +39,7 @@ const BankDetailsForm = ({ tenantId, onUpdate, initialRows = [], AddOption = tru
   const [selectedRow, setSelectedRow] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isMobileView, setIsMobileView] = useState(window.innerWidth < 769);
+  const [toast, setToast] = useState('')
 
   const userDetails = Digit.UserService.getUser();
 
@@ -105,6 +106,13 @@ const BankDetailsForm = ({ tenantId, onUpdate, initialRows = [], AddOption = tru
   }, [initialRows, headerLocale]);
 
   const saveBankDetails = Digit.Hooks.bmc.useSaveBankDetails();
+  const setToastWithTimeout = (key, action) => {
+    setToast({ key, action });
+  
+    setTimeout(() => {
+      setToast(null);
+    }, 3000);
+  };
   const addRow = () => {
     const formData = getValues();
     const isDuplicate = rows.some((row) => row.accountNumber === formData.accountNumber);
@@ -142,6 +150,8 @@ const BankDetailsForm = ({ tenantId, onUpdate, initialRows = [], AddOption = tru
 
           })),
         ]);
+        setToastWithTimeout('success', t('BANK DETAIL ADDED SUCCESSFULLY'))
+
 
         toggleModal();
 
@@ -187,6 +197,8 @@ const BankDetailsForm = ({ tenantId, onUpdate, initialRows = [], AddOption = tru
     removeRows.mutate(payload, {
       onSuccess: () => {
         setRows((prevRows) => prevRows.filter((row) => row.accountNumber !== id));
+        setToastWithTimeout('success', t('BANK DETAIL REMOVED SUCCESSFULLY'))
+
       },
       onError: (error) => {
         console.error("Failed to delete document row:", error);
@@ -232,28 +244,28 @@ const BankDetailsForm = ({ tenantId, onUpdate, initialRows = [], AddOption = tru
   const fields = [
     {
       key: "ifsc",
-      label: "BMC_ADD_DOCUMENT",
+      label: t("BMC_ADD_DOCUMENT"),
       display: (data) => data?.ifsc || "N/A", // Safely access nested value
     },
     {
       key: "micr",
-      label: "BMC_MICR Code",
+      label: t("BMC_MICR Code"),
     },
     {
       key: "accountNumber",
-      label: "BMC_Account Number",
+      label: t("BMC_Account Number"),
     },
     {
       key: "name",
-      label: "BMC_BANK NAME",
+      label: t("BMC_BANK NAME"),
     },
     {
       key: "branchName",
-      label: "BMC_BRANCH NAME",
+      label: t("BMC_BRANCH NAME"),
     },
     {
       key: "action",
-      label: "Actions",
+      label: t("Actions"),
       display: (data) => (
         <button
           onClick={() => removeBankRow(data?.accountNumber)}
@@ -267,7 +279,7 @@ const BankDetailsForm = ({ tenantId, onUpdate, initialRows = [], AddOption = tru
             fontSize: "14px",
           }}
         >
-          Delete
+          {t("Delete")}
         </button>
       ),
     },
@@ -376,14 +388,14 @@ const BankDetailsForm = ({ tenantId, onUpdate, initialRows = [], AddOption = tru
               setIsEditing(false);
               reset(initialDefaultValues);
             }}
-            title={<h1 className="heading-m">{isEditing ? t("Edit Document") : t("Add Documents")}</h1>}
+            title={<h1 style={{marginLeft:'0px'}} className="heading-m">{isEditing ? t("Edit Bank") : t("Add Banks")}</h1>}
             actionCancelLabel={t("Cancel")}
             actionCancelOnSubmit={() => {
               toggleModal();
               setIsEditing(false);
               reset(initialDefaultValues);
             }}
-            actionSaveLabel={t(isEditing && AllowEdit ? "Update" : "Submit")}
+            actionSaveLabel={(isEditing && AllowEdit ? t("Update") : t("Submit"))}
             actionSaveOnSubmit={handleSubmit(isEditing && AllowEdit ? updateRow : addRow)}
             formId="modal-action"
           >
@@ -497,6 +509,14 @@ const BankDetailsForm = ({ tenantId, onUpdate, initialRows = [], AddOption = tru
           </CustomModal>
         </div>
       </div>
+      {toast && (
+        <Toast
+          error={toast.key === "error"}
+          label={t(toast.action)}
+          onClose={() => setToast(null)}
+          style={{ maxWidth: "670px" }}
+        />
+      )}
     </React.Fragment>
   );
 };

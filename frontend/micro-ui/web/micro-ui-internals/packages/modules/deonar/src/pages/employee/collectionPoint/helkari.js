@@ -366,7 +366,7 @@ const Helkari = () => {
                         {showIndividualMessage && <p style={{ fontSize: "20px" }}>{t("Note - You can select the Helkari individually also.")}</p>}
                       </div>
                     </div>
-                    <div className="bmc-card-row">
+                    <div className="bmc-card-row"style={{overflowY:"auto", maxHeight:"511px"}}>
                       <CustomTable
                         t={t}
                         columns={isAfterStablingVisibleColumns}
