@@ -60,7 +60,6 @@ public class InspectionController {
 
     
     @PostMapping("/inspection/submit")
-    @CrossOrigin("*")
     public ResponseEntity<Object> submitInspection(@RequestBody InspectionSearchCriteria criteria ){
         try {
             inspectionService.submitInspectionDetails(criteria);
