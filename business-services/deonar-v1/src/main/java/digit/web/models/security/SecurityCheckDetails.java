@@ -22,11 +22,11 @@ public class SecurityCheckDetails {
     @JsonProperty("traderName")
     private String traderName;
 
-    @JsonProperty("dateOfArrival")
-    private String dateOfArrival;
+    @JsonProperty("date")
+    private String date;
 
-    @JsonProperty("timeOfArrival")
-    private String timeOfArrival;
+    @JsonProperty("time")
+    private String time;
 
     @JsonProperty("vehicleNumber")
     private String vehicleNumber;
@@ -57,4 +57,7 @@ public class SecurityCheckDetails {
     private Long stakeholderId;
 
     private String ddreference;
+
+
+    
 }

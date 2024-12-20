@@ -24,5 +24,7 @@ public class InspectionSearchCriteria {
     private Long animalTypeId;
     private Long token;
 
+    private String ddreference;
+
     private Boolean isInitialCheck ; 
 }

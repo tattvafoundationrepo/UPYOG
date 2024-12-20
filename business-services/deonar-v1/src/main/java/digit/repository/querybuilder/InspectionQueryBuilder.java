@@ -88,6 +88,13 @@ public class InspectionQueryBuilder {
             query.append(" tokenno = ? ");
             preparedStmtList.add(criteria.getToken());
         }
+        if (criteria.getDdreference() != null) {
+            addClauseIfRequired(query, preparedStmtList);
+            query.append(" ddreference = ? ");
+            preparedStmtList.add(criteria.getDdreference());
+        }
+
+
         return query.toString();
     }
 

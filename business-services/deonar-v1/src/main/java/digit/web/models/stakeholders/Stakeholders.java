@@ -1,5 +1,7 @@
 package digit.web.models.stakeholders;
 
+import java.util.ArrayList;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -28,8 +30,10 @@ public class Stakeholders {
     private String createdBy;
     private String updatedBy;
     private long stakeholderTypeId;
-    private long animalTypeId;
+    private Long animalTypeId;
+    private ArrayList<Long> animalTypeIds;
     private String licenceNumber;
+    private ArrayList<String> licenceNumbers;
     private String registrationNumber;
     private long validfromdate;
     private long validtodate;

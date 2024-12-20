@@ -34,6 +34,9 @@ public class InspectionRowMapper implements ResultSetExtractor<List<InspectionDe
         System.out.println(rs.getFetchSize());
         while (rs.next()) {
             InspectionDetails.InspectionDetailsBuilder detailsBuilder = InspectionDetails.builder();
+            if (hasColumn(rs, "ddreference")) {
+                detailsBuilder.arrivalId(rs.getString("ddreference"));
+            }
 
             if (hasColumn(rs, "arrivalid")) {
                 detailsBuilder.arrivalId(rs.getString("arrivalid"));

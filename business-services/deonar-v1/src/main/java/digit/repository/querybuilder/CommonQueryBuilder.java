@@ -19,8 +19,8 @@ public class CommonQueryBuilder {
     private static final String ORDERBY_NAME = " ORDER BY name DESC ";
 
     private static final String STAKEHOLDER_VIEW_QUERY = """
-            select stakeholdername as name , stakeholderid as id, licencenumber, animalid , animaltype
-            , mobilenumber , tradertype , registrationnumber
+            select stakeholdername as name ,  id, licencenumber, animaltypeid as animalid , animaltype
+            , mobilenumber , stakeholdertypename as tradertype , registrationnumber
             """;
 
     public String getStakeHolderQuery(CommonSearchCriteria criteria, List<Object> preparedStmtList) {
@@ -28,26 +28,26 @@ public class CommonQueryBuilder {
         String stakeHolder = criteria.getOption().toLowerCase();
         switch (stakeHolder) {
             case "trader":
-                query.append(" from eg_deonar_vtrader ");
+                query.append(" from eg_deonar_deal_list_animal_trader ");
 
                 break;
             case "shopkeeper":
-                query.append(" from eg_deonar_vshopkeeper ");
+                query.append(" from eg_deonar_deal_list_animal_shopkeeper ");
                 break;
             case "gawal":
-                query.append(" from eg_deonar_vgawal ");
+                query.append(" from eg_deonar_deal_list_animal_gawal ");
 
                 break;
             case "dawanwala":
-                query.append(" from  eg_deonar_vdawanwala ");
+                query.append(" from  eg_deonar_deal_list_animal_dawanwala ");
 
                 break;
             case "helkari":
-                query.append(" from eg_deonar_vhelkari ");
+                query.append(" from eg_deonar_deal_list_animal_helkari ");
 
                 break;
             case "broker":
-                query.append(" from eg_deonar_vbroker ");
+                query.append(" from eg_deonar_deal_list_animal_broker ");
 
                 break;
 

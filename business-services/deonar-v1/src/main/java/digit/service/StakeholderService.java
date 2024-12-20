@@ -5,20 +5,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import digit.kafka.Producer;
-
-import digit.web.models.stakeholders.*;
-
 import digit.web.models.stakeholders.StakeholderRequest;
+import digit.web.models.stakeholders.Stakeholders;
+import digit.web.models.stakeholders.Stakeholders;
 
 @Service
 public class StakeholderService {
 
-    
 
     @Autowired
-    private  Producer producer;
+    private Producer producer;
 
-    
+
 
     public StakeholderRequest saveStakeholderDetails(StakeholderRequest request) {
         // Validate the request
@@ -37,7 +35,45 @@ public class StakeholderService {
 
 
         request.setStakeholders(stakeholderDetails);
+
+
+
+
         producer.push("save-stakeholder-data", request);
+
+
+        // ArrayList<Long> animalTypeIds = stakeholderDetails.getAnimalTypeIds();
+
+        // animalTypeIds.forEach(animalTypeId -> {
+        //         request.getStakeholders().setAnimalTypeId(animalTypeId);
+        //         producer.push("save-animaltype-data", request);
+        //     }
+        // );
+        
+        // ArrayList<String> licenceNameList = stakeholderDetails.getLicenceNumbers();
+
+        // licenceNameList.forEach(licenceName -> {
+        //         request.getStakeholders().setLicenceNumber(licenceName);
+        //         producer.push("save-licencenumber-data", request);
+        //     }
+        // );
+
+
+        // ArrayList<Long> animalTypeIds = stakeholderDetails.getAnimalTypeIds();
+
+        // animalTypeIds.forEach(animalTypeId -> {
+        //         request.getStakeholders().setAnimalTypeId(animalTypeId);
+        //         producer.push("save-animaltype-data", request);
+        //     }
+        // );
+        
+        // ArrayList<String> licenceNameList = stakeholderDetails.getLicenceNumbers();
+
+        // licenceNameList.forEach(licenceName -> {
+        //         request.getStakeholders().setLicenceNumber(licenceName);
+        //         producer.push("save-licencenumber-data", request);
+        //     }
+        // );
         return request;
     }
 }

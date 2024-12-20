@@ -98,5 +98,8 @@ public class InspectionDetails {
     private String jsonStringReport;
 
 
+    private String ddreference;
+
+
 }
 
