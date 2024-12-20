@@ -7,7 +7,7 @@ import useDeonarCommon from "../../../../../../libraries/src/hooks/deonar/useCom
 import { columns, useDebounce } from "../collectionPoint/utils";
 import { useForm } from "react-hook-form";
 import { abdominalCavity, pelvicCavity, specimenCollection, thoracicCavity, visibleMucusMembrane } from "../../../constants/dummyData";
-import InspectionTableHeader from "./tableHeader";
+import { InspectionTableHeader, BeforeSlauhterInspectionHeader } from "./tableHeader";
 import { generateTokenNumber } from "../collectionPoint/utils";
 import { AnimalInspectionModal, BeforeSlauhterInspectionModal, PostMortemInspectionModal } from "./inspectionModal";
 import SubmitButtonField from "../commonFormFields/submitBtn";
@@ -419,6 +419,8 @@ const AnteMortemInspectionPage = () => {
     });
   };
 
+  const TableMainColumns = BeforeSlauhterInspectionHeader({ inspectionType, handleUUIDClick });
+
   return (
     <React.Fragment>
       <div className="bmc-card-full">
@@ -454,7 +456,7 @@ const AnteMortemInspectionPage = () => {
             <div className="bmc-row-card-header" style={{ width: "80%" }}>
               <CustomTable
                 t={t}
-                columns={columns(handleUUIDClick, t)}
+                columns={TableMainColumns}
                 data={ArrivalData}
                 disableSort={false}
                 autoSort={false}

@@ -4,7 +4,7 @@ import { Controller, useForm } from "react-hook-form";
 import MainFormHeader from "../commonFormFields/formMainHeading";
 import useSubmitForm from "../../../hooks/useSubmitForm";
 import { COLLECTION_POINT_ENDPOINT } from "../../../constants/apiEndpoints";
-import { helkariColumns, generateTokenNumber } from "./utils";
+import { DawanWalaColumns, generateTokenNumber } from "./utils";
 import useDeonarCommon from "@upyog/digit-ui-libraries/src/hooks/deonar/useCommonDeonar";
 import CustomModal from "../commonFormFields/customModal";
 import CustomTable from "../commonFormFields/customTable";
@@ -171,16 +171,17 @@ const S = () => {
       const securityCheckDetails = fetchedData.SecurityCheckDetails;
       const mappedAnimalCount = securityCheckDetails.flatMap((detail) =>
         detail.animalDetails.map((animal) => ({
-          arrivalId: detail.ddreference,
+          arrivalId: detail.entryUnitId,
           animalTypeId: animal.animalTypeId,
           animalType: animal.animalType,
           count: animal.token,
         }))
       );
       setGawaltable(mappedAnimalCount);
-      //console.log("mappedAnimalCount",gawaltable);
     }
   }, [fetchedData]);
+
+  const ddReference = fetchedData?.SecurityCheckDetails?.flatMap((detail) => detail.ddreference);
 
   const filteredGawaltable = gawaltable.filter((animal) => animal.arrivalId === selectedUUID);
 
@@ -334,7 +335,7 @@ const S = () => {
               {isMobileView && animalCount.map((data, index) => <TableCard data={data} key={index} fields={fields} onUUIDClick={handleUUIDClick} />)}
               <CustomTable
                 t={t}
-                columns={helkariColumns(handleUUIDClick, t)}
+                columns={DawanWalaColumns(handleUUIDClick, t)}
                 data={animalCount}
                 manualPagination={false}
                 tableClassName={"deonar-scrollable-table"}
@@ -343,7 +344,7 @@ const S = () => {
                 isLoadingRows={isLoading}
               />
               {isModalOpen && (
-                <CustomModal isOpen={isModalOpen} onClose={toggleModal} selectedUUID={selectedUUID} style={{ width: "100%" }}>
+                <CustomModal isOpen={isModalOpen} onClose={toggleModal} selectedUUID={ddReference} style={{ width: "100%" }}>
                   <Fragment>
                     <div className="bmc-card-row">
                       {/* <div

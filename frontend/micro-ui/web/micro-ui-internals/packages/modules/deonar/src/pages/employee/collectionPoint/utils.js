@@ -117,7 +117,7 @@ export const columns = (handleUUIDClick, t) => [
   },
   {
     Header: t("ARRIVAL_DATE_FIELD"),
-    accessor: "dateOfArrival",
+    accessor: "date",
     getHeaderProps: (column) => ({
       style: {
         display: "flex",
@@ -129,7 +129,7 @@ export const columns = (handleUUIDClick, t) => [
   },
   {
     Header: t("ARRIVAL_TIME_FIELD"),
-    accessor: "timeOfArrival",
+    accessor: "time",
     getHeaderProps: (column) => ({
       style: {
         display: "flex",
@@ -172,11 +172,11 @@ export const createDynamicColumns = (handleUUIDClick, tableType) => {
     },
     {
       Header: "ARRIVAL_DATE_FIELD",
-      accessor: "dateOfArrival",
+      accessor: "date",
     },
     {
       Header: "ARRIVAL_TIME_FIELD",
-      accessor: "timeOfArrival",
+      accessor: "time",
     },
   ];
 
@@ -298,11 +298,11 @@ export const createDynamicColumns = (handleUUIDClick, tableType) => {
       },
       {
         Header: "ARRIVAL_DATE_FIELD",
-        accessor: "dateOfArrival",
+        accessor: "date",
       },
       {
         Header: "ARRIVAL_TIME_FIELD",
-        accessor: "timeOfArrival",
+        accessor: "time",
       },
     ];
   }
@@ -339,11 +339,11 @@ export const createDynamicColumns = (handleUUIDClick, tableType) => {
       },
       {
         Header: "ARRIVAL_DATE_FIELD",
-        accessor: "dateOfArrival",
+        accessor: "date",
       },
       {
         Header: "ARRIVAL_TIME_FIELD",
-        accessor: "timeOfArrival",
+        accessor: "time",
       },
     ];
   }
@@ -437,7 +437,7 @@ export const helkariColumns = (handleUUIDClick, t) => [
     accessor: "ddreference",
     sortable: true,
     Cell: ({ row }) => (
-      <span onClick={() => handleUUIDClick(row.original.ddreference)} style={{ cursor: "pointer", color: "blue" }}>
+      <span onClick={() => handleUUIDClick(row.original.entryUnitId)} style={{ cursor: "pointer", color: "blue" }}>
         {row.original.ddreference}
       </span>
     ),
@@ -469,8 +469,75 @@ export const helkariColumns = (handleUUIDClick, t) => [
     isVisible: true,
   },
   {
-    Header: t("DEONAR_PERMISSION_NUMBER"),
-    accessor: "importPermission",
+    Header: t("DEONAR_ARRIVAL_UUID"),
+    accessor: "entryUnitId",
+  },
+  {
+    Header: t("ARRIVAL_DATE_FIELD"),
+    accessor: "date",
+    getHeaderProps: (column) => ({
+      style: {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center", // or any other styles you want
+      },
+    }),
+    isVisible: true,
+  },
+  {
+    Header: t("ARRIVAL_TIME_FIELD"),
+    accessor: "time",
+    getHeaderProps: (column) => ({
+      style: {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center", // or any other styles you want
+      },
+    }),
+    isVisible: true,
+  },
+];
+
+export const DawanWalaColumns = (handleUUIDClick, t) => [
+  {
+    Header: t("ID"),
+    accessor: "id",
+    Cell: ({ row }) => row.index + 1,
+    getHeaderProps: (column) => ({
+      style: {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center", // or any other styles you want
+      },
+    }),
+    isVisible: false,
+  },
+  {
+    Header: t("Deonar_DD_Reference"),
+    accessor: "ddreference",
+    sortable: true,
+    Cell: ({ row }) => (
+      <span onClick={() => handleUUIDClick(row.original.entryUnitId)} style={{ cursor: "pointer", color: "blue" }}>
+        {row.original.ddreference}
+      </span>
+    ),
+    isVisible: true,
+  },
+  {
+    Header: t("DEONAR_SHOPKEEPER_NAME"),
+    accessor: "traderName",
+    getHeaderProps: (column) => ({
+      style: {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center", // or any other styles you want
+      },
+    }),
+    isVisible: true,
+  },
+  {
+    Header: t("DEONAR_LICENSE_NUMBER"),
+    accessor: "licenceNumber",
     getHeaderProps: (column) => ({
       style: {
         display: "flex",
@@ -486,7 +553,7 @@ export const helkariColumns = (handleUUIDClick, t) => [
   },
   {
     Header: t("ARRIVAL_DATE_FIELD"),
-    accessor: "dateOfArrival",
+    accessor: "date",
     getHeaderProps: (column) => ({
       style: {
         display: "flex",
@@ -498,98 +565,7 @@ export const helkariColumns = (handleUUIDClick, t) => [
   },
   {
     Header: t("ARRIVAL_TIME_FIELD"),
-    accessor: "timeOfArrival",
-    getHeaderProps: (column) => ({
-      style: {
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center", // or any other styles you want
-      },
-    }),
-    isVisible: true,
-  },
-];
-
-export const DawanWalaColumns = (handleUUIDClick) => [
-  {
-    Header: "ID",
-    accessor: "id",
-    Cell: ({ row }) => row.index + 1,
-    getHeaderProps: (column) => ({
-      style: {
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center", // or any other styles you want
-      },
-    }),
-    isVisible: false,
-  },
-  {
-    Header: "Deonar_DD_Reference",
-    accessor: "ddreference",
-    sortable: true,
-    Cell: ({ row }) => (
-      <span onClick={() => handleUUIDClick(row.original.ddreference)} style={{ cursor: "pointer", color: "blue" }}>
-        {row.original.ddreference}
-      </span>
-    ),
-    isVisible: true,
-  },
-  {
-    Header: "DEONAR_SHOPKEEPER_NAME",
-    accessor: "traderName",
-    getHeaderProps: (column) => ({
-      style: {
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center", // or any other styles you want
-      },
-    }),
-    isVisible: true,
-  },
-  {
-    Header: "DEONAR_LICENSE_NUMBER",
-    accessor: "licenceNumber",
-    getHeaderProps: (column) => ({
-      style: {
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center", // or any other styles you want
-      },
-    }),
-    isVisible: true,
-  },
-  {
-    Header: "DEONAR_PERMISSION_NUMBER",
-    accessor: "importPermission",
-    getHeaderProps: (column) => ({
-      style: {
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center", // or any other styles you want
-      },
-    }),
-    isVisible: true,
-  },
-  {
-    Header: "Deonar_Arrival_Id",
-    accessor: "entryUnitId",
-  },
-  {
-    Header: "ARRIVAL_DATE_FIELD",
-    accessor: "dateOfArrival",
-    getHeaderProps: (column) => ({
-      style: {
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center", // or any other styles you want
-      },
-    }),
-    isVisible: true,
-  },
-  {
-    Header: "ARRIVAL_TIME_FIELD",
-    accessor: "timeOfArrival",
+    accessor: "time",
     getHeaderProps: (column) => ({
       style: {
         display: "flex",

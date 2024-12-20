@@ -165,7 +165,7 @@ const Helkari = () => {
       const securityCheckDetails = fetchedData.SecurityCheckDetails;
       const mappedAnimalCount = securityCheckDetails.flatMap((detail) =>
         detail.animalDetails.map((animal) => ({
-          arrivalId: detail.ddreference,
+          arrivalId: detail.entryUnitId,
           animalTypeId: animal.animalTypeId,
           animalType: animal.animalType,
           count: animal.token,
@@ -219,6 +219,8 @@ const Helkari = () => {
       ),
     },
   ];
+
+  const ddReference = fetchedData?.SecurityCheckDetails?.flatMap((detail) => detail.ddreference);
 
   const onSubmit = async (formData) => {
     try {
@@ -334,7 +336,7 @@ const Helkari = () => {
                 isLoadingRows={isLoading}
               />
               {isModalOpen && (
-                <CustomModal isOpen={isModalOpen} onClose={toggleModal} selectedUUID={selectedUUID} style={{ width: "100%" }}>
+                <CustomModal isOpen={isModalOpen} onClose={toggleModal} selectedUUID={ddReference} style={{ width: "100%" }}>
                   <Fragment>
                     <div className="bmc-card-row">
                       <div className="bmc-col3-card">
