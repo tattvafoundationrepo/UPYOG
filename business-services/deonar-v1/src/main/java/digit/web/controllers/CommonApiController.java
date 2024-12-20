@@ -34,7 +34,6 @@ public class CommonApiController {
 
     
     @PostMapping("/common/_get")
-    @CrossOrigin("*")
     public ResponseEntity<CommonResponse>registrationSearchPost(
             @ApiParam(value = "Common Details", required = true) 
             @Valid @RequestBody CommonRequest commonSearchRequest) {
