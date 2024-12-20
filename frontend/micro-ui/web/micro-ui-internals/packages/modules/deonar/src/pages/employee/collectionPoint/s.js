@@ -77,7 +77,7 @@ const Trading = () => {
   const shopkeeperData = useFetchOptions("shopkeeper");
 
   // const { data: fetchedData, isLoading } = fetchTradingList({});
-  const { data: fetchedData, isLoading } = fetchTradingList({ forCollection: true }, { executeOnLoad: true, executeOnRadioSelect: false });
+  const { data: fetchedData, isLoading } = fetchTradingList({}, { executeOnLoad: true, executeOnRadioSelect: false });
 
 
   useEffect(() => {
