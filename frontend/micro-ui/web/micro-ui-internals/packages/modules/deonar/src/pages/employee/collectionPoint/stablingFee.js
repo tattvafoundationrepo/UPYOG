@@ -61,7 +61,7 @@ const StablingFeePage = () => {
 
   const { searchDeonarCommon, saveStablingDetails, fetchStablingList, invalidateDeonarDetails } = useDeonarCommon();
   const { data: fetchedData, isLoading } = fetchStablingList(
-    { forCollection: true },
+    {},
     {
       executeOnLoad: true,
       executeOnRadioSelect: false,
