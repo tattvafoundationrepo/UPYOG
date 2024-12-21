@@ -11,12 +11,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import digit.bmc.model.UserSchemeApplication;
 import digit.service.BmcApplicationService;
 import digit.util.ResponseInfoFactory;
@@ -28,7 +28,6 @@ import digit.web.models.SchemeApplication;
 import digit.web.models.SchemeApplicationListResponse;
 import digit.web.models.SchemeApplicationRequest;
 import digit.web.models.SchemeApplicationResponse;
-import digit.web.models.SchemeApplicationSearchCriteria;
 import digit.web.models.SchemeApplicationSearchRequest;
 import digit.web.models.SchemeApplicationStatus;
 import digit.web.models.UserSchemeApplicationRequest;
@@ -155,7 +154,6 @@ public class SchemeApplicationController {
         
 
         @PostMapping("/_getAll")
-        @CrossOrigin("*")
         public ResponseEntity<SchemeApplicationListResponse> getAllSchemeApplications(
                 @ApiParam(value = "Request information for fetching scheme applications", required = true) @Valid @RequestBody DashboardCriteriaRequest dashboardCriteriaRequest) {
                 List<DashboardApplication> applications = new ArrayList<>();

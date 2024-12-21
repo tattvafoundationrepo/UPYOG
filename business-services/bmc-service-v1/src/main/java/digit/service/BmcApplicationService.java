@@ -249,14 +249,15 @@ public class BmcApplicationService {
     public Map<String, Long> countSchemeApplications(ApplicationCountRequest request){
         Map<String, Long> countMap = new HashMap<String,Long>();
         String tenantId = request.getRequestInfo().getUserInfo().getTenantId();
+        String uuid = request.getRequestInfo().getUserInfo().getUuid();
+        boolean forVerify = request.getForVerify() == null || request.getForVerify() == false ? false : request.getForVerify();
 
-
-        if (request.getAction() == null) {
+        if (request.getAction() == null ) {
         List<String> actionList = schemeApplicationRepository.getDistinctActionsByTenant(tenantId);
-        countMap = schemeApplicationRepository.getApplicationCountss(tenantId, actionList);
+        countMap = schemeApplicationRepository.getApplicationCountss(forVerify, uuid, actionList);
     } else {
         List<String> actions = Collections.singletonList(request.getAction().toUpperCase());
-        countMap = schemeApplicationRepository.getApplicationCountss(tenantId, actions);
+        countMap = schemeApplicationRepository.getApplicationCountss(forVerify, uuid, actions);
     }
         return countMap;
     }
