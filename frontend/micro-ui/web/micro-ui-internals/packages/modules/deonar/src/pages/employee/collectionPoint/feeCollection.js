@@ -65,7 +65,6 @@ const FeeCollection = () => {
   const [isSlaughterSelected, setIsSlaughterSelected] = useState(false);
   const [isParkingSelected, setIsParkingSelected] = useState(false);
   const [isRemovalFeeSelected, SetIsRemovalFeeSelected] = useState(false);
-  isShiftSelected
   const [isShiftSelected, SetIsShiftSelected] = useState(false);
 
 
@@ -408,199 +407,82 @@ const FeeCollection = () => {
       <!DOCTYPE html>
       <html>
         <head>
-          <title></title>
+          <title>${downloadFileName}</title>
           <style>
-            .receipt-container {
-             width: 600px;
-             height: 600px;
-             margin: 20px auto;
-             font-family: Arial, sans-serif;
-             color: #333;
-             border: 1px solid #ccc;
-             padding: 20px;
-             background-color: #fafafa;
-           }
-
-            .header-title,
-            .sub-title {
-             text-align: center;
-             margin: 0;
-             font-size: 18px;
-           }
-
-            .details-section p {
-             margin: 10px 0;
-             font-size: 14px;
-           }
-
-          /* .from-label {
-           float: right;
-          } */
-
-          .amount-table {
-           width: 40%;
-           border-collapse: collapse;
-           margin-top: 20px;
-           float: right;
-          }
-
-         .amount-table th,
-         .amount-table td {
-          border: 1px solid #000;
-          height: 30px;
-        }
-
-        .total-label {
-         text-align: left;
-        }
-
-       .total-placeholder {
-        text-align: center;
-       }
-
-         .footer-section {
-         margin-top: 30px;
-         }
-
-         .for-record {
-         font-weight: bold;
-        }
-
-        .slaughterhouses-label {
-         text-align: right;
-         margin-right: 50px;
-        font-size: 12px;
-       }
-
-
-        .container {
-         display: flex;
-        justify-content: space-between;
-        align-items: flex-start; 
-        /* gap: 20px;  */
-        margin: 20px;
-        padding: 10px;
-        box-sizing: border-box;
-        flex-wrap: wrap;
-       }
-
-
-      .left-section {
-       flex: 3; 
-       min-width: 200px;
-       font-size: 16px;
-       font-weight: 500;
-       }
-
-
-     .right-section {
-      flex: 1; 
-      min-width: 200px;
-      overflow-x: auto; 
-      }
-
-     .amount-table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-
-    .amount-table th,
-    .amount-table td {
-     border: 1px solid #ccc;
-     padding: 8px;
-     text-align: center;
-     }
-
-    .amount-table th {
-     background-color: #f2f2f2;
-     font-weight: bold;
-    }
-
-
-
-    @media screen and (max-width: 768px) {
-     .container {
-     flex-direction: column; 
-    }
-
-    .left-section,
-     .right-section {
-    width: 100%;
-  }
-}
- 
+            body {
+              font-family: Arial, sans-serif;
+              max-width: 600px;
+              margin: 0 auto;
+              padding: 20px;
+              line-height: 1.6;
+            }
+            .receipt {
+              border: 2px solid #333;
+              padding: 20px;
+              background-color: #f9f9f9;
+            }
+            .receipt-header {
+              text-align: center;
+              border-bottom: 1px solid #ddd;
+              padding-bottom: 10px;
+              margin-bottom: 20px;
+            }
+            .receipt-header h1 {
+              margin: 0;
+              color: #333;
+            }
+            .receipt-details {
+              margin-bottom: 20px;
+            }
+            .receipt-details div {
+              display: flex;
+              justify-content: space-between;
+              margin-bottom: 10px;
+              border-bottom: 1px dotted #ddd;
+              padding-bottom: 5px;
+            }
+            .receipt-details .label {
+              font-weight: bold;
+              color: #555;
+            }
+            .receipt-details .value {
+              text-align: right;
+              color: #333;
+            }
+            .receipt-footer {
+              text-align: center;
+              margin-top: 20px;
+              font-size: 0.8em;
+              color: #666;
+            }
+            @media print {
+              body { margin: 0; padding: 10px; }
+              .no-print { display: none; }
+            }
           </style>
         </head>
         <body>
-           <div class="receipt-container">
-             <h3 class="header-title">
-             Brihanmumbai Municipal Corporation
-           </h3>
-         <h4 class="sub-title">Deonar Slaughterhouse</h4>
-         <div style="text-align: right;font-weight: bold; margin-top: 10px;">0000101</div>
-
-        <div style ="display: flex; justify-content: space-between; margin-top: 20px;">
-        <span style ="font-weight: bold;">Non-refundable fees</span>
-          <span class="fee-placeholder">Date..........20</span>
-      </div>
-
-      <div class="details-section">
-        <p>
-          Mr./Ms..................................................................................................................... <span>From.............. Rs.</span>
-        </p>
-        <p>
-          This amount was received as entry-fee for the animals shown below.
-        </p>
-      </div>
-      <div class="container">
-     
-      <div class="left-section">
-        <p>Name of the broker.................................</p>
-        <p>Name of the shepherd............................</p>
-      </div>
-
-     
-      <div class="right-section">
-        <table class="amount-table">
-          <thead>
-            <tr>
-              <th>Rs.</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td></td>
-              <td></td>
-            </tr>
-            <tr>
-              <td></td>
-              <td></td>
-            </tr>
-            <tr>
-              <td></td>
-              <td></td>
-            </tr>
-          </tbody>
-          <tfoot>
-            <tr>
-              <td class="total-label">Total</td>
-              <td style="text-align: center;">...</td>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
-    </div>
-      <div class="footer-section">
-        <p class="for-record">For Record</p>
-        <p class="slaughterhouses-label">General Manager</p>
-        <p class="slaughterhouses-label">( Deonar Slaughterhouses)</p>
-        <p>
-          CA(R)69 & 79-BMPP-55951-2022-23-210 BKS.(100X2)
-        </p>
-      </div>
-    </div>
-  
+          <div class="receipt">
+            <div class="receipt-header">
+              <h1>${downloadFileName}</h1>
+            </div>
+            <div class="receipt-details">
+              ${Object.entries(receiptData)
+        .filter(([key]) => !["audit"].includes(key.toLowerCase()))
+        .map(
+          ([key, value]) => `
+                  <div>
+                    <span class="label">${key.charAt(0).toUpperCase() + key.slice(1)}</span>
+                    <span class="value">${formatReceiptValue(value)}</span>
+                  </div>
+                `
+        )
+        .join("")}
+            </div>
+            <div class="receipt-footer">
+              Generated on ${new Date().toLocaleString()}
+            </div>
+          </div>
           <div class="no-print">
             <button onclick="window.print();window.close()" 
               style="display: block; width: 200px; margin: 20px auto; padding: 10px; 
@@ -830,7 +712,6 @@ const FeeCollection = () => {
 
       if (collectionResponse?.Details && collectionResponse?.ResponseInfo?.status === "successful") {
         setFeeCollectionResponse(collectionResponse?.Details);
-        console.log(feeCollectionResponse, "setfeecollectionnnnnnn");
         setToast({ key: "success", message: "Entry fee saved successfully!" });
         setSubmittedData(formData);
         // setRefreshCollectionFeeCard(true);
@@ -1111,7 +992,6 @@ const FeeCollection = () => {
   };
 
   const context = "slaughter";
-  console.log(feeCollectionResponse, "fee collection response");
 
   return (
     <React.Fragment>

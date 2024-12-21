@@ -9,6 +9,7 @@ import useCollectionPoint from "@upyog/digit-ui-libraries/src/hooks/deonar/useCo
 import VehicleNumberField from "../commonFormFields/vehicleNumber";
 import VehicleTypeDropdownField from "../commonFormFields/vehicleTypeDropdown";
 import { useQueryClient } from "react-query";
+import SubmitButtonField from "../commonFormFields/submitBtn";
 
 const ParkingFeePage = () => {
   const { t } = useTranslation();
@@ -36,16 +37,16 @@ const ParkingFeePage = () => {
         departureTime: detail.departureTime,
         departureDate: detail.departureDate,
       }));
-  
+
       setTableData(vehicleParkedCheckDetails);
     }
   }, [parkingDetailsData]);
-  
+
   const {
     control,
     handleSubmit,
     reset,
-    formState: { errors, isValid },
+    formState: { errors, isDirty },
   } = useForm({
     defaultValues: {
       vehicleType: "",
@@ -69,34 +70,32 @@ const ParkingFeePage = () => {
   // const savePrakingData = Digit.Hooks.deonar.useSavePrakingDetail();
 
   const onSubmit = async (formData) => {
-  setIsLoading(true);
+    setIsLoading(true);
 
-  const payload = {
-    vehicleParking: {
-      vehicleNumber: formData.vehicleNumber,
-      vehicleType: formData.vehicleType.value,
-      IN: true,
-      OUT: false,
-    },
+    const payload = {
+      vehicleParking: {
+        vehicleNumber: formData.vehicleNumber,
+        vehicleType: formData.vehicleType.value,
+        IN: true,
+        OUT: false,
+      },
+    };
+
+    saveParkingDetails.mutate(payload, {
+      onSuccess: () => {
+        queryClient.invalidateQueries("ParkingDetails");
+        // refetch();
+        showToast("success", t("DEONAR_PARKING_DATA_UPDATED_SUCCESSFULY"));
+        reset();
+        setIsLoading(false);
+        setIsModalOpen(false);
+      },
+      onError: () => {
+        showToast("error", t("DEONAR_PARKING_DATA_NOT_UPDATED_SUCCESSFULY"));
+        setIsLoading(false);
+      },
+    });
   };
-
-  saveParkingDetails.mutate(payload, {
-    
-    onSuccess: () => {
-      queryClient.invalidateQueries("ParkingDetails");
-      // refetch();
-      showToast("success", t("DEONAR_PARKING_DATA_UPDATED_SUCCESSFULY"));
-      reset();
-      setIsLoading(false);
-      setIsModalOpen(false);
-    },
-    onError: () => {
-      showToast("error", t("DEONAR_PARKING_DATA_NOT_UPDATED_SUCCESSFULY"));
-      setIsLoading(false);
-    },
-  });
-};
-
 
   const handleDeparture = async (formData) => {
     setIsLoading(true);
@@ -207,7 +206,7 @@ const ParkingFeePage = () => {
               )}
             </div>
           </div>
-          <CustomModal isOpen={isModalOpen} onClose={toggleModal}>
+          <CustomModal isOpen={isModalOpen} onClose={toggleModal} title={t("Add Parking Details")}>
             <div className="bmc-card-row">
               <div className="bmc-col2-card">
                 <VehicleTypeDropdownField control={control} data={data} setData={setData} t={t} />
@@ -217,7 +216,7 @@ const ParkingFeePage = () => {
               </div>
             </div>
 
-            <div style={{ float: "right", paddingBottom: "1rem", textAlign: "end" }}>
+            {/* <div style={{ float: "right", paddingBottom: "1rem", textAlign: "end" }}>
               <button
                 className="bmc-card-button"
                 style={{ borderBottom: "3px solid black", outline: "none" }}
@@ -226,7 +225,8 @@ const ParkingFeePage = () => {
               >
                 {t("Submit")}
               </button>
-            </div>
+            </div> */}
+            <SubmitButtonField control={control} disabled={!isDirty} />
           </CustomModal>
         </form>
       </div>

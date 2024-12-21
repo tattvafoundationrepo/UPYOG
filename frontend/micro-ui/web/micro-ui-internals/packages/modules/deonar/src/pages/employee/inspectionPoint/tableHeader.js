@@ -621,7 +621,7 @@ export const BeforeSlauhterInspectionHeader = ({ inspectionType, handleUUIDClick
             accessor: "ddreference",
             sortable: true,
             Cell: ({ row }) => (
-              <span onClick={() => handleUUIDClick(row.original.entryUnitId)} style={{ cursor: "pointer", color: "blue" }}>
+              <span onClick={() => handleUUIDClick(row.original.ddreference)} style={{ cursor: "pointer", color: "blue" }}>
                 {row.original.ddreference}
               </span>
             ),
@@ -708,7 +708,7 @@ export const BeforeSlauhterInspectionHeader = ({ inspectionType, handleUUIDClick
             accessor: "ddreference",
             sortable: true,
             Cell: ({ row }) => (
-              <span onClick={() => handleUUIDClick(row.original.entryUnitId)} style={{ cursor: "pointer", color: "blue" }}>
+              <span onClick={() => handleUUIDClick(row.original.ddreference)} style={{ cursor: "pointer", color: "blue" }}>
                 {row.original.ddreference}
               </span>
             ),

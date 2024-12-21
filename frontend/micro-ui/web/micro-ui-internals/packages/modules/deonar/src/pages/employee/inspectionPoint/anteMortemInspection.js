@@ -289,16 +289,42 @@ const AnteMortemInspectionPage = () => {
     setInspectionTableData(processedData);
   };
 
+  // const handleUUIDClick = (entryUnitId) => {
+  //   setSelectedUUID(entryUnitId);
+  //   setIsLoader(true);
+
+  //   const selectedInspectionType = inspectionTypes.find((item) => item.label === radioValueCheck);
+  //   const inspectionTypeValue = selectedInspectionType ? selectedInspectionType.value : inspectionTypes[0].value;
+
+  //   getTableData.mutate(
+  //     {
+  //       entryUnitId,
+  //       inspectionType: inspectionTypeValue,
+  //     },
+  //     {
+  //       onSuccess: (data) => {
+  //         TableData(data);
+  //         setIsLoader(false);
+  //       },
+  //       onError: (error) => {
+  //         console.error("Error mutating table data:", error);
+  //         setIsLoader(false);
+  //       },
+  //     }
+  //   );
+  // };
+
   const handleUUIDClick = (entryUnitId) => {
     setSelectedUUID(entryUnitId);
     setIsLoader(true);
 
     const selectedInspectionType = inspectionTypes.find((item) => item.label === radioValueCheck);
     const inspectionTypeValue = selectedInspectionType ? selectedInspectionType.value : inspectionTypes[0].value;
-
+    const isBeforeSlaughterInspection = inspectionTypeValue === 3 || inspectionTypeValue === 4;
+    const payload = isBeforeSlaughterInspection ? { ddreference: entryUnitId } : { entryUnitId };
     getTableData.mutate(
       {
-        entryUnitId,
+        ...payload,
         inspectionType: inspectionTypeValue,
       },
       {

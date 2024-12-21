@@ -354,6 +354,7 @@ const Helkari = () => {
                               displayKeys={["label", "licenceNumber", "mobileNumber"]}
                               optionsKey="value"
                               autoCloseOnSelect={true}
+                              showColumnHeaders={true}
                               headerMappings={{
                                 label: t("Name"),
                                 licenceNumber: t("License"),
@@ -368,7 +369,7 @@ const Helkari = () => {
                         {showIndividualMessage && <p style={{ fontSize: "20px" }}>{t("Note - You can select the Helkari individually also.")}</p>}
                       </div>
                     </div>
-                    <div className="bmc-card-row"style={{overflowY:"auto", maxHeight:"511px"}}>
+                    <div className="bmc-card-row">
                       <CustomTable
                         t={t}
                         columns={isAfterStablingVisibleColumns}

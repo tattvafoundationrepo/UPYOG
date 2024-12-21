@@ -62,6 +62,8 @@ const AadhaarFullFormPage = () => {
       updatedAddress.district,
       updatedAddress.street,
       updatedAddress.city,
+      updatedAddress.wardName,
+      
       
     ];
     const isFormValid = requiredFields.every((field) => field !== null && field !== "" && field !== undefined);
@@ -122,7 +124,7 @@ const AadhaarFullFormPage = () => {
       },
       onError: (error) => {
         console.error("Failed to save user details:", error);
-        showToast("error", t("BMC_USER_SAVED_ERROR"));
+        showToast("error", t("Please fill all the required fields !"));
       },
     });
   }, [

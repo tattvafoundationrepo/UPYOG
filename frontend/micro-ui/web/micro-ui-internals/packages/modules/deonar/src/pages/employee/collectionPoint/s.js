@@ -420,6 +420,7 @@ const Trading = () => {
                             displayKeys={["label", "licenceNumber", "mobileNumber"]}
                             optionsKey="value"
                             autoCloseOnSelect={true}
+                            showColumnHeaders={true}
                             headerMappings={{
                               label: t("Name"),
                               licenceNumber: t("License"),

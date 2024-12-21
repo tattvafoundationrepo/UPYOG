@@ -538,6 +538,7 @@ const StablingFeePage = () => {
                         displayKeys={["label", "licenceNumber", "mobileNumber"]}
                         optionsKey="value"
                         autoCloseOnSelect={true}
+                        showColumnHeaders={true}
                         headerMappings={{
                           label: t("Name"),
                           licenceNumber: t("License"),
@@ -559,6 +560,7 @@ const StablingFeePage = () => {
                         displayKeys={["label", "licenceNumber", "mobileNumber"]}
                         optionsKey="value"
                         autoCloseOnSelect={true}
+                        showColumnHeaders={true}
                         headerMappings={{
                           label: t("Broker Name"),
                           licenceNumber: t("License Number"),
@@ -568,7 +570,7 @@ const StablingFeePage = () => {
                     </div>
                   </div>
                   {/* </div> */}
-                  <div className="bmc-card-row" style={{overflowY:"auto", maxHeight:"511px"}}>
+                  <div className="bmc-card-row">
                     {/* <div className="bmc-row-card-header" style={{ overflowY: "auto", maxHeight: "300px" }}> */}
                     {/* {isMobileView && data.map((data, index) => <TableCard data={data} key={index} fields={fields} onUUIDClick={handleUUIDClick} />)} */}
                     <CustomTable
