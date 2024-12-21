@@ -263,7 +263,7 @@ public class UserService {
 		}
 		userRequest.getUserOtherDetails().setZone(userRequest.getUserAddressDetails().getZoneName());
 		userRequest.getUserOtherDetails().setBlock(userRequest.getUserAddressDetails().getBlockName());
-		userRequest.getUserOtherDetails().setWard(userRequest.getUserAddressDetails().getWardName().getCode());
+		userRequest.getUserOtherDetails().setWard(userRequest.getUserAddressDetails().getWardName());
 		userRequest.getUserOtherDetails().setModifiedBy("system");
 		userRequest.getUserOtherDetails().setModifiedOn(time);
 		if (userRequest.getOccupationAndIncomeDetails() != null) {

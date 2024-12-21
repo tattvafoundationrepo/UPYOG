@@ -50,8 +50,8 @@ public class UserAddressDetails {
     @JsonProperty("state")
     private String state;
 
-    @JsonProperty("pinCode")
-    private PinCodeDto pincode;
+    @JsonProperty("pincode")
+    private String pincode;
 
     @JsonProperty("id")
     private Long id;
@@ -67,7 +67,14 @@ public class UserAddressDetails {
 
     private String zoneName;
     private String blockName;
-    private UserWard wardName;
+   // private UserWard wardName;
+
+   private String wardName;
 
 
+   
+   
+   
+    
+ 
 }

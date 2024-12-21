@@ -62,7 +62,7 @@ public class UserDetailRowMapper implements ResultSetExtractor<List<UserDetails>
                             .build();
                 }
 
-                PinCodeDto pin = PinCodeDto.builder().value(rs.getString("pincode")).build();
+              //  PinCodeDto pin = PinCodeDto.builder().value(rs.getString("pincode")).build();
                 UserAddressDetails address = null;
                 if (columns.contains("citytownvillage") && columns.contains("pincode")) {
                     address = UserAddressDetails.builder()
@@ -76,7 +76,7 @@ public class UserDetailRowMapper implements ResultSetExtractor<List<UserDetails>
                             .postOffice(rs.getString("postoffice"))
                             .country(rs.getString("country"))
                             .streetRoadLine(rs.getString("streetroadline"))
-                            .pincode(pin)
+                            .pincode(rs.getString("pincode"))
                             .state(rs.getString("state"))
                             .build();
                 }
