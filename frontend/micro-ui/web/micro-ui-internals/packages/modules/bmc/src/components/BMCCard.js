@@ -37,7 +37,7 @@ const BMCCard = () => {
       role: "APP_RANDOMIZER",
     },
     {
-      count: isLoading ? "-" : (data?.count?.VERIFY || 0) + data?.count?.SELECTED || 0,
+      count: isLoading ? "-" : data?.count?.VERIFY || 0 + data?.count?.SELECTED || 0,
       label: t("TOTAL_VERIFY"),
       link: `/digit-ui/employee`,
       role: "APP_APPROVER",

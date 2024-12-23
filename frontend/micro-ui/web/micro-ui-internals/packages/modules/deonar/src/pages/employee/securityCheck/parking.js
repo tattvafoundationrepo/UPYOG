@@ -37,11 +37,11 @@ const ParkingFeePage = () => {
         departureTime: detail.departureTime,
         departureDate: detail.departureDate,
       }));
-
+  
       setTableData(vehicleParkedCheckDetails);
     }
   }, [parkingDetailsData]);
-
+  
   const {
     control,
     handleSubmit,

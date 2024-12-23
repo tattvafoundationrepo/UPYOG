@@ -295,7 +295,7 @@ const SecurityCheckPage = ({ optionalFields = false, maxAllowedCount = 100 }) =>
   const onSubmit = async (formData) => {
     try {
       if (!selectedTrader) {
-        setToast({ key: "error", action: "Please select a trader before submitting" });
+        setToast({ key: "error", action: t("Please select a trader before submitting") });
         return;
       }
       setIsAnimalAdded(true);
@@ -341,7 +341,7 @@ const SecurityCheckPage = ({ optionalFields = false, maxAllowedCount = 100 }) =>
           console.log("Toast Action:", `Data saved successfully. Arrival UUID is: ${uuid}`);
           setToast({
             key: "success",
-            action: `Data saved successfully. Arrival UUID is:`,
+            action: t(`Data saved successfully. Arrival UUID is:`),
             uuid, // Pass UUID to the toast
           });
           reset();
@@ -370,7 +370,7 @@ const SecurityCheckPage = ({ optionalFields = false, maxAllowedCount = 100 }) =>
         setTimeout(() => {
           setToast({
             key: "success",
-            action: "UUID copied to clipboard.",
+            action: t("UUID copied to clipboard."),
           });
         }, 100); // Add a small delay to ensure UI updates properly
       },
@@ -378,7 +378,7 @@ const SecurityCheckPage = ({ optionalFields = false, maxAllowedCount = 100 }) =>
         console.error("Failed to copy text: ", err);
         setToast({
           key: "error",
-          action: "Failed to copy UUID to clipboard.",
+          action: t("Failed to copy UUID to clipboard."),
         });
       }
     );
@@ -440,7 +440,7 @@ const SecurityCheckPage = ({ optionalFields = false, maxAllowedCount = 100 }) =>
               </div>
             </div>
             <div className="bmc-row-card-header" style={{ width: "50%" }}>
-              <div className="bmc-card-row" style={{overflowY:"auto",maxHeight:"511px"}}>
+              <div className="bmc-card-row">
                 <CustomTable
                   t={t}
                   columns={Tablecolumns}

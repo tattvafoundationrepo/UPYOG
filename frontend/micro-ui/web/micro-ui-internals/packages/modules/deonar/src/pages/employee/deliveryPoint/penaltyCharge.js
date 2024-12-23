@@ -23,7 +23,7 @@ const PenaltyCharge = () => {
     handleSubmit,
     getValues,
     reset,
-    formState: { errors, isValid },
+    formState: { errors, isDirty },
   } = useForm();
 
   const { data: penaltyData, isLoading, isError } = Digit.Hooks.deonar.useGetPenalty();
@@ -169,7 +169,7 @@ const PenaltyCharge = () => {
                 </LabelFieldPair>
               </div>
 
-              <SubmitButtonField control={control} />
+              <SubmitButtonField control={control} disabled={!isDirty} />
             </div>
           </div>
         </form>

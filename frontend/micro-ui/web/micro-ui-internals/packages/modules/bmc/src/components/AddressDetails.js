@@ -1,4 +1,4 @@
-import { CardLabel, Dropdown, LabelFieldPair, TextInput } from "@upyog/digit-ui-react-components";
+import { CardLabel, LabelFieldPair, TextInput } from "@upyog/digit-ui-react-components";
 import isEqual from "lodash.isequal";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -12,32 +12,44 @@ const AddressDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = false, tena
   const headerLocale = useMemo(() => Digit.Utils.locale.getTransformedLocale(tenantId), [tenantId]);
   const pincode = Digit.SessionStorage.get("CITIZEN.COMMON.HOME.CITY")?.pincode || Digit.ULBService.getCurrentTenantId();
   const [options, setOptions] = useState([]);
-  const [selectedOption, setSelectedOption] = useState([]);
+  const [selectedOptions, setSelectedOptions] = useState([]);
 
   const RequiredFieldMessage = ({ fieldValue }) => {
-    if (!fieldValue || (typeof fieldValue === 'object' && !fieldValue.name)) {
-      return <p style={{ color: 'red', fontSize: '12px', marginTop: '-10px' }}>This is required field *</p>;
+    if (!fieldValue || (typeof fieldValue === "object" && !fieldValue.name)) {
+      return <p style={{ color: "red", fontSize: "12px", marginTop: "-10px" }}>This is required field *</p>;
     }
     return null;
   };
-  const handleSelect = (e, selectedOptions) => {
-    const selectedArray = Array.isArray(selectedOptions) ? selectedOptions : [selectedOptions];
-    if (selectedArray.length > 0) {
-      const selectedPincode = selectedArray[0];
-      // setSelectedTrader(selectedTrader);
-      // setSelectedOption(selectedArray);
-      // setPreviousOption(selectedArray);
-      // setValue("licenceNumber", selectedTrader.licenceNumber);
-      // setAnimalTypes(selectedTrader.animalTypes || []);
-      // setFormModified(false);
-    } else {
-      // setSelectedTrader(null);
-      // setSelectedOption([]);
-      // setValue("licenceNumber", "");
-      // setAnimalTypes([]);
-    }
-  };
 
+  Digit.Hooks.bmc.useLocation({ tenantid: tenantId }, "", {
+    select: (data) => {
+      try {
+        if (!data?.BoundaryDetails) {
+          console.log("No boundary details found");
+          return;
+        }
+
+        const mappedOptions = data.BoundaryDetails.map((detail) => ({
+          id: detail.id || "",
+          pincode: detail.pincode || "",
+          district: detail.district || "",
+          divisionName: detail.divisionname || "",
+          officeName: detail.officename || "",
+          stateName: detail.statename || "",
+          subWardNo: detail.subwardno || "",
+          wardName: detail.wardname || "",
+          wardNo: detail.wardno || "",
+          blockName: detail.blockname || "",
+          zoneName: detail.zonename || "",
+        }));
+        setOptions(mappedOptions);
+      } catch (error) {
+        console.error("Error in mapping location data:", error);
+      }
+    },
+  });
+
+  
   const {
     control,
     watch,
@@ -56,108 +68,15 @@ const AddressDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = false, tena
       subDistrict: initialRows?.address?.subDistrict || "",
       district: initialRows?.address?.district || "",
       state: initialRows?.address?.state || "",
-      zoneName: initialRows?.UserOtherDetails?.zoneName || "",
-      pinCode: initialRows?.address?.pinCode || "",
-      blockName: initialRows?.UserOtherDetails?.blockName || "",
-      wardName: initialRows?.UserOtherDetails?.wardName || null,
+      zoneName: initialRows?.UserOtherDetails?.zone || "",
+      pincode: initialRows?.address?.pincode || "",
+      blockName: initialRows?.UserOtherDetails?.block || "",
+      wardName: initialRows?.UserOtherDetails?.ward || null,
     },
     mode: "onChange",
   });
 
-  const [zones, setZones] = useState([]);
-  const [blocks, setBlocks] = useState([]);
-  const [wards, setWards] = useState([]);
-
-  // Digit.Hooks.bmc.useLocation(tenantId, "Zone", {
-  //   select: (data) => {
-  //     const zonesData = [];
-  //     const blocksData = [];
-  //     const wardsData = [];
-
-  //     data?.TenantBoundary[0]?.boundary.forEach((zone) => {
-  //       zonesData.push({
-  //         code: zone.code,
-  //         name: zone.name,
-  //         i18nKey: `${headerLocale}_ADMIN_${zone.code}`,
-  //       });
-
-  //       zone.children.forEach((block) => {
-  //         blocksData.push({
-  //           code: block.code,
-  //           name: block.name,
-  //           zoneCode: zone.code,
-  //           i18nKey: `${headerLocale}_ADMIN_${block.code}`,
-  //         });
-
-  //         block.children.forEach((ward) => {
-  //           wardsData.push({
-  //             code: ward.code,
-  //             name: ward.name,
-  //             zoneCode: zone.code,
-  //             blockCode: block.code,
-  //             i18nKey: `${headerLocale}_ADMIN_${ward.code}`,
-  //           });
-  //         });
-  //       });
-  //     });
-
-  //     setZones(zonesData);
-  //     setBlocks(blocksData);
-  //     setWards(wardsData);
-
-  //     return {
-  //       zonesData,
-  //       blocksData,
-  //       wardsData,
-  //     };
-  //   },
-  // });
-  Digit.Hooks.bmc.useLocation({'tenantid':tenantId}, "", {
-    select: (data) => {
-      setOptions(data["Bank Details"]);
-    },
-  });
   
-  const selectedWard = watch("wardName");
-  const [filteredBlocks, setFilteredBlocks] = useState([]);
-  const [filteredZones, setFilteredZones] = useState([]);
-
-  // useEffect(() => {
-  //   if (selectedWard && selectedWard.code) {
-  //     const selectedBlockCode = wards.find((ward) => ward.code === selectedWard.code)?.blockCode;
-  //     const selectedZoneCode = wards.find((ward) => ward.code === selectedWard.code)?.zoneCode;
-
-  //     if (selectedBlockCode) {
-  //       const filteredBlocks = blocks.filter((block) => block.code === selectedBlockCode);
-  //       setFilteredBlocks(filteredBlocks);
-  //       setValue("blockName", filteredBlocks[0]?.name || ""); // Automatically set the block name text field
-  //     } else {
-  //       setFilteredBlocks([]);
-  //       setValue("blockName", ""); // Reset block text field
-  //     }
-
-  //     if (selectedZoneCode) {
-  //       const filteredZones = zones.filter((zone) => zone.code === selectedZoneCode);
-  //       setFilteredZones(filteredZones);
-  //       setValue("zoneName", filteredZones[0]?.name || ""); // Automatically set the zone name text field
-  //     } else {
-  //       setFilteredZones([]);
-  //       setValue("zoneName", ""); // Reset zone text field
-  //     }
-  //   } else {
-  //     setFilteredBlocks([]);
-  //     setFilteredZones([]);
-  //   }
-  // }, [wards, blocks, zones, selectedWard, setValue]);
-
-  // useEffect(() => {
-  //   if (!selectedWard) {
-  //     setFilteredBlocks([]);
-  //     setFilteredZones([]);
-  //     setValue("blockName", ""); // Reset block text field
-  //     setValue("zoneName", ""); // Reset zone text field
-  //   }
-  // }, [selectedWard, setValue]);
 
   const formValuesRef = useRef(getValues());
   const formValues = watch();
@@ -177,11 +96,18 @@ const AddressDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = false, tena
   }, [formValues, isValid, stableOnUpdate]);
 
   useEffect(() => {
-    trigger(); // Validate the form on mount to show errors if fields are empty
+    trigger();
   }, [trigger]);
 
   useEffect(() => {
     if (initialRows) {
+      const dataselected = options.find((item)=>item.pincode == initialRows?.address?.pincode)
+      setSelectedOptions(dataselected ? [
+        {
+          ...dataselected,
+          label: dataselected.pincode,
+        }
+      ] : []);
       setValue("house", initialRows?.address?.house || "");
       setValue("street", initialRows?.address?.street || "");
       setValue("landmark", initialRows?.address?.landmark || "");
@@ -189,17 +115,11 @@ const AddressDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = false, tena
       setValue("subDistrict", initialRows?.address?.subDistrict || "");
       setValue("district", initialRows?.address?.district || "");
       setValue("state", initialRows?.address?.state || "");
-
       setValue("city", initialRows?.address?.city || "");
-      setValue("pinCode", initialRows?.address?.pinCode || "");
-
-      // const zonedata = zones.find((zone) => zone.code === initialRows?.UserOtherDetails?.zone) || "";
-      // const blockdata = blocks.find((block) => block.code === initialRows?.UserOtherDetails?.block) || "";
-      // const warddata = wards.find((ward) => ward.code === initialRows?.UserOtherDetails?.ward) || "";
-
-      // setValue("zoneName", zonedata?.name || "");
-      // setValue("blockName", blockdata?.name || "");
-      // setValue("wardName", warddata || null);
+      setValue("pincode", initialRows?.address?.pincode || "");
+      setValue("zoneName", initialRows?.UserOtherDetails?.zone || "");
+      setValue("wardName", initialRows?.UserOtherDetails?.ward || "");
+      setValue("blockName", initialRows?.UserOtherDetails?.block || "");
 
       if (initialRows?.address?.house) clearErrors("house");
       if (initialRows?.address?.street) clearErrors("street");
@@ -209,20 +129,75 @@ const AddressDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = false, tena
       if (initialRows?.address?.district) clearErrors("district");
       if (initialRows?.address?.state) clearErrors("state");
       if (initialRows?.address?.city) clearErrors("city");
-      if (initialRows?.address?.pinCode) clearErrors("pinCode");
-      // if (zonedata) clearErrors("zoneName");
-      // if (blockdata) clearErrors("blockName");
-      // if (warddata) clearErrors("wardName");
+      if (initialRows?.address?.pincode) clearErrors("pincode");
+      if (initialRows?.UserOtherDetails?.zone) clearErrors("zoneName");
+      if (initialRows?.UserOtherDetails?.ward) clearErrors("wardName");
+      if (initialRows?.UserOtherDetails?.block) clearErrors("blockName");
     }
-  }, [initialRows, setValue, headerLocale, clearErrors, zones, blocks, wards]);
+  }, [initialRows, setValue, headerLocale, clearErrors,options]);
 
   const handleToggle = () => {
     setIsEditable(!isEditable);
   };
 
-  const pincodeOptions = (Array.isArray(pincode) ? pincode : []).map((pin) => ({
-    value: pin,
-  }));
+  const handleSelect = (e, selectedOptionsArray) => {
+    try {
+      const selectedArray = Array.isArray(selectedOptionsArray) ? selectedOptionsArray : [selectedOptionsArray];
+
+      if (selectedArray.length > 0) {
+        const selectedDetail = selectedArray[0];
+        const updates = {
+          pincode: selectedDetail.pincode,
+          district: selectedDetail.district || "",
+          subDistrict: selectedDetail.officeName || "",
+          state: selectedDetail.stateName || "",
+          city: selectedDetail.officeName || "",
+          wardName: selectedDetail.wardNo || "",
+          zoneName: selectedDetail.divisionName || "",
+          blockName: selectedDetail.wardName || "",
+        };
+
+        Object.entries(updates).forEach(([key, value]) => {
+          setValue(key, value, { shouldValidate: true });
+        });
+        setSelectedOptions([
+          {
+            ...selectedDetail,
+            label: selectedDetail.pincode,
+          },
+        ]);
+
+        clearErrors(Object.keys(updates));
+      } else {
+        resetFieldsToDefault();
+      }
+    } catch (error) {
+      console.error("Error in handleSelect:", error);
+    }
+  };
+
+  const resetFieldsToDefault = () => {
+    const defaultFields = {
+      house: "",
+      street: "",
+      landmark: "",
+      locality: "",
+      city: "",
+      subDistrict: "",
+      district: "",
+      state: "",
+      zoneName: "",
+      pincode: "",
+      blockName: "",
+      wardName: "",
+    };
+
+    Object.keys(defaultFields).forEach((key) => {
+      setValue(key, defaultFields[key]);
+    });
+
+    setSelectedOptions(null);
+  };
 
   return (
     <React.Fragment>
@@ -246,7 +221,9 @@ const AddressDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = false, tena
         <div className="bmc-card-row">
           <div className="bmc-col3-card">
             <LabelFieldPair>
-              <CardLabel className="bmc-label">{t("BMC_HOUSE")}&nbsp;{errors.house && <sup style={{ color: "red", fontSize: "x-small" }}>{errors.house.message}</sup>}</CardLabel>
+              <CardLabel className="bmc-label">
+                {t("BMC_HOUSE")}&nbsp;{errors.house && <sup style={{ color: "red", fontSize: "x-small" }}>{errors.house.message}</sup>}
+              </CardLabel>
               <Controller
                 control={control}
                 name={"house"}
@@ -261,8 +238,7 @@ const AddressDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = false, tena
                       onBlur={props.onBlur}
                       optionKey="i18nKey"
                       t={t}
-                    />      
-
+                    />
                   </div>
                 )}
               />
@@ -270,7 +246,9 @@ const AddressDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = false, tena
           </div>
           <div className="bmc-col3-card">
             <LabelFieldPair>
-              <CardLabel className="bmc-label">{t("BMC_STREET")}&nbsp;{errors.street && <sup style={{ color: "red", fontSize: "x-small" }}>{errors.street.message}</sup>}</CardLabel>
+              <CardLabel className="bmc-label">
+                {t("BMC_STREET")}&nbsp;{errors.street && <sup style={{ color: "red", fontSize: "x-small" }}>{errors.street.message}</sup>}
+              </CardLabel>
               <Controller
                 control={control}
                 name={"street"}
@@ -286,7 +264,6 @@ const AddressDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = false, tena
                       optionKey="i18nKey"
                       t={t}
                     />
-
                   </div>
                 )}
               />
@@ -294,7 +271,9 @@ const AddressDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = false, tena
           </div>
           <div className="bmc-col3-card">
             <LabelFieldPair>
-              <CardLabel className="bmc-label">{t("BMC_LANDMARK")}&nbsp;{errors.landmark && <sup style={{ color: "red", fontSize: "x-small" }}>{errors.landmark.message}</sup>}</CardLabel>
+              <CardLabel className="bmc-label">
+                {t("BMC_LANDMARK")}&nbsp;{errors.landmark && <sup style={{ color: "red", fontSize: "x-small" }}>{errors.landmark.message}</sup>}
+              </CardLabel>
               <Controller
                 control={control}
                 name={"landmark"}
@@ -310,7 +289,6 @@ const AddressDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = false, tena
                       optionKey="i18nKey"
                       t={t}
                     />
-
                   </div>
                 )}
               />
@@ -318,7 +296,9 @@ const AddressDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = false, tena
           </div>
           <div className="bmc-col3-card">
             <LabelFieldPair>
-              <CardLabel className="bmc-label">{t("BMC_LOCALITY")}&nbsp;{errors.locality && <sup style={{ color: "red", fontSize: "x-small" }}>{errors.locality.message}</sup>}</CardLabel>
+              <CardLabel className="bmc-label">
+                {t("BMC_LOCALITY")}&nbsp;{errors.locality && <sup style={{ color: "red", fontSize: "x-small" }}>{errors.locality.message}</sup>}
+              </CardLabel>
               <Controller
                 control={control}
                 name={"locality"}
@@ -334,7 +314,6 @@ const AddressDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = false, tena
                       optionKey="i18nKey"
                       t={t}
                     />
-
                   </div>
                 )}
               />
@@ -349,78 +328,51 @@ const AddressDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = false, tena
               </CardLabel>
               <Controller
                 control={control}
-                name="pinCode"
+                name="pincode"
                 rules={{ required: t("CORE_COMMON_REQUIRED_ERRMSG") }}
                 render={(props) => (
                   <div>
                     {isEditable ? (
                       <MultiColumnDropdown
                         options={options}
-                        selected={selectedOption}
+                        selected={selectedOptions}
                         onSelect={handleSelect}
-                        // defaultLabel="Select or Search"
-                        displayKeys={["pincode", "district", "statename", "officename", "subwardno", "wardname", "divisionname"]}
+                        displayKeys={["pincode", "district", "stateName", "officeName", "subWardNo", "wardName", "divisionName"]}
                         placeholder="Select or Search"
                         optionsKey="value"
                         defaultUnit="Options"
                         autoCloseOnSelect={true}
                         showColumnHeaders={true}
                         headerMappings={{
-                          pincode: t("BMC_PINCODE"),
+                          label: t("pincode"),
                           district: t("BMC_DISTRICT"),
-                          officename: t("BMC_SUBDISTRICT"),
-                          statename: t("BMC_STATE"),
-                          subwardno: t("BMC_WARD_NAME"),
-                          wardname: t("BMC_BLOCKNAME"),
-                          divisionname: t("BMC_ZONENAME")
+                          officeName: t("BMC_SUBDISTRICT"),
+                          stateName: t("BMC_STATE"),
+                          subWardNo: t("BMC_WARD_NAME"),
+                          wardName: t("BMC_BLOCKNAME"),
+                          divisionName: t("BMC_ZONENAME"),
                         }}
-                      />) : (
-                      <TextInput disabled={!isEditable} readOnly={!isEditable} value={props?.value?.value} />
+                      />
+                    ) : (
+                      <TextInput disabled={!isEditable} readOnly={!isEditable} value={props.value || selectedOptions[0]?.pincode || ""} />
                     )}
                   </div>
                 )}
               />
             </LabelFieldPair>
           </div>
-          {/* <div className="bmc-col3-card">
-            <LabelFieldPair>
-              <CardLabel className="bmc-label">{t("BMC_PINCODE")}&nbsp;{errors.pinCode && <sup style={{ color: "red", fontSize: "x-small" }}>{errors.pinCode.message}</sup>}</CardLabel>
-              <Controller
-                control={control}
-                name="pinCode"
-                rules={{ required: t("CORE_COMMON_REQUIRED_ERRMSG") }}
-                render={(props) => (
-                  <div>
-                    {isEditable ? (
-                      <Dropdown
-                        placeholder={t("SELECT_PINCODE")}
-                        option={pincodeOptions}
-                        selected={props.value}
-                        select={(pincode) => props.onChange(pincode)}
-                        onBlur={props.onBlur}
-                        optionKey="value"
-                        t={t}
-                        isMandatory={true}
-                        className="employee-select-wrap bmc-form-field"
-                      />
-                    ) : (
-                      <TextInput disabled={!isEditable} readOnly={!isEditable} value={props?.value?.value} />
-                    )}
-                  </div>
-                )}
-              />
-            </LabelFieldPair>
-          </div> */}
           <div className="bmc-col3-card">
             <LabelFieldPair>
-              <CardLabel className="bmc-label">{t("BMC_WARD_NAME")}&nbsp;{errors.wardName && <sup style={{ color: "red", fontSize: "x-small" }}>{errors.wardName.message}</sup>}</CardLabel>
+              <CardLabel className="bmc-label">
+                {t("BMC_WARD_NAME")}&nbsp;{errors.wardName && <sup style={{ color: "red", fontSize: "x-small" }}>{errors.wardName.message}</sup>}
+              </CardLabel>
               <Controller
                 control={control}
                 name="wardName"
                 rules={{ required: t("CORE_COMMON_REQUIRED_ERRMSG") }}
                 render={(props) => (
                   <div>
-                      <TextInput disabled readOnly value={props.value?.name || ""} />
+                    <TextInput disabled readOnly value={props.value || ""} />
                   </div>
                 )}
               />
@@ -434,7 +386,12 @@ const AddressDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = false, tena
                 name="zoneName"
                 render={(props) => (
                   <div>
-                    <TextInput disabled readOnly value={props.value || ""} />
+                    <TextInput
+                      disabled
+                      readOnly
+                      value={props.value || ""} // Make sure to show the value
+                      onChange={(e) => props.onChange(e.target.value)}
+                    />
                   </div>
                 )}
               />
@@ -458,7 +415,9 @@ const AddressDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = false, tena
         <div className="bmc-card-row">
           <div className="bmc-col3-card">
             <LabelFieldPair>
-              <CardLabel className="bmc-label">{t("BMC_CITY")}&nbsp;{errors.city && <sup style={{ color: "red", fontSize: "x-small" }}>{errors.city.message}</sup>}</CardLabel>
+              <CardLabel className="bmc-label">
+                {t("BMC_CITY")}&nbsp;{errors.city && <sup style={{ color: "red", fontSize: "x-small" }}>{errors.city.message}</sup>}
+              </CardLabel>
               <Controller
                 control={control}
                 name={"city"}
@@ -466,7 +425,7 @@ const AddressDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = false, tena
                 render={(props) => (
                   <div>
                     <TextInput
-                      disabled 
+                      disabled
                       readOnly
                       value={props.value}
                       onChange={(e) => props.onChange(e.target.value)}
@@ -474,7 +433,6 @@ const AddressDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = false, tena
                       optionKey="i18nKey"
                       t={t}
                     />
-
                   </div>
                 )}
               />
@@ -482,7 +440,10 @@ const AddressDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = false, tena
           </div>
           <div className="bmc-col3-card">
             <LabelFieldPair>
-              <CardLabel className="bmc-label">{t("BMC_SUBDISTRICT")}&nbsp;{errors.subDistrict && <sup style={{ color: "red", fontSize: "x-small" }}>{errors.subDistrict.message}</sup>}</CardLabel>
+              <CardLabel className="bmc-label">
+                {t("BMC_SUBDISTRICT")}&nbsp;
+                {errors.subDistrict && <sup style={{ color: "red", fontSize: "x-small" }}>{errors.subDistrict.message}</sup>}
+              </CardLabel>
               <Controller
                 control={control}
                 name={"subDistrict"}
@@ -490,7 +451,7 @@ const AddressDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = false, tena
                 render={(props) => (
                   <div>
                     <TextInput
-                      disabled 
+                      disabled
                       readOnly
                       value={props.value}
                       onChange={(e) => props.onChange(e.target.value)}
@@ -498,7 +459,6 @@ const AddressDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = false, tena
                       optionKey="i18nKey"
                       t={t}
                     />
-
                   </div>
                 )}
               />
@@ -506,7 +466,9 @@ const AddressDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = false, tena
           </div>
           <div className="bmc-col3-card">
             <LabelFieldPair>
-              <CardLabel className="bmc-label">{t("BMC_DISTRICT")}&nbsp;{errors.district && <sup style={{ color: "red", fontSize: "x-small" }}>{errors.district.message}</sup>}</CardLabel>
+              <CardLabel className="bmc-label">
+                {t("BMC_DISTRICT")}&nbsp;{errors.district && <sup style={{ color: "red", fontSize: "x-small" }}>{errors.district.message}</sup>}
+              </CardLabel>
               <Controller
                 control={control}
                 name={"district"}
@@ -514,7 +476,7 @@ const AddressDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = false, tena
                 render={(props) => (
                   <div>
                     <TextInput
-                      disabled 
+                      disabled
                       readOnly
                       value={props.value}
                       onChange={(e) => props.onChange(e.target.value)}
@@ -522,7 +484,6 @@ const AddressDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = false, tena
                       optionKey="i18nKey"
                       t={t}
                     />
-
                   </div>
                 )}
               />
@@ -530,7 +491,9 @@ const AddressDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = false, tena
           </div>
           <div className="bmc-col3-card">
             <LabelFieldPair>
-              <CardLabel className="bmc-label">{t("BMC_STATE")}&nbsp;{errors.state && <sup style={{ color: "red", fontSize: "x-small" }}>{errors.state.message}</sup>}</CardLabel>
+              <CardLabel className="bmc-label">
+                {t("BMC_STATE")}&nbsp;{errors.state && <sup style={{ color: "red", fontSize: "x-small" }}>{errors.state.message}</sup>}
+              </CardLabel>
               <Controller
                 control={control}
                 name={"state"}
@@ -538,7 +501,7 @@ const AddressDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = false, tena
                 render={(props) => (
                   <div>
                     <TextInput
-                      disabled 
+                      disabled
                       readOnly
                       value={props.value}
                       onChange={(e) => props.onChange(e.target.value)}
@@ -546,14 +509,12 @@ const AddressDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = false, tena
                       optionKey="i18nKey"
                       t={t}
                     />
-
                   </div>
                 )}
               />
             </LabelFieldPair>
           </div>
         </div>
-
       </form>
     </React.Fragment>
   );

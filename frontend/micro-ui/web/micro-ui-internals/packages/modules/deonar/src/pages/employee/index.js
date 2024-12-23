@@ -24,6 +24,10 @@ const App = ({ path, stateCode, userType, tenants }) => {
   const S = Digit.ComponentRegistryService?.getComponent("S");
   const FeeCollection = Digit.ComponentRegistryService?.getComponent("FeeCollection");
   const Slaughtering = Digit.ComponentRegistryService?.getComponent("Slaughtering");
+  const SlaughteringEme = Digit.ComponentRegistryService?.getComponent("SlaughteringEmergency");
+  const SlaughteringNor = Digit.ComponentRegistryService?.getComponent("SlaughteringNormal");
+  const SlaughteringExt = Digit.ComponentRegistryService?.getComponent("SlaughteringExport");
+
   const Helkari = Digit.ComponentRegistryService?.getComponent("Helkari");
   const Stakeholder = Digit.ComponentRegistryService?.getComponent("Stakeholder");
   const Inbox = Digit?.ComponentRegistryService?.getComponent('DEONARInbox');
@@ -68,6 +72,9 @@ const App = ({ path, stateCode, userType, tenants }) => {
         <PrivateRoute path={`${path}/s`} component={S} />
         <PrivateRoute path={`${path}/feeCollection`} component={FeeCollection} />
         <PrivateRoute path={`${path}/slaughtering`} component={Slaughtering} />
+        <PrivateRoute path={`${path}/slaughteringEmr`} component={SlaughteringEme} />
+        <PrivateRoute path={`${path}/slaughteringNor`} component={SlaughteringNor} />
+        <PrivateRoute path={`${path}/slaughteringExt`} component={SlaughteringExt} />
         <PrivateRoute path={`${path}/inspection`} component={AnteMortemInspectionPage} />
         <PrivateRoute path={`${path}/slaughterfeerecovery`} component={SlaughterFeeRecoveryPage} />
         <PrivateRoute path={`${path}/vehiclewashing`} component={VehicleWashing} />

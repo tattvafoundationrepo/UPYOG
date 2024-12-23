@@ -21,11 +21,14 @@ import getRootReducer from "./redux/reducers";
 import Trading from "./pages/employee/collectionPoint/trading";
 import S from "./pages/employee/collectionPoint/s";
 import FeeCollection from "./pages/employee/collectionPoint/feeCollection";
-import Slaughtering from "./pages/employee/collectionPoint/slaughtering";
+import Slaughtering from "./pages/employee/slaughter/slaughtering";
 import Helkari from "./pages/employee/collectionPoint/helkari";
 import Stakeholder from "./pages/employee/collectionPoint/stakeholder";
 import InboxFilter from "./components/InboxFilter";
 import DEONARInbox from "./pages/employee/Inbox";
+import SlaughteringNormal from "./pages/employee/slaughter/slaughterNormal";
+import SlaughteringExport from "./pages/employee/slaughter/slaughterExport";
+import SlaughteringEmergency from "./pages/employee/slaughter/slaughterEmergency";
 
 export const DEONARModule = ({ stateCode, userType, tenants }) => {
   const { t } = useTranslation();
@@ -76,7 +79,10 @@ const componentsToRegister = {
   Helkari,
   Stakeholder,
   DEONAR_INBOX_FILTER: (props) => <InboxFilter {...props} />,
-  DEONARInbox
+  DEONARInbox,
+  SlaughteringNormal,
+  SlaughteringExport,
+  SlaughteringEmergency
 };
 
 export const initDEONARComponents = () => {

@@ -1,28 +1,38 @@
 {
-    "tenantId": "mh.mumbai",
-    "moduleName": "BMC",
-    "FAQs": [
+    "tenantId": "mh",
+    "moduleName": "bmc",
+    "faqs": [
         {
-            "BMC": {
-                "FAQs": [
-                    {
-                        "question": "WHAT IS BMC",
-                        "answer": [
-                            {
-                                "ans": "BMC IS A DIGITAL PLATFORM"
-                            }
-                        ]
-                    },
-                    {
-                        "question": "HOW TO USE BMC",
-                        "answer": [
-                            {
-                                "ans": "BMC IS A DIGITAL PLATFORM"
-                            }
-                        ]
-                    }
-                ]
-            }
+            "question": "Question-1",
+            "answer": [
+                {
+                    "ans": "Answer-1"
+                }
+            ]
+        },
+        {
+            "question": "Question-2",
+            "answer": [
+                {
+                    "ans": "Answer-2"
+                }
+            ]
+        },
+        {
+            "question": "Question-3",
+            "answer": [
+                {
+                    "ans": "Answer-3"
+                }
+            ]
+        },
+        {
+            "question": "Question-4",
+            "answer": [
+                {
+                    "ans": "Answer-4"
+                }
+            ]
         }
     ]
 }

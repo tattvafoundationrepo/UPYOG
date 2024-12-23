@@ -62,6 +62,7 @@ const AnteMortemInspectionPage = () => {
   const [inspectionId, setInspectionId] = useState(1);
   const [animalQuarters, setAnimalQuarters] = useState([{ name: "1" }, { name: "2" }, { name: "3" }, { name: "4" }]);
   const [opinionOptionId, setOpinionOptionId] = useState(inspectionTypes[0].value);
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
   const {
     control,
@@ -289,61 +290,48 @@ const AnteMortemInspectionPage = () => {
     setInspectionTableData(processedData);
   };
 
-  // const handleUUIDClick = (entryUnitId) => {
-  //   setSelectedUUID(entryUnitId);
-  //   setIsLoader(true);
-
-  //   const selectedInspectionType = inspectionTypes.find((item) => item.label === radioValueCheck);
-  //   const inspectionTypeValue = selectedInspectionType ? selectedInspectionType.value : inspectionTypes[0].value;
-
-  //   getTableData.mutate(
-  //     {
-  //       entryUnitId,
-  //       inspectionType: inspectionTypeValue,
-  //     },
-  //     {
-  //       onSuccess: (data) => {
-  //         TableData(data);
-  //         setIsLoader(false);
-  //       },
-  //       onError: (error) => {
-  //         console.error("Error mutating table data:", error);
-  //         setIsLoader(false);
-  //       },
-  //     }
-  //   );
-  // };
-
-  const handleUUIDClick = (entryUnitId) => {
-    setSelectedUUID(entryUnitId);
-    setIsLoader(true);
-
-    const selectedInspectionType = inspectionTypes.find((item) => item.label === radioValueCheck);
-    const inspectionTypeValue = selectedInspectionType ? selectedInspectionType.value : inspectionTypes[0].value;
-    const isBeforeSlaughterInspection = inspectionTypeValue === 3 || inspectionTypeValue === 4;
-    const payload = isBeforeSlaughterInspection ? { ddreference: entryUnitId } : { entryUnitId };
-    getTableData.mutate(
-      {
-        ...payload,
-        inspectionType: inspectionTypeValue,
-      },
-      {
-        onSuccess: (data) => {
-          TableData(data);
-          setIsLoader(false);
-        },
-        onError: (error) => {
-          console.error("Error mutating table data:", error);
-          setIsLoader(false);
-        },
-      }
-    );
-  };
-
   const ArrivalData = arrivalDataCount.filter((row) => {
     const values = Object.values(row);
     return values.some((value) => String(value).toLowerCase().includes(debouncedSearchTerm.toLowerCase()));
   });
+
+  const handleUUIDClick = (identifier) => {
+    setSelectedUUID(identifier);
+    setIsLoader(true);
+    let selectedRow = ArrivalData.find((row) => {
+      return String(row.ddreference).trim().toLowerCase() === String(identifier).trim().toLowerCase();
+    });
+
+    if (!selectedRow) {
+      selectedRow = ArrivalData.find((row) => {
+        return String(row.entryUnitId).trim().toLowerCase() === String(identifier).trim().toLowerCase();
+      });
+    }
+    if (!selectedRow) {
+      console.error("No matching row found for identifier:", identifier);
+      setIsLoader(false);
+      return;
+    }
+    const { entryUnitId, ddreference } = selectedRow;
+    const selectedInspectionType = inspectionTypes.find((item) => item.label === radioValueCheck);
+    const inspectionTypeValue = selectedInspectionType ? selectedInspectionType.value : inspectionTypes[0].value;
+    const payload = {
+      entryUnitId: entryUnitId || identifier,
+      inspectionAgainst: ddreference || identifier,
+      inspectionType: inspectionTypeValue,
+    };
+
+    getTableData.mutate(payload, {
+      onSuccess: (data) => {
+        TableData(data);
+        setIsLoader(false);
+      },
+      onError: (error) => {
+        console.error("Error mutating table data:", error);
+        setIsLoader(false);
+      },
+    });
+  };
 
   const handleRadioChange = (value) => {
     setRadioValueCheck(value);
@@ -383,14 +371,34 @@ const AnteMortemInspectionPage = () => {
   const saveAnteMortemInspection = Digit.Hooks.deonar.useInspectionPointSave();
 
   const handleInspectionDetail = () => {
+    const identifier = selectedUUID;
+    let selectedRow = ArrivalData.find((row) => {
+      return String(row.ddreference).trim().toLowerCase() === String(identifier).trim().toLowerCase();
+    });
+
+    if (!selectedRow) {
+      selectedRow = ArrivalData.find((row) => {
+        return String(row.entryUnitId).trim().toLowerCase() === String(identifier).trim().toLowerCase();
+      });
+    }
+    if (!selectedRow) {
+      console.error("No matching row found for identifier:", identifier);
+      setIsLoader(false);
+      return;
+    }
+    const { entryUnitId, ddreference } = selectedRow;
+    const selectedInspectionType = inspectionTypes.find((item) => item.label === radioValueCheck);
+    const inspectionTypeValue = selectedInspectionType ? selectedInspectionType.value : inspectionTypes[0].value;
     const payload = {
-      entryUnitId: selectedUUID,
-      inspectionType: inspectionTypes.find((item) => item.label === radioValueCheck)?.value,
+      entryUnitId: entryUnitId || identifier,
+      inspectionAgainst: ddreference || identifier,
+      inspectionType: inspectionTypeValue,
     };
     InspectionDetailsData.mutate(payload, {
       onSuccess: (data) => {
-        showToast("success", "YOU_HAVE_SAVED_THE_INSPECTION_DATA_REPORT_SUCCESSFULY");
+        showToast("success", t("YOU_HAVE_SAVED_THE_INSPECTION_DATA_REPORT_SUCCESSFULLY"));
         console.log(data, "Inspection details data");
+        setIsSubmitted(true);
       },
       onError: (error) => {
         console.error("Error fetching new table data:", error);
@@ -405,20 +413,78 @@ const AnteMortemInspectionPage = () => {
       setToast(null);
     }, duration);
   };
+  // const handleUpdateData = () => {
+  //   toggleModal();
+  //   setIsLoader(true);
+
+  //   const payload = {
+  //     InspectionDetails: {
+  //       ...selectedAnimal,
+  //       entryUnitId: selectedUUID,
+  //       inspectionId: inspectionTypes.find((item) => item.label === radioValueCheck)?.value,
+  //     },
+  //   };
+
+  //   const currentValues = getValues();
+
+  //   Object.keys(currentValues).forEach((key) => {
+  //     if (currentValues[key] && currentValues[key] !== selectedAnimal[key]) {
+  //       payload.InspectionDetails[key] = currentValues[key];
+  //     }
+  //   });
+
+  //   saveAnteMortemInspection.mutate(payload, {
+  //     onSuccess: (response) => {
+  //       showToast("success", t("DEONAR_INSPECTION_DATA_UPDATED_SUCCESSFULY"));
+  //       setInspectionTableData((prevData) => {
+  //         return prevData.map((item) => {
+  //           if (item.animal === selectedAnimal.animal) {
+  //             return { ...item, ...payload.InspectionDetails };
+  //           }
+  //           return item;
+  //         });
+  //       });
+  //       setIsLoader(false);
+  //     },
+  //     onError: (error) => {
+  //       showToast("error", t("DEONAR_INSPECTION_DATA_NOT_UPDATED_SUCCESSFULY"));
+  //       setIsLoader(false);
+  //     },
+  //   });
+  // };
+
   const handleUpdateData = () => {
-    toggleModal();
     setIsLoader(true);
+    const identifier = selectedUUID;
+    let selectedRow = ArrivalData.find((row) => {
+      return String(row.ddreference).trim().toLowerCase() === String(identifier).trim().toLowerCase();
+    });
+
+    if (!selectedRow) {
+      selectedRow = ArrivalData.find((row) => {
+        return String(row.entryUnitId).trim().toLowerCase() === String(selectedUUID).trim().toLowerCase();
+      });
+    }
+
+    if (!selectedRow) {
+      console.error("No matching row found for selectedUUID:", selectedUUID);
+      setIsLoader(false);
+      return;
+    }
+    const { entryUnitId, ddreference } = selectedRow;
+    const selectedInspectionType = inspectionTypes.find((item) => item.label === radioValueCheck);
+    const inspectionTypeValue = selectedInspectionType ? selectedInspectionType.value : inspectionTypes[0].value;
 
     const payload = {
       InspectionDetails: {
-        ...selectedAnimal,
-        entryUnitId: selectedUUID,
+        entryUnitId: entryUnitId || selectedUUID,
+        inspectionAgainst: ddreference || selectedUUID,
+        inspectionType: inspectionTypeValue,
         inspectionId: inspectionTypes.find((item) => item.label === radioValueCheck)?.value,
+        ...selectedAnimal,
       },
     };
-
     const currentValues = getValues();
-
     Object.keys(currentValues).forEach((key) => {
       if (currentValues[key] && currentValues[key] !== selectedAnimal[key]) {
         payload.InspectionDetails[key] = currentValues[key];
@@ -427,7 +493,7 @@ const AnteMortemInspectionPage = () => {
 
     saveAnteMortemInspection.mutate(payload, {
       onSuccess: (response) => {
-        showToast("success", t("DEONAR_INSPECTION_DATA_UPDATED_SUCCESSFULY"));
+        showToast("success", t("DEONAR_INSPECTION_DATA_UPDATED_SUCCESSFULLY"));
         setInspectionTableData((prevData) => {
           return prevData.map((item) => {
             if (item.animal === selectedAnimal.animal) {
@@ -439,7 +505,7 @@ const AnteMortemInspectionPage = () => {
         setIsLoader(false);
       },
       onError: (error) => {
-        showToast("error", t("DEONAR_INSPECTION_DATA_NOT_UPDATED_SUCCESSFULY"));
+        showToast("error", t("DEONAR_INSPECTION_DATA_NOT_UPDATED_SUCCESSFULLY"));
         setIsLoader(false);
       },
     });
@@ -509,7 +575,7 @@ const AnteMortemInspectionPage = () => {
           <div className="bmc-card-row">
             {isLoader && radioValueCheck ? (
               <Loader />
-            ) : inspectionTableData && radioValueCheck && inspectionTableData.length === 0 ? (
+            ) : inspectionTableData && radioValueCheck && inspectionTableData.length === 0 && !isSubmitted ? (
               <div className="">
                 <strong>{t("Data is not Available.")}</strong>
               </div>
@@ -533,7 +599,7 @@ const AnteMortemInspectionPage = () => {
                     ...Tablecolumns,
                   ]}
                   tableClassName={"deonar-custom-scroll"}
-                  data={inspectionTableData && inspectionTableData.length === 0 ? null : inspectionTableData}
+                  data={inspectionTableData?.length ? inspectionTableData : null}
                   disableSort={false}
                   autoSort={false}
                   manualPagination={false}

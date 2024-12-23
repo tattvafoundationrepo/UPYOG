@@ -31,7 +31,7 @@ const DEONARCard = () => {
     },
     {
       label: t("Helkari"),
-      link: `/digit-ui/employee/deonar/helkari`,
+      link: `/digit-ui/employee/deonar/Helkari`,
       roles: ["SUPERUSER","DEONAR_GENERIC"]
     },
     {
@@ -41,12 +41,27 @@ const DEONARCard = () => {
     },
     {
       label: t("INSPECTION"),
-      link: `/digit-ui/employee/deonar/inspection`,
+      link: `/digit-ui/employee/deonar/Inspection`,
       roles: ["SUPERUSER","DEONAR_INSPECTION"]
     },
     {
-      label: t("SLAUGHTERING"),
+      label: t("BOOKING_SLAUGHTER"),
       link: `/digit-ui/employee/deonar/slaughtering`,
+      roles: ["SUPERUSER","DEONAR_GENERIC"]
+    },
+    {
+      label: t("SLAUGHTERING (EMR)"),
+      link: `/digit-ui/employee/deonar/slaughteringEmr`,
+      roles: ["SUPERUSER","DEONAR_GENERIC"]
+    },
+    {
+      label: t("SLAUGHTERING (NOR)"),
+      link: `/digit-ui/employee/deonar/slaughteringNor`,
+      roles: ["SUPERUSER","DEONAR_GENERIC"]
+    },
+    {
+      label: t("SLAUGHTERING (EXT)"),
+      link: `/digit-ui/employee/deonar/slaughteringExt`,
       roles: ["SUPERUSER","DEONAR_GENERIC"]
     },
     {
@@ -101,7 +116,7 @@ const DEONARCard = () => {
     },
     {
       label: t("INBOX"),
-      link: `/digit-ui/employee/deonar/inbox`,
+      link: `/digit-ui/employee/deonar/Inbox`,
       roles: ["SUPERUSER","DEONAR_GENERIC"]
     }
   ];
