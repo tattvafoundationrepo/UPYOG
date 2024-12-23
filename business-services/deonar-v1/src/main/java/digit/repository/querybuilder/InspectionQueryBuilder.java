@@ -76,7 +76,7 @@ public class InspectionQueryBuilder {
         if (criteria.getInspectionType() != null && criteria.getIsInitialCheck() == true) {
             addClauseIfRequired(query, preparedStmtList);
             query.append(" inspectiontype = ? ");
-            preparedStmtList.add(1);
+            preparedStmtList.add(criteria.getInspectionType());
         }
         if (criteria.getAnimalTypeId() != null) {
             addClauseIfRequired(query, preparedStmtList);
@@ -88,10 +88,10 @@ public class InspectionQueryBuilder {
             query.append(" tokenno = ? ");
             preparedStmtList.add(criteria.getToken());
         }
-        if (criteria.getDdreference() != null) {
+        if (criteria.getInspectionAgainst() != null) {
             addClauseIfRequired(query, preparedStmtList);
-            query.append(" ddreference = ? ");
-            preparedStmtList.add(criteria.getDdreference());
+            query.append(" inspection_against = ? ");
+            preparedStmtList.add(criteria.getInspectionAgainst());
         }
 
 

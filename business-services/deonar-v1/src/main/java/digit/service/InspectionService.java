@@ -47,67 +47,6 @@ public class InspectionService {
 
     }
 
-    // public List<InspectionDetails> getInspectionDetailsOld(InspectionSearchCriteria criteria) throws Exception {
-    //     List<InspectionDetails> details = new ArrayList<>();
-
-        
-        
-        
-    //     if(criteria.getInspectionType() == 2){
-    //       details  = repository.getReantemortemInspection(criteria.getEntryUnitId());
-    //       for (InspectionDetails inspectionDetails : details) {
-    //         inspectionDetails.getAnimalDetail().setEditable(true);
-    //       }
-    //       return details;
-    //     }
-    //     Long id = repository.getArrivalId(criteria.getEntryUnitId(), criteria.getInspectionType());
-    //     if (id != null) {
-    //         details = repository.getInspectionDetails(criteria);
-    //         return details;
-    //     }
-        
-        
-    //     InspectionRequest request = new InspectionRequest();
-    //     Long time = System.currentTimeMillis();
-    //     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss");
-    //     String username = criteria.getRequestInfo().getUserInfo().getUserName();
-    //     Inspection inspection = new Inspection();
-    //     inspection.setArrivalId(criteria.getEntryUnitId());
-    //     inspection.setEmployeeId(criteria.getRequestInfo().getUserInfo().getUuid());
-    //     inspection.setInspectionDate(time);
-    //     inspection.setInspectionTime(LocalTime.now().format(formatter));
-    //     inspection.setInspectionUnitId(1);
-    //     inspection.setCreatedAt(time);
-    //     inspection.setUpdatedAt(time);
-    //     inspection.setCreatedBy(username);
-    //     inspection.setUpdatedBy(username);
-    //     inspection.setInspectionType(criteria.getInspectionType().intValue());
-    //     request.setInspection(inspection);
-    //     producer.push("save-inspection-details", request);
-
-    //     List<Map<String, Long>> tokens = repository.getAnimalTypeCounts(criteria.getEntryUnitId());
-
-    //     for (Map<String, Long> animal : tokens) {
-    //         InspectionDetails iDetail = new InspectionDetails();
-    //         String animalType = repository.getAnimalType(animal.get("animalTypeId"));
-    //         String result = repository.getInspectionIndicatorsByType(criteria.getInspectionType(),
-    //                 animal.get("animalTypeId"));
-    //         InspectionRowMapper.mapJsonToInspectionDetails(result, iDetail);
-    //         iDetail.setArrivalId(criteria.getEntryUnitId());
-    //         iDetail.setInspectionId(criteria.getInspectionType());
-    //         iDetail.setAnimalTokenNumber(animal.get("count"));
-    //         AnimalDetail animalDetail = AnimalDetail.builder()
-    //                 .animalType(animalType)
-    //                 .animalTypeId(animal.get("animalTypeId"))
-    //                 .count(animal.get("count").intValue())
-    //                 .editable(true)
-    //                 .build();
-    //         iDetail.setAnimalDetail(animalDetail);
-    //         details.add(iDetail);
-    //     }
-    //     return details;
-    // }
-
     public String toCustomJson(InspectionDetails details) {
         ObjectMapper mapper = new ObjectMapper();
         ArrayNode arrayNode = mapper.createArrayNode();
@@ -171,6 +110,7 @@ public class InspectionService {
         inspection.setUpdatedAt(time);
         inspection.setCreatedBy(username);
         inspection.setUpdatedBy(username);
+        inspection.setInspectionAgainst(criteria.getInspectionAgainst());
         inspection.setInspectionType(criteria.getInspectionType().intValue());
         request.setInspection(inspection);
         criteria.setIsInitialCheck(false);

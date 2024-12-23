@@ -100,6 +100,8 @@ public class InspectionDetails {
 
     private String ddreference;
 
+    private String inspectionAgainst;
+
 
 }
 

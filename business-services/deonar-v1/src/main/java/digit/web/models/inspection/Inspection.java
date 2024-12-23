@@ -24,4 +24,5 @@ public class Inspection {
     private Long updatedAt;
     private String createdBy;
     private String updatedBy;
+    private String inspectionAgainst;
 }

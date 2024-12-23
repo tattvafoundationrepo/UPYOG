@@ -25,6 +25,7 @@ public class InspectionSearchCriteria {
     private Long token;
 
     private String ddreference;
+    private String inspectionAgainst;
 
     private Boolean isInitialCheck ; 
 }
