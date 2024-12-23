@@ -15,13 +15,13 @@ public class SlaughterList {
 
 
     private String arrivalId;
+    private String ddReference;
     private String mobileNumber;
     private String licenceNumber;
-    private String stakeholderId;
+    private Integer stakeholderId;
     private String shopkeeperName;
+    private String opinion;
     private List<AnimalDetail> animalAssignmentDetailsList;
-    private String ddReference;
-
     private String purchaseDate;
     private String purchaseTime;
     

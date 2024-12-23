@@ -8,13 +8,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import digit.service.AnimalSlaughterService;
 import digit.util.ResponseInfoFactory;
 import digit.web.models.Slaughter;
+import digit.web.models.SlaughterList;
 import digit.web.models.SlaughterRequest;
 import digit.web.models.SlaughterResponse;
 import digit.web.models.SlaughterUnit;
@@ -58,6 +58,60 @@ public class AnimalSlaughterController {
                     .createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
             SlaughterUnitShiftResponse res = SlaughterUnitShiftResponse.builder()
                     .unit(common)
+                    .responseInfo(responseInfo)
+                    .build();
+            return new ResponseEntity<>(res, HttpStatus.OK);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(ERR_MSG, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
+    @PostMapping("/animal/slaughterList/_emergency")
+    public ResponseEntity<Object> getAnimalListForEmergency(@RequestBody RequestInfoWrapper request) {
+        try {
+            List<SlaughterList> common = service.getSlaughterListEmergency(request);
+            ResponseInfo responseInfo = responseInfoFactory
+            .createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
+            SlaughterResponse res = SlaughterResponse.builder()
+            .detailsList(common)
+            .responseInfo(responseInfo)
+            .build();
+            return new ResponseEntity<>(res, HttpStatus.OK);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(ERR_MSG, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
+    @PostMapping("/animal/slaughterList/_normal")
+    public ResponseEntity<Object> getAnimalListForNormal(@RequestBody RequestInfoWrapper request) {
+        try {
+            List<SlaughterList> common = service.getSlaughterListNormal(request);
+            ResponseInfo responseInfo = responseInfoFactory
+                    .createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
+            SlaughterResponse res = SlaughterResponse.builder()
+                    .detailsList(common)
+                    .responseInfo(responseInfo)
+                    .build();
+            return new ResponseEntity<>(res, HttpStatus.OK);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>(ERR_MSG, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
+    @PostMapping("/animal/slaughter/_export")
+    public ResponseEntity<Object> getAnimalListForExport(@RequestBody RequestInfoWrapper request) {
+        try {
+            List<SlaughterList> common = service.getSlaughterListExport(request);
+            ResponseInfo responseInfo = responseInfoFactory
+                    .createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
+            SlaughterResponse res = SlaughterResponse.builder()
+                    .detailsList(common)
                     .responseInfo(responseInfo)
                     .build();
             return new ResponseEntity<>(res, HttpStatus.OK);

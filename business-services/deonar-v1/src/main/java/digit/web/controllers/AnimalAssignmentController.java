@@ -61,6 +61,7 @@ public class AnimalAssignmentController {
     }
 
     @PostMapping("/get/slaughter/_list")
+
     public ResponseEntity<ShopkeeperResponse> getSlaughterList(
             @ApiParam(value = "Details for inspection ", required = true) @Valid @RequestBody ShopkeeperRequest request) {
         List<SlaughterList> ShopkeeperDetails = service.getListForSlaughter(request);

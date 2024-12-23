@@ -28,6 +28,7 @@ public class InspectionController {
     private ResponseInfoFactory responseInfoFactory;
 
     @PostMapping("/inspection/_search")
+    @CrossOrigin("*")
     public ResponseEntity<InspectionResponse> getInspectionOnArrival(
             @ApiParam(value = "Details for inspection ", required = true)
             @Valid @RequestBody InspectionSearchCriteria criteria) {
@@ -49,6 +50,7 @@ public class InspectionController {
     }
 
     @PostMapping("/inspection/save")
+    @CrossOrigin("*")
     public ResponseEntity<InspectionRequest> saveInspectionOnArrival(@RequestBody InspectionRequest inspectionRequest){
         try {
             InspectionRequest request= inspectionService.updateInspectionDetails(inspectionRequest);
@@ -60,6 +62,7 @@ public class InspectionController {
 
     
     @PostMapping("/inspection/submit")
+    @CrossOrigin("*")
     public ResponseEntity<Object> submitInspection(@RequestBody InspectionSearchCriteria criteria ){
         try {
             inspectionService.submitInspectionDetails(criteria);
