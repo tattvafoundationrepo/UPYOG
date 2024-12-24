@@ -23,6 +23,7 @@ public class SlaughterUnitShiftRowmapper implements ResultSetExtractor<List<Slau
 
 
             SlaughterUnit shift = SlaughterUnit.builder()
+            .id(rs.getInt("id"))
             .openTime(rs.getString("opentime"))
             .closeTime(rs.getString("closetime")).build();
           

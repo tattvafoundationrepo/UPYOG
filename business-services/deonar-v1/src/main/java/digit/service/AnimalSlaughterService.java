@@ -12,6 +12,8 @@ import digit.repository.CommonRepository;
 import digit.repository.SlaughterRepository;
 import digit.web.SlaughterSearchCriteria;
 import digit.web.models.Slaughter;
+import digit.web.models.SlaughterBookingDetails;
+import digit.web.models.SlaughterBookingRequest;
 import digit.web.models.SlaughterList;
 import digit.web.models.SlaughterRequest;
 import digit.web.models.SlaughterUnit;
@@ -72,6 +74,27 @@ public class AnimalSlaughterService {
         SlaughterSearchCriteria criteria = SlaughterSearchCriteria.builder().slaughterUnitType("export").build();
         return slaughterRepository.getSlaughterListDetails(criteria);
 
+    }
+
+    public List<SlaughterBookingDetails> saveSlaughterBookings(SlaughterBookingRequest request) {
+        long epochTime = System.currentTimeMillis();
+        AuditDetails audit = AuditDetails.builder()
+                .createdBy(request.getRequestInfo().getUserInfo().getUuid())
+                .lastModifiedBy(request.getRequestInfo().getUserInfo().getUuid())
+                .createdTime(epochTime)
+                .lastModifiedTime(epochTime)
+                .build();
+        request.setAuditDetails(audit);
+        producer.push("topic_deonar_saveslaughter_booking", request);
+        return request.getBookingDetails();   
+         
+    }
+
+    public List<SlaughterList> getSlaughterListForBooking(RequestInfoWrapper request) {
+
+        SlaughterSearchCriteria criteria = SlaughterSearchCriteria.builder().slaughterUnitType("booking").build();
+        return slaughterRepository.getSlaughterListDetails(criteria);
+  
     }
 
 }

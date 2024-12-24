@@ -104,7 +104,7 @@ public class CommonQueryBuilder {
 
     public String getSlaughterUnitShift(CommonSearchCriteria commonSearchCriteria, List<Object> preparedStmtList) {
         String sql = """    
-            select opentime , closetime from eg_deonar_slaughter_unit_shift edsus 
+            select id , opentime , closetime from eg_deonar_slaughter_unit_shift edsus 
             where edsus.slaughterunitid =?
  
                                 """;

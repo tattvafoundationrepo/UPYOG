@@ -16,7 +16,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @Builder
 public class SlaughterUnit {
-
+  private  Integer id;
   private  String openTime ;
   private  String closeTime;
 
