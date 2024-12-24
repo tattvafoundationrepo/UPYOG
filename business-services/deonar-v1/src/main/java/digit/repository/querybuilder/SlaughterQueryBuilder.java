@@ -10,7 +10,7 @@ import digit.web.SlaughterSearchCriteria;
 public class SlaughterQueryBuilder {
 
     private static final String BASE_QUERY = """
-            SELECT  *
+            SELECT  DISTINCT *
             FROM eg_deonar_list_slaughter
             """;
 
