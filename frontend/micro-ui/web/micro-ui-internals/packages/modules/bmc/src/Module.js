@@ -100,7 +100,7 @@ export const BMCLinks = ({ matchPath,userType }) => {
     <React.Fragment>
       <div className="HomePageWrapper" style={{"padding-top": 10}}>
         <div className="BannerWithSearch">
-        <img src={"https://ukpfms-digit-repo.s3.ap-south-1.amazonaws.com/Free-Silai-Machine-Yojna-1-jpg.jpeg"} alt="noimagefound" />
+        <img src={"https://gambia-terraform.s3.ap-south-1.amazonaws.com/Free-Silai-Machine-Yojna-1-jpg.jpeg"} alt="noimagefound" />
         </div>
         <CitizenHomeCard header={t("BMC")} links={links} Icon={() => <PTIcon className="fill-path-primary-main" />} />
       </div>
