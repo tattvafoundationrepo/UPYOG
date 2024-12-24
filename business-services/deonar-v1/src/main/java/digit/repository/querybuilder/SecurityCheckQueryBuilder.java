@@ -38,12 +38,12 @@ public class SecurityCheckQueryBuilder {
                         """;
 
     private static final String BASE_QUERY_TRADING_LIST = """
-            SELECT * FROM eg_deonar_vtradablelist
+            SELECT distinct * FROM eg_deonar_vtradablelist
 
             """;
 
     private static final String BASE_QUERY_STABLING_LIST = """
-            SELECT * FROM eg_deonar_vstablelist
+            SELECT distinct * FROM eg_deonar_vstablelist
             """;
     private static final String BASE_QUERY_SLAUGHTER_LIST = """
 
@@ -51,11 +51,11 @@ public class SecurityCheckQueryBuilder {
             """;
     private static final String BASE_QUERY_DAWANWALA_ASSIGNMENT_LIST = """
 
-             select * from eg_deonar_vlistfordawanwalaassignment
+             select distinct * from eg_deonar_vlistfordawanwalaassignment
             """;
 
     private static final String BASE_QUERY_HELKARI_ASSIGNMENT_LIST = """
-            select * from eg_deonar_vlistforhelkariassignment
+            select distinct * from eg_deonar_vlistforhelkariassignment
             """;;
 
     private static final String BASE_QUERY_REMOVAL_LIST = """
