@@ -108,10 +108,10 @@ const AadhaarFullFormPage = () => {
     const data = {
       updatedAddress,
       updatedDisability,
-      updatedQualifications,
+   //   updatedQualifications,
       updatedPersonalDetails,
-      updatedBank,
-      updatedDocument,
+    //  updatedBank,
+     // updatedDocument,
       updateOthersDetails,
     };
 
@@ -130,11 +130,11 @@ const AadhaarFullFormPage = () => {
   }, [
     updatedAddress,
     updatedDisability,
-    updatedQualifications,
+   // updatedQualifications,
     updatedPersonalDetails,
-    updatedBank,
+   // updatedBank,
     saveUserDetail,
-    updatedDocument,
+  //  updatedDocument,
     updateOthersDetails,
     history,
     t,
@@ -144,11 +144,11 @@ const AadhaarFullFormPage = () => {
     validateForm();
   }, [
     updatedPersonalDetails,
-    updatedQualifications,
+  //  updatedQualifications,
     updatedDisability,
     updatedAddress,
-    updatedBank,
-    updatedDocument,
+  //  updatedBank,
+  //  updatedDocument,
     updateOthersDetails,
   ]);
 
