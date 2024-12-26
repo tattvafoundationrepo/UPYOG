@@ -24,4 +24,6 @@ public class AnimalDetail{
     private Boolean stable;
 
     private Boolean editable ;
+
+    private String removaltype;
 }

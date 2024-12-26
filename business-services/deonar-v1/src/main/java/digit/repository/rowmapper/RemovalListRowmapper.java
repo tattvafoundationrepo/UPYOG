@@ -10,6 +10,7 @@ import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.stereotype.Component;
 
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -25,20 +26,22 @@ public class RemovalListRowmapper implements ResultSetExtractor<List<RemovalList
         Map<String, RemovalList> removalMap = new HashMap<>();
 
         while (rs.next()) {
-            String ddReference = rs.getString("ddreference");
-            Long assigneeId = rs.getLong("assigneeid");
-            String arrivalId = rs.getString("arrivalid");
+            String ddReference = isColumnPresent(rs, "ddreference") ? rs.getString("ddreference") : null;
+            String arrivalId = isColumnPresent(rs, "arrivalid") ? rs.getString("arrivalid") : null;
+            String uniqueKey = (ddReference != null) ? ddReference : arrivalId;
 
-            RemovalList removalDetails = removalMap.get(ddReference);
+
+            RemovalList removalDetails = removalMap.get(uniqueKey);
             if (removalDetails == null) {
                 removalDetails = RemovalList.builder()
-                        .entryUnitId(ddReference)
-                        .stakeholderId(assigneeId)
-                        .traderName(rs.getString("shopkeeper"))
-                        .licenceNumber(rs.getString("assigneelic"))
-                        .arrivalId(arrivalId)
-                        .dateOfArrival(rs.getDate("dateofarrival").toLocalDate().toString())  
-                        .timeOfArrival(rs.getTime("timeofarrival").toLocalTime().toString())  
+                        .entryUnitId(arrivalId)
+                        .stakeholderId(rs.getLong("stakeholderid"))
+                        .shopkeepername(rs.getString("shopkeepername"))
+                        .licenceNumber(rs.getString("licencenumber"))
+                        .ddreference (ddReference)
+                        .mobilenumber(rs.getString("mobilenumber"))
+                        .removaldate(rs.getString("removaldate"))  
+                        .removaltime(rs.getString("removaltime"))  
                         .animalDetails(new ArrayList<>()) 
                         .build();
 
@@ -49,11 +52,27 @@ public class RemovalListRowmapper implements ResultSetExtractor<List<RemovalList
                     .animalTypeId(rs.getLong("animaltypeid"))
                     .count(rs.getInt("token"))
                     .animalType(rs.getString("animaltype"))
+                    .removaltype(rs.getString("removaltype"))
                     .build();
 
                     removalDetails.getAnimalDetails().add(animalAssignmentDetails);
         }
 
         return new ArrayList<>(removalMap.values());
+    }
+
+     private boolean isColumnPresent(ResultSet rs, String columnName) {
+        try {
+            ResultSetMetaData metaData = rs.getMetaData();
+            int columnCount = metaData.getColumnCount();
+            for (int i = 1; i <= columnCount; i++) {
+                if (metaData.getColumnName(i).equalsIgnoreCase(columnName)) {
+                    return true;
+                }
+            }
+        } catch (SQLException e) {
+           
+        }
+        return false;
     }
 }

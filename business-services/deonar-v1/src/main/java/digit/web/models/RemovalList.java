@@ -21,14 +21,11 @@ public class RemovalList {
      @JsonProperty("entryUnitId")
     private String entryUnitId;
 
-    @JsonProperty("traderName")
-    private String traderName;
+    @JsonProperty("dateOfRemoval")
+    private String removaldate;
 
-    @JsonProperty("dateOfArrival")
-    private String dateOfArrival;
-
-    @JsonProperty("timeOfArrival")
-    private String timeOfArrival;
+    @JsonProperty("timeOfRemoval")
+    private String removaltime;
 
 
     @JsonProperty("licenceNumber")
@@ -39,7 +36,19 @@ public class RemovalList {
 
     private Long stakeholderId;
 
-    private String arrivalId;
+    private String ddreference;
 
+    private String removaltype;
+
+    private String shopkeepername;
+
+    private String mobilenumber;
+
+    private String registrationNumber;
+
+
+
+
+  
 
 }

@@ -1,16 +1,5 @@
 package digit.repository;
 
-import static digit.constants.DeonarConstant.LORRY_TRUCK_TEMPO_CAR_THREE_WHEELER_DAY_RATE;
-import static digit.constants.DeonarConstant.THREE_WHEELER;
-import static digit.constants.DeonarConstant.THREE_WHEELER_OVERNIGHT_AFTER_6AM;
-import static digit.constants.DeonarConstant.THREE_WHEELER_OVERNIGHT_LESS_2H;
-import static digit.constants.DeonarConstant.THREE_WHEELER_OVERNIGHT_MORE_2H;
-import static digit.constants.DeonarConstant.TWO_WHEELER;
-import static digit.constants.DeonarConstant.TWO_WHEELER_DAY_RATE;
-import static digit.constants.DeonarConstant.TWO_WHEELER_OVERNIGHT_AFTER_6AM;
-import static digit.constants.DeonarConstant.TWO_WHEELER_OVERNIGHT_LESS_2H;
-import static digit.constants.DeonarConstant.TWO_WHEELER_OVERNIGHT_MORE_2H;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -22,6 +11,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+import static digit.constants.DeonarConstant.LORRY_TRUCK_TEMPO_CAR_THREE_WHEELER_DAY_RATE;
+import static digit.constants.DeonarConstant.THREE_WHEELER;
+import static digit.constants.DeonarConstant.THREE_WHEELER_OVERNIGHT_LESS_2H;
+import static digit.constants.DeonarConstant.THREE_WHEELER_OVERNIGHT_MORE_2H;
+import static digit.constants.DeonarConstant.TWO_WHEELER;
+import static digit.constants.DeonarConstant.TWO_WHEELER_DAY_RATE;
+import static digit.constants.DeonarConstant.TWO_WHEELER_OVERNIGHT_LESS_2H;
+import static digit.constants.DeonarConstant.TWO_WHEELER_OVERNIGHT_MORE_2H;
 import digit.repository.querybuilder.VehicleParkingQueryBuilder;
 import digit.repository.rowmapper.ParkedInVehicleRowMapper;
 import digit.repository.rowmapper.VehicleMonthlyFeeRowMapper;
@@ -121,7 +118,7 @@ public class VehicleParkingRepository {
 
 
             // If vehicle is parked during the night (12 AM to 6 AM)
-            if (parkedInTime.isAfter(LocalTime.of(23, 59, 59, 999999999)) && parkedOutTime.isBefore(LocalTime.of(6, 0, 0, 0))) {
+            if (parkedInTime.isAfter(LocalTime.of(0, 0)) && parkedOutTime.isBefore(LocalTime.of(6, 0, 0, 0))) {
                 isNightOnly = true;
             }
 
