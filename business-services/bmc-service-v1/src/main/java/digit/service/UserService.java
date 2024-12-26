@@ -223,15 +223,15 @@ public class UserService {
 		tenantId = tenantId != null && tenantId.length() >= 2 ? tenantId.substring(0, 2) : tenantId;
 		Long time = System.currentTimeMillis();
 
-		for (UpdatedDocument document : userRequest.getUpdatedDocuments()) {
-			document.getDocumentDetails().setUserId(userId);
-			document.getDocumentDetails().setAvailable(true);
-			document.getDocumentDetails().setTenantId(tenantId);
-			document.getDocumentDetails().setCreatedBy("system");
-			document.getDocumentDetails().setModifiedBy("system");
-			document.getDocumentDetails().setModifiedOn(time);
-		}
-		producer.push("upsert-user-document", userRequest);
+		// for (UpdatedDocument document : userRequest.getUpdatedDocuments()) {
+		// 	document.getDocumentDetails().setUserId(userId);
+		// 	document.getDocumentDetails().setAvailable(true);
+		// 	document.getDocumentDetails().setTenantId(tenantId);
+		// 	document.getDocumentDetails().setCreatedBy("system");
+		// 	document.getDocumentDetails().setModifiedBy("system");
+		// 	document.getDocumentDetails().setModifiedOn(time);
+		// }
+		// producer.push("upsert-user-document", userRequest);
 
 		userRequest.setAadharUser(new AadharUser());
 		userRequest.getAadharUser().setUserId(userId);
@@ -303,29 +303,29 @@ public class UserService {
 			producer.push("insert-useraddress", userRequest);
 		}
 
-		for (BankDetails details : userRequest.getBankDetailsList()) {
-			details.setUserId(userId);
-			details.setTenantId(tenantId);
-			details.setIsActive(true);
-			details.setCreatedBy("system");
-			details.setModifiedBy("system");
-			details.setModifiedOn(time);
-		}
+		// for (BankDetails details : userRequest.getBankDetailsList()) {
+		// 	details.setUserId(userId);
+		// 	details.setTenantId(tenantId);
+		// 	details.setIsActive(true);
+		// 	details.setCreatedBy("system");
+		// 	details.setModifiedBy("system");
+		// 	details.setModifiedOn(time);
+		// }
 
-		if (!ObjectUtils.isEmpty(userRequest.getQualificationDetailsList())) {
-			for (QualificationSave details : userRequest.getQualificationDetailsList()) {
+		// if (!ObjectUtils.isEmpty(userRequest.getQualificationDetailsList())) {
+		// 	for (QualificationSave details : userRequest.getQualificationDetailsList()) {
 
-				details.setUserId(userId);
+		// 		details.setUserId(userId);
 
-				details.setCreatedBy("system");
-				details.setCreatedOn(time);
-				details.setModifiedBy("system");
-				details.setAvailable(true);
-				details.setModifiedOn(time);
-			}
-		}
-		producer.push("upsert-userbank", userRequest);
-		producer.push("upsert-userqualification", userRequest);
+		// 		details.setCreatedBy("system");
+		// 		details.setCreatedOn(time);
+		// 		details.setModifiedBy("system");
+		// 		details.setAvailable(true);
+		// 		details.setModifiedOn(time);
+		// 	}
+		// }
+		//producer.push("upsert-userbank", userRequest);
+		//producer.push("upsert-userqualification", userRequest);
 		producer.push("upsert-aadharuser", userRequest);
 		producer.push("upsert-userotherdetails", userRequest);
 		return userRequest;
