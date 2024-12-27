@@ -15,6 +15,7 @@ public class SlaughterBookingDetails {
     private Integer slaughterUnitId; 
     private Integer unitShiftId; 
     private Long slaughterDate; 
+    private Boolean slaughterByBmcEmployee;
     
 
 }
