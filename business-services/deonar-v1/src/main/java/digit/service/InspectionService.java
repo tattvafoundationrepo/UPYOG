@@ -17,6 +17,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import digit.kafka.Producer;
 import digit.repository.InspectionRepository;
+import digit.web.models.AnimalAssignment;
+import digit.web.models.AnimalAssignmentRequest;
 import digit.web.models.inspection.Inspection;
 import digit.web.models.inspection.InspectionDetails;
 import digit.web.models.inspection.InspectionRequest;
@@ -30,7 +32,15 @@ public class InspectionService {
     @Autowired
     private Producer producer;
 
+    private static final List<Integer> DEAD_OPINION_IDS = List.of(2, 8, 15);
+    private static final List<Integer> NOT_FIT_FOR_SLAUGHTER_IDS = List.of(4, 10, 13);
+    
+
     public InspectionRequest updateInspectionDetails(InspectionRequest inspectionRequest) {
+       
+       Long deadRemovalTypeId = 4l; 
+       Long NFSRemovalTypeId = 5l;
+
         if (inspectionRequest == null) {
             throw new CustomException("INVALID_DATA", "Inspection request data is null or incomplete.");
         }
@@ -43,6 +53,34 @@ public class InspectionService {
         inspectionRequest.setInspection(inspection);
         inspectionRequest.getInspectionDetails().setReport(toCustomJson(inspectionRequest.getInspectionDetails()));
         producer.push("update-inspection-details", inspectionRequest);
+        Integer opinionId = inspectionRequest.getInspectionDetails().getOpinionId();
+       
+
+        if(DEAD_OPINION_IDS.contains(opinionId) || NOT_FIT_FOR_SLAUGHTER_IDS.contains(opinionId)){
+            List<AnimalAssignment> assignmentList = new ArrayList<>();
+
+            AnimalAssignmentRequest request = AnimalAssignmentRequest.builder()
+            .arrivalId(inspectionRequest.getInspectionDetails().getArrivalId())
+            .createdAt(time)
+            .createdBy(inspectionRequest.getRequestInfo().getUserInfo().getId())
+            .updatedAt(time)
+            .updatedBy(inspectionRequest.getRequestInfo().getUserInfo().getId())
+            .animalAssignments(new ArrayList<>()).build();
+            AnimalAssignment assignment = new AnimalAssignment();
+            assignment.setAnimalTypeId(inspectionRequest.getInspectionDetails().getAnimalTypeId());
+            assignment.setToken(inspectionRequest.getInspectionDetails().getAnimalTokenNumber());
+            if (DEAD_OPINION_IDS.contains(opinionId)){
+              assignment.setDeonarRemovalType(deadRemovalTypeId);
+            }
+            else if(NOT_FIT_FOR_SLAUGHTER_IDS.contains(opinionId)){
+                assignment.setDeonarRemovalType(NFSRemovalTypeId);
+            } 
+            assignmentList.add(assignment);
+            request.setAnimalAssignments(assignmentList);
+            producer.push("save-animal-removal", request);
+
+        }    
+        
         return inspectionRequest;
 
     }
