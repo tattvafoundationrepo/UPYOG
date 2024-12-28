@@ -10,7 +10,6 @@ import { abdominalCavity, pelvicCavity, specimenCollection, thoracicCavity, visi
 import { InspectionTableHeader, BeforeSlauhterInspectionHeader } from "./tableHeader";
 import { generateTokenNumber } from "../collectionPoint/utils";
 import { AnimalInspectionModal, BeforeSlauhterInspectionModal, PostMortemInspectionModal } from "./inspectionModal";
-import SubmitButtonField from "../commonFormFields/submitBtn";
 
 const inspectionTypes = [
   { label: "Ante-Mortem Inspection", value: 1 },
@@ -40,7 +39,6 @@ const AnteMortemInspectionPage = () => {
   const [nostrilOptions, setNostrilOptions] = useState([]);
   const [muzzleOptions, setMuzzleOptions] = useState([]);
   const [opinionOptions, setOpinionOptions] = useState([]);
-  const [postMertemOpinion, setPostMertemOpinion] = useState([]);
   const [approxAgeOptions, setApproxAgeOptions] = useState([]);
   const [visibleMucusMembraneOptions, setVisibleMucusMembraneOptions] = useState([]);
   const [thoracicCavityOptions, setThoracicCavityOptions] = useState([]);
@@ -151,8 +149,6 @@ const AnteMortemInspectionPage = () => {
     { name: "appetite" },
     { name: "nostrils" },
     { name: "muzzle" },
-    { name: "AnteMortemInspectionOpinion" },
-    { name: "PostmortemInspectionOpinion" },
   ]);
 
   useEffect(() => {
@@ -170,8 +166,6 @@ const AnteMortemInspectionPage = () => {
       setAppetiteOptions(data2?.deonar?.appetite?.map((option) => option.name) || []);
       setNostrilOptions(data2?.deonar?.nostrils?.map((option) => option.name) || []);
       setMuzzleOptions(data2?.deonar?.muzzle?.map((option) => option.name) || []);
-      // setOpinionOptions(data2?.deonar?.AnteMortemInspectionOpinion?.map((option) => option.name) || []);
-      // setPostMertemOpinion(data2?.deonar?.PostmortemInspectionOpinion?.map((option) => option.name) || []);
       setApproxAgeOptions(data2?.deonar?.approxAge?.map((option) => option.name) || []);
     }
   }, [data2, isLoading]);
@@ -398,7 +392,6 @@ const AnteMortemInspectionPage = () => {
       onSuccess: (data) => {
         showToast("success", t("YOU_HAVE_SAVED_THE_INSPECTION_DATA_REPORT_SUCCESSFULLY"));
         console.log(data, "Inspection details data");
-        setIsSubmitted(true);
       },
       onError: (error) => {
         console.error("Error fetching new table data:", error);
@@ -413,45 +406,6 @@ const AnteMortemInspectionPage = () => {
       setToast(null);
     }, duration);
   };
-  // const handleUpdateData = () => {
-  //   toggleModal();
-  //   setIsLoader(true);
-
-  //   const payload = {
-  //     InspectionDetails: {
-  //       ...selectedAnimal,
-  //       entryUnitId: selectedUUID,
-  //       inspectionId: inspectionTypes.find((item) => item.label === radioValueCheck)?.value,
-  //     },
-  //   };
-
-  //   const currentValues = getValues();
-
-  //   Object.keys(currentValues).forEach((key) => {
-  //     if (currentValues[key] && currentValues[key] !== selectedAnimal[key]) {
-  //       payload.InspectionDetails[key] = currentValues[key];
-  //     }
-  //   });
-
-  //   saveAnteMortemInspection.mutate(payload, {
-  //     onSuccess: (response) => {
-  //       showToast("success", t("DEONAR_INSPECTION_DATA_UPDATED_SUCCESSFULY"));
-  //       setInspectionTableData((prevData) => {
-  //         return prevData.map((item) => {
-  //           if (item.animal === selectedAnimal.animal) {
-  //             return { ...item, ...payload.InspectionDetails };
-  //           }
-  //           return item;
-  //         });
-  //       });
-  //       setIsLoader(false);
-  //     },
-  //     onError: (error) => {
-  //       showToast("error", t("DEONAR_INSPECTION_DATA_NOT_UPDATED_SUCCESSFULY"));
-  //       setIsLoader(false);
-  //     },
-  //   });
-  // };
 
   const handleUpdateData = () => {
     setIsLoader(true);
@@ -581,43 +535,35 @@ const AnteMortemInspectionPage = () => {
               </div>
             ) : (
               <React.Fragment>
-                <CustomTable
-                  t={t}
-                  columns={[
-                    {
-                      Header: t("Edit"),
-                      accessor: "edit",
-                      Cell: ({ row }) => {
-                        const editable = row.original.editable;
-                        return editable ? (
-                          <span onClick={() => openModal(row.original)}>
-                            <EditIcon style={{ cursor: "pointer" }} />
-                          </span>
-                        ) : null;
+                {inspectionTableData && radioValueCheck && inspectionTableData.length > 0 && (
+                  <CustomTable
+                    t={t}
+                    columns={[
+                      {
+                        Header: t("Edit"),
+                        accessor: "edit",
+                        Cell: ({ row }) => {
+                          const editable = row.original.editable;
+                          return editable ? (
+                            <span onClick={() => openModal(row.original)}>
+                              <EditIcon style={{ cursor: "pointer" }} />
+                            </span>
+                          ) : null;
+                        },
                       },
-                    },
-                    ...Tablecolumns,
-                  ]}
-                  tableClassName={"deonar-custom-scroll"}
-                  data={inspectionTableData?.length ? inspectionTableData : null}
-                  disableSort={false}
-                  autoSort={false}
-                  manualPagination={false}
-                  onAddClickFunction={() => openModal(inspectionTypes[0].label)}
-                  showAddButton={true}
-                  buttonText={t("Submit")}
-                  onAddClick={handleInspectionDetail}
-                />
-                {/* <div style={{ float: "right", paddingBottom: "1rem", textAlign: "end" }}>
-                  <button
-                    className="bmc-card-button"
-                    style={{ borderBottom: "3px solid black", outline: "none" }}
-                    type="submit"
-                    onClick={handleInspectionDetail}
-                  >
-                    {t("Submit")}
-                  </button>
-                </div> */}
+                      ...Tablecolumns,
+                    ]}
+                    tableClassName={"deonar-custom-scroll"}
+                    data={inspectionTableData?.length ? inspectionTableData : null}
+                    disableSort={false}
+                    autoSort={false}
+                    manualPagination={false}
+                    onAddClickFunction={() => openModal(inspectionTypes[0].label)}
+                    showAddButton={true}
+                    buttonText={t("Submit")}
+                    onAddClick={handleInspectionDetail}
+                  />
+                )}
               </React.Fragment>
             )}
           </div>

@@ -437,7 +437,7 @@ export const helkariColumns = (handleUUIDClick, t) => [
     accessor: "ddreference",
     sortable: true,
     Cell: ({ row }) => (
-      <span onClick={() => handleUUIDClick(row.original.entryUnitId)} style={{ cursor: "pointer", color: "blue" }}>
+      <span onClick={() => handleUUIDClick(row.original.ddreference)} style={{ cursor: "pointer", color: "blue" }}>
         {row.original.ddreference}
       </span>
     ),
@@ -517,7 +517,7 @@ export const DawanWalaColumns = (handleUUIDClick, t) => [
     accessor: "ddreference",
     sortable: true,
     Cell: ({ row }) => (
-      <span onClick={() => handleUUIDClick(row.original.entryUnitId)} style={{ cursor: "pointer", color: "blue" }}>
+      <span onClick={() => handleUUIDClick(row.original.ddreference)} style={{ cursor: "pointer", color: "blue" }}>
         {row.original.ddreference}
       </span>
     ),
@@ -665,7 +665,7 @@ const slaughterTypeOptions = [
 export const feeConfigs = {
   arrival: {
     fields: [
-      { type: "dropdown", label: ("Payment Mode"), name: "paymentMethod", required: true },
+      { type: "dropdown", label: "Payment Mode", name: "paymentMethod", required: true },
       { type: "input", label: "Reference Number", name: "transactionId", required: true },
     ],
     options: {

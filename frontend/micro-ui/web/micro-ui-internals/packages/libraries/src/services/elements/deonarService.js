@@ -2,7 +2,7 @@ import Urls from "../atoms/urls";
 import { Request } from "../atoms/Utils/Request";
 
 const DeonarService = {
-  get: (data) => {
+  DeonarService: (data) => {
     return Request({
       data: data,
       url: Urls.common.getDeonarCommon,
@@ -100,10 +100,32 @@ const DeonarService = {
     });
   },
 
+  saveWashingDetail: (data) => {
+    return Request({
+      data: data,
+      url: Urls.deonar_security_check.saveWashingDetails,
+      useCache: false,
+      method: "POST",
+      auth: true,
+      userService: true,
+    });
+  },
+
   getPrakingDetail: (data) => {
     return Request({
       data: data,
       url: Urls.deonar_security_check.getPrakingDetails,
+      useCache: false,
+      method: "POST",
+      auth: true,
+      userService: true,
+    });
+  },
+
+  getWashingDetails: (data) => {
+    return Request({
+      data: data,
+      url: Urls.deonar_security_check.getWashingDetails,
       useCache: false,
       method: "POST",
       auth: true,
@@ -375,6 +397,54 @@ const DeonarService = {
     return Request({
       data: data,
       url: Urls.deonar_security_check.saveInspectionData,
+      useCache: false,
+      method: "POST",
+      auth: true,
+      userService: true,
+    });
+  },
+  saveSlaughterBooking: (data) => {
+    return Request({
+      data: data,
+      url: Urls.deonar_security_check.saveSlaughterListDataBooking,
+      useCache: false,
+      method: "POST",
+      auth: true,
+      userService: true,
+    });
+  },
+  saveStakeholderDetails: (data) => {    
+    return Request({            
+      data: data,
+      url: Urls.deonar_security_check.saveStakeholderDetails,
+      useCache: false,
+      method: "POST",
+      auth: true,      
+      userService: true,      })},
+  getEmergencySlaughter: (data) => {
+    return Request({
+      data: data,
+      url: Urls.deonar_security_check.getEmergencySlaughterList,
+      useCache: false,
+      method: "POST",
+      auth: true,
+      userService: true,
+    });
+  },
+  getExportSlaughterList: (data) => {
+    return Request({
+      data: data,
+      url: Urls.deonar_security_check.getEmergencyExportList,
+      useCache: false,
+      method: "POST",
+      auth: true,
+      userService: true,
+    });
+  },
+  getRemovalReports: (data) => {
+    return Request({
+      data: data,
+      url: Urls.deonar_security_check.getRemovalReport,
       useCache: false,
       method: "POST",
       auth: true,

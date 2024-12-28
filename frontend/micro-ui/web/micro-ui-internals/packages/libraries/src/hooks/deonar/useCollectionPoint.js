@@ -50,6 +50,12 @@ const useCollectionPoint = ({ value }) => {
       queryClient.invalidateQueries("ParkingDetails");
     },
   });
+
+  const saveWashingDetails = useMutation((data) => DeonarService.saveWashingDetail(data), {
+    onSuccess: () => {
+      queryClient.invalidateQueries("WashingDetails");
+    },
+  });
   // const fetchSlaughterCollectionFee = (data, config = {}) => {
   //   return useQuery(["SlaughterFee", data], () => DeonarService.getCollectionSlaughterFee(data), {
   //     ...config,
@@ -88,9 +94,24 @@ const useCollectionPoint = ({ value }) => {
       },
     });
   };
+  
   const fetchParkingCollectionDetails = (data, config = {}, enabled = true) => {
     return useQuery(["ParkingDetails", data], 
       () => DeonarService.getCollectionParkingDetails(data), 
+      {
+        ...config,
+        // Disable caching to always fetch fresh data
+        cacheTime: 0,
+        // Stale immediately after fetching
+        staleTime: 0,
+        enabled,
+      }
+    );
+  };
+
+  const fetchWashingCollectionDetails = (data, config = {}, enabled = true) => {
+    return useQuery(["WashingDetails", data], 
+      () => DeonarService.getWashingDetails(data), 
       {
         ...config,
         // Disable caching to always fetch fresh data
@@ -199,6 +220,31 @@ const useCollectionPoint = ({ value }) => {
       },
     });
   };
+  const fetchEmergencySlaughterList = (data, config = {}) => {
+    return useQuery(["EmergencySlaughterList", data], () => DeonarService.getEmergencySlaughter(data), {
+      ...config,
+      onSuccess: (data) => {
+        console.log(data, "EmergencySlaughterList collection data");
+      },
+    });
+  };
+  const fetchExportSlaughterList = (data, config = {}) => {
+    return useQuery(["ExportSlaughterList", data], () => DeonarService.getExportSlaughterList(data), {
+      ...config,
+      onSuccess: (data) => {
+        console.log(data, "ExportSlaughterList collection data");
+      },
+    });
+  };
+  const fetchRemovalReport = (data, config = {}) => {
+    return useQuery(["RemovalReport", data], () => DeonarService.getRemovalReports(data), {
+      ...config,
+      onSuccess: (data) => {
+        console.log(data, "RemovalReport collection data");
+      },
+    });
+  };
+
 
   return {
     fetchEntryCollectionFee,
@@ -216,6 +262,11 @@ const useCollectionPoint = ({ value }) => {
     fetchweighingList,
     saveParkingDetails,
     fetchweighingFee,
+    fetchEmergencySlaughterList,
+    fetchExportSlaughterList,
+    fetchRemovalReport,
+    saveWashingDetails,
+    fetchWashingCollectionDetails
   };
 };
 

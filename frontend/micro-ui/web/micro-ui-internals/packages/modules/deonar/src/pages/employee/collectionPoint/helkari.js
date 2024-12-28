@@ -117,8 +117,8 @@ const Helkari = () => {
     }
   }, [shopkeeperData, shopKeeper]);
 
-  const handleUUIDClick = (entryUnitId) => {
-    setSelectedUUID(entryUnitId);
+  const handleUUIDClick = (ddreference) => {
+    setSelectedUUID(ddreference);
     setIsModalOpen(!isModalOpen);
   };
 
@@ -141,7 +141,7 @@ const Helkari = () => {
   };
 
   const fields = [
-    { key: "entryUnitId", label: t("DEONAR_ARRIVAL_UUID"), isClickable: true },
+    { key: "ddreference", label: t("DEONAR_DD_REFERENCE"), isClickable: true },
     { key: "traderName", label: t("DEONAR_TRADER_NAME") },
     { key: "licenceNumber", label: t("DEONAR_LICENSE_NUMBER") },
     { key: "vehicleNumber", label: t("Deonar_Vehicle_Number") },
@@ -165,7 +165,8 @@ const Helkari = () => {
       const securityCheckDetails = fetchedData.SecurityCheckDetails;
       const mappedAnimalCount = securityCheckDetails.flatMap((detail) =>
         detail.animalDetails.map((animal) => ({
-          arrivalId: detail.entryUnitId,
+          arrivalId: detail.ddreference,
+          entryUnitId: detail.entryUnitId,
           animalTypeId: animal.animalTypeId,
           animalType: animal.animalType,
           count: animal.token,
@@ -220,12 +221,9 @@ const Helkari = () => {
     },
   ];
 
-  const ddReference = fetchedData?.SecurityCheckDetails?.flatMap((detail) => detail.ddreference);
-
   const onSubmit = async (formData) => {
     try {
       const filteredAnimalAssignments = gawaltable
-        .filter((animal) => animal.arrivalId === selectedUUID)
         .map((animal, index) => {
           const selectedHelkariArray = helkariOption[index] || [];
           const selectedHelkari = selectedHelkariArray[0];
@@ -241,10 +239,12 @@ const Helkari = () => {
         })
         .filter((entry) => entry !== null)
         .flat();
+      const arrivalId = gawaltable.find((animal) => animal.arrivalId === selectedUUID)?.entryUnitId;
+
       const payload = {
         ...formData,
         animalAssignments: filteredAnimalAssignments,
-        arrivalId: selectedUUID,
+        arrivalId: arrivalId,
       };
 
       saveStablingDetails(payload, {
@@ -336,7 +336,7 @@ const Helkari = () => {
                 isLoadingRows={isLoading}
               />
               {isModalOpen && (
-                <CustomModal isOpen={isModalOpen} onClose={toggleModal} selectedUUID={ddReference} style={{ width: "100%" }}>
+                <CustomModal isOpen={isModalOpen} onClose={toggleModal} selectedUUID={selectedUUID} style={{ width: "100%" }}>
                   <Fragment>
                     <div className="bmc-card-row">
                       <div className="bmc-col3-card">

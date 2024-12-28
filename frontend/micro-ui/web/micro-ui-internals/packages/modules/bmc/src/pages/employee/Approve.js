@@ -198,10 +198,10 @@ const ApprovePage = ({ Comment, isLoading }) => {
     },
     {
       Header: t("Pincode"),
-      accessor: "pinCode",
+      accessor: "pincode",
       Cell: ({ row }) => (
         <div style={{ cursor: "pointer" }} onClick={() => handleRowClick(row.original.applicationNumber)}>
-          {row.original.pinCode}
+          {row.original.pincode}
         </div>
       ),
     },
@@ -218,9 +218,9 @@ const ApprovePage = ({ Comment, isLoading }) => {
       ),
       aadharName: applicantDetails?.AadharUser?.aadharName || "N/A",
       applicationNumber: application.applicationNumber || "N/A",
-      ward: applicantDetails?.UserOtherDetails?.ward.split("_")[1] || "N/A",
+      ward: applicantDetails?.UserOtherDetails?.ward || "N/A",
       gender: applicantDetails?.AadharUser?.gender || "N/A",
-      pinCode: applicantDetails?.address?.pinCode?.value || "N/A",
+      pincode: applicantDetails?.address?.pincode || "N/A",
     };
   });
 
@@ -232,7 +232,6 @@ const ApprovePage = ({ Comment, isLoading }) => {
         <div className="bmc-row-card-header" style={{ padding: "0" }}>
           <div className="bmc-card-row">
             <div className="bmc-table-container">
-              
               <CustomTable
                 t={t}
                 columns={Tablecolumns}

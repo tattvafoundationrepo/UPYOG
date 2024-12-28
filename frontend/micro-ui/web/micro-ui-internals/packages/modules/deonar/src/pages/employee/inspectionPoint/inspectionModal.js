@@ -28,12 +28,18 @@ export const AnimalInspectionModal = ({
 }) => {
   const { t } = useTranslation();
   const [localData, setLocalData] = useState(selectedAnimal);
+  const [otherSelected, setOtherSelected] = useState({});
 
   useEffect(() => {
     if (selectedAnimal) {
       setLocalData(selectedAnimal);
     }
   }, [selectedAnimal]);
+
+  const handleSave = () => {
+    handleUpdateValue(localData);
+    toggleModal();
+  };
 
   const handleChange = (field, value) => {
     setLocalData((prevData) => ({
@@ -42,16 +48,69 @@ export const AnimalInspectionModal = ({
     }));
   };
 
-  const handleSave = () => {
-    handleUpdateValue(localData);
-    toggleModal();
-  };
-
-  if (!selectedAnimal) return null;
-
   const opinionNameToId = Object.fromEntries(opinionOptions.map((option) => [option.name, option.value]));
 
   const opinionNames = opinionOptions.map((option) => option.name);
+
+  const handleInputChange = (field, e) => {
+    const value = e.target.value;
+    setLocalData((prevData) => ({ ...prevData, [field]: value }));
+    if (!value) {
+      setOtherSelected((prev) => ({ ...prev, [field]: false }));
+    }
+  };
+
+  const handleSelectChange = (field, selectedName) => {
+    if (selectedName === "Other") {
+      setOtherSelected((prev) => ({ ...prev, [field]: true }));
+      setLocalData((prevData) => ({ ...prevData, [field]: "" }));
+    } else {
+      setOtherSelected((prev) => ({ ...prev, [field]: false }));
+      setLocalData((prevData) => ({ ...prevData, [field]: selectedName }));
+    }
+  };
+
+  const renderField = (field, label, options, placeholder) => (
+    <div className="bmc-col3-card">
+      <LabelFieldPair>
+        <CardLabel className="bmc-label">{t(label)}</CardLabel>
+        <Controller
+          control={control}
+          name={field}
+          render={(props) =>
+            otherSelected[field] ? (
+              <TextInput
+                defaultValue={localData?.[field] || ""}
+                onBlur={props.onBlur}
+                onChange={(e) => {
+                  handleInputChange(field, e);
+                  props.onChange(e.target.value);
+                }}
+                t={t}
+                placeholder={t(placeholder)}
+              />
+            ) : (
+              <Dropdown
+                option={options}
+                select={(selectedName) => {
+                  handleSelectChange(field, selectedName);
+                  props.onChange(selectedName);
+                }}
+                selected={localData?.[field]}
+                t={t}
+                onBlur={props.onBlur}
+                placeholder={t(placeholder)}
+              />
+            )
+          }
+        />
+      </LabelFieldPair>
+    </div>
+  );
+
+  if (!selectedAnimal) return null;
+  console.log("localData", localData);
+  console.log("opinionOptions", opinionOptions);
 
   return (
     <CustomModal isOpen={isModalOpen} onClose={toggleModal} fullScreen>
@@ -97,28 +156,7 @@ export const AnimalInspectionModal = ({
               </LabelFieldPair>
             </div>
 
-            <div className="bmc-col3-card">
-              <LabelFieldPair>
-                <CardLabel className="bmc-label">{t("DEONAR_BREED")}</CardLabel>
-                <Controller
-                  control={control}
-                  name="breed"
-                  render={(props) => (
-                    <Dropdown
-                      option={breedOptions}
-                      select={(value) => {
-                        handleChange("breed", value);
-                        props.onChange(value);
-                      }}
-                      selected={localData?.breed}
-                      t={t}
-                      onBlur={props.onBlur}
-                      placeholder={t("DEONAR_BREED")}
-                    />
-                  )}
-                />
-              </LabelFieldPair>
-            </div>
+            {renderField("breed", "DEONAR_BREED", breedOptions, "DEONAR_BREED")}
 
             <div className="bmc-col3-card">
               <LabelFieldPair>
@@ -142,54 +180,9 @@ export const AnimalInspectionModal = ({
                 />
               </LabelFieldPair>
             </div>
+            {renderField("approxAge", "DEONAR_APPROXIMATE_AGE", approxAgeOptions, "DEONAR_APPROXIMATE_AGE")}
 
-            <div className="bmc-col3-card">
-              <LabelFieldPair>
-                <CardLabel className="bmc-label">{t("DEONAR_APPROXIMATE_AGE")}</CardLabel>
-                <Controller
-                  control={control}
-                  name="approxAge"
-                  render={(props) => (
-                    <Dropdown
-                      option={approxAgeOptions}
-                      select={(value) => {
-                        handleChange("approxAge", value);
-                        props.onChange(value);
-                      }}
-                      selected={localData?.approxAge}
-                      t={t}
-                      onBlur={props.onBlur}
-                      placeholder={t("DEONAR_APPROXIMATE_AGE")}
-                    />
-                  )}
-                />
-              </LabelFieldPair>
-            </div>
-
-            <div className="bmc-card-row">
-              <div className="bmc-col3-card">
-                <LabelFieldPair>
-                  <CardLabel className="bmc-label">{t("DEONAR_BODY_COLOR")}</CardLabel>
-                  <Controller
-                    control={control}
-                    name="bodyColor"
-                    render={(props) => (
-                      <Dropdown
-                        option={bodyColorOptions}
-                        select={(value) => {
-                          handleChange("bodyColor", value);
-                          props.onChange(value);
-                        }}
-                        selected={localData?.bodyColor}
-                        t={t}
-                        onBlur={props.onBlur}
-                        placeholder={t("DEONAR_BODY_COLOR")}
-                      />
-                    )}
-                  />
-                </LabelFieldPair>
-              </div>
-            </div>
+            <div className="bmc-card-row">{renderField("bodyColor", "DEONAR_BODY_COLOR", bodyColorOptions, "DEONAR_BODY_COLOR")}</div>
           </div>
           <div className="bmc-card-row">
             <Header>{t("Animal_Characterstics_Specific")}</Header>
@@ -216,52 +209,8 @@ export const AnimalInspectionModal = ({
                 />
               </LabelFieldPair>
             </div>
-
-            <div className="bmc-col3-card">
-              <LabelFieldPair>
-                <CardLabel className="bmc-label">{t("DEONAR_NOSTRILS")}</CardLabel>
-                <Controller
-                  control={control}
-                  name="nostrils"
-                  render={(props) => (
-                    <Dropdown
-                      option={nostrilOptions}
-                      select={(value) => {
-                        handleChange("nostrils", value);
-                        props.onChange(value);
-                      }}
-                      selected={localData?.nostrils}
-                      t={t}
-                      onBlur={props.onBlur}
-                      placeholder={t("DEONAR_NOSTRILS")}
-                    />
-                  )}
-                />
-              </LabelFieldPair>
-            </div>
-
-            <div className="bmc-col3-card">
-              <LabelFieldPair>
-                <CardLabel className="bmc-label">{t("DEONAR_MUZZLE")}</CardLabel>
-                <Controller
-                  control={control}
-                  name="muzzle"
-                  render={(props) => (
-                    <Dropdown
-                      option={muzzleOptions}
-                      select={(value) => {
-                        handleChange("muzzle", value);
-                        props.onChange(value);
-                      }}
-                      selected={localData?.muzzle}
-                      t={t}
-                      onBlur={props.onBlur}
-                      placeholder={t("DEONAR_MUZZLE")}
-                    />
-                  )}
-                />
-              </LabelFieldPair>
-            </div>
+            {renderField("nostrils", "DEONAR_NOSTRILS", nostrilOptions, "DEONAR_NOSTRILS")}
+            {renderField("muzzle", "DEONAR_MUZZLE", muzzleOptions, "DEONAR_MUZZLE")}
 
             <div className="bmc-col3-card">
               <LabelFieldPair>
@@ -286,122 +235,18 @@ export const AnimalInspectionModal = ({
               </LabelFieldPair>
             </div>
           </div>
+
           <div className="bmc-card-row">
-            <div className="bmc-col3-card">
-              <LabelFieldPair>
-                <CardLabel className="bmc-label">{t("DEONAR_BODY_TEMPERATURE")}</CardLabel>
-                <Controller
-                  control={control}
-                  name="bodyTemp"
-                  render={(props) => (
-                    <Dropdown
-                      option={bodyTempOptions}
-                      select={(value) => {
-                        handleChange("bodyTemp", value);
-                        props.onChange(value);
-                      }}
-                      selected={localData?.bodyTemp}
-                      t={t}
-                      onBlur={props.onBlur}
-                      placeholder={t("DEONAR_BODY_TEMPERATURE")}
-                    />
-                  )}
-                />
-              </LabelFieldPair>
-            </div>
-            <div className="bmc-col3-card">
-              <LabelFieldPair>
-                <CardLabel className="bmc-label">{t("DEONAR_PULSE_RATE")}</CardLabel>
-                <Controller
-                  control={control}
-                  name="pulseRate"
-                  render={(props) => (
-                    <Dropdown
-                      option={pulseOptions}
-                      select={(value) => {
-                        handleChange("pulseRate", value);
-                        props.onChange(value);
-                      }}
-                      selected={localData?.pulseRate}
-                      t={t}
-                      onBlur={props.onBlur}
-                      placeholder={t("DEONAR_PULSE_RATE")}
-                    />
-                  )}
-                />
-              </LabelFieldPair>
-            </div>
-            <div className="bmc-col3-card">
-              <LabelFieldPair>
-                <CardLabel className="bmc-label">{t("DEONAR_POSTURE")}</CardLabel>
-                <Controller
-                  control={control}
-                  name="posture"
-                  render={(props) => (
-                    <Dropdown
-                      option={postureOptions}
-                      select={(value) => {
-                        handleChange("posture", value);
-                        props.onChange(value);
-                      }}
-                      selected={localData?.posture}
-                      t={t}
-                      onBlur={props.onBlur}
-                      placeholder={t("DEONAR_POSTURE")}
-                    />
-                  )}
-                />
-              </LabelFieldPair>
-            </div>
-            <div className="bmc-col3-card">
-              <LabelFieldPair>
-                <CardLabel className="bmc-label">{t("DEONAR_GAIT")}</CardLabel>
-                <Controller
-                  control={control}
-                  name="gait"
-                  render={(props) => (
-                    <Dropdown
-                      option={gaitOptions}
-                      select={(value) => {
-                        handleChange("gait", value);
-                        props.onChange(value);
-                      }}
-                      selected={localData?.gait}
-                      t={t}
-                      onBlur={props.onBlur}
-                      placeholder={t("DEONAR_GAIT")}
-                    />
-                  )}
-                />
-              </LabelFieldPair>
-            </div>
+            {renderField("bodyTemp", "DEONAR_BODY_TEMPERATURE", bodyTempOptions, "DEONAR_BODY_TEMPERATURE")}
+            {renderField("pulseRate", "DEONAR_PULSE_RATE", pulseOptions, "DEONAR_PULSE_RATE")}
+            {renderField("posture", "DEONAR_POSTURE", postureOptions, "DEONAR_POSTURE")}
+            {renderField("gait", "DEONAR_GAIT", gaitOptions, "DEONAR_GAIT")}
           </div>
-          <div className="bmc-card-row">
-            <div className="bmc-col3-card">
-              <LabelFieldPair>
-                <CardLabel className="bmc-label">{t("DEONAR_APPETITE")}</CardLabel>
-                <Controller
-                  control={control}
-                  name="appetite"
-                  render={(props) => (
-                    <Dropdown
-                      option={appetiteOptions}
-                      select={(value) => {
-                        handleChange("appetite", value);
-                        props.onChange(value);
-                      }}
-                      selected={localData?.appetite}
-                      t={t}
-                      onBlur={props.onBlur}
-                      placeholder={t("DEONAR_APPETITE")}
-                    />
-                  )}
-                />
-              </LabelFieldPair>
-            </div>
-          </div>
+
+          <div className="bmc-card-row">{renderField("appetite", "DEONAR_APPETITE", appetiteOptions, "DEONAR_APPETITE")}</div>
           <div className="bmc-card-row">
             <Header>{t("Remarks")}</Header>
+
             <div className="bmc-col3-card">
               <LabelFieldPair>
                 <CardLabel className="bmc-label">{t("DEONAR_OPINION")}</CardLabel>
@@ -426,7 +271,6 @@ export const AnimalInspectionModal = ({
                 />
               </LabelFieldPair>
             </div>
-
             <div className="bmc-col3-card">
               <LabelFieldPair>
                 <CardLabel className="bmc-label">{t("DEONAR_OTHER")}</CardLabel>
@@ -516,12 +360,69 @@ export const BeforeSlauhterInspectionModal = ({
 }) => {
   const { t } = useTranslation();
   const [localData, setLocalData] = useState(selectedAnimal);
+  const [otherSelected, setOtherSelected] = useState({});
 
   useEffect(() => {
     if (selectedAnimal) {
       setLocalData(selectedAnimal);
     }
   }, [selectedAnimal]);
+
+  const handleInputChange = (field, e) => {
+    const value = e.target.value;
+    setLocalData((prevData) => ({ ...prevData, [field]: value }));
+    if (!value) {
+      setOtherSelected((prev) => ({ ...prev, [field]: false }));
+    }
+  };
+
+  const handleSelectChange = (field, selectedName) => {
+    if (selectedName === "Other") {
+      setOtherSelected((prev) => ({ ...prev, [field]: true }));
+      setLocalData((prevData) => ({ ...prevData, [field]: "" }));
+    } else {
+      setOtherSelected((prev) => ({ ...prev, [field]: false }));
+      setLocalData((prevData) => ({ ...prevData, [field]: selectedName }));
+    }
+  };
+
+  const renderField = (field, label, options, placeholder) => (
+    <div className="bmc-col3-card">
+      <LabelFieldPair>
+        <CardLabel className="bmc-label">{t(label)}</CardLabel>
+        <Controller
+          control={control}
+          name={field}
+          render={(props) =>
+            otherSelected[field] ? (
+              <TextInput
+                defaultValue={localData?.[field] || ""}
+                onBlur={props.onBlur}
+                onChange={(e) => {
+                  handleInputChange(field, e);
+                  props.onChange(e.target.value);
+                }}
+                t={t}
+                placeholder={t(placeholder)}
+              />
+            ) : (
+              <Dropdown
+                option={options}
+                select={(selectedName) => {
+                  handleSelectChange(field, selectedName);
+                  props.onChange(selectedName);
+                }}
+                selected={localData?.[field]}
+                t={t}
+                onBlur={props.onBlur}
+                placeholder={t(placeholder)}
+              />
+            )
+          }
+        />
+      </LabelFieldPair>
+    </div>
+  );
 
   const handleChange = (field, value) => {
     setLocalData((prevData) => ({
@@ -560,7 +461,7 @@ export const BeforeSlauhterInspectionModal = ({
               </span>
             </div>
             <Header>{t("Animal_Characterstics_General")}</Header>
-            <div className="bmc-col3-card">
+            {/* <div className="bmc-col3-card">
               <LabelFieldPair>
                 <CardLabel className="bmc-label">{t("DEONAR_SLAUGHTER_RECEIPT_NUMBER")}</CardLabel>
                 <Controller
@@ -584,7 +485,7 @@ export const BeforeSlauhterInspectionModal = ({
                   )}
                 />
               </LabelFieldPair>
-            </div>
+            </div> */}
 
             <div className="bmc-col3-card">
               <LabelFieldPair>
@@ -609,28 +510,7 @@ export const BeforeSlauhterInspectionModal = ({
               </LabelFieldPair>
             </div>
 
-            <div className="bmc-col3-card">
-              <LabelFieldPair>
-                <CardLabel className="bmc-label">{t("DEONAR_BREED")}</CardLabel>
-                <Controller
-                  control={control}
-                  name="breed"
-                  render={(props) => (
-                    <Dropdown
-                      option={breedOptions}
-                      select={(value) => {
-                        handleChange("breed", value);
-                        props.onChange(value);
-                      }}
-                      selected={localData?.breed}
-                      t={t}
-                      onBlur={props.onBlur}
-                      placeholder={t("DEONAR_BREED")}
-                    />
-                  )}
-                />
-              </LabelFieldPair>
-            </div>
+            {renderField("breed", "DEONAR_BREED", breedOptions, "DEONAR_BREED")}
 
             <div className="bmc-col3-card">
               <LabelFieldPair>
@@ -654,53 +534,9 @@ export const BeforeSlauhterInspectionModal = ({
                 />
               </LabelFieldPair>
             </div>
+            {renderField("approxAge", "DEONAR_APPROXIMATE_AGE", approxAgeOptions, "DEONAR_APPROXIMATE_AGE")}
 
-            <div className="bmc-card-row">
-              <div className="bmc-col3-card">
-                <LabelFieldPair>
-                  <CardLabel className="bmc-label">{t("DEONAR_APPROXIMATE_AGE")}</CardLabel>
-                  <Controller
-                    control={control}
-                    name="approxAge"
-                    render={(props) => (
-                      <Dropdown
-                        option={approxAgeOptions}
-                        select={(value) => {
-                          handleChange("approxAge", value);
-                          props.onChange(value);
-                        }}
-                        selected={localData?.approxAge}
-                        t={t}
-                        onBlur={props.onBlur}
-                        placeholder={t("DEONAR_APPROXIMATE_AGE")}
-                      />
-                    )}
-                  />
-                </LabelFieldPair>
-              </div>
-              <div className="bmc-col3-card">
-                <LabelFieldPair>
-                  <CardLabel className="bmc-label">{t("DEONAR_BODY_COLOR")}</CardLabel>
-                  <Controller
-                    control={control}
-                    name="bodyColor"
-                    render={(props) => (
-                      <Dropdown
-                        option={bodyColorOptions}
-                        select={(value) => {
-                          handleChange("bodyColor", value);
-                          props.onChange(value);
-                        }}
-                        selected={localData?.bodyColor}
-                        t={t}
-                        onBlur={props.onBlur}
-                        placeholder={t("DEONAR_BODY_COLOR")}
-                      />
-                    )}
-                  />
-                </LabelFieldPair>
-              </div>
-            </div>
+            <div className="bmc-card-row">{renderField("bodyColor", "DEONAR_BODY_COLOR", bodyColorOptions, "DEONAR_BODY_COLOR")}</div>
           </div>
           <div className="bmc-card-row">
             <Header>{t("Animal_Characterstics_Specific")}</Header>
@@ -727,52 +563,8 @@ export const BeforeSlauhterInspectionModal = ({
                 />
               </LabelFieldPair>
             </div>
-
-            <div className="bmc-col3-card">
-              <LabelFieldPair>
-                <CardLabel className="bmc-label">{t("DEONAR_NOSTRILS")}</CardLabel>
-                <Controller
-                  control={control}
-                  name="nostrils"
-                  render={(props) => (
-                    <Dropdown
-                      option={nostrilOptions}
-                      select={(value) => {
-                        handleChange("nostrils", value);
-                        props.onChange(value);
-                      }}
-                      selected={localData?.nostrils}
-                      t={t}
-                      onBlur={props.onBlur}
-                      placeholder={t("DEONAR_NOSTRILS")}
-                    />
-                  )}
-                />
-              </LabelFieldPair>
-            </div>
-
-            <div className="bmc-col3-card">
-              <LabelFieldPair>
-                <CardLabel className="bmc-label">{t("DEONAR_MUZZLE")}</CardLabel>
-                <Controller
-                  control={control}
-                  name="muzzle"
-                  render={(props) => (
-                    <Dropdown
-                      option={muzzleOptions}
-                      select={(value) => {
-                        handleChange("muzzle", value);
-                        props.onChange(value);
-                      }}
-                      selected={localData?.muzzle}
-                      t={t}
-                      onBlur={props.onBlur}
-                      placeholder={t("DEONAR_MUZZLE")}
-                    />
-                  )}
-                />
-              </LabelFieldPair>
-            </div>
+            {renderField("nostrils", "DEONAR_NOSTRILS", nostrilOptions, "DEONAR_NOSTRILS")}
+            {renderField("muzzle", "DEONAR_MUZZLE", muzzleOptions, "DEONAR_MUZZLE")}
 
             <div className="bmc-col3-card">
               <LabelFieldPair>
@@ -797,120 +589,16 @@ export const BeforeSlauhterInspectionModal = ({
               </LabelFieldPair>
             </div>
           </div>
+
           <div className="bmc-card-row">
-            <div className="bmc-col3-card">
-              <LabelFieldPair>
-                <CardLabel className="bmc-label">{t("DEONAR_BODY_TEMPERATURE")}</CardLabel>
-                <Controller
-                  control={control}
-                  name="bodyTemp"
-                  render={(props) => (
-                    <Dropdown
-                      option={bodyTempOptions}
-                      select={(value) => {
-                        handleChange("bodyTemp", value);
-                        props.onChange(value);
-                      }}
-                      selected={localData?.bodyTemp}
-                      t={t}
-                      onBlur={props.onBlur}
-                      placeholder={t("DEONAR_BODY_TEMPERATURE")}
-                    />
-                  )}
-                />
-              </LabelFieldPair>
-            </div>
-            <div className="bmc-col3-card">
-              <LabelFieldPair>
-                <CardLabel className="bmc-label">{t("DEONAR_PULSE_RATE")}</CardLabel>
-                <Controller
-                  control={control}
-                  name="pulseRate"
-                  render={(props) => (
-                    <Dropdown
-                      option={pulseOptions}
-                      select={(value) => {
-                        handleChange("pulseRate", value);
-                        props.onChange(value);
-                      }}
-                      selected={localData?.pulseRate}
-                      t={t}
-                      onBlur={props.onBlur}
-                      placeholder={t("DEONAR_PULSE_RATE")}
-                    />
-                  )}
-                />
-              </LabelFieldPair>
-            </div>
-            <div className="bmc-col3-card">
-              <LabelFieldPair>
-                <CardLabel className="bmc-label">{t("DEONAR_POSTURE")}</CardLabel>
-                <Controller
-                  control={control}
-                  name="posture"
-                  render={(props) => (
-                    <Dropdown
-                      option={postureOptions}
-                      select={(value) => {
-                        handleChange("posture", value);
-                        props.onChange(value);
-                      }}
-                      selected={localData?.posture}
-                      t={t}
-                      onBlur={props.onBlur}
-                      placeholder={t("DEONAR_POSTURE")}
-                    />
-                  )}
-                />
-              </LabelFieldPair>
-            </div>
-            <div className="bmc-col3-card">
-              <LabelFieldPair>
-                <CardLabel className="bmc-label">{t("DEONAR_GAIT")}</CardLabel>
-                <Controller
-                  control={control}
-                  name="gait"
-                  render={(props) => (
-                    <Dropdown
-                      option={gaitOptions}
-                      select={(value) => {
-                        handleChange("gait", value);
-                        props.onChange(value);
-                      }}
-                      selected={localData?.gait}
-                      t={t}
-                      onBlur={props.onBlur}
-                      placeholder={t("DEONAR_GAIT")}
-                    />
-                  )}
-                />
-              </LabelFieldPair>
-            </div>
+            {renderField("bodyTemp", "DEONAR_BODY_TEMPERATURE", bodyTempOptions, "DEONAR_BODY_TEMPERATURE")}
+            {renderField("pulseRate", "DEONAR_PULSE_RATE", pulseOptions, "DEONAR_PULSE_RATE")}
+            {renderField("posture", "DEONAR_POSTURE", postureOptions, "DEONAR_POSTURE")}
+            {renderField("gait", "DEONAR_GAIT", gaitOptions, "DEONAR_GAIT")}
           </div>
-          <div className="bmc-card-row">
-            <div className="bmc-col3-card">
-              <LabelFieldPair>
-                <CardLabel className="bmc-label">{t("DEONAR_APPETITE")}</CardLabel>
-                <Controller
-                  control={control}
-                  name="appetite"
-                  render={(props) => (
-                    <Dropdown
-                      option={appetiteOptions}
-                      select={(value) => {
-                        handleChange("appetite", value);
-                        props.onChange(value);
-                      }}
-                      selected={localData?.appetite}
-                      t={t}
-                      onBlur={props.onBlur}
-                      placeholder={t("DEONAR_APPETITE")}
-                    />
-                  )}
-                />
-              </LabelFieldPair>
-            </div>
-          </div>
+
+          <div className="bmc-card-row">{renderField("appetite", "DEONAR_APPETITE", appetiteOptions, "DEONAR_APPETITE")}</div>
+
           <div className="bmc-card-row">
             <Header>{t("Remarks")}</Header>
             <div className="bmc-col3-card">
@@ -1027,12 +715,69 @@ export const PostMortemInspectionModal = ({
   const { t } = useTranslation();
   const [localData, setLocalData] = useState(selectedAnimal);
   const [showAnimalQuaters, setShowAnimalQuarters] = useState(false);
+  const [otherSelected, setOtherSelected] = useState({});
 
   useEffect(() => {
     if (selectedAnimal) {
       setLocalData(selectedAnimal);
     }
   }, [selectedAnimal]);
+
+  const handleInputChange = (field, e) => {
+    const value = e.target.value;
+    setLocalData((prevData) => ({ ...prevData, [field]: value }));
+    if (!value) {
+      setOtherSelected((prev) => ({ ...prev, [field]: false }));
+    }
+  };
+
+  const handleSelectChange = (field, selectedName) => {
+    if (selectedName === "Other") {
+      setOtherSelected((prev) => ({ ...prev, [field]: true }));
+      setLocalData((prevData) => ({ ...prevData, [field]: "" }));
+    } else {
+      setOtherSelected((prev) => ({ ...prev, [field]: false }));
+      setLocalData((prevData) => ({ ...prevData, [field]: selectedName }));
+    }
+  };
+
+  const renderField = (field, label, options, placeholder) => (
+    <div className="bmc-col3-card">
+      <LabelFieldPair>
+        <CardLabel className="bmc-label">{t(label)}</CardLabel>
+        <Controller
+          control={control}
+          name={field}
+          render={(props) =>
+            otherSelected[field] ? (
+              <TextInput
+                defaultValue={localData?.[field] || ""}
+                onBlur={props.onBlur}
+                onChange={(e) => {
+                  handleInputChange(field, e);
+                  props.onChange(e.target.value);
+                }}
+                t={t}
+                placeholder={t(placeholder)}
+              />
+            ) : (
+              <Dropdown
+                option={options}
+                select={(selectedName) => {
+                  handleSelectChange(field, selectedName);
+                  props.onChange(selectedName);
+                }}
+                selected={localData?.[field]}
+                t={t}
+                onBlur={props.onBlur}
+                placeholder={t(placeholder)}
+              />
+            )
+          }
+        />
+      </LabelFieldPair>
+    </div>
+  );
 
   const handleChange = (field, value) => {
     setLocalData((prevData) => ({
@@ -1088,8 +833,8 @@ export const PostMortemInspectionModal = ({
               </span>
             </div>
             <Header>{t("Animal_Characterstics_General")}</Header>
-
-            <div className="bmc-col3-card">
+            <div className="bmc-card-row">
+              {/* <div className="bmc-col3-card">
               <LabelFieldPair>
                 <CardLabel className="bmc-label">{t("DEONAR_SLAUGHTER_RECEIPT_NUMBER")}</CardLabel>
                 <Controller
@@ -1113,144 +858,83 @@ export const PostMortemInspectionModal = ({
                   )}
                 />
               </LabelFieldPair>
-            </div>
+            </div> */}
 
-            <div className="bmc-col3-card">
-              <LabelFieldPair>
-                <CardLabel className="bmc-label">{t("DEONAR_SPECIES")}</CardLabel>
-                <Controller
-                  control={control}
-                  name="species"
-                  render={(props) => (
-                    <Dropdown
-                      option={speciesOptions}
-                      select={(value) => {
-                        handleChange("species", value);
-                        props.onChange(value);
-                      }}
-                      selected={localData?.species}
-                      t={t}
-                      onBlur={props.onBlur}
-                      placeholder={t("DEONAR_SPECIES")}
-                    />
-                  )}
-                />
-              </LabelFieldPair>
-            </div>
+              <div className="bmc-col3-card">
+                <LabelFieldPair>
+                  <CardLabel className="bmc-label">{t("DEONAR_SPECIES")}</CardLabel>
+                  <Controller
+                    control={control}
+                    name="species"
+                    render={(props) => (
+                      <Dropdown
+                        option={speciesOptions}
+                        select={(value) => {
+                          handleChange("species", value);
+                          props.onChange(value);
+                        }}
+                        selected={localData?.species}
+                        t={t}
+                        onBlur={props.onBlur}
+                        placeholder={t("DEONAR_SPECIES")}
+                      />
+                    )}
+                  />
+                </LabelFieldPair>
+              </div>
 
-            <div className="bmc-col3-card">
-              <LabelFieldPair>
-                <CardLabel className="bmc-label">{t("DEONAR_BREED")}</CardLabel>
-                <Controller
-                  control={control}
-                  name="breed"
-                  render={(props) => (
-                    <Dropdown
-                      option={breedOptions}
-                      select={(value) => {
-                        handleChange("breed", value);
-                        props.onChange(value);
-                      }}
-                      selected={localData?.breed}
-                      t={t}
-                      onBlur={props.onBlur}
-                      placeholder={t("DEONAR_BREED")}
-                    />
-                  )}
-                />
-              </LabelFieldPair>
-            </div>
+              {renderField("breed", "DEONAR_BREED", breedOptions, "DEONAR_BREED")}
 
-            <div className="bmc-col3-card">
-              <LabelFieldPair>
-                <CardLabel className="bmc-label">{t("DEONAR_SEX")}</CardLabel>
-                <Controller
-                  control={control}
-                  name="sex"
-                  render={(props) => (
-                    <Dropdown
-                      option={sexOptions}
-                      select={(value) => {
-                        handleChange("sex", value);
-                        props.onChange(value);
-                      }}
-                      selected={localData?.sex}
-                      t={t}
-                      onBlur={props.onBlur}
-                      placeholder={t("DEONAR_SEX")}
-                    />
-                  )}
-                />
-              </LabelFieldPair>
-            </div>
+              <div className="bmc-col3-card">
+                <LabelFieldPair>
+                  <CardLabel className="bmc-label">{t("DEONAR_SEX")}</CardLabel>
+                  <Controller
+                    control={control}
+                    name="sex"
+                    render={(props) => (
+                      <Dropdown
+                        option={sexOptions}
+                        select={(value) => {
+                          handleChange("sex", value);
+                          props.onChange(value);
+                        }}
+                        selected={localData?.sex}
+                        t={t}
+                        onBlur={props.onBlur}
+                        placeholder={t("DEONAR_SEX")}
+                      />
+                    )}
+                  />
+                </LabelFieldPair>
+              </div>
 
-            <div className="bmc-col3-card">
-              <LabelFieldPair>
-                <CardLabel className="bmc-label">{t("DEONAR_APPROXIMATE_AGE")}</CardLabel>
-                <Controller
-                  control={control}
-                  name="approxAge"
-                  render={(props) => (
-                    <Dropdown
-                      option={approxAgeOptions}
-                      select={(value) => {
-                        handleChange("approxAge", value);
-                        props.onChange(value);
-                      }}
-                      selected={localData?.approxAge}
-                      t={t}
-                      onBlur={props.onBlur}
-                      placeholder={t("DEONAR_APPROXIMATE_AGE")}
-                    />
-                  )}
-                />
-              </LabelFieldPair>
+              {renderField("approxAge", "DEONAR_APPROXIMATE_AGE", approxAgeOptions, "DEONAR_APPROXIMATE_AGE")}
             </div>
+            <div className="bmc-card-row">
+              {renderField("bodyColor", "DEONAR_BODY_COLOR", bodyColorOptions, "DEONAR_BODY_COLOR")}
 
-            <div className="bmc-col3-card">
-              <LabelFieldPair>
-                <CardLabel className="bmc-label">{t("DEONAR_BODY_COLOR")}</CardLabel>
-                <Controller
-                  control={control}
-                  name="bodyColor"
-                  render={(props) => (
-                    <Dropdown
-                      option={bodyColorOptions}
-                      select={(value) => {
-                        handleChange("bodyColor", value);
-                        props.onChange(value);
-                      }}
-                      selected={localData?.bodyColor}
-                      t={t}
-                      onBlur={props.onBlur}
-                      placeholder={t("DEONAR_BODY_COLOR")}
-                    />
-                  )}
-                />
-              </LabelFieldPair>
-            </div>
-
-            <div className="bmc-col3-card">
-              <LabelFieldPair>
-                <CardLabel className="bmc-label">{t("DEONAR_PREGNANCY")}</CardLabel>
-                <Controller
-                  control={control}
-                  name="pregnancy"
-                  render={(props) => (
-                    <Dropdown
-                      option={pregnancyOptions}
-                      select={(value) => {
-                        handleChange("pregnancy", value);
-                        props.onChange(value);
-                      }}
-                      selected={localData?.pregnancy}
-                      t={t}
-                      onBlur={props.onBlur}
-                      placeholder={t("DEONAR_PREGNANCY")}
-                    />
-                  )}
-                />
-              </LabelFieldPair>
+              <div className="bmc-col3-card">
+                <LabelFieldPair>
+                  <CardLabel className="bmc-label">{t("DEONAR_PREGNANCY")}</CardLabel>
+                  <Controller
+                    control={control}
+                    name="pregnancy"
+                    render={(props) => (
+                      <Dropdown
+                        option={pregnancyOptions}
+                        select={(value) => {
+                          handleChange("pregnancy", value);
+                          props.onChange(value);
+                        }}
+                        selected={localData?.pregnancy}
+                        t={t}
+                        onBlur={props.onBlur}
+                        placeholder={t("DEONAR_PREGNANCY")}
+                      />
+                    )}
+                  />
+                </LabelFieldPair>
+              </div>
             </div>
           </div>
           <div className="bmc-card-row">

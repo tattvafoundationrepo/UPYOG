@@ -249,7 +249,7 @@ const Urls = {
     getUserDetails: "/bmc-service-v1/user/_get",
     saveUserDetails: "/bmc-service-v1/user/_save",
     getAllApplications: "/bmc-service-v1/application/_status",
-    getAllBMCInboxApplication:"/bmc-service-v1/bmc/application/_getAll",
+    getAllBMCInboxApplication:"/bmc-service-v1/application/_getAll",
   },
 
   banksDetails: {
@@ -258,6 +258,7 @@ const Urls = {
 
   deonar_security_check: {
     getStakeholders: "/deonar-v1/stakeholder/_get",
+    saveStakeholderDetails: "/deonar-v1/stakeholders/_save",
     saveDeonarDetails: "/deonar-v1/securityCheck/_save",
     searchDeonarDetails: "/deonar-v1/securityCheck/_search",
     saveInspectionPoint: "/deonar-v1/inspection/save",
@@ -272,7 +273,7 @@ const Urls = {
     getCollectionParkingFee: "/deonar-v1/vehicleParking/_parkingFee",
     getCollectionSlaughterFee: "/deonar-v1/collection/fee/slaughter/_get",
     getCollectionParkingDetails: "/deonar-v1/vehicleParking/_parkedInVehicle",
-    getCollectionSlaughterList: "/deonar-v1/get/slaughter/_list",
+    getCollectionSlaughterList: "/deonar-v1/slaughter/list/_booking",
     getTradingList: "/deonar-v1/get/trading/_list",
     getStablingList: "/deonar-v1/get/stabling/_list",
     getDawanwalaList: "/deonar-v1/get/animalList/_dawanwala",
@@ -290,6 +291,12 @@ const Urls = {
     saveSlaughterListData: "/deonar-v1/animal/slaughter/_save",
     getSlaughterUnit: "/deonar-v1/animal/slaughter/_shifts",
     saveInspectionData: "/deonar-v1/inspection/submit",
+    saveWashingDetails: "/deonar-v1/vehicleWashing/_save",
+    getWashingDetails: "/deonar-v1/vehicleWashing/_washInVehicle",
+    getEmergencySlaughterList: "/deonar-v1/animal/slaughterList/_emergency",
+    getEmergencyExportList: '/deonar-v1/animal/slaughter/_export',
+    getRemovalReport:"/deonar-v1/get/removal/_list",
+    saveSlaughterListDataBooking: "/deonar-v1/animal/slaughter/_booking"
   },
   access_control: "/access/v1/actions/mdms/_get",
   billgenie: "/egov-searcher",

@@ -16,7 +16,7 @@ const useDeonarCommon = () => {
 
   // Fetching data
   const fetchDeonarCommon = (data, config = {}) => {
-    return useQuery(["DeonarDetails", data], () => DeonarService.get(data), {
+    return useQuery(["DeonarDetails", data], () => DeonarService.DeonarService(data), {
       ...config,
       onSuccess: (data) => {
         dispatch(fetchDeonarDetailsSuccess(data));
@@ -183,20 +183,26 @@ const useDeonarCommon = () => {
 
 
   const fetchSlaughterUnit = (data, options = {}) => {
-    const { 
+    const {
       enabled = true,
       executeOnLoad = false,
-      executeOnRadioSelect = false
+      executeOnRadioSelect = false,
     } = options;
-    return useQuery(["fetchSlaughterUnit", data], () => DeonarService.getSlaughterUnit(data), {
-      enabled: enabled && (executeOnLoad || executeOnRadioSelect),
-      ...options,
-      onSuccess: (data) => {
-        console.log(data, "Slaughhter unit data");
-        options.onSuccess && options.onSuccess(data);
-      },
-    });
+  
+    return useQuery(
+      ["fetchSlaughterUnit", data],
+      () => DeonarService.getSlaughterUnit(data),
+      {
+        enabled: enabled && (executeOnLoad || executeOnRadioSelect),
+        ...options,
+        onSuccess: (data) => {
+          console.log(data, "Slaughter unit data");
+          options.onSuccess && options.onSuccess(data);
+        },
+      }
+    );
   };
+  
   //   return useQuery(["fetchSlaughterUnit", data], (data), {
 
   //   } => DeonarService.getSlaughterUnit(data, config));
@@ -205,6 +211,35 @@ const useDeonarCommon = () => {
   const saveInspectionDetailsData = (data, config = {}) => {
     return useMutation((data) => DeonarService.saveInspectionData(data), config);
   };
+  const fetchEmergencySlaughterList = (data, config = {}) => {
+    return useMutation((data) => DeonarService.getEmergencySlaughter(data), config);
+  };
+
+  const saveStakeholderDetails = useMutation((data) => DeonarService.saveStakeholderDetails(data), {
+    onSuccess: () => {
+      queryClient.invalidateQueries("StakeholderDetails");
+    },
+  });
+
+
+  const { mutate: saveSlaughterList } = useMutation(
+    (data) => DeonarService.saveSlaughterBooking(data),
+    {
+      onSuccess: async () => {
+        await queryClient.invalidateQueries("DeonarSlaughteringDetails");
+        await queryClient.refetchQueries("DeonarSlaughteringDetails", {
+          active: true,
+          exact: true
+        });
+      },
+
+      onError: (error) => {
+        console.error("Error saving slaughtering details:", error);
+        throw error; 
+      },
+    }
+  );
+
 
   return {
     fetchDeonarCommon,
@@ -223,6 +258,9 @@ const useDeonarCommon = () => {
     saveSlaughterListData,
     fetchSlaughterUnit,
     saveInspectionDetailsData,
+    saveStakeholderDetails,
+    fetchEmergencySlaughterList,
+    saveSlaughterList
   };
 };
 

@@ -3,12 +3,13 @@ import { useTranslation } from "react-i18next";
 import MainFormHeader from "../commonFormFields/formMainHeading";
 import CustomTable from "../commonFormFields/customTable";
 import TableCard from "../commonFormFields/tableCard";
-import { CardLabel, LabelFieldPair, Toast, Dropdown, CheckBox } from "@upyog/digit-ui-react-components";
-import { Controller, useForm } from "react-hook-form";
+import { Toast, CheckBox } from "@upyog/digit-ui-react-components";
+import { useForm } from "react-hook-form";
 import useCollectionPoint from "@upyog/digit-ui-libraries/src/hooks/deonar/useCollectionPoint";
 import SubmitButtonField from "../commonFormFields/submitBtn";
 import useDeonarCommon from "@upyog/digit-ui-libraries/src/hooks/deonar/useCommonDeonar";
 import { generateTokenNumber } from "../collectionPoint/utils";
+import CustomModal from "../commonFormFields/customModal";
 
 const SlaughteringEmergency = () => {
   const { t } = useTranslation();
@@ -19,11 +20,14 @@ const SlaughteringEmergency = () => {
   const [totalRecords, setTotalRecords] = useState(0);
   const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768);
   const [selectedRows, setSelectedRows] = useState([]);
-  const [slaughtering, setSlaughtering] = useState([
-    { code: "1", name: "YES" },
-    { code: "2", name: "NO" },
-  ]);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [animalAssignmentData, setAnimalAssignmentData] = useState("");
+  const [isCheckboxChecked, setIsCheckboxChecked] = useState(false);
+
+  const { fetchEmergencySlaughterList } = useCollectionPoint({});
+  const { data: SlaughterListData } = fetchEmergencySlaughterList({}, { executeOnLoad: true });
+  const { saveSlaughterListData } = useDeonarCommon();
 
   const {
     control,
@@ -40,11 +44,9 @@ const SlaughteringEmergency = () => {
     },
   });
 
-  const { fetchSlaughterCollectionList } = useCollectionPoint({});
-  const { data: SlaughterListData } = fetchSlaughterCollectionList({}, { executeOnLoad: true });
-  const { saveSlaughterListData } = useDeonarCommon();
-
-  const handleUUIDClick = (ddReference) => {
+  const handleUUIDClick = (ddReference, entryUnitId) => {
+    setSelectedUUID(entryUnitId);
+    setIsModalOpen(!isModalOpen);
     setSelectedUUID(ddReference);
     const selectedSlaughter = slaughterList.find((item) => item.ddReference === ddReference);
     if (selectedSlaughter) {
@@ -61,6 +63,16 @@ const SlaughteringEmergency = () => {
 
       setSlaughterAnimalListData(updatedAnimalList || []);
     }
+    if (selectedSlaughter?.animalAssignmentDetailsList) {
+      const formattedData = selectedSlaughter.animalAssignmentDetailsList.map((animal) => ({
+        animalType: animal.animalType,
+        count: animal.token,
+        animalTypeId: animal.animalTypeId,
+        animalTokenNumber: generateTokenNumber(animal.animalType, animal.token),
+      }));
+      setAnimalAssignmentData(formattedData);
+      setTotalRecords(formattedData.length);
+    }
   };
 
   const saveSlaughterData = saveSlaughterListData();
@@ -74,12 +86,6 @@ const SlaughteringEmergency = () => {
 
   const onSubmit = async (formData) => {
     const selectedSlaughter = slaughterList.find((item) => item.ddReference === selectedUUID);
-
-    // const slaughterDetails = slaughterAnimalListData.map((item) => ({
-    //   animalTypeId: item.animalTypeId,
-    //   token: item.token,
-    // }))
-
     const slaughterDetails = slaughterAnimalListData
       .filter((item) => selectedRows.includes(item.animalTokenNumber))
       .map((item) => ({
@@ -88,21 +94,11 @@ const SlaughteringEmergency = () => {
       }));
 
     if (selectedSlaughter) {
-      const slaughteringValue = formData?.slaughtering?.name === "YES" ? true : false;
-      // const selectedTokens = slaughterAnimalListData
-      //   .filter((animal) => selectedRows.includes(animal.animalTokenNumber))
-      //   .map((animal) => animal.token);
-
       const payload = {
         slaughterDetails: {
           arrivalId: selectedSlaughter?.arrivalId,
-          ddReference: selectedSlaughter?.ddReference,
-          shopkeeperName: selectedSlaughter?.shopkeeperName,
-          licenceNumber: selectedSlaughter?.licenceNumber,
-          // animalTypeId: slaughterAnimalListData?.[0]?.animalTypeId,
-          // token: selectedTokens,
+          slaughterType: "Emergency",
           details: slaughterDetails,
-          slaughtering: slaughteringValue,
         },
       };
 
@@ -116,6 +112,7 @@ const SlaughteringEmergency = () => {
           setSelectedRows([]);
           showToast("success", t("DEONAR_SLAUGHTERING_DATA_SUBMITTED_SUCCESSFULY"));
           setIsSubmitted(true);
+          toggleModal();
         },
         onError: (error) => {
           showToast("error", t("DEONAR_SLAUGHTERING_DATA_NOT_SUBMITTED_SUCCESSFULY"));
@@ -124,22 +121,24 @@ const SlaughteringEmergency = () => {
     }
   };
 
-  const handleRowCheckboxChange = (ddReference) => {
+  const handleRowCheckboxChange = (animalTokenNumber) => {
     setSelectedRows((prevSelectedRows) => {
-      if (prevSelectedRows.includes(ddReference)) {
-        return prevSelectedRows.filter((row) => row !== ddReference);
+      let updatedSelectedRows = [];
+      if (prevSelectedRows.includes(animalTokenNumber)) {
+        updatedSelectedRows = prevSelectedRows.filter((row) => row !== animalTokenNumber);
       } else {
-        return [...prevSelectedRows, ddReference];
+        updatedSelectedRows = [...prevSelectedRows, animalTokenNumber];
       }
+
+      setIsCheckboxChecked(updatedSelectedRows.length > 0);
+      return updatedSelectedRows;
     });
   };
 
-  const currentRows = slaughterAnimalListData;
-
   useEffect(() => {
     if (SlaughterListData) {
-      setSlaughterList(SlaughterListData.slaughterLists || []);
-      setTotalRecords(SlaughterListData.slaughterLists.length);
+      setSlaughterList(SlaughterListData.SlaughterList || []);
+      setTotalRecords(SlaughterListData.SlaughterList.length);
     }
   }, [SlaughterListData]);
 
@@ -180,18 +179,23 @@ const SlaughteringEmergency = () => {
     },
   ];
 
-  const tableColumnsAnimal = [
+  const toggleModal = () => {
+    setIsModalOpen(!isModalOpen);
+  };
+
+  const isVisibleColumns2 = [
     {
       Header: (
         <CheckBox
           onChange={(e) => {
             if (e.target.checked) {
-              setSelectedRows(currentRows.map((row) => row.animalTokenNumber));
+              setSelectedRows(animalAssignmentData.map((row) => row.animalTokenNumber));
             } else {
               setSelectedRows([]);
             }
+            setIsCheckboxChecked(e.target.checked);
           }}
-          checked={currentRows.length > 0 && currentRows.length === selectedRows.length}
+          checked={animalAssignmentData.length > 0 && animalAssignmentData.length === selectedRows.length}
         />
       ),
       accessor: "checkbox",
@@ -201,16 +205,13 @@ const SlaughteringEmergency = () => {
       },
       disableSortBy: true,
     },
-
     {
       Header: t("Animal Type"),
       accessor: "animalType",
-      disableSortBy: true,
     },
     {
       Header: t("Animal Token"),
       accessor: "animalTokenNumber",
-      disableSortBy: true,
     },
   ];
 
@@ -247,28 +248,15 @@ const SlaughteringEmergency = () => {
             </div>
           </div>
 
-          {selectedUUID && !isSubmitted && (
-            <div className="bmc-row-card-header">
-              <div style={{ paddingBottom: "20px", display: "flex", gap: "12px", alignItems: "center" }}>
-                <h3 style={{ fontWeight: "600", fontSize: "20px" }}>{t("ACTIVE_DD_REFERENCENO")}: </h3>
-                <span
-                  style={{
-                    fontWeight: "bold",
-                    backgroundColor: "rgb(204, 204, 204)",
-                    borderRadius: "10px",
-                    padding: "8px",
-                    fontSize: "22px",
-                  }}
-                >
-                  {selectedUUID}
-                </span>
-              </div>
+          {isModalOpen && (
+            <CustomModal isOpen={isModalOpen} onClose={toggleModal} selectedUUID={selectedUUID} style={{ width: "100%" }}>
               <div className="bmc-card-row">
                 <CustomTable
                   t={t}
-                  columns={tableColumnsAnimal}
-                  data={slaughterAnimalListData}
+                  columns={isVisibleColumns2}
                   manualPagination={false}
+                  data={animalAssignmentData}
+                  totalRecords={totalRecords}
                   tableClassName={"deonar-scrollable-table"}
                   getCellProps={() => ({
                     style: {
@@ -277,9 +265,8 @@ const SlaughteringEmergency = () => {
                   })}
                 />
               </div>
-             
-                <SubmitButtonField control={control} />
-              </div>
+              <SubmitButtonField control={control} disabled={!isCheckboxChecked || isDirty} />
+            </CustomModal>
           )}
         </form>
       </div>
