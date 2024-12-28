@@ -29,6 +29,9 @@ import DEONARInbox from "./pages/employee/Inbox";
 import SlaughteringNormal from "./pages/employee/slaughter/slaughterNormal";
 import SlaughteringExport from "./pages/employee/slaughter/slaughterExport";
 import SlaughteringEmergency from "./pages/employee/slaughter/slaughterEmergency";
+import RemovalReport from "./pages/employee/collectionPoint/RemovalReport";
+import WashingFeePage from "./pages/employee/securityCheck/washingFeePage";
+import GatePassIssue from "./pages/employee/deliveryPoint/gatePassIssue";
 
 export const DEONARModule = ({ stateCode, userType, tenants }) => {
   const { t } = useTranslation();
@@ -78,11 +81,14 @@ const componentsToRegister = {
   Slaughtering,
   Helkari,
   Stakeholder,
+  RemovalReport,
   DEONAR_INBOX_FILTER: (props) => <InboxFilter {...props} />,
   DEONARInbox,
   SlaughteringNormal,
   SlaughteringExport,
-  SlaughteringEmergency
+  SlaughteringEmergency,
+  WashingFeePage,
+  GatePassIssue,
 };
 
 export const initDEONARComponents = () => {

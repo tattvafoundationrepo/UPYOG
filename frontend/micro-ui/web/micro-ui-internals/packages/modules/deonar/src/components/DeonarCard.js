@@ -110,6 +110,11 @@ const DEONARCard = () => {
       roles: ["SUPERUSER","DEONAR_GENERIC"]
     },
     {
+      label: t("GATE PASS ISSUE"),
+      link: `/digit-ui/employee/deonar/gate`,
+      roles: ["SUPERUSER","DEONAR_GENERIC"]
+    },
+    {
       label: t("Stake Holder"),
       link: `/digit-ui/employee/deonar/stakeholder`,
       roles: ["SUPERUSER","DEONAR_GENERIC"]
@@ -117,6 +122,16 @@ const DEONARCard = () => {
     {
       label: t("INBOX"),
       link: `/digit-ui/employee/deonar/Inbox`,
+      roles: ["SUPERUSER","DEONAR_GENERIC"]
+    },
+    {
+      label: t("REMOVAL REPORT"),
+      link: `/digit-ui/employee/deonar/removalReport`,
+      roles: ["SUPERUSER","DEONAR_GENERIC"]
+    },
+    {
+      label: t("WASHINGFEEPAGE"),
+      link: `/digit-ui/employee/deonar/washing`,
       roles: ["SUPERUSER","DEONAR_GENERIC"]
     }
   ];

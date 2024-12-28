@@ -27,12 +27,15 @@ const App = ({ path, stateCode, userType, tenants }) => {
   const SlaughteringEme = Digit.ComponentRegistryService?.getComponent("SlaughteringEmergency");
   const SlaughteringNor = Digit.ComponentRegistryService?.getComponent("SlaughteringNormal");
   const SlaughteringExt = Digit.ComponentRegistryService?.getComponent("SlaughteringExport");
+  const WashingFeePage = Digit.ComponentRegistryService?.getComponent("WashingFeePage");
+  const GatePassIssue = Digit.ComponentRegistryService?.getComponent("GatePassIssue");
 
   const Helkari = Digit.ComponentRegistryService?.getComponent("Helkari");
   const Stakeholder = Digit.ComponentRegistryService?.getComponent("Stakeholder");
   const Inbox = Digit?.ComponentRegistryService?.getComponent('DEONARInbox');
   const mobileView = innerWidth <= 640;
   const tenantId = Digit.ULBService.getCurrentTenantId();
+  const Removal = Digit.ComponentRegistryService?.getComponent("RemovalReport");
   const inboxInitialState = {
     searchParams: {
       tenantId: tenantId,
@@ -82,7 +85,10 @@ const App = ({ path, stateCode, userType, tenants }) => {
         <PrivateRoute path={`${path}/penaltyCharge`} component={PenaltyCharge} />
         <PrivateRoute path={`${path}/gatePass`} component={GatePass} />
         <PrivateRoute path={`${path}/stakeholder`} component={Stakeholder} />
+        <PrivateRoute path={`${path}/removalReport`} component={Removal} />
         <PrivateRoute path={`${path}/helkari`} component={Helkari} />
+        <PrivateRoute path={`${path}/washing`} component = {WashingFeePage} />
+        <PrivateRoute path={`${path}/gate`} component={GatePassIssue} />
         <PrivateRoute path={`${path}/inbox`} component={() => (
               <Inbox parentRoute={path} businessService="deonar" filterComponent="DEONAR_INBOX_FILTER" initialStates={inboxInitialState} isInbox={true} />
             )} />
