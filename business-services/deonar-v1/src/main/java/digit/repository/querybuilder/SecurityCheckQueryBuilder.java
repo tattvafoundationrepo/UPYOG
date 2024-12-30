@@ -180,7 +180,7 @@ public class SecurityCheckQueryBuilder {
 
         if (!ObjectUtils.isEmpty(request.getForCollection())) {
             if (request.getForCollection() == true) {
-                return " select * from eg_deonar_vlistforslaughterfeecollection ";
+                return " select * from eg_deonar_list_slaughter_collection ";
             }
         }
         return BASE_QUERY_SLAUGHTER_LIST;

@@ -15,8 +15,11 @@ public class StakeholderCheckDetails {
     @JsonProperty("stakeholdername")
     private String stakeholderName;
 
-    @JsonProperty("address")
-    private String address;
+    @JsonProperty("address1")
+    private String address1;
+
+    @JsonProperty("address2")
+    private String address2;
 
     @JsonProperty("mobilenumber")
     private long mobilenumber;
@@ -38,5 +41,8 @@ public class StakeholderCheckDetails {
 
     @JsonProperty("animaltype")
     private String animaltype;
+
+    @JsonProperty("pincode")
+    private String pincode;
 
 }

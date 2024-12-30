@@ -1,11 +1,10 @@
 package digit.repository.querybuilder;
 
-import java.util.*;
+import java.util.List;
 
 import org.springframework.stereotype.Component;
 
 import digit.web.models.stakeholders.StakeholderCheckCriteria;
-import digit.web.models.stakeholders.StakeholderCheckDetails;
 import digit.web.models.stakeholders.Stakeholders;
 
 @Component
@@ -76,13 +75,21 @@ public class SaveStakeholderQueryBuilder {
             """;
     
     private static final String GET_STAKEHOLDER = """
-            SELECT stakeholdername AS stakeholdername,
-            mobilenumber AS mobilenumber,
-            email AS email,
-            licencenumber AS licencenumber,
-            registrationnumber AS registrationnumber,
-            stakeholdertypename AS stakeholdertype,
-            animaltype AS animaltype \
+            SELECT id, stakeholdername, mobilenumber, email, 
+            licencenumber, registrationnumber, stakeholdertypename, animaltype 
+            """;
+    
+    private static final String GET_ALL = """
+            SELECT dl.stakeholdername AS stakeholdername,
+            dl.mobilenumber AS mobilenumber,
+            dl.email AS email,
+            dl.licencenumber AS licencenumber,
+            dl.registrationnumber AS registrationnumber,
+            dl.stakeholdertypename AS stakeholdertype,
+            dl.animaltype AS animaltype,
+            sa.address1 AS address1,
+            sa.address2 AS address2,
+            sa.pincode AS pincode 
             """;
 
     private static final String UNION_ALL = """
@@ -115,7 +122,9 @@ public class SaveStakeholderQueryBuilder {
     }
 
     public String getStakeholderQuery(StakeholderCheckCriteria criteria, List<Object> preparedStmtList){
-        StringBuilder query = new StringBuilder(GET_STAKEHOLDER);
+        StringBuilder query = new StringBuilder(GET_ALL);
+        query.append(" FROM (");
+        query.append(GET_STAKEHOLDER);
         if(criteria == null){
             query.append(" FROM eg_deonar_deal_list_animal_broker ");
             query.append(UNION_ALL);
@@ -133,7 +142,6 @@ public class SaveStakeholderQueryBuilder {
             query.append(UNION_ALL);
             query.append(GET_STAKEHOLDER);
             query.append(" FROM eg_deonar_deal_list_animal_trader ");
-            query.append(" ORDER BY stakeholdername ASC ");
         } else {
             query.append(" FROM eg_deonar_deal_list_animal_broker ");
             query.append(UNION_ALL);
@@ -151,8 +159,10 @@ public class SaveStakeholderQueryBuilder {
             query.append(UNION_ALL);
             query.append(GET_STAKEHOLDER);
             query.append(" FROM eg_deonar_deal_list_animal_trader ");
-            query.append(" ORDER BY stakeholdername ASC ");
         }
+        query.append(") dl ");
+        query.append(" LEFT JOIN eg_deonar_stakeholder sa ON dl.id = sa.id");
+        query.append(" ORDER BY stakeholdername ASC ");
         return query.toString();
     }
 

@@ -25,6 +25,9 @@ public class StakeholderRowMapper implements  ResultSetExtractor<List<Stakeholde
                                             .licencenumber(rs.getString("licencenumber"))
                                             .mobilenumber(rs.getLong("mobilenumber"))
                                             .registrationnumber(rs.getString("registrationnumber"))
+                                            .address1(rs.getString("address1"))
+                                            .address2(rs.getString("address2"))
+                                            .pincode(rs.getString("pincode"))
                                             .email(rs.getString("email"))
                                             .build();
             detailsList.add(details);

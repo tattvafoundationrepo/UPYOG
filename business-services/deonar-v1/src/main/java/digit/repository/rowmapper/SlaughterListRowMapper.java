@@ -35,7 +35,7 @@ public class SlaughterListRowMapper implements ResultSetExtractor<List<Slaughter
             if (shopkeeperDetails == null) {
                 shopkeeperDetails = SlaughterList.builder()
                         .ddReference(ddreference)
-                        .stakeholderId(rs.getInt("stakeholderid"))
+                       // .stakeholderId(rs.getInt("stakeholderid"))
                         .shopkeeperName(rs.getString("stakeholdername"))
                         .licenceNumber(rs.getString("licencenumber"))
                         .mobileNumber(rs.getString("mobilenumber"))
@@ -43,7 +43,7 @@ public class SlaughterListRowMapper implements ResultSetExtractor<List<Slaughter
                         .animalAssignmentDetailsList(new ArrayList<>()) 
                         .purchaseDate(rs.getString("purchasedate"))
                         .purchaseTime(rs.getString("purchasetime"))
-                        .opinion(rs.getString("opinion"))
+                       // .opinion(rs.getString("opinion"))
                         .build();
 
                 shopkeeperMap.put(uniqueKey, shopkeeperDetails);
@@ -52,7 +52,7 @@ public class SlaughterListRowMapper implements ResultSetExtractor<List<Slaughter
              AnimalDetail animalAssignmentDetails = AnimalDetail.builder()
                      .animalTypeId(rs.getLong("animaltypeid"))
                      .count(rs.getInt("token"))
-                     .animalType(rs.getString("animaltype"))
+                    // .animalType(rs.getString("animaltype"))
                      .build();
 
              shopkeeperDetails.getAnimalAssignmentDetailsList().add(animalAssignmentDetails);
