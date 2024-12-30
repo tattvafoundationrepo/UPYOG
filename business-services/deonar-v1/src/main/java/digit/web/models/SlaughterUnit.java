@@ -17,6 +17,7 @@ import lombok.Setter;
 @Builder
 public class SlaughterUnit {
   private  Integer id;
+  private String name ;
   private  String openTime ;
   private  String closeTime;
 

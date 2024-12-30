@@ -48,7 +48,6 @@ public class CommonRepository {
 
     public List<SlaughterUnit>getSlaughterUnitShifts(SlaughterUnitRequest request){
         CommonSearchCriteria criteria = new CommonSearchCriteria();
-        criteria.setId(request.getSlaughterUnitId());
         List<Object> preparedStmtList = new ArrayList<>();
         String query = queryBuilder.getSlaughterUnitShift( criteria,preparedStmtList);
         log.info("Final query: " + query);

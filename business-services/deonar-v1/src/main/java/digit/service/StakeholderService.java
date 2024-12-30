@@ -1,12 +1,18 @@
 package digit.service;
 
 import java.util.ArrayList;
+import java.util.List;
 
+import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import digit.kafka.Producer;
+import digit.repository.SaveStakeholderRepository;
+import digit.web.models.stakeholders.StakeholderCheckCriteria;
+import digit.web.models.stakeholders.StakeholderCheckDetails;
 import digit.web.models.stakeholders.StakeholderRequest;
 import digit.web.models.stakeholders.Stakeholders;
 
@@ -17,7 +23,8 @@ public class StakeholderService {
     @Autowired
     private Producer producer;
 
-
+    @Autowired
+    private SaveStakeholderRepository saveStakeholderRepository;
 
     public StakeholderRequest saveStakeholderDetails(StakeholderRequest request) {
         // Validate the request
@@ -43,23 +50,6 @@ public class StakeholderService {
         producer.push("save-stakeholder-data", request);
 
 
-        // ArrayList<Long> animalTypeIds = stakeholderDetails.getAnimalTypeIds();
-
-        // animalTypeIds.forEach(animalTypeId -> {
-        //         request.getStakeholders().setAnimalTypeId(animalTypeId);
-        //         producer.push("save-animaltype-data", request);
-        //     }
-        // );
-        
-        // ArrayList<String> licenceNameList = stakeholderDetails.getLicenceNumbers();
-
-        // licenceNameList.forEach(licenceName -> {
-        //         request.getStakeholders().setLicenceNumber(licenceName);
-        //         producer.push("save-licencenumber-data", request);
-        //     }
-        // );
-
-
         ArrayList<Long> animalTypeIds = stakeholderDetails.getAnimalTypeIds();
 
         animalTypeIds.forEach(animalTypeId -> {
@@ -76,5 +66,22 @@ public class StakeholderService {
             }
         );
         return request;
+    }
+
+    public List<StakeholderCheckDetails> getStakeholderDetails(RequestInfo requestInfo,StakeholderCheckCriteria criteria){
+        if(criteria == null){
+            criteria = new StakeholderCheckCriteria();
+        }
+        if(requestInfo == null){
+            requestInfo = new RequestInfo();
+        }
+
+        List<StakeholderCheckDetails> stakeholderDetails = saveStakeholderRepository.getStakeholderDetails(requestInfo, criteria);
+
+        if (CollectionUtils.isEmpty(stakeholderDetails)) {
+            return new ArrayList<>();
+        }
+
+        return stakeholderDetails;
     }
 }

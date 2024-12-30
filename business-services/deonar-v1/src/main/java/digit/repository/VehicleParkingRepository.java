@@ -122,6 +122,15 @@ public class VehicleParkingRepository {
                 isNightOnly = true;
             }
 
+            if (parkedInTime.isAfter(LocalTime.of(0, 0)) && parkedInTime.isBefore(LocalTime.of(6, 0, 0, 0)) && parkedOutTime.isAfter(LocalTime.of(6, 0, 0, 0)) && parkedOutTime.isBefore(LocalTime.of(23, 59, 59, 9999))) {
+                return switch (vehicleType) {
+                    case THREE_WHEELER -> LORRY_TRUCK_TEMPO_CAR_THREE_WHEELER_DAY_RATE + THREE_WHEELER_OVERNIGHT_MORE_2H;
+                    case TWO_WHEELER -> TWO_WHEELER_DAY_RATE + TWO_WHEELER_OVERNIGHT_MORE_2H;
+                    default -> 0;
+                }; // Rs. 213
+                // Rs. 93
+            }
+
         } else {
             // Handle scenario 2: Vehicle parked across multiple days (Day and Night)
             isDayAndNight = true;
@@ -147,14 +156,31 @@ public class VehicleParkingRepository {
                 
                                 // If the vehicle is parked out between 12 AM - 6 AM, treat as night parking
                                 if (parkedOutTime.isAfter(LocalTime.of(23, 59, 59, 999999999)) && parkedOutTime.isBefore(LocalTime.of(6, 0, 0, 0))) {
-                                    fee += calculateNightCharges(vehicleType, parkedIndDate, parkedInTime, parkedOutDate, parkedOutTime);
+                                   
+                                    long deduction = 0;
+                                    if(parkedOutTime.isBefore(LocalTime.of(2, 0)) || parkedInTime.isAfter(LocalTime.of(4, 0))){ 
+                                        if(vehicleType.equals(THREE_WHEELER)){
+                                            deduction = THREE_WHEELER_OVERNIGHT_MORE_2H;
+                                        } else {
+                                            deduction = TWO_WHEELER_OVERNIGHT_MORE_2H;
+                                        }
+                                    }
+                                    fee += calculateNightCharges(vehicleType, parkedIndDate, parkedInTime, parkedOutDate, parkedOutTime) - deduction;
                                 } else {
+                                    long deduction = 0;
+                                    if(parkedOutTime.isAfter(LocalTime.of(0, 0)) && parkedOutTime.isBefore(LocalTime.of(2, 0)) || parkedInTime.isAfter(LocalTime.of(4, 0)) && parkedInTime.isBefore(LocalTime.of(6, 0))){ 
+                                       
+                                        if(vehicleType.equals(THREE_WHEELER)){
+                                            deduction = THREE_WHEELER_OVERNIGHT_MORE_2H;
+                                        } else {
+                                            deduction = TWO_WHEELER_OVERNIGHT_MORE_2H;
+                                        }
+                                    }
                                     // Night charge for the last day (12 AM to 6 AM)
-                                    fee += calculateNightCharges(vehicleType, parkedIndDate, parkedInTime, parkedOutDate, parkedOutTime);
+                                    fee += calculateNightCharges(vehicleType, parkedIndDate, parkedInTime, parkedOutDate, parkedOutTime) - deduction;
                                 }
                             }
                         }
-                
                         return fee;
                     }
                 

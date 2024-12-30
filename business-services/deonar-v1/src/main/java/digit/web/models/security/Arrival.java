@@ -18,6 +18,7 @@ public class Arrival {
     private Date permissionDate;
     private Time timeOfArrival;
     private String vehicleNumber;
+    private String licenceNumber;
     private Long createdAt;
     private Long updatedAt;
     private Integer createdBy;

@@ -1,17 +1,17 @@
 package digit.web.controllers;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.egov.common.contract.response.ResponseInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import digit.service.StakeholderService;
-import digit.web.models.stakeholders.StakeholderRequest;
-import digit.web.models.stakeholders.StakeholderResponse;
-import digit.web.models.stakeholders.Stakeholders;
+import digit.util.ResponseInfoFactory;
+import digit.web.models.stakeholders.*;
 
 // Annotate as a REST controller
 @RestController
@@ -20,6 +20,9 @@ public class StakeholdersController {
 
     @Autowired
     private StakeholderService stakeholderService;
+
+    @Autowired
+    private ResponseInfoFactory responseInfoFactory;
 
     // POST endpoint for saving stakeholder details
     @PostMapping("/_save")
@@ -52,4 +55,32 @@ public class StakeholdersController {
         }
     }
 
+    @PostMapping("/_get")
+    public ResponseEntity<StakeholderCheckResponse> getStakeholderDetails( @RequestBody StakeholderCheckRequest stakeholderCheckRequest){
+        List<StakeholderCheckDetails> stakeholderDetails = new ArrayList<>();
+        String message = null;
+        try {
+            StakeholderCheckCriteria stakeholderCheckCriteria = stakeholderCheckRequest.getStakeholderCheckCriteria();
+            if(stakeholderCheckCriteria == null){
+                stakeholderCheckCriteria = new StakeholderCheckCriteria();
+            }
+            stakeholderDetails = stakeholderService
+                                .getStakeholderDetails(stakeholderCheckRequest.getRequestInfo(), stakeholderCheckCriteria);
+        } catch (Exception e) {
+                        e.printStackTrace();
+                        message = e.getMessage();
+                        System.out.println("Error while fetching stakeholders: " + message);
+        }
+        ResponseInfo responseInfo = responseInfoFactory
+                                        .createResponseInfoFromRequestInfo(stakeholderCheckRequest.getRequestInfo(),
+                                                        true);
+        StakeholderCheckResponse response = StakeholderCheckResponse.builder()
+                                        .stakeholderCheckDetails(stakeholderDetails)
+                                        .message(message)
+                                        .responseInfo(responseInfo)
+                                        .build();
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
 }
+// /stakeholders/_get
