@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { SearchField, Table, TextInput, Loader } from "@upyog/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
+import ImportPermissionDateField from "./importPermissionDate";
+import { useForm } from "react-hook-form";
 
 const CustomTable = ({
   columns = [],
@@ -37,6 +39,8 @@ const CustomTable = ({
   showAddButton = false,
   buttonText = "Add Employee",
   onAddClick,
+  showDateColumn = false, // New prop to control date column visibility
+  onDateChange, 
   ...rest
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -50,6 +54,7 @@ const CustomTable = ({
   const [isDownloading, setIsDownloading] = useState(false);
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false); // State for dropdown
   const { t } = useTranslation();
+  const { control } = useForm();
 
   useEffect(() => {
     setFilteredData(data);
@@ -263,6 +268,32 @@ const CustomTable = ({
     }
   };
 
+  const enhancedColumns = useMemo(() => {
+    if (!showDateColumn) return columns;
+
+    return [
+      ...columns,
+      {
+        Header: t("DEONAR_IMPORT_PERMISSION_DATE"),
+        accessor: "importPermissionDate",
+        Cell: ({ row }) => (
+          <ImportPermissionDateField
+          showLabel= {false}
+            control={control}
+            data={row.original}
+            setData={(newData) => {
+              if (onDateChange) {
+                onDateChange(row.index, newData);
+              }
+            }}
+            style={{ margin: 0, padding: 0 }}
+          />
+        ),
+      },
+    ];
+  }, [columns, showDateColumn, t, control, onDateChange]);
+
+
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "1rem" }}>
@@ -345,7 +376,7 @@ const CustomTable = ({
 
       <Table
         className={`customTable table-fixed-first-column table-border-style deonar-scrollable-table ${tableClassName}`}
-        columns={columns.map((col) => ({
+        columns={enhancedColumns.map((col) => ({
           ...col,
           sortFn: col.sortable ? () => handleSort(col.accessor) : undefined,
           isSortable: col.sortable,

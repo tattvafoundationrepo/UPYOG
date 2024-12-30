@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { CardLabel, LabelFieldPair, DatePicker } from "@upyog/digit-ui-react-components";
 import { Controller } from "react-hook-form";
 
-const ImportPermissionDateField = ({ control, data, setData, style }) => {
+const ImportPermissionDateField = ({ control, data, setData, style , showLabel= true}) => {
   const { t } = useTranslation();
   const [error, setError] = useState("");
 
@@ -33,7 +33,10 @@ const ImportPermissionDateField = ({ control, data, setData, style }) => {
   return (
     <div className="bmc-col3-card" style={style}>
       <LabelFieldPair>
-        <CardLabel className="bmc-label">{t("DEONAR_IMPORT_PERMISSION_DATE")}</CardLabel>
+        {
+          showLabel &&  <CardLabel className="bmc-label">{t("DEONAR_IMPORT_PERMISSION_DATE")}</CardLabel>
+        }
+      
         <Controller
           control={control}
           name="importPermissionDate"
