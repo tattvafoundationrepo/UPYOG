@@ -130,7 +130,7 @@ const DEONARCard = () => {
       roles: ["SUPERUSER","DEONAR_GENERIC"]
     },
     {
-      label: t("WASHINGFEEPAGE"),
+      label: t("WASHING"),
       link: `/digit-ui/employee/deonar/washing`,
       roles: ["SUPERUSER","DEONAR_GENERIC"]
     }

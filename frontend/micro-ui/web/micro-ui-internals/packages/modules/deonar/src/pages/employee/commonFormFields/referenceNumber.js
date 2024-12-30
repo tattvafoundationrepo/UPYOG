@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { CardLabel, Dropdown, LabelFieldPair, TextInput, DatePicker } from "@upyog/digit-ui-react-components";
 import { Controller, useForm } from "react-hook-form";
 
-const ReferenceNumberField = ({control, data, setData, style}) => {
+const ReferenceNumberField = ({label, control, data, setData, style}) => {
   const { t } = useTranslation();
   const [error, setError] = useState("");
 
@@ -32,7 +32,7 @@ const ReferenceNumberField = ({control, data, setData, style}) => {
   return (
     <div className="bmc-col3-card" style={style}>
         <LabelFieldPair>
-            <CardLabel className="bmc-label">{t("DEONAR_REFERENCE_NUMBER")}&nbsp;{error && <sup style={{ color: "red", fontSize: "x-small" }}>{error}</sup>}</CardLabel>
+            <CardLabel className="bmc-label">{t("Registration Number")}&nbsp;{error && <sup style={{ color: "red", fontSize: "x-small" }}>{error}</sup>}</CardLabel>
             <Controller
                 control={control}
                 name="referenceNumber"
@@ -53,7 +53,7 @@ const ReferenceNumberField = ({control, data, setData, style}) => {
                     onBlur={props.onBlur}
                     optionKey="i18nKey"
                     t={t}
-                    placeholder={t("DEONAR_REFERENCE_NUMBER")}
+                    placeholder={t(label)}
                     />
                 </div>
                 )}

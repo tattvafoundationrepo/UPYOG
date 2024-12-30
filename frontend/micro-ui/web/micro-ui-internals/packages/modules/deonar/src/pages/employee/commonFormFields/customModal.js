@@ -21,7 +21,6 @@ const CustomModal = ({ isOpen, onClose, title, selectedUUID, children, style }) 
         alignItems: "center",
         zIndex: 1000,
         overflow: "hidden",
-     
       }}
       onClick={onClose}
     >
@@ -34,7 +33,7 @@ const CustomModal = ({ isOpen, onClose, title, selectedUUID, children, style }) 
           padding: "20px",
           maxWidth: "90%", // Ensures the modal is responsive horizontally
           maxHeight: "90vh", // Ensures the modal doesn't overflow vertically
-          overflowY: "auto", // Adds scrolling if content overflows vertically
+          // overflowY: "auto", // Adds scrolling if content overflows vertically
           // width: "500px", // Default width
           ...style, // Allows custom styling if passed
         }}
@@ -58,6 +57,10 @@ const CustomModal = ({ isOpen, onClose, title, selectedUUID, children, style }) 
                   borderRadius: "10px",
                   padding: "8px",
                   fontSize: "22px",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                  maxWidth: "400px",
                 }}
               >
                 {selectedUUID}

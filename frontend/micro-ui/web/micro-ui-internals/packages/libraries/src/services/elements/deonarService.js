@@ -22,7 +22,17 @@ const DeonarService = {
       userService: true,
     });
   },
-
+  
+  getStakeholder: (data) => {
+    return Request({
+      data: data,
+      url: Urls.deonar_security_check.getStakeholder,
+      useCache: false,
+      method: "POST",
+      auth: true,
+      userService: true,
+    });
+  },
   saveDeonarUserDetails: (data) => {
     return Request({
       data: data,
@@ -445,6 +455,17 @@ const DeonarService = {
     return Request({
       data: data,
       url: Urls.deonar_security_check.getRemovalReport,
+      useCache: false,
+      method: "POST",
+      auth: true,
+      userService: true,
+    });
+  },
+
+  getNormalSlaughterList: (data) => {
+    return Request({
+      data: data,
+      url: Urls.deonar_security_check.getNormalSlaughterList,
       useCache: false,
       method: "POST",
       auth: true,

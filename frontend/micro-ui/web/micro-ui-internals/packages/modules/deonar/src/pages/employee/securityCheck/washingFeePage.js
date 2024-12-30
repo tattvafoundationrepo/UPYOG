@@ -115,7 +115,6 @@ const WashingFeePage = () => {
       },
     };
 
-    console.log("payloadOUT", payload);
 
     saveWashingDetails(payload, {
       onSuccess: (data) => {

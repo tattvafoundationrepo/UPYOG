@@ -257,6 +257,7 @@ const Urls = {
   },
 
   deonar_security_check: {
+    getStakeholder:"/deonar-v1/stakeholders/_getAll",
     getStakeholders: "/deonar-v1/stakeholder/_get",
     saveStakeholderDetails: "/deonar-v1/stakeholders/_save",
     saveDeonarDetails: "/deonar-v1/securityCheck/_save",
@@ -296,7 +297,8 @@ const Urls = {
     getEmergencySlaughterList: "/deonar-v1/animal/slaughterList/_emergency",
     getEmergencyExportList: '/deonar-v1/animal/slaughter/_export',
     getRemovalReport:"/deonar-v1/get/removal/_list",
-    saveSlaughterListDataBooking: "/deonar-v1/animal/slaughter/_booking"
+    saveSlaughterListDataBooking: "/deonar-v1/animal/slaughter/_booking",
+    getNormalSlaughterList: "/deonar-v1/animal/slaughterList/_normal",
   },
   access_control: "/access/v1/actions/mdms/_get",
   billgenie: "/egov-searcher",

@@ -23,8 +23,8 @@ const SlaughteringNormal = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const { fetchSlaughterCollectionList } = useCollectionPoint({});
-  const { data: SlaughterListData } = fetchSlaughterCollectionList({}, { executeOnLoad: true });
+  const { fetchNormalSlaughterList } = useCollectionPoint({});
+  const { data: SlaughterListData } = fetchNormalSlaughterList({}, { executeOnLoad: true });
   const { saveSlaughterListData } = useDeonarCommon();
   const [animalAssignmentData, setAnimalAssignmentData] = useState("");
   const [isCheckboxChecked, setIsCheckboxChecked] = useState(false);

@@ -3,12 +3,14 @@ import { useTranslation } from "react-i18next";
 import MainFormHeader from "../commonFormFields/formMainHeading";
 import CustomTable from "../commonFormFields/customTable";
 import TableCard from "../commonFormFields/tableCard";
-import { CardLabel, LabelFieldPair, Toast, Dropdown, CheckBox } from "@upyog/digit-ui-react-components";
-import { Controller, useForm } from "react-hook-form";
+import { CardLabel, LabelFieldPair, Toast, Dropdown, CheckBox, ToggleSwitch } from "@upyog/digit-ui-react-components";
+import { useForm } from "react-hook-form";
 import useCollectionPoint from "@upyog/digit-ui-libraries/src/hooks/deonar/useCollectionPoint";
 import SubmitButtonField from "../commonFormFields/submitBtn";
 import useDeonarCommon from "@upyog/digit-ui-libraries/src/hooks/deonar/useCommonDeonar";
 import { generateTokenNumber } from "../collectionPoint/utils";
+import CustomModal from "../commonFormFields/customModal";
+import MultiColumnDropdown from "../commonFormFields/multiColumnDropdown";
 
 const Slaughtering = () => {
   const { t } = useTranslation();
@@ -19,11 +21,57 @@ const Slaughtering = () => {
   const [totalRecords, setTotalRecords] = useState(0);
   const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768);
   const [selectedRows, setSelectedRows] = useState([]);
-  const [slaughtering, setSlaughtering] = useState([
-    { code: "1", name: "YES" },
-    { code: "2", name: "NO" },
-  ]);
+  const [slaughteringUnit, setSlaughteringUnit] = useState([]);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [slaughterAssignment, setSlaughterAssignment] = useState([]);
+  const [selectedSlaughterUnits, setSelectedSlaughterUnits] = useState({});
+
+  const [slaughterDates, setSlaughterDates] = useState({});
+
+  const [shiftOptions, setShiftOptions] = useState({});
+  const [selectedShifts, setSelectedShifts] = useState({});
+  const [slaughterByBmc, setSlaughterByBmc] = useState({});
+  const [selectAll, setSelectAll] = useState(false);
+
+  const [uniqueSlaughterUnits, setUniqueSlaughterUnits] = useState([]);
+  const [shiftsMapping, setShiftsMapping] = useState({});
+  const [unitIdMapping, setUnitIdMapping] = useState({});
+
+  const [selectedUnitForFetch, setSelectedUnitForFetch] = useState(null);
+  const { fetchSlaughterCollectionList } = useCollectionPoint({});
+  const { data: SlaughterListData } = fetchSlaughterCollectionList({}, { executeOnLoad: true });
+  const { saveSlaughterListData, fetchDeonarCommon, fetchSlaughterUnit, saveSlaughterList } = useDeonarCommon();
+
+  const { data: slaughterUnitData, refetch } = fetchSlaughterUnit(
+    {},
+    {
+      executeOnLoad: true,
+    }
+  );
+
+  useEffect(() => {
+    const unitId = selectedUnitForFetch;
+    setSelectedUnitForFetch(unitId);
+  }, []);
+
+  useEffect(() => {
+    if (slaughterUnitData?.unit) {
+      const mappedShifts = slaughterUnitData.unit.map((unit) => ({
+        label: `${unit.openTime} - ${unit.closeTime}`,
+        value: unit.id,
+      }));
+
+      // Set shifts for all rows
+      const allRowsShifts = {};
+      slaughterAssignment.forEach((_, index) => {
+        allRowsShifts[index] = mappedShifts;
+      });
+
+      setShiftOptions(allRowsShifts);
+    }
+  }, [slaughterUnitData, slaughterAssignment]);
 
   const {
     control,
@@ -40,11 +88,9 @@ const Slaughtering = () => {
     },
   });
 
-  const { fetchSlaughterCollectionList } = useCollectionPoint({});
-  const { data: SlaughterListData } = fetchSlaughterCollectionList({}, { executeOnLoad: true });
-  const { saveSlaughterListData } = useDeonarCommon();
-
-  const handleUUIDClick = (ddReference) => {
+  const handleUUIDClick = (ddReference, entryUnitId) => {
+    setSelectedUUID(entryUnitId);
+    setIsModalOpen(!isModalOpen);
     setSelectedUUID(ddReference);
     const selectedSlaughter = slaughterList.find((item) => item.ddReference === ddReference);
     if (selectedSlaughter) {
@@ -58,8 +104,7 @@ const Slaughtering = () => {
           ...item,
           animalTokenNumber: generateTokenNumber(item.animalType, item.token),
         })) || [];
-
-      setSlaughterAnimalListData(updatedAnimalList || []);
+      setSlaughterAssignment(updatedAnimalList || []);
     }
   };
 
@@ -72,76 +117,154 @@ const Slaughtering = () => {
     }, duration);
   };
 
+  const handleToggleChange = (rowIndex) => (e) => {
+    const newValue = !slaughterByBmc[rowIndex];
+    setSlaughterByBmc((prev) => ({
+      ...prev,
+      [rowIndex]: newValue,
+    }));
+
+    // Check if all toggles are selected after this change
+    const updatedValues = {
+      ...slaughterByBmc,
+      [rowIndex]: newValue,
+    };
+
+    const allSelected = Object.values(updatedValues).every((value) => value === true);
+    setSelectAll(allSelected);
+  };
+
+  useEffect(() => {
+    if (Object.keys(slaughterByBmc).length > 0) {
+      const allSelected = Object.values(slaughterByBmc).every((value) => value === true);
+      setSelectAll(allSelected);
+    }
+  }, [slaughterByBmc]);
+
+  const handleSelectAll = (e) => {
+    const isChecked = e.target.checked;
+    setSelectAll(isChecked);
+    const updatedSlaughterByBmc = slaughterAssignment.reduce((acc, _, index) => {
+      acc[index] = isChecked;
+      return acc;
+    }, {});
+
+    setSlaughterByBmc(updatedSlaughterByBmc);
+  };
+
+  const resetModal = () => {
+    setSelectedUUID(undefined);
+  };
+
   const onSubmit = async (formData) => {
-    const selectedSlaughter = slaughterList.find((item) => item.ddReference === selectedUUID);
+    try {
+      const selectedSlaughter = slaughterList.find((item) => item.ddReference === selectedUUID);
 
-    // const slaughterDetails = slaughterAnimalListData.map((item) => ({
-    //   animalTypeId: item.animalTypeId,
-    //   token: item.token,
-    // }))
+      if (!selectedSlaughter) {
+        showToast("error", t("No selected record found"));
+        return;
+      }
 
-    const slaughterDetails = slaughterAnimalListData
-      .filter((item) => selectedRows.includes(item.animalTokenNumber))
-      .map((item) => ({
-        animalTypeId: item.animalTypeId,
-        token: item.token,
-      }));
+      const bookingDetails = slaughterAssignment
+        .map((item, index) => {
+          const slaughterUnit = selectedSlaughterUnits[index]?.[0];
+          const selectedShift = selectedShifts[index];
+          const date = slaughterDates[index];
 
-    if (selectedSlaughter) {
-      const slaughteringValue = formData?.slaughtering?.name === "YES" ? true : false;
-      // const selectedTokens = slaughterAnimalListData
-      //   .filter((animal) => selectedRows.includes(animal.animalTokenNumber))
-      //   .map((animal) => animal.token);
+          // Only proceed if we have all required data
+          if (!slaughterUnit || !selectedShift || !date) return null;
+
+          return {
+            arrivalId: selectedSlaughter.arrivalId,
+            ddReference: selectedSlaughter.ddReference,
+            animalTypeId: item.animalTypeId,
+            token: item.token,
+            slaughterUnitId: unitIdMapping[slaughterUnit.value], // Using the correct unit ID from mapping
+            unitShiftId: selectedShift.value, // Using the shift ID
+            slaughterDate: date ? new Date(date).getTime() : null,
+            slaughterByBmcEmployee: slaughterByBmc[index] || false,
+          };
+        })
+        .filter(Boolean); // Remove any null entries
+
+      console.log("Sending payload:", bookingDetails); // For debugging
 
       const payload = {
-        slaughterDetails: {
-          arrivalId: selectedSlaughter?.arrivalId,
-          ddReference: selectedSlaughter?.ddReference,
-          shopkeeperName: selectedSlaughter?.shopkeeperName,
-          licenceNumber: selectedSlaughter?.licenceNumber,
-          // animalTypeId: slaughterAnimalListData?.[0]?.animalTypeId,
-          // token: selectedTokens,
-          details: slaughterDetails,
-          slaughtering: slaughteringValue,
-        },
+        bookingDetails,
       };
 
-      saveSlaughterData.mutate(payload, {
-        onSuccess: (data) => {
-          reset({
-            slaughter: "",
-            slaughterType: {},
-            slaughterUnit: {},
-          });
+      saveSlaughterList(payload, {
+        onSuccess: () => {
+          reset();
+          resetForm();
           setSelectedRows([]);
+          setSelectedShifts({});
+          setSelectedSlaughterUnits({});
+          setSlaughterByBmc({});
           showToast("success", t("DEONAR_SLAUGHTERING_DATA_SUBMITTED_SUCCESSFULY"));
           setIsSubmitted(true);
+          setIsModalOpen(false);
         },
         onError: (error) => {
+          console.error("Submission error:", error);
           showToast("error", t("DEONAR_SLAUGHTERING_DATA_NOT_SUBMITTED_SUCCESSFULY"));
         },
       });
+    } catch (error) {
+      console.error("Form submission error:", error);
+      showToast("error", t("DEONAR_SLAUGHTERING_DATA_NOT_SUBMITTED_SUCCESSFULY"));
     }
   };
-
-  const handleRowCheckboxChange = (ddReference) => {
-    setSelectedRows((prevSelectedRows) => {
-      if (prevSelectedRows.includes(ddReference)) {
-        return prevSelectedRows.filter((row) => row !== ddReference);
-      } else {
-        return [...prevSelectedRows, ddReference];
-      }
-    });
-  };
-
-  const currentRows = slaughterAnimalListData;
 
   useEffect(() => {
     if (SlaughterListData) {
-      setSlaughterList(SlaughterListData.slaughterLists || []);
-      setTotalRecords(SlaughterListData.slaughterLists.length);
+      setSlaughterList(SlaughterListData?.SlaughterList || []);
+      setTotalRecords(SlaughterListData?.SlaughterList?.length);
+      const transformedData = SlaughterListData.SlaughterList.map((item) => ({
+        animalType: item.animalAssignmentDetailsList?.[0]?.animalType || "Unknown",
+        animalTypeId: item.animalAssignmentDetailsList?.[0]?.animalTypeId || null,
+        token: item.animalAssignmentDetailsList?.[0]?.token || null,
+      }));
+      setSlaughterAssignment(transformedData);
     }
   }, [SlaughterListData]);
+
+  useEffect(() => {
+    if (slaughterUnitData?.unit) {
+      // Group units by name
+      const unitsByName = slaughterUnitData.unit.reduce((acc, unit) => {
+        if (!acc[unit.name]) {
+          acc[unit.name] = [];
+        }
+        acc[unit.name].push(unit);
+        return acc;
+      }, {});
+
+      // Store the first unit ID for each unique name
+      const idMapping = {};
+      Object.entries(unitsByName).forEach(([name, units]) => {
+        idMapping[name] = units[0].id; // Store the first unit's ID for each unique name
+      });
+      setUnitIdMapping(idMapping);
+
+      // Create unique units array for first dropdown
+      const uniqueUnits = Object.keys(unitsByName).map((name) => ({
+        label: name,
+        value: name,
+      }));
+      setUniqueSlaughterUnits(uniqueUnits);
+
+      // Create shifts mapping for each unique unit name
+      const shiftsMap = {};
+      Object.entries(unitsByName).forEach(([unitName, units]) => {
+        shiftsMap[unitName] = units.map((unit) => ({
+          label: `${unit.openTime} - ${unit.closeTime}`,
+          value: unit.id,
+        }));
+      });
+      setShiftsMapping(shiftsMap);
+    }
+  }, [slaughterUnitData]);
 
   useEffect(() => {
     if (toast) {
@@ -149,6 +272,14 @@ const Slaughtering = () => {
       return () => clearTimeout(timer);
     }
   }, [toast]);
+
+  const resetForm = () => {
+    setSelectedShifts({});
+    setShiftOptions({});
+    setSelectedSlaughterUnits({});
+    setSlaughterDates({}); // Reset dates
+    reset();
+  };
 
   const Tablecolumns = [
     {
@@ -180,37 +311,161 @@ const Slaughtering = () => {
     },
   ];
 
-  const tableColumnsAnimal = [
+  const toggleModal = () => {
+    if (isDirty) {
+      setIsConfirmModalOpen(true);
+    } else {
+      resetModal();
+      setIsModalOpen(false);
+      resetForm();
+    }
+  };
+
+  const getTodayDate = () => {
+    const today = new Date();
+    return today.toISOString().split("T")[0];
+  };
+
+  const handleDateChange = (rowIndex, date) => {
+    const selectedDate = new Date(date);
+    const today = new Date(getTodayDate());
+
+    if (selectedDate >= today) {
+      setSlaughterDates((prev) => ({
+        ...prev,
+        [rowIndex]: date,
+      }));
+    } else {
+      showToast("error", t("DEONAR_DATE_CANNOT_BE_BEFORE_TODAY"));
+      // Clear the invalid date
+      setSlaughterDates((prev) => ({
+        ...prev,
+        [rowIndex]: "",
+      }));
+    }
+  };
+
+  const handleSlaughterUnitSelect = (rowIndex, selectedOptions) => {
+    const formattedSelection = Array.isArray(selectedOptions) ? selectedOptions : [selectedOptions];
+    setSelectedSlaughterUnits((prev) => ({
+      ...prev,
+      [rowIndex]: formattedSelection,
+    }));
+    setSelectedShifts((prev) => ({
+      ...prev,
+      [rowIndex]: null,
+    }));
+  };
+
+  const handleShiftSelect = (rowIndex, selected) => {
+    const selectedShift = Array.isArray(selected) ? selected[0] : selected;
+    setSelectedShifts((prev) => ({
+      ...prev,
+      [rowIndex]: selectedShift,
+    }));
+  };
+
+  const isVisibleColumns = [
+    { Header: t("Animal Type"), accessor: "animalType" },
     {
-      Header: (
-        <CheckBox
-          onChange={(e) => {
-            if (e.target.checked) {
-              setSelectedRows(currentRows.map((row) => row.animalTokenNumber));
-            } else {
-              setSelectedRows([]);
-            }
-          }}
-          checked={currentRows.length > 0 && currentRows.length === selectedRows.length}
-        />
-      ),
-      accessor: "checkbox",
+      Header: t("Animal Token"),
+      accessor: "token",
       Cell: ({ row }) => {
-        const isChecked = selectedRows.includes(row.original.animalTokenNumber);
-        return <CheckBox checked={isChecked} onChange={() => handleRowCheckboxChange(row.original.animalTokenNumber)} />;
+        const animalType = row.original.animalType;
+        const index = row.index;
+        return generateTokenNumber(animalType, row.original.token);
       },
-      disableSortBy: true,
+    },
+    {
+      accessor: t("animalDetails"),
+      Header: t("Assign Slaughtering Unit"),
+
+      Cell: ({ row }) => {
+        const rowIndex = row.index;
+        const selectedValue = selectedSlaughterUnits[rowIndex] || [];
+        return (
+          <MultiColumnDropdown
+            key={`slaughter-unit-${rowIndex}`}
+            options={uniqueSlaughterUnits || []}
+            selected={selectedValue}
+            onSelect={(e, selected) => handleSlaughterUnitSelect(rowIndex, selected)}
+            placeholder={t("Select Assignment Unit")}
+            displayKeys={["label"]}
+            optionsKey="value"
+            defaultUnit="Options"
+            autoCloseOnSelect={true}
+            showColumnHeaders={true}
+            headerMappings={{
+              label: t("name"),
+            }}
+          />
+        );
+      },
+    },
+    {
+      accessor: t("slaughterShift"),
+      Header: t("Assign Shift"),
+      Cell: ({ row }) => {
+        const rowIndex = row.index;
+        const selectedUnit = selectedSlaughterUnits[rowIndex]?.[0];
+        const availableShifts = selectedUnit ? shiftsMapping[selectedUnit.value] : [];
+        const selectedShift = selectedShifts[rowIndex];
+
+        return (
+          <MultiColumnDropdown
+            key={`slaughter-shift-dropdown-${rowIndex}`}
+            options={availableShifts || []}
+            selected={selectedShift ? [selectedShift] : []}
+            onSelect={(e, selected) => handleShiftSelect(rowIndex, selected)}
+            placeholder={t("Select Shift")}
+            displayKeys={["label"]}
+            optionsKey="value"
+            defaultUnit="Options"
+            autoCloseOnSelect={true}
+            showColumnHeaders={true}
+            headerMappings={{
+              label: t("name"),
+            }}
+          />
+        );
+      },
     },
 
     {
-      Header: t("Animal Type"),
-      accessor: "animalType",
-      disableSortBy: true,
+      accessor: "slaughterDate",
+      Header: t("Slaughter Booking Date"),
+      Cell: ({ row }) => (
+        <input
+          type="date"
+          style={{ border: "1px solid ", padding: "3px", background: "rgba(227, 227, 227, var(--bg-opacity))" }}
+          value={slaughterDates[row.index] || ""}
+          onChange={(e) => handleDateChange(row.index, e.target.value)}
+          min={getTodayDate()} 
+          className="digit-datepicker"
+        />
+      ),
     },
+
     {
-      Header: t("Animal Token"),
-      accessor: "animalTokenNumber",
-      disableSortBy: true,
+      accessor: "slaughterByBmcEmployee",
+      Header: () => (
+        <div className="flex items-center justify-center">
+          <CheckBox label={t("Slaughter by BMC Employee")} onChange={handleSelectAll} checked={selectAll} style={{ margin: "0 auto", top: "3px"}} />
+        </div>
+      ),
+      Cell: ({ row }) => {
+        const rowIndex = row.index;
+        return (
+          <div className="flex items-center justify-center" style={{ paddingBottom: "15px" }}>
+            <ToggleSwitch
+              value={slaughterByBmc[rowIndex] || false}
+              onChange={handleToggleChange(rowIndex)}
+              name={`toggle-${rowIndex}`}
+              style={{ margin: "0 auto" }}
+            />
+          </div>
+        );
+      },
     },
   ];
 
@@ -247,39 +502,30 @@ const Slaughtering = () => {
             </div>
           </div>
 
-          {selectedUUID && !isSubmitted && (
-            <div className="bmc-row-card-header">
-              <div style={{ paddingBottom: "20px", display: "flex", gap: "12px", alignItems: "center" }}>
-                <h3 style={{ fontWeight: "600", fontSize: "20px" }}>{t("ACTIVE_DD_REFERENCENO")}: </h3>
-                <span
-                  style={{
-                    fontWeight: "bold",
-                    backgroundColor: "rgb(204, 204, 204)",
-                    borderRadius: "10px",
-                    padding: "8px",
-                    fontSize: "22px",
-                  }}
-                >
-                  {selectedUUID}
-                </span>
-              </div>
+          {isModalOpen && (
+            <CustomModal isOpen={isModalOpen} onClose={toggleModal} selectedUUID={selectedUUID} style={{ width: "100%" }}>
+              {/* <div className="bmc-row-card-header" style={{ marginBottom: "40px" }}> */}
+
+              {/* </div> */}
               <div className="bmc-card-row">
+                {/* <div className="bmc-row-card-header" style={{ overflowY: "auto", maxHeight: "300px" }}> */}
+                {/* {isMobileView && data.map((data, index) => <TableCard data={data} key={index} fields={fields} onUUIDClick={handleUUIDClick} />)} */}
                 <CustomTable
                   t={t}
-                  columns={tableColumnsAnimal}
-                  data={slaughterAnimalListData}
+                  columns={isVisibleColumns}
                   manualPagination={false}
+                  data={slaughterAssignment}
+                  totalRecords={totalRecords}
                   tableClassName={"deonar-scrollable-table"}
-                  getCellProps={() => ({
-                    style: {
-                      fontSize: "14px",
-                    },
-                  })}
+                  autoSort={false}
+                  isLoadingRows={""}
+                  showDateColumn={false}
+                  // onDateChange={handleDateChange}
                 />
+                {/* </div> */}
               </div>
-             
-                <SubmitButtonField control={control} />
-              </div>
+              <SubmitButtonField control={control} />
+            </CustomModal>
           )}
         </form>
       </div>

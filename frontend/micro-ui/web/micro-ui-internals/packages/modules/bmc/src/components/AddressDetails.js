@@ -143,7 +143,6 @@ const AddressDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = false, tena
   const handleSelect = (e, selectedOptionsArray) => {
     try {
       const selectedArray = Array.isArray(selectedOptionsArray) ? selectedOptionsArray : [selectedOptionsArray];
-
       if (selectedArray.length > 0) {
         const selectedDetail = selectedArray[0];
         const updates = {
@@ -152,7 +151,7 @@ const AddressDetailCard = ({ onUpdate, initialRows = {}, AllowEdit = false, tena
           subDistrict: selectedDetail.officeName || "",
           state: selectedDetail.stateName || "",
           city: selectedDetail.officeName || "",
-          wardName: selectedDetail.wardNo || "",
+          wardName: selectedDetail.subWardNo || "",
           zoneName: selectedDetail.divisionName || "",
           blockName: selectedDetail.wardName || "",
         };

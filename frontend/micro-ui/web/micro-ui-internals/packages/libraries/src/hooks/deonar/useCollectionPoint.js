@@ -29,7 +29,8 @@ const useCollectionPoint = ({ value }) => {
       enabled: value === "stabling",
       staleTime: 0,
       cacheTime: 0,
-      refetchOnWindowFocus: true,    });
+      refetchOnWindowFocus: true,
+    });
   };
 
   const { mutateAsync: saveCollectionEntryFee } = useMutation((data) => DeonarService.saveCollectionEntryFee(data), {
@@ -81,11 +82,7 @@ const useCollectionPoint = ({ value }) => {
   };
 
   const fetchParkingCollectionFee = (data, config = {}) => {
-    const { 
-      enabled = true,
-      executeOnLoad = false,
-      executeOnRadioSelect = false
-    } = config;
+    const { enabled = true, executeOnLoad = false, executeOnRadioSelect = false } = config;
     return useQuery(["ParkingFee", data], () => DeonarService.getCollectionParkingFee(data), {
       enabled: enabled && (executeOnLoad || executeOnRadioSelect),
       ...config,
@@ -94,41 +91,31 @@ const useCollectionPoint = ({ value }) => {
       },
     });
   };
-  
+
   const fetchParkingCollectionDetails = (data, config = {}, enabled = true) => {
-    return useQuery(["ParkingDetails", data], 
-      () => DeonarService.getCollectionParkingDetails(data), 
-      {
-        ...config,
-        // Disable caching to always fetch fresh data
-        cacheTime: 0,
-        // Stale immediately after fetching
-        staleTime: 0,
-        enabled,
-      }
-    );
+    return useQuery(["ParkingDetails", data], () => DeonarService.getCollectionParkingDetails(data), {
+      ...config,
+      // Disable caching to always fetch fresh data
+      cacheTime: 0,
+      // Stale immediately after fetching
+      staleTime: 0,
+      enabled,
+    });
   };
 
   const fetchWashingCollectionDetails = (data, config = {}, enabled = true) => {
-    return useQuery(["WashingDetails", data], 
-      () => DeonarService.getWashingDetails(data), 
-      {
-        ...config,
-        // Disable caching to always fetch fresh data
-        cacheTime: 0,
-        // Stale immediately after fetching
-        staleTime: 0,
-        enabled,
-      }
-    );
+    return useQuery(["WashingDetails", data], () => DeonarService.getWashingDetails(data), {
+      ...config,
+      // Disable caching to always fetch fresh data
+      cacheTime: 0,
+      // Stale immediately after fetching
+      staleTime: 0,
+      enabled,
+    });
   };
 
   const fetchSlaughterCollectionList = (data, config = {}) => {
-    const { 
-      enabled = true,
-      executeOnLoad = false,
-      executeOnRadioSelect = false
-    } = config;
+    const { enabled = true, executeOnLoad = false, executeOnRadioSelect = false } = config;
     return useQuery(["SlaughterList", data], () => DeonarService.getCollectionSlaughterList(data), {
       enabled: enabled && (executeOnLoad || executeOnRadioSelect),
       ...config,
@@ -139,11 +126,7 @@ const useCollectionPoint = ({ value }) => {
   };
 
   const fetchRemovalList = (data, config = {}) => {
-    const { 
-      enabled = true,
-      executeOnLoad = false,
-      executeOnRadioSelect = false
-    } = config;
+    const { enabled = true, executeOnLoad = false, executeOnRadioSelect = false } = config;
     return useQuery(["RemovalList", data], () => DeonarService.getCollectionRemovalList(data), {
       enabled: enabled && (executeOnLoad || executeOnRadioSelect),
       ...config,
@@ -153,13 +136,8 @@ const useCollectionPoint = ({ value }) => {
     });
   };
 
-
   const fetchRemovalCollectionFee = (data, config = {}) => {
-    const { 
-      enabled = true,
-      executeOnLoad = false,
-      executeOnRadioSelect = false
-    } = config;
+    const { enabled = true, executeOnLoad = false, executeOnRadioSelect = false } = config;
     return useQuery(["removalFee", data], () => DeonarService.getCollectionRemovalFee(data), {
       enabled: enabled && (executeOnLoad || executeOnRadioSelect),
       ...config,
@@ -191,11 +169,7 @@ const useCollectionPoint = ({ value }) => {
   };
 
   const fetchweighingList = (data, config = {}) => {
-    const { 
-      enabled = true,
-      executeOnLoad = false,
-      executeOnRadioSelect = false
-    } = config;
+    const { enabled = true, executeOnLoad = false, executeOnRadioSelect = false } = config;
     return useQuery(["weighingList", data], () => DeonarService.getCollectionWeighingList(data), {
       enabled: enabled && (executeOnLoad || executeOnRadioSelect),
       ...config,
@@ -207,11 +181,7 @@ const useCollectionPoint = ({ value }) => {
   };
 
   const fetchweighingFee = (data, config = {}) => {
-    const { 
-      enabled = true,
-      executeOnLoad = false,
-      executeOnRadioSelect = false
-    } = config;
+    const { enabled = true, executeOnLoad = false, executeOnRadioSelect = false } = config;
     return useQuery(["weighingFee", data], () => DeonarService.fetchWeighingCollectionFee(data), {
       enabled: enabled && (executeOnLoad || executeOnRadioSelect),
       ...config,
@@ -245,6 +215,16 @@ const useCollectionPoint = ({ value }) => {
     });
   };
 
+  const fetchNormalSlaughterList = (data, config = {}) => {
+    const { enabled = true, executeOnLoad = false, executeOnRadioSelect = false } = config;
+    return useQuery(["NormalSlaughterList", data], () => DeonarService.getNormalSlaughterList(data), {
+      enabled: enabled && (executeOnLoad || executeOnRadioSelect),
+      ...config,
+      onSuccess: (data) => {
+        console.log(data, "NormalSlaughterList collection data");
+      },
+    });
+  };
 
   return {
     fetchEntryCollectionFee,
@@ -266,7 +246,8 @@ const useCollectionPoint = ({ value }) => {
     fetchExportSlaughterList,
     fetchRemovalReport,
     saveWashingDetails,
-    fetchWashingCollectionDetails
+    fetchWashingCollectionDetails,
+    fetchNormalSlaughterList,
   };
 };
 
