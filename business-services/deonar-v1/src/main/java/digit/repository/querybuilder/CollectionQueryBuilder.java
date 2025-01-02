@@ -32,8 +32,8 @@ public class CollectionQueryBuilder {
 
     public String getStableFee(CollectionSearchCriteria criteria, List<Object> preparedStmtList) {
         final String STABLEFEE_QUERY = """
-                SELECT arrivalid,animal,animalcount,feevalue,totalstablefee
-                FROM eg_deonar_vstablefee
+                SELECT arrivalid,animal_details,animal_type_count,total_fee_with_stakeholder
+                FROM my_test
                 """;
         StringBuilder query = new StringBuilder(STABLEFEE_QUERY);
         if (criteria.getSearch() != null) {
@@ -191,4 +191,13 @@ public class CollectionQueryBuilder {
 
     }
 
+    public String saveVehicleParkDeparture(long time, String vehiclenumber){
+        final String SET_DEPARTURE_TIME = """
+                UPDATE eg_deonar_vehicle_parking
+                """;
+        StringBuilder query = new StringBuilder(SET_DEPARTURE_TIME);
+        query.append(" SET departuretime = ").append(String.valueOf(time)).append(" ");
+        query.append(" WHERE vehiclenumber = '").append(String.valueOf(vehiclenumber)).append("' ");
+        return query.toString();
+    }
 }

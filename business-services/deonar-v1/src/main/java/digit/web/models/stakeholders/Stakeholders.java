@@ -35,7 +35,9 @@ public class Stakeholders {
     private String licenceNumber;
     private ArrayList<String> licenceNumbers;
     private String registrationNumber;
-    private long validfromdate;
-    private long validtodate;
+    private String validfromdate;
+    private String validtodate;
+    private long validTo;
+    private long validFrom;
 
 }

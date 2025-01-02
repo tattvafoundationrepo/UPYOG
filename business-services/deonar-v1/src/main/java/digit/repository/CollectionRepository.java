@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
-
 import digit.repository.querybuilder.CollectionQueryBuilder;
 import digit.repository.rowmapper.CollectionRowMapper;
 import digit.web.models.collection.EntryFee;
@@ -108,7 +107,10 @@ public class CollectionRepository {
       
     }
 
-   
+    public void saveVehicleParking(long time, String vehiclenumber){
+        String query = queryBuilder.saveVehicleParkDeparture(time, vehiclenumber);
+        jdbcTemplate.execute(query);
+    }
 
     
 }

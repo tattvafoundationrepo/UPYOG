@@ -1,6 +1,9 @@
 package digit.service;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.egov.common.contract.request.RequestInfo;
@@ -41,6 +44,9 @@ public class StakeholderService {
         stakeholderDetails.setUpdatedAt(currentTimeMillis);
         stakeholderDetails.setUpdatedBy(request.getRequestInfo().getUserInfo().getId().toString());
 
+        stakeholderDetails.setValidFrom(getMillisFromDate(request.getStakeholders().getValidfromdate()));
+        stakeholderDetails.setValidTo(getMillisFromDate(request.getStakeholders().getValidtodate()));
+        
 
         request.setStakeholders(stakeholderDetails);
 
@@ -83,5 +89,19 @@ public class StakeholderService {
         }
 
         return stakeholderDetails;
+    }
+
+    private long getMillisFromDate(String dateString) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        Date date = null;
+        try {
+            date = dateFormat.parse(dateString); // Parse the string into Date
+        } catch (ParseException ex) {
+            System.out.println("Invalid date format: " + ex.getMessage());
+            return -1; // Return -1 to indicate an error
+        }
+        long millis = date.getTime(); // Convert to milliseconds
+        System.out.println("Milliseconds: " + millis);
+        return millis; // Return the milliseconds
     }
 }

@@ -3,11 +3,15 @@ package digit.repository.rowmapper;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.springframework.jdbc.core.ResultSetExtractor;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import digit.web.models.collection.EntryFee;
 import digit.web.models.collection.ParkingFee;
 import digit.web.models.collection.SlaughterFee;
@@ -16,6 +20,7 @@ import digit.web.models.collection.WashFee;
 import digit.web.models.collection.WeighingFee;
 import digit.web.models.collection.WeighingFeeDetails;
 import lombok.extern.slf4j.Slf4j;
+import com.fasterxml.jackson.core.type.TypeReference;
 
 @Slf4j
 public class CollectionRowMapper<T> implements ResultSetExtractor<List<T>> {
@@ -26,6 +31,8 @@ public class CollectionRowMapper<T> implements ResultSetExtractor<List<T>> {
     public CollectionRowMapper(Class<T> type) {
         this.type = type;
     }
+
+    ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
     @SuppressWarnings("unchecked")
@@ -86,39 +93,81 @@ public class CollectionRowMapper<T> implements ResultSetExtractor<List<T>> {
     }
 
     private List<StableFee> extractStableFee(ResultSet rs) throws SQLException {
-        // Use a map to store EntryFee objects by arrivalid
+        Map<Long, StableFee.Details> detailsMap = new LinkedHashMap<>();
         Map<String, StableFee> stableFeeMap = new LinkedHashMap<>();
+        float total = 0;
+    
         while (rs.next()) {
             String arrivalId = rs.getString("arrivalid");
-            float total = rs.getFloat("totalstablefee");
-
-            // Check if an stableFee object already exists for this arrivalId
+            total += rs.getFloat("total_fee_with_stakeholder");
+    
             StableFee stableFee = stableFeeMap.get(arrivalId);
-
+    
             if (stableFee == null) {
-                // If not, create a new stableFee object and add it to the map
                 stableFee = StableFee.builder()
                         .arrivalid(arrivalId)
-                        .details(new ArrayList<>()) // Initialize the list of details
-                        .total(total)
+                        .details(new ArrayList<>())
                         .build();
                 stableFeeMap.put(arrivalId, stableFee);
             }
+            stableFee.setTotal(total);
+    
+            String animalDetailsJson = rs.getString("animal_details");
+            String animalTypeCountJson = rs.getString("animal_type_count");
+    
+            try {
+                List<Map<String, Object>> animalDetails = objectMapper.readValue(animalDetailsJson,
+                        new TypeReference<List<Map<String, Object>>>() {});
+                List<Map<String, Object>> animalTypeCount = objectMapper.readValue(animalTypeCountJson,
+                        new TypeReference<List<Map<String, Object>>>() {});
+    
 
-            // Create and add Details object for each row
-            StableFee.Details details = StableFee.Details.builder()
-                    .animal(rs.getString("animal"))
-                    .count(rs.getInt("animalcount"))
-                    .fee(rs.getFloat("feevalue"))
-                    .build();
-            details.setTotalFee(details.getCount() * details.getFee());
+                Map<Long, Map<String, Object>> countMap = new HashMap<>();
+                for (Map<String, Object> countEntry : animalTypeCount) {
+                    Long animaltypeid = ((Number) countEntry.get("animaltypeid")).longValue();
+                    Integer count = ((Number) countEntry.get("count")).intValue();
+                    String animalType = countEntry.get("animaltype").toString();
+    
+                    Map<String, Object> info = new HashMap<>();
+                    info.put("count", count);
+                    info.put("animalType", animalType);
+    
+                    countMap.put(animaltypeid, info);
+                }
+    
+                for (Map<String, Object> detailEntry : animalDetails) {
+                    Long animaltypeid = ((Number) detailEntry.get("animaltypeid")).longValue();
 
-            // Add the Details to the stableFee's list
-            stableFee.getDetails().add(details);
+                    Map<String, Object> info = countMap.getOrDefault(animaltypeid, Map.of("count", 0, "animalType", "Unknown"));
+    
+                    Integer count = (Integer) info.get("count");
+                    String animalType = (String) info.get("animalType");
+                    Float feeWithStakeholder = ((Number) detailEntry.get("fee_with_stakeholder")).floatValue();
+    
+                    StableFee.Details details = detailsMap.get(animaltypeid);
+                    if (details != null) {
+                       details.setFee(feeWithStakeholder);
+                    }
+                    else {
+                        details = StableFee.Details.builder()
+                                .animal(animalType)
+                                .count(count)
+                                .build();
+
+                        detailsMap.put(animaltypeid, details);
+                        details.setFee(feeWithStakeholder);
+                        stableFee.getDetails().add(details);
+                    }
+                    
+                   
+                }
+            } catch (Exception e) {
+                throw new SQLException("Error parsing JSON data", e);
+            }
         }
+    
         return new ArrayList<>(stableFeeMap.values());
     }
-
     private List<ParkingFee> extractParkingFee(ResultSet rs) throws SQLException {
         // Use a map to store ParkingFee objects by vehiclenumber
         Map<String, ParkingFee> parkingFeeMap = new LinkedHashMap<>();
