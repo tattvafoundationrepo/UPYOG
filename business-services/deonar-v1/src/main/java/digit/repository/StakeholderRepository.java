@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import digit.repository.querybuilder.SecurityCheckQueryBuilder;
 import digit.repository.querybuilder.ShopkeeperQueryBuilder;
+import digit.repository.rowmapper.CollectionStablingListRowMapper;
 import digit.repository.rowmapper.RemovalListRowmapper;
 import digit.repository.rowmapper.SecurityCheckDetailRowMapper;
 import digit.repository.rowmapper.ShopkeeperRowMapper;
@@ -16,6 +17,7 @@ import digit.repository.rowmapper.SlaughterListRowMapper;
 import digit.web.models.GetListRequest;
 import digit.web.models.RemovalList;
 import digit.web.models.SlaughterList;
+import digit.web.models.collection.CollectionStablingListDetails;
 import digit.web.models.security.SecurityCheckDetails;
 import digit.web.models.shopkeeper.ShopkeeperDetails;
 import digit.web.models.shopkeeper.ShopkeeperRequest;
@@ -47,6 +49,8 @@ public class StakeholderRepository {
 
     @Autowired
     RemovalListRowmapper removalListRowmapper;
+    @Autowired
+    CollectionStablingListRowMapper collectionStablingListRowMapper;
 
 
     public List<ShopkeeperDetails>getShopKeeperDetails(ShopkeeperRequest request){
@@ -105,6 +109,13 @@ public class StakeholderRepository {
         String query = securityCheckQueryBuilder.getWeighingListQuery(request, preparedStmtList);
         log.info("Final query: " + query);
         return jdbcTemplate.query(query, slaughterListRowMapper, preparedStmtList.toArray());
+    }
+
+    public List<CollectionStablingListDetails> getStablingListForCollection(GetListRequest request) {
+        List<Object> preparedStmtList = new ArrayList<>();
+        String query = securityCheckQueryBuilder.getStablingListQuery(request, preparedStmtList);
+        log.info("Final query: " + query);
+        return jdbcTemplate.query(query, collectionStablingListRowMapper, preparedStmtList.toArray());
     }
 
 }

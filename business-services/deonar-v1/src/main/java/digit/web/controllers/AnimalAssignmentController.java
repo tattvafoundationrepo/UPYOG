@@ -20,6 +20,7 @@ import digit.web.models.GetListRequest;
 import digit.web.models.RemovalList;
 import digit.web.models.RemovalListResponse;
 import digit.web.models.SlaughterList;
+import digit.web.models.collection.CollectionStablingListDetails;
 import digit.web.models.security.SecurityCheckDetails;
 import digit.web.models.security.SecurityCheckResponse;
 import digit.web.models.shopkeeper.ShopkeeperDetails;
@@ -119,8 +120,24 @@ public class AnimalAssignmentController {
 
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
+    @PostMapping("/get/stabling/list/_collection")
+    public ResponseEntity<SecurityCheckResponse> getStablingListsForCollection(
+            @ApiParam(value = "Lists for animal stabling", required = true)
+            @Valid @RequestBody GetListRequest request) {
+
+        List<CollectionStablingListDetails> securityDetails = service.getListForStablingForColllection(request);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(),
+        true);
+        SecurityCheckResponse response = SecurityCheckResponse.builder()
+                .stablingDetails(securityDetails)
+                .responseInfo(responseInfo)
+                .build();
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
 
     @PostMapping("/get/removal/_list")
+
     public ResponseEntity<RemovalListResponse> getRemovalLists(
             @ApiParam(value = "Lists of removed animal", required = true)
             @Valid @RequestBody GetListRequest request) {

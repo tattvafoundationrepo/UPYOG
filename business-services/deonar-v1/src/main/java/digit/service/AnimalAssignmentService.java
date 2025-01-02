@@ -18,6 +18,7 @@ import digit.web.models.Assignments;
 import digit.web.models.GetListRequest;
 import digit.web.models.RemovalList;
 import digit.web.models.SlaughterList;
+import digit.web.models.collection.CollectionStablingListDetails;
 import digit.web.models.security.SecurityCheckDetails;
 import digit.web.models.shopkeeper.ShopkeeperDetails;
 import digit.web.models.shopkeeper.ShopkeeperRequest;
@@ -85,7 +86,9 @@ public class AnimalAssignmentService {
     }
 
     public List<SecurityCheckDetails> getListForStabling(GetListRequest request) {
+
         List<SecurityCheckDetails> stablingList = stakeholderRepository.getStablingListDetails(request);
+        
         return stablingList;
     }
 
@@ -118,6 +121,12 @@ public class AnimalAssignmentService {
         List<SlaughterList> details = stakeholderRepository.getWeighingListDetails(request);
         return details;
         
+    }
+
+    public List<CollectionStablingListDetails> getListForStablingForColllection(GetListRequest request) {
+        List<CollectionStablingListDetails> stablingList = stakeholderRepository.getStablingListForCollection(request);
+        
+        return stablingList;
     }
 
    
