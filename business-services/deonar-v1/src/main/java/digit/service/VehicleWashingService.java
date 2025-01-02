@@ -33,22 +33,27 @@ public class VehicleWashingService {
         }
 
         long currentTimeMillis = System.currentTimeMillis();
-        VehicleWashingDetails vehicleWashingDetails = request.getVehicleWashingDetails();
-        if (vehicleWashingDetails.isVehicleIn()) {
-            vehicleWashingDetails.setWashingTime(currentTimeMillis);
-            request.setCreatedBy(request.getRequestInfo().getUserInfo().getId().intValue());
-            request.setCreatedAt(currentTimeMillis);
-        } else {
-            vehicleWashingDetails.setDepartureTime(currentTimeMillis);
-            vehicleWashingDetails.setWashingTime(
-                    vehicleWashingRepository.getWashedInTime(request.getVehicleWashingDetails().getVehicleType(),
-                            request.getVehicleWashingDetails().getVehicleNumber()));
-            request.setUpdatedBy(request.getRequestInfo().getUserInfo().getId().intValue());
-            request.setUpdatedAt(currentTimeMillis);
-        }
+        List<VehicleWashingDetails> vehicleWashingDetailsList = request.getVehicleWashingDetails();
+        vehicleWashingDetailsList.forEach(vehicleWashingDetails -> {
+            if (vehicleWashingDetails.isVehicleIn()) {
+                vehicleWashingDetails.setWashingTime(currentTimeMillis);
+                request.setCreatedBy(request.getRequestInfo().getUserInfo().getId().intValue());
+                request.setCreatedAt(currentTimeMillis);
+            } else {
+                vehicleWashingDetails.setDepartureTime(currentTimeMillis);
+                vehicleWashingDetails.setWashingTime(
+                        vehicleWashingRepository.getWashedInTime(
+                                vehicleWashingDetails.getVehicleType(),
+                                vehicleWashingDetails.getVehicleNumber()
+                        )
+                );
+                request.setUpdatedBy(request.getRequestInfo().getUserInfo().getId().intValue());
+                request.setUpdatedAt(currentTimeMillis);
+            }
+        });
 
         producer.push(DeonarConstant.SAVE_VEHICLE_WASHING, request);
-        request.setVehicleWashingDetails(vehicleWashingDetails);
+        request.setVehicleWashingDetails(vehicleWashingDetailsList);
         return request;
     }
 

@@ -1,5 +1,6 @@
 package digit.web.controllers;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.egov.common.contract.response.ResponseInfo;
@@ -32,25 +33,26 @@ public class VehicleWashingController {
         @Autowired
         private ResponseInfoFactory responseInfoFactory;
 
-        @CrossOrigin("*")
+     
         @PostMapping("/vehicleWashing/_save")
-        public ResponseEntity<VehicleWashingResponse> vehicleWashingDetails(
+        public ResponseEntity<List<VehicleWashingResponse>> vehicleWashingDetails(
                         @RequestBody VehicleWashingRequest vehicleWashingRequest) {
-                VehicleWashingDetails vehicleWashingDetails = null;
-                VehicleWashingResponse response = new VehicleWashingResponse();
+                List<VehicleWashingResponse> response = new ArrayList<>();
                 try {
                         VehicleWashingRequest savedRequest = vehicleWashingService
                                         .saveWashedVehicleDetails(vehicleWashingRequest);
 
-                        vehicleWashingDetails = savedRequest.getVehicleWashingDetails();
-                        long vehicleType = vehicleWashingDetails.getVehicleType();
-                        String vehicleNumber = vehicleWashingDetails.getVehicleNumber();
-                        Long washingTime = savedRequest.getVehicleWashingDetails().getWashingTime();
-                        Long departureTime = savedRequest.getVehicleWashingDetails().getDepartureTime();
+                        List<VehicleWashingDetails> vehicleWashingDetailsList = savedRequest.getVehicleWashingDetails();
 
-                        response = VehicleWashingResponse.builder().vehicleType(vehicleType)
-                                        .vehicleNumber(vehicleNumber)
-                                        .washingTime(washingTime).departureTime(departureTime).build();
+                        vehicleWashingDetailsList.forEach(vehicleWashingDetails -> {
+                                long vehicleType = vehicleWashingDetails.getVehicleType();
+                                String vehicleNumber = vehicleWashingDetails.getVehicleNumber();
+                                Long washingTime = vehicleWashingDetails.getWashingTime();
+                                Long departureTime = vehicleWashingDetails.getDepartureTime();
+                                response.add(VehicleWashingResponse.builder().vehicleType(vehicleType)
+                                                .vehicleNumber(vehicleNumber)
+                                                .washingTime(washingTime).departureTime(departureTime).build());
+                        });
 
                         return new ResponseEntity<>(response, HttpStatus.OK);
                 } catch (Exception e) {

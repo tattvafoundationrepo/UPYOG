@@ -18,6 +18,8 @@ public class StableFee {
     
     private String arrivalid;
     private List<Details> details;
+    private Long stakeholderId;
+    private String liceneceNumber;
     private Float total;
 
     // Calculate total fees based on each detail's totalFee

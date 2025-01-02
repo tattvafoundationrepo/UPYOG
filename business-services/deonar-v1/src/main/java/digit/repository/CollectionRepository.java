@@ -112,5 +112,10 @@ public class CollectionRepository {
         jdbcTemplate.execute(query);
     }
 
+    public void saveVehicleWashing(long time, String vehiclenumber){
+        String query = queryBuilder.saveVehicleWashDeparture(time, vehiclenumber);
+        jdbcTemplate.execute(query);
+    }
+
     
 }

@@ -32,8 +32,8 @@ public class CollectionQueryBuilder {
 
     public String getStableFee(CollectionSearchCriteria criteria, List<Object> preparedStmtList) {
         final String STABLEFEE_QUERY = """
-                SELECT arrivalid,animal_details,animal_type_count,total_fee_with_stakeholder
-                FROM my_test
+                SELECT arrivalid,licencenumber,stakeholderid,animal_details,animal_type_count,total_fee_with_stakeholder
+                FROM eg_deonar_collection_stabling_fee
                 """;
         StringBuilder query = new StringBuilder(STABLEFEE_QUERY);
         if (criteria.getSearch() != null) {
@@ -41,6 +41,12 @@ public class CollectionQueryBuilder {
             query.append(" arrivalid = ? ");
             preparedStmtList.add(criteria.getSearch());
         }
+        if (criteria.getLiceneceNumber() != null) {
+            addClauseIfRequired(query, preparedStmtList);
+            query.append(" licencenumber = ? ");
+            preparedStmtList.add(criteria.getLiceneceNumber());
+        }
+
         return query.toString();
     }
 
@@ -194,6 +200,16 @@ public class CollectionQueryBuilder {
     public String saveVehicleParkDeparture(long time, String vehiclenumber){
         final String SET_DEPARTURE_TIME = """
                 UPDATE eg_deonar_vehicle_parking
+                """;
+        StringBuilder query = new StringBuilder(SET_DEPARTURE_TIME);
+        query.append(" SET departuretime = ").append(String.valueOf(time)).append(" ");
+        query.append(" WHERE vehiclenumber = '").append(String.valueOf(vehiclenumber)).append("' ");
+        return query.toString();
+    }
+
+    public String saveVehicleWashDeparture(long time, String vehiclenumber){
+        final String SET_DEPARTURE_TIME = """
+                UPDATE eg_deonar_vehicle_washing
                 """;
         StringBuilder query = new StringBuilder(SET_DEPARTURE_TIME);
         query.append(" SET departuretime = ").append(String.valueOf(time)).append(" ");

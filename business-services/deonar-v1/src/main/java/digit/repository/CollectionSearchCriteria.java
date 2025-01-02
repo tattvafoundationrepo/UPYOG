@@ -13,6 +13,10 @@ public class CollectionSearchCriteria {
     @JsonProperty("Search")
     private String search;
 
+    private String liceneceNumber;
+
+    private Long stakeholderId;
+
     private String slaughterUnit;
 
     private String openTime;

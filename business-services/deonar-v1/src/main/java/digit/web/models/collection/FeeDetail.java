@@ -4,17 +4,16 @@ import org.egov.common.contract.models.AuditDetails;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import lombok.ToString;
 
-@Getter
-@Setter
+
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
 @ToString
+@Data
 public class FeeDetail {
     private String uuid;
     private String paidby;
@@ -24,4 +23,7 @@ public class FeeDetail {
     private String referenceno;
     private String recieptno;
     private AuditDetails audit;
+    private String arrivalid;
+    private Long stakeholderId;
+    private String licenceNumber;
 }

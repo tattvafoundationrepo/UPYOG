@@ -3,6 +3,9 @@ package digit.web.models.security.vehiclewashing;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;
 import lombok.*;
+
+import java.util.List;
+
 import org.egov.common.contract.request.RequestInfo;
 
 @Data
@@ -15,11 +18,10 @@ public class VehicleWashingRequest {
 
     @JsonProperty("RequestInfo")
     @Valid
-    @Builder.Default
-    private RequestInfo requestInfo = null;
+    private RequestInfo requestInfo;
 
     @JsonProperty("vehicleWashing")
-    private VehicleWashingDetails vehicleWashingDetails;
+    private List<VehicleWashingDetails> vehicleWashingDetails;
 
     private Long createdAt;
 

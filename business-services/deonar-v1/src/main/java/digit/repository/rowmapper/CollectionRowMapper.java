@@ -106,6 +106,8 @@ public class CollectionRowMapper<T> implements ResultSetExtractor<List<T>> {
             if (stableFee == null) {
                 stableFee = StableFee.builder()
                         .arrivalid(arrivalId)
+                        .stakeholderId(rs.getLong("stakeholderid"))
+                        .liceneceNumber(rs.getString("licencenumber"))
                         .details(new ArrayList<>())
                         .build();
                 stableFeeMap.put(arrivalId, stableFee);

@@ -111,8 +111,17 @@ public class CollectionService {
                 .audit(audit)
                 .build();
         producer.push("topic_deonar_savefee", common);
+        
+        if(common.getFeevalue() > 0 && common.getFeetype() == 2){
+            common.setLicenceNumber(feedetail.getLicenceNumber());
+            common.setStakeholderId(feedetail.getStakeholderId());
+            producer.push("topic_deonar_savefeedetails", common);
+        }
         if(common.getFeevalue() > 0 && common.getFeetype() == 7){
             commonRepository.saveVehicleParking(System.currentTimeMillis(), common.getPaidby());
+        }
+        if(common.getFeevalue() > 0 && common.getFeetype() == 6){
+            commonRepository.saveVehicleWashing(System.currentTimeMillis(), common.getPaidby());
         }
         return common;
     }
