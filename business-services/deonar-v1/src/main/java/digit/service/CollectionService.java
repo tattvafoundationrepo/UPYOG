@@ -32,9 +32,9 @@ public class CollectionService {
     @Autowired
     private IdgenUtil idgenUtil;
 
-    public List<EntryFee> getEntryFee(RequestInfo requestInfo, CollectionSearchCriteria criteria) {
+    public List<StableFee> getEntryFee(RequestInfo requestInfo, CollectionSearchCriteria criteria) {
         // Fetch applications from database according to the given search criteria
-        List<EntryFee> common = commonRepository.getEntryFee(criteria);
+        List<StableFee> common = commonRepository.getEntryFee(criteria);
         // If no applications are found matching the given criteria, return an empty
         // list
         if (CollectionUtils.isEmpty(common))

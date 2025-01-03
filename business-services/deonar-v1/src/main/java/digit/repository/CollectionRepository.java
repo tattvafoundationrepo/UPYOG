@@ -32,12 +32,12 @@ public class CollectionRepository {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    public List<EntryFee>getEntryFee(CollectionSearchCriteria searchCriteria){
+    public List<StableFee>getEntryFee(CollectionSearchCriteria searchCriteria){
         List<Object> preparedStmtList = new ArrayList<>();
         String query = queryBuilder.getEntryFee(searchCriteria, preparedStmtList);
         log.info("Final query: " + query);
         // Create a new instance of the row mapper with the correct type
-        CollectionRowMapper<EntryFee> entryfeerowMapper = new CollectionRowMapper<>(EntryFee.class);
+        CollectionRowMapper<StableFee> entryfeerowMapper = new CollectionRowMapper<>(StableFee.class);
         return jdbcTemplate.query(query, entryfeerowMapper, preparedStmtList.toArray());
     }
 

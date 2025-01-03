@@ -22,7 +22,6 @@ import digit.web.models.stakeholders.Stakeholders;
 @Service
 public class StakeholderService {
 
-
     @Autowired
     private Producer producer;
 
@@ -38,7 +37,6 @@ public class StakeholderService {
         long currentTimeMillis = System.currentTimeMillis();
         Stakeholders stakeholderDetails = request.getStakeholders();
 
-
         stakeholderDetails.setCreatedAt(currentTimeMillis);
         stakeholderDetails.setCreatedBy(request.getRequestInfo().getUserInfo().getId().toString());
         stakeholderDetails.setUpdatedAt(currentTimeMillis);
@@ -46,43 +44,40 @@ public class StakeholderService {
 
         stakeholderDetails.setValidFrom(getMillisFromDate(request.getStakeholders().getValidfromdate()));
         stakeholderDetails.setValidTo(getMillisFromDate(request.getStakeholders().getValidtodate()));
-        
 
         request.setStakeholders(stakeholderDetails);
 
-
-
-
         producer.push("save-stakeholder-data", request);
 
+        if (stakeholderDetails.getStakeholderTypeId() != 7) {
+            ArrayList<Long> animalTypeIds = stakeholderDetails.getAnimalTypeIds();
 
-        ArrayList<Long> animalTypeIds = stakeholderDetails.getAnimalTypeIds();
-
-        animalTypeIds.forEach(animalTypeId -> {
+            animalTypeIds.forEach(animalTypeId -> {
                 request.getStakeholders().setAnimalTypeId(animalTypeId);
                 producer.push("save-animaltype-data", request);
-            }
-        );
-        
-        ArrayList<String> licenceNameList = stakeholderDetails.getLicenceNumbers();
+            });
 
-        licenceNameList.forEach(licenceName -> {
+            ArrayList<String> licenceNameList = stakeholderDetails.getLicenceNumbers();
+
+            licenceNameList.forEach(licenceName -> {
                 request.getStakeholders().setLicenceNumber(licenceName);
                 producer.push("save-licencenumber-data", request);
-            }
-        );
+            });
+        }
         return request;
     }
 
-    public List<StakeholderCheckDetails> getStakeholderDetails(RequestInfo requestInfo,StakeholderCheckCriteria criteria){
-        if(criteria == null){
+    public List<StakeholderCheckDetails> getStakeholderDetails(RequestInfo requestInfo,
+            StakeholderCheckCriteria criteria) {
+        if (criteria == null) {
             criteria = new StakeholderCheckCriteria();
         }
-        if(requestInfo == null){
+        if (requestInfo == null) {
             requestInfo = new RequestInfo();
         }
 
-        List<StakeholderCheckDetails> stakeholderDetails = saveStakeholderRepository.getStakeholderDetails(requestInfo, criteria);
+        List<StakeholderCheckDetails> stakeholderDetails = saveStakeholderRepository.getStakeholderDetails(requestInfo,
+                criteria);
 
         if (CollectionUtils.isEmpty(stakeholderDetails)) {
             return new ArrayList<>();

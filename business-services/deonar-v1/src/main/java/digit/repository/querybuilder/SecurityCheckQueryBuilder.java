@@ -169,8 +169,12 @@ public class SecurityCheckQueryBuilder {
 
     public String getStablingListQuery(GetListRequest request, List<Object> preparedStmtList) {
         if (!ObjectUtils.isEmpty(request.getForCollection())) {
-            if (request.getForCollection() == true) {
-                return " select * from eg_deonar_collection_stabling_fee ";
+            if (request.getForCollection() == true  ) {
+                if(request.getForStablingCollection() != null)
+                   return " select * from eg_deonar_collection_stabling_fee ";
+    
+                if(request.getForEntryCollection() != null )
+                 return " select * from eg_deonar_collection_entry_fee ";
             }
         }
         return BASE_QUERY_STABLING_LIST;

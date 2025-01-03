@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -45,10 +46,10 @@ public class CollectionController {
     public ResponseEntity<Object> getEntryFee(
             @ApiParam(value = "Get Entry Fee Details", required = true) @Valid @RequestBody CollectionRequest request) {
         try {
-            List<EntryFee> common = service.getEntryFee(request.getRequestInfo(), request.getCriteria());
+            List<StableFee> common = service.getEntryFee(request.getRequestInfo(), request.getCriteria());
             ResponseInfo responseInfo = responseInfoFactory
                     .createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
-            EntryFeeResponse res = EntryFeeResponse.builder()
+            StableFeeResponse res = StableFeeResponse.builder()
                     .details(common)
                     .responseInfo(responseInfo)
                     .build();
@@ -60,6 +61,7 @@ public class CollectionController {
     }
 
     @PostMapping("/stable/_get")
+
     public ResponseEntity<Object> getStableFee(
             @ApiParam(value = "Get Stable Fee Details", required = true) @Valid @RequestBody CollectionRequest request) {
         try {
@@ -189,7 +191,7 @@ public class CollectionController {
 
 
 
-
+  
     @PostMapping("/_save")
     public ResponseEntity<Object> saveFee(@RequestBody CollectFeeRequest request) {
         try {

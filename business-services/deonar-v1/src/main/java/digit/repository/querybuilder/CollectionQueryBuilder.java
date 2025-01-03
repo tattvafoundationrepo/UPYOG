@@ -10,15 +10,22 @@ import digit.repository.CollectionSearchCriteria;
 public class CollectionQueryBuilder {
     public String getEntryFee(CollectionSearchCriteria criteria, List<Object> preparedStmtList) {
         final String ENTRYFEE_QUERY = """
-                SELECT arrivalid,animal,animalcount,feevalue,totalentryfee
-                FROM eg_deonar_ventryfee
+                SELECT arrivalid,licencenumber,stakeholderid,animal_details,animal_type_count,total_fee_with_stakeholder
+                FROM eg_deonar_collection_entry_fee
                 """;
         StringBuilder query = new StringBuilder(ENTRYFEE_QUERY);
+   
         if (criteria.getSearch() != null) {
             addClauseIfRequired(query, preparedStmtList);
             query.append(" arrivalid = ? ");
             preparedStmtList.add(criteria.getSearch());
         }
+        if (criteria.getLiceneceNumber() != null) {
+            addClauseIfRequired(query, preparedStmtList);
+            query.append(" licencenumber = ? ");
+            preparedStmtList.add(criteria.getLiceneceNumber());
+        }
+
         return query.toString();
     }
 

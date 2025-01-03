@@ -93,83 +93,75 @@ public class CollectionRowMapper<T> implements ResultSetExtractor<List<T>> {
     }
 
     private List<StableFee> extractStableFee(ResultSet rs) throws SQLException {
-        Map<Long, StableFee.Details> detailsMap = new LinkedHashMap<>();
         Map<String, StableFee> stableFeeMap = new LinkedHashMap<>();
-        float total = 0;
+        ObjectMapper objectMapper = new ObjectMapper();
     
         while (rs.next()) {
             String arrivalId = rs.getString("arrivalid");
-            total += rs.getFloat("total_fee_with_stakeholder");
-    
+        
             StableFee stableFee = stableFeeMap.get(arrivalId);
-    
             if (stableFee == null) {
                 stableFee = StableFee.builder()
                         .arrivalid(arrivalId)
                         .stakeholderId(rs.getLong("stakeholderid"))
                         .liceneceNumber(rs.getString("licencenumber"))
+                        .total(rs.getFloat("total_fee_with_stakeholder"))
                         .details(new ArrayList<>())
                         .build();
                 stableFeeMap.put(arrivalId, stableFee);
             }
-            stableFee.setTotal(total);
-    
+        
             String animalDetailsJson = rs.getString("animal_details");
             String animalTypeCountJson = rs.getString("animal_type_count");
-    
+        
             try {
-                List<Map<String, Object>> animalDetails = objectMapper.readValue(animalDetailsJson,
-                        new TypeReference<List<Map<String, Object>>>() {});
-                List<Map<String, Object>> animalTypeCount = objectMapper.readValue(animalTypeCountJson,
-                        new TypeReference<List<Map<String, Object>>>() {});
-    
-
-                Map<Long, Map<String, Object>> countMap = new HashMap<>();
-                for (Map<String, Object> countEntry : animalTypeCount) {
-                    Long animaltypeid = ((Number) countEntry.get("animaltypeid")).longValue();
-                    Integer count = ((Number) countEntry.get("count")).intValue();
+                Map<Long, StableFee.Details> detailsMap = new HashMap<>();
+                List<Map<String, Object>> animalTypeCountList = objectMapper.readValue(
+                        animalTypeCountJson, new TypeReference<List<Map<String, Object>>>() {});
+        
+                for (Map<String, Object> countEntry : animalTypeCountList) {
+                    Long animalTypeId = ((Number) countEntry.get("animaltypeid")).longValue();
                     String animalType = countEntry.get("animaltype").toString();
-    
-                    Map<String, Object> info = new HashMap<>();
-                    info.put("count", count);
-                    info.put("animalType", animalType);
-    
-                    countMap.put(animaltypeid, info);
+                    Integer count = ((Number) countEntry.get("count")).intValue();
+        
+                    StableFee.Details detail = StableFee.Details.builder()
+                            .animal(animalType)
+                            .count(count)
+                            .animalTypeId(animalTypeId)
+                            .stableFeeDetails(new ArrayList<>())
+                            .build();
+        
+                    detailsMap.put(animalTypeId, detail);
+                    stableFee.getDetails().add(detail);
                 }
-    
-                for (Map<String, Object> detailEntry : animalDetails) {
-                    Long animaltypeid = ((Number) detailEntry.get("animaltypeid")).longValue();
-
-                    Map<String, Object> info = countMap.getOrDefault(animaltypeid, Map.of("count", 0, "animalType", "Unknown"));
-    
-                    Integer count = (Integer) info.get("count");
-                    String animalType = (String) info.get("animalType");
-                    Float feeWithStakeholder = ((Number) detailEntry.get("fee_with_stakeholder")).floatValue();
-    
-                    StableFee.Details details = detailsMap.get(animaltypeid);
-                    if (details != null) {
-                       details.setFee(feeWithStakeholder);
+        
+                List<StableFee.StableFeeDetails> stableFeeDetailsList = objectMapper.readValue(
+                        animalDetailsJson, new TypeReference<List<StableFee.StableFeeDetails>>() {});
+        
+                for (StableFee.StableFeeDetails stableFeeDetail : stableFeeDetailsList) {
+                    Long animalTypeId = (long) stableFeeDetail.getAnimalTypeId();
+                    StableFee.Details detail = detailsMap.get(animalTypeId);
+        
+                    if (detail != null && detail.getAnimalTypeId() == stableFeeDetail.getAnimalTypeId().longValue()) {
+                        detail.getStableFeeDetails().add(stableFeeDetail);
                     }
-                    else {
-                        details = StableFee.Details.builder()
-                                .animal(animalType)
-                                .count(count)
-                                .build();
-
-                        detailsMap.put(animaltypeid, details);
-                        details.setFee(feeWithStakeholder);
-                        stableFee.getDetails().add(details);
-                    }
-                    
-                   
+                }
+ 
+                for (StableFee.Details detail : detailsMap.values()) {
+                    double totalFee = detail.getStableFeeDetails().stream()
+                            .mapToDouble(sfd -> sfd.getFeeWithStakeholder() != null ? sfd.getFeeWithStakeholder() : 0.0)
+                            .sum();
+                    detail.setTotalFee(totalFee);
                 }
             } catch (Exception e) {
                 throw new SQLException("Error parsing JSON data", e);
             }
         }
-    
+        
         return new ArrayList<>(stableFeeMap.values());
+        
     }
+    
     private List<ParkingFee> extractParkingFee(ResultSet rs) throws SQLException {
         // Use a map to store ParkingFee objects by vehiclenumber
         Map<String, ParkingFee> parkingFeeMap = new LinkedHashMap<>();

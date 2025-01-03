@@ -124,7 +124,23 @@ public class AnimalAssignmentController {
     public ResponseEntity<SecurityCheckResponse> getStablingListsForCollection(
             @ApiParam(value = "Lists for animal stabling", required = true)
             @Valid @RequestBody GetListRequest request) {
+        request.setForEntryCollection(true);
+        List<CollectionStablingListDetails> securityDetails = service.getListForStablingForColllection(request);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(),
+        true);
+        SecurityCheckResponse response = SecurityCheckResponse.builder()
+                .stablingDetails(securityDetails)
+                .responseInfo(responseInfo)
+                .build();
 
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @PostMapping("/get/entry/list/_collection")
+    public ResponseEntity<SecurityCheckResponse> getEntryListsForCollection(
+            @ApiParam(value = "Lists for animal stabling", required = true)
+            @Valid @RequestBody GetListRequest request) {
+        request.setForEntryCollection(true);
         List<CollectionStablingListDetails> securityDetails = service.getListForStablingForColllection(request);
         ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(),
         true);

@@ -20,5 +20,9 @@ public class GetListRequest {
 
     private Boolean forCollection;
 
+    private Boolean forEntryCollection;
+
+    private Boolean forStablingCollection;
+
 
 }

@@ -33,7 +33,7 @@ public class VehicleWashingController {
         @Autowired
         private ResponseInfoFactory responseInfoFactory;
 
-     
+  
         @PostMapping("/vehicleWashing/_save")
         public ResponseEntity<List<VehicleWashingResponse>> vehicleWashingDetails(
                         @RequestBody VehicleWashingRequest vehicleWashingRequest) {
@@ -60,7 +60,7 @@ public class VehicleWashingController {
                 }
         }
 
-        @CrossOrigin("*")
+
         @PostMapping("/vehicleWashing/_search")
         public ResponseEntity<VehicleWashedCheckResponse> getVehicleWashingDetails(
                         @RequestBody VehicleWashedCheckRequest vehicleWashedCheckRequest) {
@@ -81,7 +81,6 @@ public class VehicleWashingController {
                 }
         }
 
-        @CrossOrigin("*")
         @PostMapping("/vehicleWashing/_washInVehicle")
         public ResponseEntity<VehicleWashedCheckResponse> getWashedInVehicle(
                         @RequestBody VehicleWashedCheckRequest vehicleWashedCheckRequest) {
@@ -177,7 +176,6 @@ public class VehicleWashingController {
         // }
         // }
 
-        @CrossOrigin("*")
         @PostMapping("/vehicleWashing/_VehicleWashingFee")
         public ResponseEntity<VehicleWashingFeesResponseWraper> getVehicleWashingFee(
                         @RequestBody VehicleWashedCheckRequest vehicleWashedCheckRequest) {
