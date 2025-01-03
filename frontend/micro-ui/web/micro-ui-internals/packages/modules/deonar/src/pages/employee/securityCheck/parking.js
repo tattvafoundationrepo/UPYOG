@@ -180,15 +180,15 @@ const ParkingFeePage = () => {
         <form onSubmit={handleSubmit(onSubmit)}>
           <MainFormHeader title={"DEONAR_PARKING"} />
           <div className="bmc-row-card-header">
-            <div className="bmc-card-row">
-              {isLoading ? (
+          <div className="bmc-card-row" style={{ overflowY: "auto", maxHeight: "511px" }}>
+          {isLoading ? (
                 <Loader />
               ) : (
                 <CustomTable
                   t={t}
                   columns={Tablecolumns}
                   data={tableData}
-                  tableClassName={"deonar-scrollable-table"}
+                  // tableClassName={"deonar-scrollable-table"}
                   disableSort={false}
                   autoSort={false}
                   manualPagination={false}

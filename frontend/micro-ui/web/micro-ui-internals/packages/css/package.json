@@ -1,6 +1,6 @@
 {
   "name": "@tattvafoundation/upyog-css",
-  "version": "1.0.14",
+  "version": "1.0.15",
   "license": "MIT",
   "main": "dist/index.css",
   "engines": {
@@ -53,6 +53,7 @@
     "img/**/*.png",
     "src/**/*.scss",
     "src/**/*.css",
-    "img/**/*.jpg"
+    "img/**/*.jpg",
+    "img/**/*.jpeg"
   ]
 }

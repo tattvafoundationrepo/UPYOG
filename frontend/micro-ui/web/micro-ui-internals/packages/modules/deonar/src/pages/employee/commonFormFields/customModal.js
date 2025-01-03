@@ -2,7 +2,7 @@ import React from "react";
 import { CloseSvg } from "@upyog/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
 
-const CustomModal = ({ isOpen, onClose, title, selectedUUID, children, style }) => {
+const CustomModal = ({ isOpen, onClose, title, selectedUUID, children, style, width = "auto" }) => {
   const { t } = useTranslation();
   if (!isOpen) return null;
 
@@ -31,10 +31,10 @@ const CustomModal = ({ isOpen, onClose, title, selectedUUID, children, style }) 
           backgroundColor: "#fff",
           borderRadius: "8px",
           padding: "20px",
-          maxWidth: "90%", // Ensures the modal is responsive horizontally
+          maxWidth: "90%", // Ensures responsiveness
           maxHeight: "90vh", // Ensures the modal doesn't overflow vertically
           overflowY: "auto", // Adds scrolling if content overflows vertically
-          // width: "500px", // Default width
+          width, // Dynamic width passed as a prop
           ...style, // Allows custom styling if passed
         }}
       >
@@ -45,6 +45,11 @@ const CustomModal = ({ isOpen, onClose, title, selectedUUID, children, style }) 
             justifyContent: "space-between",
             alignItems: "center",
             marginBottom: "20px",
+            position: "sticky", // Sticky header
+            top: 0,
+            backgroundColor: "#fff",
+            zIndex: 10,
+            padding: "10px 0",
           }}
         >
           {selectedUUID ? (

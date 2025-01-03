@@ -20,7 +20,7 @@ const PinCodeField = ({ name, label, control, data, setData }) => {
       return false;
     }
     if (value?.length !== 6) {
-      setError(t("CORE_INVALID_PIN_CODE_ERRMSG"));
+      setError(t("CORE_COMMON_REQUIRED_ERRMSG"));
       return false;
     }
     return true;

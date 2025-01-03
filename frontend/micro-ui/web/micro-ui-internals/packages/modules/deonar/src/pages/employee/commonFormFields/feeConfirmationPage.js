@@ -47,7 +47,6 @@ const FeeConfirmationPage = ({
         backgroundColor: "#fff",
         fontFamily: "Arial, sans-serif",
         boxShadow: "0px 0px 10px rgba(0, 0, 0, 0.1)",
-        maxHeight:'517px'
       }}
     >
       {/* Bill Header */}
@@ -62,7 +61,7 @@ const FeeConfirmationPage = ({
           <CustomTable
             t={t}
             columns={Tablecolumns}
-            tableClassName=" deonar-custom-scroll"
+            // tableClassName=" deonar-custom-scroll"
             data={tableData}
             disableSort={false}
             autoSort={false}

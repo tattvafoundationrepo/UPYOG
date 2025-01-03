@@ -18,7 +18,7 @@
     "node": ">=14"
   },
   "dependencies": {
-    "@tattvafoundation/upyog-css":"1.0.14",
+    "@tattvafoundation/upyog-css":"1.0.15",
     "@upyog-niua/upyog-css": "1.0.10",
     "@upyog/digit-ui-libraries": "1.7.0-beta.5",
     "@upyog/digit-ui-module-common": "1.7.0-beta.5",

@@ -19,8 +19,8 @@ import SearchButtonField from "../commonFormFields/searchBtn";
 
 const radioOptions = [
   { label: "Entry Collection Fee", value: "arrival", feeType: 1 },
-  { label: "Stabling Fee (Gawal)", value: "stabling", feeType: 2 },
-  { label: "Stabling Fee (DawanWala)", value: "trading", feeType: 9 },
+  { label: "Stabling Fee", value: "stabling", feeType: 2 },
+  // { label: "Trading Fee", value: "trading", feeType: 9 },
   { label: "Removal Collection Fee", value: "removal", feeType: 3 },
   { label: "Slaughter Recovery Fee", value: "slaughter", feeType: 4 },
   { label: "Vehicle Washing Fee", value: "washing", feeType: 6 },
@@ -47,6 +47,7 @@ const FeeCollection = () => {
   const [submittedData, setSubmittedData] = useState({});
   const [tableData, setTableData] = useState([]);
   const [parkingDetails, setParkingDetails] = useState([]);
+  const [washingDetails, setWashingDetails] = useState([]);
   const [slaughterList, setSlaughterList] = useState([]);
   const [tableColumns, setTableColumns] = useState(collectionDynamicColumns[selectedRadioValue]);
   const [customTableColumns, setCustomTableColumns] = useState(createDynamicColumns(() => {}, selectedRadioValue));
@@ -64,9 +65,9 @@ const FeeCollection = () => {
   const [isWeighingSelected, setIsWeighingSelected] = useState(false);
   const [isSlaughterSelected, setIsSlaughterSelected] = useState(false);
   const [isParkingSelected, setIsParkingSelected] = useState(false);
+  const [isWashingSelected, setIsWashingSelected] = useState(false);
   const [isRemovalFeeSelected, SetIsRemovalFeeSelected] = useState(false);
   const [isShiftSelected, SetIsShiftSelected] = useState(false);
-
 
   // const [refreshCollectionFeeCard, setRefreshCollectionFeeCard] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
@@ -146,6 +147,7 @@ const FeeCollection = () => {
     fetchParkingCollectionFee,
     fetchSlaughterCollectionFee,
     fetchParkingCollectionDetails,
+    fetchWashingCollectionDetails,
     saveCollectionEntryFee,
     fetchSlaughterCollectionList,
     fetchRemovalCollectionFee,
@@ -154,19 +156,31 @@ const FeeCollection = () => {
     fetchPenaltiesList,
     fetchweighingList,
     fetchweighingFee,
+    fectchCollectionStablingList,
   } = useCollectionPoint({ value: selectedRadioValue });
   // const { fetchEntryCollectionFee, fetchStablingCollectionFee } = useCollectionPoint({});
   const { data: entryData } = fetchEntryCollectionFee({ Search: { Search: selectedUUID } });
   const { data: fetchedData, isLoading } = fetchEntryFeeDetailsbyUUID({ forCollection: true });
-  const { data: fetchedStablingData } = fetchStablingList(
+  const { data: fetchedStablingData } = fectchCollectionStablingList(
     { forCollection: true },
     { executeOnRadioSelect: isStablingSelected, executeOnLoad: false, enabled: isStablingSelected }
   );
-  const { data: stablingData } = fetchStablingCollectionFee({ Search: { Search: selectedUUID } });
+
+  const selectedItem = stablingListData.find((item) => item.entryUnitId === selectedUUID)?.licenceNumber;
+
+  const { data: stablingData } = fetchStablingCollectionFee(
+    { Search: { Search: selectedUUID, liceneceNumber: selectedItem } },
+    { executeOnRadioSelect: isStablingSelected, executeOnLoad: false, enabled: isStablingSelected }
+  );
   const { data: parkingDetailsData } = fetchParkingCollectionDetails(
     {},
     {}, // Additional config if needed
     selectedRadioValue === "parking" // Pass the enabled condition here
+  );
+  const { data: washingDetailsData } = fetchWashingCollectionDetails(
+    {},
+    {}, // Additional config if needed
+    selectedRadioValue === "washing" // Pass the enabled condition here
   );
   const { data: SlaughterListData } = fetchSlaughterCollectionList(
     { forCollection: true },
@@ -186,11 +200,13 @@ const FeeCollection = () => {
     }
   );
   const { data: vehicleData } = fetchWashingCollectionFee({
-    vehicleParking: {
+    vehicleWashing: {
       vehicleType: selectedVehicleId,
       vehicleNumber: selectedUUID,
     },
-    selectedRadioValue,
+    executeOnLoad: false,
+    executeOnRadioSelect: isWashingSelected,
+    enabled: isWashingSelected,
   });
   const { data: removalFeeData } = fetchRemovalCollectionFee(
     { Search: { Search: selectedUUID } },
@@ -231,7 +247,10 @@ const FeeCollection = () => {
 
   const useFetchShiftOptions = () => {
     const slaughterUnitId = slaughterUnitData[0]?.id;
-    const { data } = fetchSlaughterUnit({ slaughterUnitId }, {executeOnLoad: false, executeOnRadioSelect: isShiftSelected, enabled: isShiftSelected });
+    const { data } = fetchSlaughterUnit(
+      { slaughterUnitId },
+      { executeOnLoad: false, executeOnRadioSelect: isShiftSelected, enabled: isShiftSelected }
+    );
 
     return (
       data?.unit?.map((shift) => ({
@@ -320,7 +339,7 @@ const FeeCollection = () => {
 
   useEffect(() => {
     if (fetchedStablingData) {
-      setStablingListData(fetchedStablingData.SecurityCheckDetails || []);
+      setStablingListData(fetchedStablingData.CollectionStablingList || []);
       setTotalRecords();
     }
   }, [fetchedStablingData]);
@@ -340,6 +359,13 @@ const FeeCollection = () => {
   }, [parkingDetailsData]);
 
   useEffect(() => {
+    if (washingDetailsData) {
+      setWashingDetails(washingDetailsData.VehicleWashedCheckDetails || []);
+      setTotalRecords();
+    }
+  }, [washingDetailsData]);
+
+  useEffect(() => {
     if (SlaughterListData) {
       setSlaughterList(SlaughterListData?.slaughterLists || []);
       setTotalRecords();
@@ -351,11 +377,11 @@ const FeeCollection = () => {
       const details = slaughterData?.Details || [];
       const mappedDetails = details.flatMap((detailItem) =>
         detailItem.details.map((item) => ({
-          animalType: item?.animal,
-          animalCount: item?.count,
-          animalFee: item?.fee,
-          totalFee: item?.totalFee,
-          total: detailItem?.total,
+          animalType: item?.animal || "-",
+          animalCount: item?.count || "-",
+          animalFee: item?.fee || "-",
+          totalFee: item?.totalFee  || "-",
+          total: detailItem?.total || "-",
         }))
       );
       setSlaughterList(mappedDetails);
@@ -468,16 +494,16 @@ const FeeCollection = () => {
             </div>
             <div class="receipt-details">
               ${Object.entries(receiptData)
-        .filter(([key]) => !["audit"].includes(key.toLowerCase()))
-        .map(
-          ([key, value]) => `
+                .filter(([key]) => !["audit"].includes(key.toLowerCase()))
+                .map(
+                  ([key, value]) => `
                   <div>
                     <span class="label">${key.charAt(0).toUpperCase() + key.slice(1)}</span>
                     <span class="value">${formatReceiptValue(value)}</span>
                   </div>
                 `
-        )
-        .join("")}
+                )
+                .join("")}
             </div>
             <div class="receipt-footer">
               Generated on ${new Date().toLocaleString()}
@@ -544,7 +570,7 @@ const FeeCollection = () => {
       case "parking":
         return parkingDetails;
       case "washing":
-        return parkingDetails;
+        return washingDetails;
       case "slaughter":
         return slaughterList;
       case "removal":
@@ -625,6 +651,7 @@ const FeeCollection = () => {
     setIsWeighingSelected(value === "weighing");
     setIsSlaughterSelected(value === "slaughter");
     setIsParkingSelected(value === "parking");
+    setIsWashingSelected(value === "washing");
     SetIsRemovalFeeSelected(value === "removal");
     SetIsShiftSelected(value === "slaughter");
   };
@@ -647,7 +674,6 @@ const FeeCollection = () => {
     // Add type-specific fields based on the selected radio value
     switch (selectedRadioValue) {
       case "arrival":
-      case "stabling":
       case "trading":
       case "removal":
       case "slaughter":
@@ -666,8 +692,22 @@ const FeeCollection = () => {
           },
         };
 
+      case "stabling":
+        return {
+          ...basePayload,
+          FeeDetail: {
+            uuid: selectedUUID,
+            feetype: feeType,
+            paidby: selectedUUID,
+            method: formData.paymentMethod?.value || "Card",
+            referenceno: formData.transactionId || selectedUUID,
+            feevalue: tableData.length > 0 ? tableData[0].total : 0,
+            stakeholderId: tableData[0].stakeholderId,
+            licenceNumber: tableData[0].liceneceNumber,
+          },
+        };
+
       case "parking":
-      case "washing":
         return {
           ...basePayload,
           FeeDetail: {
@@ -680,6 +720,22 @@ const FeeCollection = () => {
               departureDate: tableData[0]?.departuredate,
               departureTime: tableData[0]?.departuretime,
               totalHours: tableData[0]?.totalhours,
+            },
+          },
+        };
+
+      case "washing":
+        return {
+          ...basePayload,
+          FeeDetail: {
+            ...basePayload.FeeDetail,
+            vehicleWashing: {
+              vehicleType: selectedVehicleId,
+              vehicleNumber: selectedUUID,
+              washingDate: tableData[0]?.washingDate,
+              washingTime: tableData[0]?.washingTime,
+              departureDate: tableData[0]?.departuredate,
+              departureTime: tableData[0]?.departuretime,
             },
           },
         };
@@ -757,8 +813,8 @@ const FeeCollection = () => {
         setParkingDetails(updatedTableData);
         break;
       case "washing":
-        updatedTableData = parkingDetails.filter((item) => item.vehicleNumber !== paidUUID);
-        setParkingDetails(updatedTableData);
+        updatedTableData = washingDetails.filter((item) => item.vehicleNumber !== paidUUID);
+        setWashingDetails(updatedTableData);
         break;
       case "slaughter":
         updatedTableData = slaughterList.filter((item) => item.entryUnitId !== paidUUID);
@@ -789,6 +845,7 @@ const FeeCollection = () => {
     stablingListData,
     tradingListData,
     parkingDetails,
+    washingDetails,
     slaughterList,
     removalListData,
     penaltyListData,
@@ -848,6 +905,8 @@ const FeeCollection = () => {
                 {
                   vehiclenumber: washingData.vehicleNumber,
                   vehicletype: washingData.vehicleType,
+                  washingTime: washingData.washingTime || "N/A",
+                  washingDate: washingData.washingDate,
                   total: washingData.washingFee,
                 },
               ];
@@ -1034,7 +1093,7 @@ const FeeCollection = () => {
                   t={t}
                   columns={customTableColumns}
                   data={getTableData()}
-                  tableClassName={"deonar-custom-scroll"}
+                  // tableClassName={"deonar-custom-scroll"}
                   manualPagination={false}
                   totalRecords={totalRecords}
                   sortBy={["entryUnitId:asc"]}
@@ -1046,7 +1105,7 @@ const FeeCollection = () => {
           </div>
 
           <div style={{ display: "flex", gap: "10px", float: "inline-end", width: "100%" }}>
-            <div className="bmc-col-large-header" style={{ width: "100%" }}>
+            <div className="bmc-col-large-header" style={{ width: "50%" }}>
               <div className="bmc-row-card-header" style={{ display: "flex", flexDirection: "column", gap: "45px" }}>
                 {selectedUUID ? (
                   <>
@@ -1123,7 +1182,7 @@ const FeeCollection = () => {
                 )}
               </div>
             </div>
-            <div className="bmc-col-large-header" style={{ width: "100%" }}>
+            <div className="bmc-col-large-header" style={{ width: "50%" }}>
               <div className="bmc-row-card-header">
                 {selectedUUID ? (
                   !isConfirmationPage && (

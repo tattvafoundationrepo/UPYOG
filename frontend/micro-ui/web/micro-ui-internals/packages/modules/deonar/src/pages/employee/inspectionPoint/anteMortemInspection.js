@@ -59,7 +59,6 @@ const AnteMortemInspectionPage = () => {
   const [isLoader, setIsLoader] = useState(false);
   const [inspectionId, setInspectionId] = useState(1);
   const [animalQuarters, setAnimalQuarters] = useState([{ name: "1" }, { name: "2" }, { name: "3" }, { name: "4" }]);
-  const [opinionOptionId, setOpinionOptionId] = useState(inspectionTypes[0].value);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
   const {
@@ -105,31 +104,31 @@ const AnteMortemInspectionPage = () => {
   useEffect(() => {
     if (inspectionTableData && inspectionTableData.length > 0) {
       setValue("animalTokenNumber", inspectionTableData[0]?.animalTokenNumber || "");
-      setValue("species", inspectionTableData[0]?.species || "Caprine/Ovine");
-      setValue("breed", inspectionTableData[0]?.breed || "Non descripteur (ND)");
-      setValue("sex", inspectionTableData[0]?.sex || "Male/Female (mIf)");
-      setValue("bodyColor", inspectionTableData[0]?.["bodyColor"] || "Mixed");
-      setValue("pregnancy", inspectionTableData[0]?.pregnancy || "Yes");
-      setValue("gait", inspectionTableData[0]?.gait || "Staggering gait");
-      setValue("posture", inspectionTableData[0]?.posture || "Downer");
-      setValue("pulseRate", inspectionTableData[0]?.["pulseRate"] || "Other");
-      setValue("bodyTemp", inspectionTableData[0]?.["bodyTemp"] || "No Abnormality Detected (NAD)");
-      setValue("appetite", inspectionTableData[0]?.appetite || "Reduced appetite");
-      setValue("eyes", inspectionTableData[0]?.eyes || "Swollen");
-      setValue("nostrils", inspectionTableData[0]?.nostrils || "Other");
-      setValue("muzzle", inspectionTableData[0]?.muzzle || "Scabs");
+      setValue("species", inspectionTableData[0]?.species || "");
+      setValue("breed", inspectionTableData[0]?.breed || "");
+      setValue("sex", inspectionTableData[0]?.sex || "");
+      setValue("bodyColor", inspectionTableData[0]?.["bodyColor"] || "");
+      setValue("pregnancy", inspectionTableData[0]?.pregnancy || "");
+      setValue("gait", inspectionTableData[0]?.gait || "");
+      setValue("posture", inspectionTableData[0]?.posture || "");
+      setValue("pulseRate", inspectionTableData[0]?.["pulseRate"] || "");
+      setValue("bodyTemp", inspectionTableData[0]?.["bodyTemp"] || "");
+      setValue("appetite", inspectionTableData[0]?.appetite || "");
+      setValue("eyes", inspectionTableData[0]?.eyes || "");
+      setValue("nostrils", inspectionTableData[0]?.nostrils || "");
+      setValue("muzzle", inspectionTableData[0]?.muzzle || "");
       setValue("opinion", inspectionTableData[0]?.opinion || "");
       setValue("opinionId", inspectionTableData[0]?.opinionId || "");
-      setValue("approxAge", inspectionTableData[0]?.["approxAge"] || ">3m");
-      setValue("visibleMucusMembrane", inspectionTableData[0]?.["visibleMucusMembrane"] || "Yes");
-      setValue("thoracicCavity", inspectionTableData[0]?.["thoracicCavity"] || "Yes");
-      setValue("abdominalCavity", inspectionTableData[0]?.["abdominalCavity"] || "Yes");
-      setValue("pelvicCavity", inspectionTableData[0]?.["pelvicCavity"] || "Yes");
-      setValue("specimenCollection", inspectionTableData[0]?.["specimenCollection"] || "Yes");
-      setValue("specialObservation", inspectionTableData[0]?.["specialObservation"] || "No");
-      setValue("other", inspectionTableData[0]?.other || "ok");
-      setValue("resultremark", inspectionTableData[0]?.resultremark || "ok");
-      setValue("slaughterReceiptNumber", inspectionTableData[0]?.slaughterReceiptNumber || "ok");
+      setValue("approxAge", inspectionTableData[0]?.["approxAge"] || "");
+      setValue("visibleMucusMembrane", inspectionTableData[0]?.["visibleMucusMembrane"] || "");
+      setValue("thoracicCavity", inspectionTableData[0]?.["thoracicCavity"] || "");
+      setValue("abdominalCavity", inspectionTableData[0]?.["abdominalCavity"] || "");
+      setValue("pelvicCavity", inspectionTableData[0]?.["pelvicCavity"] || "");
+      setValue("specimenCollection", inspectionTableData[0]?.["specimenCollection"] || "");
+      setValue("specialObservation", inspectionTableData[0]?.["specialObservation"] || "");
+      setValue("other", inspectionTableData[0]?.other || "");
+      setValue("resultremark", inspectionTableData[0]?.resultremark || "");
+      setValue("slaughterReceiptNumber", inspectionTableData[0]?.slaughterReceiptNumber || "");
       setValue("animalQuarters", inspectionTableData[0]?.animalQuarters);
     }
   }, [inspectionTableData, setValue]);
@@ -187,9 +186,10 @@ const AnteMortemInspectionPage = () => {
   const InspectionDetailsData = saveInspectionDetailsData();
 
   const useFetchOptions = () => {
+    const opinionOptionID = inspectionTypes.find((item) => item.label === radioValueCheck)?.value;
     const { data } = fetchDeonarCommon({
       CommonSearchCriteria: {
-        inspectionTypeId: opinionOptionId,
+        inspectionTypeId: opinionOptionID,
         Option: "opinion",
       },
     });
@@ -292,6 +292,7 @@ const AnteMortemInspectionPage = () => {
   const handleUUIDClick = (identifier) => {
     setSelectedUUID(identifier);
     setIsLoader(true);
+    setIsSubmitted(false);
     let selectedRow = ArrivalData.find((row) => {
       return String(row.ddreference).trim().toLowerCase() === String(identifier).trim().toLowerCase();
     });
@@ -331,10 +332,11 @@ const AnteMortemInspectionPage = () => {
     setRadioValueCheck(value);
     setSelectedUUID("");
     setInspectionTableData([]);
+    setIsSubmitted(false);
     reset();
     setSelectedAnimal(null);
     showToast("notify", `Switched to ${value}`);
-    setOpinionOptionId(inspectionTypes.find((item) => item.label === value)?.value);
+    setOpinionOptions(inspectionTypes.find((item) => item.label === value)?.value);
 
     const selectedInspectionType = inspectionTypes.find((item) => item.label === value);
     if (selectedInspectionType) {
@@ -390,7 +392,10 @@ const AnteMortemInspectionPage = () => {
     };
     InspectionDetailsData.mutate(payload, {
       onSuccess: (data) => {
-        showToast("success", t("YOU_HAVE_SAVED_THE_INSPECTION_DATA_REPORT_SUCCESSFULLY"));
+        showToast("success", t("YOU HAVE SAVED THE INSPECTION DATA REPORT SUCCESSFULLY"));
+        setSelectedUUID(null);
+        setInspectionTableData([]);
+        setIsSubmitted(true);
         console.log(data, "Inspection details data");
       },
       onError: (error) => {
@@ -507,15 +512,15 @@ const AnteMortemInspectionPage = () => {
                 disableSort={false}
                 autoSort={false}
                 manualPagination={false}
-                tableClassName={"deonar-scrollable-table"}
+                // tableClassName={"deonar-scrollable-table"}
               />
             </div>
           </div>
         </div>
 
-        <div className="bmc-row-card-header">
+        {/* <div className="bmc-row-card-header">
           <div className="bmc-card-row">
-            {selectedUUID ? (
+            {selectedUUID && !isSubmitted ? (
               <div style={{ paddingBottom: "20px", display: "flex", gap: "12px", alignItems: "center" }}>
                 <h3 style={{ fontWeight: "600", fontSize: "20px" }}>{t("Active Arrival UUID")}:</h3>
                 <span style={{ fontWeight: "bold", backgroundColor: "rgb(204, 204, 204)", borderRadius: "10px", padding: "8px", fontSize: "22px" }}>
@@ -563,6 +568,67 @@ const AnteMortemInspectionPage = () => {
                     buttonText={t("Submit")}
                     onAddClick={handleInspectionDetail}
                   />
+                )}
+              </React.Fragment>
+            )}
+          </div>
+        </div> */}
+
+        <div className="bmc-row-card-header">
+          <div className="bmc-card-row">
+            <div style={{ paddingBottom: "20px", display: "flex", gap: "12px", alignItems: "center" }}>
+              <h3 style={{ fontWeight: "600", fontSize: "20px" }}>{!isSubmitted && t("Active Arrival UUID")}</h3>
+              {!isSubmitted && (
+                <span style={{ fontWeight: "bold", backgroundColor: "rgb(204, 204, 204)", borderRadius: "10px", padding: "8px", fontSize: "22px" }}>
+                  {selectedUUID || t("Arrival UUID - Please Select Arrival UUID from Above Table.")}
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="bmc-card-row" style={{ overflowY: "auto", maxHeight: "511px" }}>
+            {isLoader && radioValueCheck ? (
+              <Loader />
+            ) : (
+              <React.Fragment>
+                {inspectionTableData && radioValueCheck && inspectionTableData.length > 0 && (
+                  <CustomTable
+                    t={t}
+                    columns={[
+                      {
+                        Header: t("Edit"),
+                        accessor: "edit",
+                        Cell: ({ row }) => {
+                          const editable = row.original.editable;
+                          return editable ? (
+                            <span onClick={() => openModal(row.original)}>
+                              <EditIcon style={{ cursor: "pointer" }} />
+                            </span>
+                          ) : null;
+                        },
+                      },
+                      ...Tablecolumns,
+                    ]}
+                    // tableClassName={"deonar-scrollable-table"}
+                    data={inspectionTableData}
+                    disableSort={false}
+                    autoSort={false}
+                    manualPagination={false}
+                    onAddClickFunction={() => openModal(inspectionTypes[0].label)}
+                    showAddButton={true}
+                    buttonText={t("Submit")}
+                    onAddClick={handleInspectionDetail}
+                  />
+                )}
+                {!isSubmitted && !inspectionTableData?.length && (
+                  <div>
+                    <strong>{t("Data is not Available.")}</strong>
+                  </div>
+                )}
+                {isSubmitted && (
+                  <strong style={{ color: "green", fontWeight: "bold" }}>
+                    {t("YOU HAVE SAVED THE INSPECTION DATA REPORT SUCCESSFULLY FOR THIS ARRIVAL UUID")}
+                  </strong>
                 )}
               </React.Fragment>
             )}

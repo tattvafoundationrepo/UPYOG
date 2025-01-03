@@ -32,6 +32,7 @@ import SlaughteringEmergency from "./pages/employee/slaughter/slaughterEmergency
 import RemovalReport from "./pages/employee/collectionPoint/RemovalReport";
 import WashingFeePage from "./pages/employee/securityCheck/washingFeePage";
 import GatePassIssue from "./pages/employee/deliveryPoint/gatePassIssue";
+import RegionalGatePass from "./pages/employee/deliveryPoint/regionalGatePass";
 
 export const DEONARModule = ({ stateCode, userType, tenants }) => {
   const { t } = useTranslation();
@@ -81,6 +82,7 @@ const componentsToRegister = {
   Slaughtering,
   Helkari,
   Stakeholder,
+  RegionalGatePass,
   RemovalReport,
   DEONAR_INBOX_FILTER: (props) => <InboxFilter {...props} />,
   DEONARInbox,

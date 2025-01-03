@@ -3,6 +3,8 @@ import { Controller } from "react-hook-form";
 import { Header, LabelFieldPair, CardLabel, Dropdown, TextInput } from "@upyog/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
 import CustomModal from "../commonFormFields/customModal";
+import OpinionDropdown from "./opinionDropdown";
+
 export const AnimalInspectionModal = ({
   isModalOpen,
   toggleModal,
@@ -47,10 +49,6 @@ export const AnimalInspectionModal = ({
       [field]: value,
     }));
   };
-
-  const opinionNameToId = Object.fromEntries(opinionOptions.map((option) => [option.name, option.value]));
-
-  const opinionNames = opinionOptions.map((option) => option.name);
 
   const handleInputChange = (field, e) => {
     const value = e.target.value;
@@ -109,28 +107,12 @@ export const AnimalInspectionModal = ({
   );
 
   if (!selectedAnimal) return null;
-  console.log("localData", localData);
-  console.log("opinionOptions", opinionOptions);
 
   return (
-    <CustomModal isOpen={isModalOpen} onClose={toggleModal} fullScreen>
+    <CustomModal isOpen={isModalOpen} onClose={toggleModal} fullScreen title={`${t("Active Animal Token Number")} - ${localData?.animal}`}>
       <form>
         <React.Fragment>
           <div className="bmc-card-row">
-            <div style={{ paddingBottom: "20px", display: "flex", gap: "12px", alignItems: "center" }}>
-              <h3 style={{ fontWeight: "600", fontSize: "20px" }}>{t("Active Animal Token Number")}: </h3>
-              <span
-                style={{
-                  fontWeight: "bold",
-                  backgroundColor: "rgb(204, 204, 204)",
-                  borderRadius: "10px",
-                  padding: "8px",
-                  fontSize: "22px",
-                }}
-              >
-                {localData?.animal}
-              </span>
-            </div>
             <Header>{t("Animal_Characterstics_General")}</Header>
 
             <div className="bmc-col3-card">
@@ -246,31 +228,7 @@ export const AnimalInspectionModal = ({
           <div className="bmc-card-row">{renderField("appetite", "DEONAR_APPETITE", appetiteOptions, "DEONAR_APPETITE")}</div>
           <div className="bmc-card-row">
             <Header>{t("Remarks")}</Header>
-
-            <div className="bmc-col3-card">
-              <LabelFieldPair>
-                <CardLabel className="bmc-label">{t("DEONAR_OPINION")}</CardLabel>
-                <Controller
-                  control={control}
-                  name="opinionId"
-                  render={(props) => (
-                    <Dropdown
-                      option={opinionNames}
-                      select={(selectedName) => {
-                        const selectedId = opinionNameToId[selectedName];
-                        handleChange("opinionId", selectedId);
-                        handleChange("opinion", selectedName);
-                        props.onChange(selectedId);
-                      }}
-                      selected={localData?.opinion}
-                      t={t}
-                      onBlur={props.onBlur}
-                      placeholder={t("DEONAR_OPINION")}
-                    />
-                  )}
-                />
-              </LabelFieldPair>
-            </div>
+            <OpinionDropdown control={control} t={t} localData={localData} handleChange={handleChange} opinionOptions={opinionOptions} />
             <div className="bmc-col3-card">
               <LabelFieldPair>
                 <CardLabel className="bmc-label">{t("DEONAR_OTHER")}</CardLabel>
@@ -296,7 +254,6 @@ export const AnimalInspectionModal = ({
                 />
               </LabelFieldPair>
             </div>
-
             <div className="bmc-col3-card">
               <LabelFieldPair>
                 <CardLabel className="bmc-label">{t("DEONAR_REMARK")}</CardLabel>
@@ -437,29 +394,11 @@ export const BeforeSlauhterInspectionModal = ({
   };
   if (!selectedAnimal) return null;
 
-  const opinionNameToId = Object.fromEntries(opinionOptions.map((option) => [option.name, option.value]));
-
-  const opinionNames = opinionOptions.map((option) => option.name);
-
   return (
-    <CustomModal isOpen={isModalOpen} onClose={toggleModal} fullScreen>
+    <CustomModal isOpen={isModalOpen} onClose={toggleModal} fullScreen title={`${t("Active Animal Token Number")} - ${localData?.animal}`}>
       <form>
         <React.Fragment>
           <div className="bmc-card-row">
-            <div style={{ paddingBottom: "20px", display: "flex", gap: "12px", alignItems: "center" }}>
-              <h3 style={{ fontWeight: "600", fontSize: "20px" }}>{t("Active Animal Token Number")}: </h3>
-              <span
-                style={{
-                  fontWeight: "bold",
-                  backgroundColor: "rgb(204, 204, 204)",
-                  borderRadius: "10px",
-                  padding: "8px",
-                  fontSize: "22px",
-                }}
-              >
-                {localData?.animal}
-              </span>
-            </div>
             <Header>{t("Animal_Characterstics_General")}</Header>
             {/* <div className="bmc-col3-card">
               <LabelFieldPair>
@@ -601,30 +540,7 @@ export const BeforeSlauhterInspectionModal = ({
 
           <div className="bmc-card-row">
             <Header>{t("Remarks")}</Header>
-            <div className="bmc-col3-card">
-              <LabelFieldPair>
-                <CardLabel className="bmc-label">{t("DEONAR_OPINION")}</CardLabel>
-                <Controller
-                  control={control}
-                  name="opinionId"
-                  render={(props) => (
-                    <Dropdown
-                      option={opinionNames}
-                      select={(selectedName) => {
-                        const selectedId = opinionNameToId[selectedName];
-                        handleChange("opinionId", selectedId);
-                        handleChange("opinion", selectedName);
-                        props.onChange(selectedId);
-                      }}
-                      selected={localData?.opinion}
-                      t={t}
-                      onBlur={props.onBlur}
-                      placeholder={t("DEONAR_OPINION")}
-                    />
-                  )}
-                />
-              </LabelFieldPair>
-            </div>
+            <OpinionDropdown control={control} t={t} localData={localData} handleChange={handleChange} opinionOptions={opinionOptions} />
 
             <div className="bmc-col3-card">
               <LabelFieldPair>
@@ -809,29 +725,11 @@ export const PostMortemInspectionModal = ({
 
   if (!selectedAnimal) return null;
 
-  const opinionNameToId = Object.fromEntries(opinionOptions.map((option) => [option.name, option.value]));
-
-  const opinionNames = opinionOptions.map((option) => option.name);
-
   return (
-    <CustomModal isOpen={isModalOpen} onClose={toggleModal} fullScreen>
+    <CustomModal isOpen={isModalOpen} onClose={toggleModal} fullScreen title={`${t("Active Animal Token Number")} - ${localData?.animal}`}>
       <form>
         <React.Fragment>
           <div className="bmc-card-row">
-            <div style={{ paddingBottom: "20px", display: "flex", gap: "12px", alignItems: "center" }}>
-              <h3 style={{ fontWeight: "600", fontSize: "20px" }}>{t("Active Animal Token Number")}: </h3>
-              <span
-                style={{
-                  fontWeight: "bold",
-                  backgroundColor: "rgb(204, 204, 204)",
-                  borderRadius: "10px",
-                  padding: "8px",
-                  fontSize: "22px",
-                }}
-              >
-                {localData?.animal}
-              </span>
-            </div>
             <Header>{t("Animal_Characterstics_General")}</Header>
             <div className="bmc-card-row">
               {/* <div className="bmc-col3-card">
@@ -1059,30 +957,7 @@ export const PostMortemInspectionModal = ({
 
           <div className="bmc-card-row">
             <Header>{t("Remarks")}</Header>
-            <div className="bmc-col3-card">
-              <LabelFieldPair>
-                <CardLabel className="bmc-label">{t("DEONAR_OPINION")}</CardLabel>
-                <Controller
-                  control={control}
-                  name="opinionId"
-                  render={(props) => (
-                    <Dropdown
-                      option={opinionNames}
-                      select={(selectedName) => {
-                        const selectedId = opinionNameToId[selectedName];
-                        handleChange("opinionId", selectedId);
-                        handleChange("opinion", selectedName);
-                        props.onChange(selectedId);
-                      }}
-                      selected={localData?.opinion}
-                      t={t}
-                      onBlur={props.onBlur}
-                      placeholder={t("DEONAR_OPINION")}
-                    />
-                  )}
-                />
-              </LabelFieldPair>
-            </div>
+            <OpinionDropdown control={control} t={t} localData={localData} handleChange={handleChange} opinionOptions={opinionOptions} />
 
             {showAnimalQuaters && (
               <div className="bmc-col3-card">

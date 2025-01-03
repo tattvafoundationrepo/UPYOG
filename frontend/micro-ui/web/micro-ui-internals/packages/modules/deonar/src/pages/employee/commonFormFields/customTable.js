@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo } from "react";
-import { SearchField, Table, TextInput, Loader } from "@upyog/digit-ui-react-components";
+import React, { useState, useEffect, useMemo, useRef } from "react";
+import { SearchField, Table, TextInput, Loader, Dropdown } from "@upyog/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
 import ImportPermissionDateField from "./importPermissionDate";
 import { useForm } from "react-hook-form";
@@ -26,6 +26,8 @@ const CustomTable = ({
   onSort,
   isLoadingRows = false,
   showSearch = true,
+  showDropdown = false,
+  dropdownOptions = [],
   showTotalRecords = true,
   showPagination = true,
   showPdfDownload = false,
@@ -40,7 +42,7 @@ const CustomTable = ({
   buttonText = "Add Employee",
   onAddClick,
   showDateColumn = false, // New prop to control date column visibility
-  onDateChange, 
+  onDateChange,
   ...rest
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -53,6 +55,10 @@ const CustomTable = ({
   );
   const [isDownloading, setIsDownloading] = useState(false);
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false); // State for dropdown
+  const [needsScroll, setNeedsScroll] = useState(false);
+
+  const tableRef = useRef(null);
+
   const { t } = useTranslation();
   const { control } = useForm();
 
@@ -278,7 +284,7 @@ const CustomTable = ({
         accessor: "importPermissionDate",
         Cell: ({ row }) => (
           <ImportPermissionDateField
-          showLabel= {false}
+            showLabel={false}
             control={control}
             data={row.original}
             setData={(newData) => {
@@ -293,6 +299,37 @@ const CustomTable = ({
     ];
   }, [columns, showDateColumn, t, control, onDateChange]);
 
+  useEffect(() => {
+    const checkTableOverflow = () => {
+      if (tableRef.current) {
+        const tableWidth = tableRef.current.scrollWidth;
+        const containerWidth = tableRef.current.clientWidth;
+        setNeedsScroll(tableWidth > containerWidth);
+      }
+    };
+
+    // Initial check
+    checkTableOverflow();
+
+    // Add resize listener
+    const resizeObserver = new ResizeObserver(checkTableOverflow);
+    if (tableRef.current) {
+      resizeObserver.observe(tableRef.current);
+    }
+
+    // Cleanup
+    return () => {
+      if (tableRef.current) {
+        resizeObserver.unobserve(tableRef.current);
+      }
+    };
+  }, [columns, data]); // Re-run when columns or data change
+
+  const tableWrapperStyle = {
+    maxHeight: '400px',
+    width: '100%',
+    overflow: needsScroll ? 'auto' : 'visible',
+  };
 
   return (
     <div>
@@ -303,6 +340,25 @@ const CustomTable = ({
               <TextInput value={searchTerm} placeholder={searchPlaceholder} onChange={handleSearchChange} style={{ width: "35%" }} />
             </SearchField>
           )}
+          {showDropdown &&
+            Array.isArray(dropdownOptions) &&
+            dropdownOptions.map((dropdownConfig, index) => (
+              <Dropdown
+                key={index}
+                label={dropdownConfig.label || t("Dropdown")}
+                selected={dropdownConfig.selectedOption}
+                select={(value) => {
+                  dropdownConfig.setSelectedOption(value);
+                  if (dropdownConfig.onDropdownChange) {
+                    dropdownConfig.onDropdownChange(value);
+                  }
+                }}
+                option={dropdownConfig.options}
+                optionKey={dropdownConfig.optionKey || "name"}
+                placeholder={dropdownConfig.placeholder || t("Select an Option")}
+                style={{ width: dropdownConfig.width || "35%" }}
+              />
+            ))}
         </div>
 
         <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
@@ -374,8 +430,11 @@ const CustomTable = ({
         </div>
       </div>
 
+      <div style={tableWrapperStyle} ref={tableRef}>
+
+
       <Table
-        className={`customTable table-fixed-first-column table-border-style deonar-scrollable-table ${tableClassName}`}
+        className={`customTable table-fixed-first-column table-border-style  ${tableClassName}`}
         columns={enhancedColumns.map((col) => ({
           ...col,
           sortFn: col.sortable ? () => handleSort(col.accessor) : undefined,
@@ -402,6 +461,8 @@ const CustomTable = ({
         })}
         {...rest}
       />
+
+      </div>
 
       {showAddButton && (
         <div style={{ paddingBottom: "1rem" }}>

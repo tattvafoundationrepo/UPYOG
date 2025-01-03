@@ -332,16 +332,19 @@ const S = () => {
           <div className="bmc-card-row">
             <div className="bmc-row-card-header">
               {isMobileView && animalCount.map((data, index) => <TableCard data={data} key={index} fields={fields} onUUIDClick={handleUUIDClick} />)}
+              <div className="bmc-card-row" style={{ overflowY: "auto", maxHeight: "511px" }}>
+
               <CustomTable
                 t={t}
                 columns={DawanWalaColumns(handleUUIDClick, t)}
                 data={animalCount}
                 manualPagination={false}
-                tableClassName={"deonar-scrollable-table"}
+                // tableClassName={"deonar-scrollable-table"}
                 totalRecords={totalRecords}
                 autoSort={false}
                 isLoadingRows={isLoading}
               />
+              </div>
               {isModalOpen && (
                 <CustomModal isOpen={isModalOpen} onClose={toggleModal} selectedUUID={selectedUUID} style={{ width: "100%" }}>
                   <Fragment>
@@ -384,15 +387,15 @@ const S = () => {
 
                       {/* <div className="bmc-row-card-header" style={{ overflowY: "auto", maxHeight: "300px" }}> */}
                       {/* {isMobileView && data.map((data, index) => <TableCard data={data} key={index} fields={fields} onUUIDClick={handleUUIDClick} />)} */}
-                      <div className="bmc-card-row">
-                        <CustomTable
+                      <div className="bmc-card-row" style={{ overflowY: "auto", maxHeight: "511px" }}>
+                      <CustomTable
                           t={t}
                           columns={isAfterStablingVisibleColumns}
                           data={filteredGawaltable}
                           totalRecords={totalRecords}
                           autoSort={false}
                           manualPagination={false}
-                          tableClassName={"deonar-scrollable-table"}
+                          // tableClassName={"deonar-scrollable-table"}
                           isLoadingRows={isLoading}
                           showPdfDownload={true}
                           showExcelDownload={true}

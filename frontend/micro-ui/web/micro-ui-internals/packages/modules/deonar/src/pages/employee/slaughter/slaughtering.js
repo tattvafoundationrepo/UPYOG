@@ -124,7 +124,6 @@ const Slaughtering = () => {
       [rowIndex]: newValue,
     }));
 
-    // Check if all toggles are selected after this change
     const updatedValues = {
       ...slaughterByBmc,
       [rowIndex]: newValue,
@@ -170,8 +169,6 @@ const Slaughtering = () => {
           const slaughterUnit = selectedSlaughterUnits[index]?.[0];
           const selectedShift = selectedShifts[index];
           const date = slaughterDates[index];
-
-          // Only proceed if we have all required data
           if (!slaughterUnit || !selectedShift || !date) return null;
 
           return {
@@ -179,15 +176,15 @@ const Slaughtering = () => {
             ddReference: selectedSlaughter.ddReference,
             animalTypeId: item.animalTypeId,
             token: item.token,
-            slaughterUnitId: unitIdMapping[slaughterUnit.value], // Using the correct unit ID from mapping
+            slaughterUnitId: unitIdMapping[slaughterUnit.value],
             unitShiftId: selectedShift.value, // Using the shift ID
             slaughterDate: date ? new Date(date).getTime() : null,
             slaughterByBmcEmployee: slaughterByBmc[index] || false,
           };
         })
-        .filter(Boolean); // Remove any null entries
+        .filter(Boolean);
 
-      console.log("Sending payload:", bookingDetails); // For debugging
+      console.log("Sending payload:", bookingDetails);
 
       const payload = {
         bookingDetails,
@@ -240,21 +237,17 @@ const Slaughtering = () => {
         return acc;
       }, {});
 
-      // Store the first unit ID for each unique name
       const idMapping = {};
       Object.entries(unitsByName).forEach(([name, units]) => {
-        idMapping[name] = units[0].id; // Store the first unit's ID for each unique name
+        idMapping[name] = units[0].id;
       });
       setUnitIdMapping(idMapping);
-
-      // Create unique units array for first dropdown
       const uniqueUnits = Object.keys(unitsByName).map((name) => ({
         label: name,
         value: name,
       }));
       setUniqueSlaughterUnits(uniqueUnits);
 
-      // Create shifts mapping for each unique unit name
       const shiftsMap = {};
       Object.entries(unitsByName).forEach(([unitName, units]) => {
         shiftsMap[unitName] = units.map((unit) => ({
@@ -277,7 +270,7 @@ const Slaughtering = () => {
     setSelectedShifts({});
     setShiftOptions({});
     setSelectedSlaughterUnits({});
-    setSlaughterDates({}); // Reset dates
+    setSlaughterDates({});
     reset();
   };
 
@@ -363,6 +356,13 @@ const Slaughtering = () => {
       ...prev,
       [rowIndex]: selectedShift,
     }));
+    if (selectedShift) {
+      const today = getTodayDate();
+      setSlaughterDates((prev) => ({
+        ...prev,
+        [rowIndex]: today,
+      }));
+    }
   };
 
   const isVisibleColumns = [
@@ -440,7 +440,7 @@ const Slaughtering = () => {
           style={{ border: "1px solid ", padding: "3px", background: "rgba(227, 227, 227, var(--bg-opacity))" }}
           value={slaughterDates[row.index] || ""}
           onChange={(e) => handleDateChange(row.index, e.target.value)}
-          min={getTodayDate()} 
+          min={getTodayDate()}
           className="digit-datepicker"
         />
       ),
@@ -450,7 +450,7 @@ const Slaughtering = () => {
       accessor: "slaughterByBmcEmployee",
       Header: () => (
         <div className="flex items-center justify-center">
-          <CheckBox label={t("Slaughter by BMC Employee")} onChange={handleSelectAll} checked={selectAll} style={{ margin: "0 auto", top: "3px"}} />
+          <CheckBox label={t("Slaughter by BMC Employee")} onChange={handleSelectAll} checked={selectAll} style={{ margin: "0 auto", top: "3px" }} />
         </div>
       ),
       Cell: ({ row }) => {
@@ -495,7 +495,7 @@ const Slaughtering = () => {
                 columns={Tablecolumns}
                 data={slaughterList}
                 manualPagination={false}
-                tableClassName={"deonar-scrollable-table"}
+                // tableClassName={"deonar-scrollable-table"}
                 totalRecords={totalRecords}
                 autoSort={false}
               />
@@ -507,8 +507,8 @@ const Slaughtering = () => {
               {/* <div className="bmc-row-card-header" style={{ marginBottom: "40px" }}> */}
 
               {/* </div> */}
-              <div className="bmc-card-row">
-                {/* <div className="bmc-row-card-header" style={{ overflowY: "auto", maxHeight: "300px" }}> */}
+              <div className="bmc-card-row" style={{ overflowY: "auto", maxHeight: "511px" }}>
+              {/* <div className="bmc-row-card-header" style={{ overflowY: "auto", maxHeight: "300px" }}> */}
                 {/* {isMobileView && data.map((data, index) => <TableCard data={data} key={index} fields={fields} onUUIDClick={handleUUIDClick} />)} */}
                 <CustomTable
                   t={t}
@@ -516,7 +516,7 @@ const Slaughtering = () => {
                   manualPagination={false}
                   data={slaughterAssignment}
                   totalRecords={totalRecords}
-                  tableClassName={"deonar-scrollable-table"}
+                  // tableClassName={"deonar-scrollable-table"}
                   autoSort={false}
                   isLoadingRows={""}
                   showDateColumn={false}

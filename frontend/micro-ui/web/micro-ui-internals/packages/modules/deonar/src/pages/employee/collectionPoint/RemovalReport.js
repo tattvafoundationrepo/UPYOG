@@ -26,16 +26,22 @@ const RemovalReport = () => {
 
   const visibleColumns = [
     {
-      Header: t("Shopkeeper's Name"),
+      Header: t("Stakeholder's Name"),
       accessor: "ownerName",
       Cell: ({ row }) => (
         <span
           onClick={() => handleStakeholderClick(row)}
-          style={{ cursor: "pointer", color: "blue", textDecoration: "underline" }}
+          style={{ cursor: "pointer",  textDecoration: "underline" }}
         >
           {t(row.original.ownerName) || "N/A"}
         </span>
       ),
+    },
+    {
+      Header: t("Stakeholder's Type"),
+      accessor: "type",
+      Cell: ({ row }) => t(row.original.type) || "N/A",
+
     },
     {
       Header: t("Arrival UUID"),
@@ -87,22 +93,34 @@ const RemovalReport = () => {
 
   ]
   useEffect(() => {
-    if (RemovalList) {
-      const transformedData = RemovalList.SecurityCheckDetails.map((item) => ({
+    if (RemovalList) {  
+      const mainTableData = RemovalList.SecurityCheckDetails.map((item) => ({
         ownerName: item.shopkeepername || "N/A",
         UUID: item.entryUnitId || "N/A",
-        removalType: item.animalDetails?.[0]?.removaltype || "N/A",
-        animalType: item.animalDetails?.[0]?.animalType || "N/A",
         reference: item.ddreference || "N/A",
         licenseNumber: item.licenceNumber || "N/A",
-        animalToken: item.animalDetails?.[0]?.token || "N/A",
-        date: typeof item.dateOfRemoval === "string" ? item.dateOfRemoval : "Invalid Date",
-        time: (item.timeOfRemoval || "N/A").replace(/:/g, "."),
         mobileNumber: item.mobilenumber || "N/A",
       }));
-      setGetApplicationData(transformedData);
+  
+      const detailedData = RemovalList.SecurityCheckDetails.flatMap((item) =>
+        item.animalDetails.map((animalDetail) => ({
+          ownerName: item.shopkeepername || "N/A",
+          UUID: item.entryUnitId || "N/A",
+          removalType: animalDetail.removaltype || "N/A",
+          animalType: animalDetail.animalType || "N/A",
+          reference: item.ddreference || "N/A",
+          licenseNumber: item.licenceNumber || "N/A",
+          animalToken: animalDetail.token || "N/A",
+          date: typeof item.dateOfRemoval === "string" ? item.dateOfRemoval : "Invalid Date",
+          time: (item.timeOfRemoval || "N/A").replace(/:/g, "."), 
+          mobileNumber: item.mobilenumber || "N/A",
+        }))
+      );
+  
+      setGetApplicationData({ mainTableData, detailedData });
     }
   }, [RemovalList]);
+  
 
 
 
@@ -120,10 +138,9 @@ const RemovalReport = () => {
           t={t}
           pageSizeLimit={10}
           columns={visibleColumns}
-          data={getApplicationData || []}
+          data={getApplicationData?.mainTableData || []}
           manualPagination={false}
-          totalRecords={getApplicationData.length}
-          tableClassName={"ebe-custom-scroll"}
+          // tableClassName={"ebe-custom-scroll"}
           showSearch={true}
           showText={true}
           isLoading={isLoading}
@@ -132,23 +149,26 @@ const RemovalReport = () => {
       {isModalOpen && (
         <div className="bmc-card-row">
           
-            <CustomModal isOpen={isModalOpen} onClose={handleCloseModal} selectedUUID={selectedUUID} style={{ width: "100%" }} tableClassName={"ebe-custom-scroll"}>
-              <h3>{t("Assigned Stakeholder Details")}</h3>
-              <p>{t("Selected UUID")}: {selectedUUID || "N/A"}</p>
-              <div className="bmc-card-row">
-
-                <CustomTable
-                  t={t}
-                  columns={isVisibleColumns2}
-                  manualPagination={false}
-                  data={getApplicationData || []}
-                  totalRecords={totalRecords}
-                  tableClassName={"deonar-scrollable-table"}
-                  autoSort={false}
-                  isLoadingRows={false}
-                />
-              </div>
-            </CustomModal>
+          <CustomModal 
+      isOpen={isModalOpen} 
+      onClose={handleCloseModal} 
+      selectedUUID={selectedUUID} 
+      style={{ width: "100%" }} 
+      tableClassName={"ebe-custom-scroll"}
+    >
+            <div className="bmc-card-row" style={{ overflowY: "auto", maxHeight: "511px" }}>
+            <CustomTable
+          t={t}
+          columns={isVisibleColumns2}
+          manualPagination={false}
+          data={getApplicationData?.detailedData.filter(item => item.UUID === selectedUUID) || []}
+          totalRecords={totalRecords}
+          // tableClassName={"deonar-scrollable-table"}
+          autoSort={false}
+          isLoadingRows={false}
+        />
+      </div>
+    </CustomModal>
           
 
 

@@ -1,14 +1,15 @@
-import React, { useEffect, useState } from "react";
+import React, { use, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useForm } from "react-hook-form";
 import MainFormHeader from "../commonFormFields/formMainHeading";
-import { Toast, Loader } from "@upyog/digit-ui-react-components";
+import { Toast, Loader, CheckBox } from "@upyog/digit-ui-react-components";
 import CustomTable from "../commonFormFields/customTable";
 import CustomModal from "../commonFormFields/customModal";
 import useCollectionPoint from "@upyog/digit-ui-libraries/src/hooks/deonar/useCollectionPoint";
 import VehicleNumberField from "../commonFormFields/vehicleNumber";
 import VehicleTypeDropdownField from "../commonFormFields/vehicleTypeDropdown";
 import { useQueryClient } from "react-query";
+import SubmitButtonField from "../commonFormFields/submitBtn";
 
 const WashingFeePage = () => {
   const { t } = useTranslation();
@@ -17,14 +18,43 @@ const WashingFeePage = () => {
   const [toast, setToast] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [tableData, setTableData] = useState([]);
+  const [parkingDetails, setParkingDetails] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [disabledRows, setDisabledRows] = useState([]);
+  const [selectedRows, setSelectedRows] = useState([]);
+  const [isCheckboxChecked, setIsCheckboxChecked] = useState(false);
   const [responseData, setResponseData] = useState();
-  const queryClient = useQueryClient(); 
-
-  const { fetchWashingCollectionDetails, saveWashingDetails } = useCollectionPoint({});
+  const queryClient = useQueryClient();
+  const { fetchWashingCollectionDetails, fetchParkingCollectionDetails, saveWashingDetails } = useCollectionPoint({});
 
   const { data: washingDetailsData } = fetchWashingCollectionDetails();
+
+  const { data: parkingDetailsData } = fetchParkingCollectionDetails();
+
+  const handleRowCheckboxChange = (vehicleNumber) => {
+    setSelectedRows((prevSelectedRows) => {
+      let updatedSelectedRows = [];
+      if (prevSelectedRows.includes(vehicleNumber)) {
+        updatedSelectedRows = prevSelectedRows.filter((row) => row !== vehicleNumber);
+      } else {
+        updatedSelectedRows = [...prevSelectedRows, vehicleNumber];
+      }
+
+      setIsCheckboxChecked(updatedSelectedRows.length > 0);
+      return updatedSelectedRows;
+    });
+  };
+  useEffect(() => {
+    if (parkingDetailsData?.VehicleParkedCheckDetails) {
+      const vehicleParkedCheckDetails = parkingDetailsData.VehicleParkedCheckDetails.map((detail) => ({
+        vehicleType: detail.vehicleType,
+        vehicleNumber: detail.vehicleNumber,
+        vehicleId: detail.vehicleId,
+      }));
+
+      setParkingDetails(vehicleParkedCheckDetails);
+    }
+  }, [parkingDetailsData]);
 
   useEffect(() => {
     if (washingDetailsData?.VehicleWashedCheckDetails) {
@@ -36,20 +66,22 @@ const WashingFeePage = () => {
         departureTime: detail.departureTime,
         departureDate: detail.departureDate,
       }));
-  
+
       setTableData(vehicleWashedCheckDetails);
     }
   }, [washingDetailsData]);
-  
+
   const {
     control,
     handleSubmit,
     reset,
-    formState: { errors, isValid },
+    formState: { errors, isValid, isDirty },
   } = useForm({
     defaultValues: {
       vehicleType: "",
       vehicleNumber: "",
+      IN: true,
+      OUT: false,
     },
     mode: "onChange",
   });
@@ -65,73 +97,36 @@ const WashingFeePage = () => {
   const toggleModal = () => {
     setIsModalOpen(!isModalOpen);
   };
-
-
-  const onSubmit = async (formData) => {
-  setIsLoading(true);
-
-  const payload = {
-    vehicleWashing: {
-      vehicleNumber: formData.vehicleNumber,
-      vehicleType: formData.vehicleType.value,
-      IN: true,
-      OUT: false,
-    },
-  };
-
-  saveWashingDetails.mutate(payload, {
-    
-    onSuccess: () => {
-      queryClient.invalidateQueries("WashingDetails");
-      showToast("success", t("DEONAR_WASHING_DATA_UPDATED_SUCCESSFULY"));
-      reset();
-      setIsLoading(false);
-      setIsModalOpen(false);
-    },
-    onError: () => {
-      showToast("error", t("DEONAR_WASHING_DATA_NOT_UPDATED_SUCCESSFULY"));
-      setIsLoading(false);
-    },
-  });
-};
-
-
-  const handleDeparture = async (formData) => {
-    setIsLoading(true);
-    let washingTime;
-    if (typeof formData.washingTime === "string") {
-      const [hours, minutes, seconds] = formData.washingTime.split(":");
-      washingTime = new Date().setHours(hours, minutes, seconds.split(".")[0], seconds.split(".")[1] || 0);
-    } else {
-      washingTime = formData.washingTime;
-    }
+  const onSubmit = async () => {
+    const selectedDetails = parkingDetails.filter((detail) =>
+      selectedRows.includes(detail.vehicleNumber)
+    );
     const payload = {
-      vehicleWashing: {
-        vehicleNumber: formData.vehicleNumber,
-        vehicleType: formData.vehicleType,
-        washingTime: washingTime,
-        IN: false,
-        OUT: true,
-      },
+      vehicleWashing: selectedDetails.map((detail) => ({
+        vehicleType: detail.vehicleId,
+        vehicleNumber: detail.vehicleNumber,
+        IN: true,
+        OUT: false,
+      })),
     };
-
-
-    saveWashingDetails(payload, {
-      onSuccess: (data) => {
+    saveWashingDetails.mutate(payload, {
+      onSuccess: () => {
         queryClient.invalidateQueries("WashingDetails");
         showToast("success", t("DEONAR_WASHING_DATA_UPDATED_SUCCESSFULY"));
-        reset();
-        setResponseData(data);
-        setDisabledRows((prev) => [...prev, formData.vehicleNumber]);
-        setIsLoading(false);
       },
       onError: () => {
         showToast("error", t("DEONAR_WASHING_DATA_NOT_UPDATED_SUCCESSFULY"));
-        setIsLoading(false);
       },
     });
-  };
 
+    reset();
+    setIsLoading(false);
+    setIsModalOpen(false);
+    setSelectedRows([]);
+    setIsCheckboxChecked(false);
+  };
+  
+  
   const Tablecolumns = [
     {
       Header: t("Vehicle Number"),
@@ -169,16 +164,44 @@ const WashingFeePage = () => {
     ],
   };
 
- 
-  
-
+  const isVisibleColumns2 = [
+    {
+      Header: (
+        <CheckBox
+          onChange={(e) => {
+            if (e.target.checked) {
+              setSelectedRows(parkingDetails.map((row) => row.vehicleNumber));
+            } else {
+              setSelectedRows([]);
+            }
+            setIsCheckboxChecked(e.target.checked);
+          }}
+          checked={parkingDetails.length > 0 && parkingDetails.length === selectedRows.length}
+        />
+      ),
+      accessor: "checkbox",
+      Cell: ({ row }) => {
+        const isChecked = selectedRows.includes(row.original.vehicleNumber);
+        return <CheckBox checked={isChecked} onChange={() => handleRowCheckboxChange(row.original.vehicleNumber)} />;
+      },
+      disableSortBy: true,
+    },
+    {
+      Header: t("Vehicle Number"),
+      accessor: "vehicleNumber",
+    },
+    {
+      Header: t("Vehicle Type"),
+      accessor: "vehicleType",
+    },
+  ];
   return (
     <React.Fragment>
       <div className="bmc-card-full">
         <form onSubmit={handleSubmit(onSubmit)}>
           <MainFormHeader title={"DEONAR_WASHING"} />
           <div className="bmc-row-card-header">
-            <div className="bmc-card-row" style={{overflowY:"auto", maxHeight:"511px"}}>
+            <div className="bmc-card-row" style={{ overflowY: "auto", maxHeight: "511px" }}>
               {isLoading ? (
                 <Loader />
               ) : (
@@ -186,8 +209,7 @@ const WashingFeePage = () => {
                   t={t}
                   columns={Tablecolumns}
                   data={tableData}
-                  tableClassName={"deonar-scrollable-table"}
-
+                  // tableClassName={"deonar-scrollable-table"}
                   disableSort={false}
                   autoSort={false}
                   manualPagination={false}
@@ -205,27 +227,28 @@ const WashingFeePage = () => {
               )}
             </div>
           </div>
-          <CustomModal isOpen={isModalOpen} onClose={toggleModal}>
-            <div className="bmc-card-row">
-              <div className="bmc-col2-card">
-                <VehicleTypeDropdownField control={control} data={data} setData={setData} t={t} />
+          {isModalOpen && (
+            <CustomModal isOpen={isModalOpen} onClose={toggleModal} style={{ width: "100%" }}>
+            <div className="bmc-card-row" style={{ overflowY: "auto", maxHeight: "511px" }}>
+            <CustomTable
+                  t={t}
+                  columns={isVisibleColumns2}
+                  manualPagination={false}
+                  data={parkingDetails}
+                  // totalRecords={totalRecords}
+                  // tableClassName={"deonar-scrollable-table"}
+                  autoSort={false}
+                  isLoadingRows={""}
+                  getCellProps={() => ({
+                    style: {
+                      fontSize: "14px",
+                    },
+                  })}
+                />
               </div>
-              <div className="bmc-col2-card">
-                <VehicleNumberField control={control} setData={setData} data={data} t={t} />
-              </div>
-            </div>
-
-            <div style={{ float: "right", paddingBottom: "1rem", textAlign: "end" }}>
-              <button
-                className="bmc-card-button"
-                style={{ borderBottom: "3px solid black", outline: "none" }}
-                type="submit"
-                onClick={handleSubmit(onSubmit)}
-              >
-                {t("Submit")}
-              </button>
-            </div>
-          </CustomModal>
+              <SubmitButtonField control={control} disabled={!isCheckboxChecked || isDirty} />
+            </CustomModal>
+          )}
         </form>
       </div>
       {toast && (

@@ -226,6 +226,17 @@ const useCollectionPoint = ({ value }) => {
     });
   };
 
+  const fectchCollectionStablingList = (data, config = {}) => {
+    const { enabled = true, executeOnLoad = false, executeOnRadioSelect = false } = config;
+    return useQuery(["StablingList", data], () => DeonarService.getCollectionStablingList(data), {
+      enabled: enabled && (executeOnLoad || executeOnRadioSelect),
+      ...config,
+      onSuccess: (data) => {
+        console.log(data, "StablingList collection data");
+      },
+    });
+  };
+
   return {
     fetchEntryCollectionFee,
     fetchStablingCollectionFee,
@@ -248,6 +259,7 @@ const useCollectionPoint = ({ value }) => {
     saveWashingDetails,
     fetchWashingCollectionDetails,
     fetchNormalSlaughterList,
+    fectchCollectionStablingList
   };
 };
 

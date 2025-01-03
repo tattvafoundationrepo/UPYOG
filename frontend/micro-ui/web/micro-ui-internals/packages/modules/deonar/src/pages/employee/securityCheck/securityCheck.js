@@ -440,11 +440,11 @@ const SecurityCheckPage = ({ optionalFields = false, maxAllowedCount = 100 }) =>
               </div>
             </div>
             <div className="bmc-row-card-header" style={{ width: "50%" }}>
-              <div className="bmc-card-row">
+            <div className="bmc-card-row" style={{ overflowY: "auto", maxHeight: "511px" }}>
                 <CustomTable
                   t={t}
                   columns={Tablecolumns}
-                  tableClassName="deonar-scrollable-table"
+                  // tableClassName="deonar-custom-scroll"
                   data={tableData}
                   disableSort={false}
                   autoSort={false}

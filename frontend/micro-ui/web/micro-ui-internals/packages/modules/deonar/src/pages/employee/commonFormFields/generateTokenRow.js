@@ -195,7 +195,15 @@ const DynamicRowGenerator = ({
       <button
         type="button"
         onClick={() => handleGenerateRows(currentRow, rows, setRows, setCurrentRow, onRowsUpdate)}
-        style={{ padding: "2px 20px", outline: "none", background: "#f47738", borderRadius: "15px", marginBottom: "14px", color: "white" }}
+        style={{
+          float: "right",
+          padding: "2px 20px",
+          outline: "none",
+          background: "#f47738",
+          borderRadius: "15px",
+          marginBottom: "14px",
+          color: "white",
+        }}
       >
         {t(generateButtonLabel)}
       </button>

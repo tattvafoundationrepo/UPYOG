@@ -423,14 +423,16 @@ const DeonarService = {
       userService: true,
     });
   },
-  saveStakeholderDetails: (data) => {    
-    return Request({            
+  saveStakeholderDetails: (data) => {
+    return Request({
       data: data,
       url: Urls.deonar_security_check.saveStakeholderDetails,
       useCache: false,
       method: "POST",
-      auth: true,      
-      userService: true,      })},
+      auth: true,
+      userService: true,
+    });
+  },
   getEmergencySlaughter: (data) => {
     return Request({
       data: data,
@@ -466,6 +468,17 @@ const DeonarService = {
     return Request({
       data: data,
       url: Urls.deonar_security_check.getNormalSlaughterList,
+      useCache: false,
+      method: "POST",
+      auth: true,
+      userService: true,
+    });
+  },
+
+  getCollectionStablingList: (data) => {
+    return Request({
+      data: data,
+      url: Urls.deonar_security_check.getCollectionStablingList,
       useCache: false,
       method: "POST",
       auth: true,

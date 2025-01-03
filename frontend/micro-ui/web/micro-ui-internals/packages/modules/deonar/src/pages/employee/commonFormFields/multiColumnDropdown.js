@@ -35,7 +35,7 @@ const MultiColumnDropdown = ({
   name = "",
   headerMappings = {},
   placeholder = "Search Or Select...",
-  className={}
+  className = {}
 }) => {
   const [active, setActive] = useState(false);
   const [searchQuery, setSearchQuery] = useState(""); // Initialize as an empty string
@@ -102,28 +102,39 @@ const MultiColumnDropdown = ({
 
   const filteredOptions = searchQuery
     ? options.filter((option) =>
-        displayKeys.some((key) => (t(option[key]) || "").toLowerCase().includes(searchQuery.toLowerCase()))
-      )
+      displayKeys.some((key) => (t(option[key]) || "").toLowerCase().includes(searchQuery.toLowerCase()))
+    )
     : options;
 
   const onSearch = (e) => {
     setSearchQuery(e.target.value);
   };
-
   const handleSelect = (e, option) => {
     if (!disabled) {
       onSelect(e, [option]);
+      setSearchQuery(""); // Clear search input after selection
       if (autoCloseOnSelect) {
         setActive(false);
-        setSearchQuery(""); // Reset search after selection
       }
     }
     e?.stopPropagation();
   };
-
+  // const handleSelect = (e, option) => {
+  //   if (!disabled) {
+  //     onSelect(e, [option]);
+  //     if (autoCloseOnSelect) {
+  //       setActive(false);
+  //       setSearchQuery(""); // Reset search after selection
+  //     }
+  //   }
+  //   e?.stopPropagation();
+  // };
   const getSelectedValue = () => {
-    return selected.length > 0 ? selected[0].label : "";
+    return searchQuery === "" && selected.length > 0 ? selected[0].label : "";
   };
+  // const getSelectedValue = () => {
+  //   return selected.length > 0 ? selected[0].label : "";
+  // };
 
   const toggleDropdown = () => {
     if (active) {
@@ -134,11 +145,10 @@ const MultiColumnDropdown = ({
   };
 
   return (
-    <div className="multi-select-dropdown-wrap" ref={dropdownRef}>
+    <div className="multi-column-dropdown-wrap" ref={dropdownRef}>
       <div className={`master${active ? `-active` : ""}`}>
         <input
-          // className={`${className || ""} cursorPointer`}
-          className="cursorPointer"
+          className={`${className || ""} cursorPointer`}
           type="text"
           ref={inputRef}
           onFocus={() => {
@@ -146,15 +156,18 @@ const MultiColumnDropdown = ({
               setActive(true); // Only activate if not already active
             }
           }}
-          value={searchQuery || getSelectedValue() || undefined} // Use undefined to allow placeholder to show
-          onChange={onSearch}
+          value={searchQuery} // Only show searchQuery value
+          onChange={(e) => setSearchQuery(e.target.value)} // Directly update searchQuery
           disabled={disabled}
           readOnly={readOnly}
-          placeholder={placeholder} // Properly handle placeholder visibility
+          placeholder={placeholder}
           onBlur={() => {
-            if (!searchQuery && !getSelectedValue()) {
+            if (!searchQuery && selected.length === 0) {
               setSearchQuery(""); // Reset the search query if necessary
             }
+          }}
+          style={{
+            verticalAlign: "middle", // Align the text
           }}
         />
         <div className="label" onClick={toggleDropdown}>
@@ -163,18 +176,22 @@ const MultiColumnDropdown = ({
         </div>
       </div>
       {active && !disabled && (
-        <div className="server" id="jk-dropdown-unique">
+        <div
+          className="server"
+          id="jk-dropdown-unique"
+          style={{
+            minWidth: `${inputRef.current?.offsetWidth || 200}px`, // Ensure the dropdown menu is at least as wide as the input
+            width: `${displayKeys.length * 150}px`, // Dynamically calculate width based on the number of columns
+          }}
+        >
           {showColumnHeaders && (
             <div
               className="column-headers"
               style={{
                 display: "grid",
-                fontWeight: "bold",
                 gridTemplateColumns: `repeat(${displayKeys.length}, 1fr)`,
-                // width: `${displayKeys.length * 150}px`, // Adjust width dynamically (e.g., 150px per column)
-                // minWidth: "75px", // Ensure a minimum width for single-column cases
+                fontWeight: "bold",
               }}
-              // style={{ display: "grid", gridTemplateColumns: `repeat(${displayKeys.length}, 1fr)`, fontWeight: "bold" }}
             >
               {displayKeys.map((key) => (
                 <p className="label" key={key}>
@@ -187,7 +204,10 @@ const MultiColumnDropdown = ({
             <div
               key={index}
               className={`menu-item ${index === optionIndex ? "active" : ""}`}
-              style={{ display: "grid", gridTemplateColumns: `repeat(${displayKeys.length}, 1fr)` }}
+              style={{
+                display: "grid",
+                gridTemplateColumns: `repeat(${displayKeys.length}, 1fr)`,
+              }}
               onClick={(e) => handleSelect(e, option)}
             >
               {displayKeys.map((key) => (

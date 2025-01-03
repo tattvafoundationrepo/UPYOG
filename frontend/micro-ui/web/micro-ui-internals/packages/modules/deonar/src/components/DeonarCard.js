@@ -133,6 +133,11 @@ const DEONARCard = () => {
       label: t("WASHING"),
       link: `/digit-ui/employee/deonar/washing`,
       roles: ["SUPERUSER","DEONAR_GENERIC"]
+    },
+    {
+      label: t("CITIZEN ASSIGNMENT"),
+      link: `/digit-ui/employee/deonar/religiousGatePass`,
+      roles: ["SUPERUSER","DEONAR_GENERIC"]
     }
   ];
 

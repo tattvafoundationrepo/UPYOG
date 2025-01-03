@@ -27,7 +27,7 @@ const CollectionFeeCard = ({
             <CustomTable
               t={t}
               columns={Tablecolumns}
-              tableClassName="deonar-scrollable-table"
+              // tableClassName="deonar-scrollable-table"
               data={tableData}
               disableSort={false}
               autoSort={false}

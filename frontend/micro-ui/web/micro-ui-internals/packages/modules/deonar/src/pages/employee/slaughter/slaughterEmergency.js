@@ -241,7 +241,7 @@ const SlaughteringEmergency = () => {
                 columns={Tablecolumns}
                 data={slaughterList}
                 manualPagination={false}
-                tableClassName={"deonar-scrollable-table"}
+                // tableClassName={"deonar-scrollable-table"}
                 totalRecords={totalRecords}
                 autoSort={false}
               />
@@ -250,14 +250,14 @@ const SlaughteringEmergency = () => {
 
           {isModalOpen && (
             <CustomModal isOpen={isModalOpen} onClose={toggleModal} selectedUUID={selectedUUID} style={{ width: "100%" }}>
-              <div className="bmc-card-row">
-                <CustomTable
+            <div className="bmc-card-row" style={{ overflowY: "auto", maxHeight: "511px" }}>
+            <CustomTable
                   t={t}
                   columns={isVisibleColumns2}
                   manualPagination={false}
                   data={animalAssignmentData}
                   totalRecords={totalRecords}
-                  tableClassName={"deonar-scrollable-table"}
+                  // tableClassName={"deonar-scrollable-table"}
                   getCellProps={() => ({
                     style: {
                       fontSize: "14px",
