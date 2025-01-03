@@ -465,7 +465,7 @@ const CustomTable = ({
       </div>
 
       {showAddButton && (
-        <div style={{ paddingBottom: "1rem" }}>
+        <div style={{ paddingBottom: "1rem", marginTop: "100px" }}>
           <button onClick={onAddClick} className="bmc-card-button" style={{ borderBottom: "3px solid black", outline: "none" }} type="submit">
             {buttonText}
           </button>
