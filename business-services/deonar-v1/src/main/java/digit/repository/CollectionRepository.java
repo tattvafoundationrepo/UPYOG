@@ -11,6 +11,7 @@ import digit.repository.querybuilder.CollectionQueryBuilder;
 import digit.repository.rowmapper.CollectionRowMapper;
 import digit.web.models.collection.EntryFee;
 import digit.web.models.collection.ParkingFee;
+import digit.web.models.collection.RemovalFee;
 import digit.web.models.collection.SlaughterFee;
 import digit.web.models.collection.StableFee;
 import digit.web.models.collection.WashFee;
@@ -60,12 +61,11 @@ public class CollectionRepository {
       
     }
 
-    public List<StableFee> getRemovalCollectionFee(CollectionSearchCriteria criteria) {
+    public List<RemovalFee> getRemovalCollectionFee(CollectionSearchCriteria criteria) {
         List<Object> preparedStmtList = new ArrayList<>();
         String query = queryBuilder.getRemovalFeeQuery(criteria, preparedStmtList);
         log.info("Final query: " + query);
-        // Create a new instance of the row mapper with the correct type
-        CollectionRowMapper<StableFee> entryfeerowMapper = new CollectionRowMapper<>(StableFee.class);
+        CollectionRowMapper<RemovalFee> entryfeerowMapper = new CollectionRowMapper<>(RemovalFee.class);
         return jdbcTemplate.query(query, entryfeerowMapper, preparedStmtList.toArray());
     }
 

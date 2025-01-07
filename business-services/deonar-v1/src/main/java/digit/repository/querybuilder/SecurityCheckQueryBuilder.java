@@ -175,6 +175,9 @@ public class SecurityCheckQueryBuilder {
     
                 if(request.getForEntryCollection() != null )
                  return " select * from eg_deonar_collection_entry_fee ";
+
+                if(request.getForRemovalCollection() != null )
+                 return " select * from eg_deonar_collection_removal_fee "; 
             }
         }
         return BASE_QUERY_STABLING_LIST;

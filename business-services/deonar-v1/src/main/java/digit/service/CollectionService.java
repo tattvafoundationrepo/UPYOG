@@ -12,9 +12,9 @@ import digit.kafka.Producer;
 import digit.repository.CollectionRepository;
 import digit.repository.CollectionSearchCriteria;
 import digit.util.IdgenUtil;
-import digit.web.models.collection.EntryFee;
 import digit.web.models.collection.FeeDetail;
 import digit.web.models.collection.ParkingFee;
+import digit.web.models.collection.RemovalFee;
 import digit.web.models.collection.SlaughterFee;
 import digit.web.models.collection.StableFee;
 import digit.web.models.collection.WashFee;
@@ -31,6 +31,8 @@ public class CollectionService {
     
     @Autowired
     private IdgenUtil idgenUtil;
+
+    private static List<Integer> collectionTypeList  = List.of(1,2,3,4,5);
 
     public List<StableFee> getEntryFee(RequestInfo requestInfo, CollectionSearchCriteria criteria) {
         // Fetch applications from database according to the given search criteria
@@ -52,8 +54,8 @@ public class CollectionService {
         return common;
     }
 
-    public List<StableFee> getRemovalFee(RequestInfo requestInfo, CollectionSearchCriteria criteria) {
-        List<StableFee> common = commonRepository.getRemovalCollectionFee(criteria);
+    public List<RemovalFee> getRemovalFee(RequestInfo requestInfo, CollectionSearchCriteria criteria) {
+        List<RemovalFee> common = commonRepository.getRemovalCollectionFee(criteria);
 
         if (CollectionUtils.isEmpty(common))
             return new ArrayList<>();
@@ -112,8 +114,10 @@ public class CollectionService {
                 .build();
         producer.push("topic_deonar_savefee", common);
         
-        if(common.getFeevalue() > 0 && common.getFeetype() == 2){
-            common.setLicenceNumber(feedetail.getLicenceNumber());
+        if(common.getFeevalue() > 0 && collectionTypeList.contains(common.getFeetype().intValue())){
+            if(feedetail.getLicenceNumber() != null){
+                common.setLicenceNumber(feedetail.getLicenceNumber());
+            }
             common.setStakeholderId(feedetail.getStakeholderId());
             producer.push("topic_deonar_savefeedetails", common);
         }

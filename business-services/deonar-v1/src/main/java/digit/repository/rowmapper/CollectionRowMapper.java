@@ -14,6 +14,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import digit.web.models.collection.EntryFee;
 import digit.web.models.collection.ParkingFee;
+import digit.web.models.collection.RemovalFee;
 import digit.web.models.collection.SlaughterFee;
 import digit.web.models.collection.StableFee;
 import digit.web.models.collection.WashFee;
@@ -55,7 +56,83 @@ public class CollectionRowMapper<T> implements ResultSetExtractor<List<T>> {
         if (type.equals(WeighingFee.class)) {
             return (List<T>) extractWeighingFee(rs);
         }
+        if (type.equals(RemovalFee.class)) {
+            return (List<T>) extractRemovalFee(rs);
+        }
         throw new UnsupportedOperationException("Type " + type.getName() + " is not supported.");
+    }
+
+    private List<RemovalFee> extractRemovalFee(ResultSet rs) throws SQLException {
+
+        Map<String, RemovalFee> stableFeeMap = new LinkedHashMap<>();
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        while (rs.next()) {
+            String arrivalId = rs.getString("arrivalid");
+
+            RemovalFee stableFee = stableFeeMap.get(arrivalId);
+            if (stableFee == null) {
+                stableFee = RemovalFee.builder()
+                        .arrivalid(arrivalId)
+                        .stakeholderId(rs.getLong("stakeholderid"))
+                        .liceneceNumber(rs.getString("licencenumber"))
+                        .total(rs.getFloat("total_fee_with_stakeholder"))
+                        .details(new ArrayList<>())
+                        .build();
+                stableFeeMap.put(arrivalId, stableFee);
+            }
+
+            String animalDetailsJson = rs.getString("animal_details");
+            String animalTypeCountJson = rs.getString("animal_type_count");
+
+            try {
+                Map<Long, RemovalFee.Details> detailsMap = new HashMap<>();
+                List<Map<String, Object>> animalTypeCountList = objectMapper.readValue(
+                        animalTypeCountJson, new TypeReference<List<Map<String, Object>>>() {
+                        });
+
+                for (Map<String, Object> countEntry : animalTypeCountList) {
+                    Long animalTypeId = ((Number) countEntry.get("animaltypeid")).longValue();
+                    String animalType = countEntry.get("animaltype").toString();
+                    Integer count = ((Number) countEntry.get("count")).intValue();
+
+                    RemovalFee.Details detail = RemovalFee.Details.builder()
+                            .animal(animalType)
+                            .count(count)
+                            .animalTypeId(animalTypeId)
+                            .stableFeeDetails(new ArrayList<>())
+                            .build();
+
+                    detailsMap.put(animalTypeId, detail);
+                    stableFee.getDetails().add(detail);
+                }
+
+                List<RemovalFee.RemovalFeeDetails> stableFeeDetailsList = objectMapper.readValue(
+                        animalDetailsJson, new TypeReference<List<RemovalFee.RemovalFeeDetails>>() {
+                        });
+
+                for (RemovalFee.RemovalFeeDetails stableFeeDetail : stableFeeDetailsList) {
+                    Long animalTypeId = (long) stableFeeDetail.getAnimalTypeId();
+                    RemovalFee.Details detail = detailsMap.get(animalTypeId);
+
+                    if (detail != null && detail.getAnimalTypeId() == stableFeeDetail.getAnimalTypeId().longValue()) {
+                        detail.getStableFeeDetails().add(stableFeeDetail);
+                    }
+                }
+
+                for (RemovalFee.Details detail : detailsMap.values()) {
+                    double totalFee = detail.getStableFeeDetails().stream()
+                            .mapToDouble(sfd -> sfd.getFeeWithStakeholder() != null ? sfd.getFeeWithStakeholder() : 0.0)
+                            .sum();
+                    detail.setTotalFee(totalFee);
+                }
+            } catch (Exception e) {
+                throw new SQLException("Error parsing JSON data", e);
+            }
+        }
+
+        return new ArrayList<>(stableFeeMap.values());
+        
     }
 
     private List<EntryFee> extractEntryFee(ResultSet rs) throws SQLException {
@@ -95,10 +172,10 @@ public class CollectionRowMapper<T> implements ResultSetExtractor<List<T>> {
     private List<StableFee> extractStableFee(ResultSet rs) throws SQLException {
         Map<String, StableFee> stableFeeMap = new LinkedHashMap<>();
         ObjectMapper objectMapper = new ObjectMapper();
-    
+
         while (rs.next()) {
             String arrivalId = rs.getString("arrivalid");
-        
+
             StableFee stableFee = stableFeeMap.get(arrivalId);
             if (stableFee == null) {
                 stableFee = StableFee.builder()
@@ -110,43 +187,45 @@ public class CollectionRowMapper<T> implements ResultSetExtractor<List<T>> {
                         .build();
                 stableFeeMap.put(arrivalId, stableFee);
             }
-        
+
             String animalDetailsJson = rs.getString("animal_details");
             String animalTypeCountJson = rs.getString("animal_type_count");
-        
+
             try {
                 Map<Long, StableFee.Details> detailsMap = new HashMap<>();
                 List<Map<String, Object>> animalTypeCountList = objectMapper.readValue(
-                        animalTypeCountJson, new TypeReference<List<Map<String, Object>>>() {});
-        
+                        animalTypeCountJson, new TypeReference<List<Map<String, Object>>>() {
+                        });
+
                 for (Map<String, Object> countEntry : animalTypeCountList) {
                     Long animalTypeId = ((Number) countEntry.get("animaltypeid")).longValue();
                     String animalType = countEntry.get("animaltype").toString();
                     Integer count = ((Number) countEntry.get("count")).intValue();
-        
+
                     StableFee.Details detail = StableFee.Details.builder()
                             .animal(animalType)
                             .count(count)
                             .animalTypeId(animalTypeId)
                             .stableFeeDetails(new ArrayList<>())
                             .build();
-        
+
                     detailsMap.put(animalTypeId, detail);
                     stableFee.getDetails().add(detail);
                 }
-        
+
                 List<StableFee.StableFeeDetails> stableFeeDetailsList = objectMapper.readValue(
-                        animalDetailsJson, new TypeReference<List<StableFee.StableFeeDetails>>() {});
-        
+                        animalDetailsJson, new TypeReference<List<StableFee.StableFeeDetails>>() {
+                        });
+
                 for (StableFee.StableFeeDetails stableFeeDetail : stableFeeDetailsList) {
                     Long animalTypeId = (long) stableFeeDetail.getAnimalTypeId();
                     StableFee.Details detail = detailsMap.get(animalTypeId);
-        
+
                     if (detail != null && detail.getAnimalTypeId() == stableFeeDetail.getAnimalTypeId().longValue()) {
                         detail.getStableFeeDetails().add(stableFeeDetail);
                     }
                 }
- 
+
                 for (StableFee.Details detail : detailsMap.values()) {
                     double totalFee = detail.getStableFeeDetails().stream()
                             .mapToDouble(sfd -> sfd.getFeeWithStakeholder() != null ? sfd.getFeeWithStakeholder() : 0.0)
@@ -157,11 +236,11 @@ public class CollectionRowMapper<T> implements ResultSetExtractor<List<T>> {
                 throw new SQLException("Error parsing JSON data", e);
             }
         }
-        
+
         return new ArrayList<>(stableFeeMap.values());
-        
+
     }
-    
+
     private List<ParkingFee> extractParkingFee(ResultSet rs) throws SQLException {
         // Use a map to store ParkingFee objects by vehiclenumber
         Map<String, ParkingFee> parkingFeeMap = new LinkedHashMap<>();

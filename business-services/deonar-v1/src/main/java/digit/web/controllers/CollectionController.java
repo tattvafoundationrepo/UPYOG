@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -17,11 +16,10 @@ import digit.util.ResponseInfoFactory;
 import digit.web.models.collection.CollectFeeRequest;
 import digit.web.models.collection.CollectedFeeResponse;
 import digit.web.models.collection.CollectionRequest;
-import digit.web.models.collection.EntryFee;
-import digit.web.models.collection.EntryFeeResponse;
 import digit.web.models.collection.FeeDetail;
 import digit.web.models.collection.ParkingFee;
 import digit.web.models.collection.ParkingFeeResponse;
+import digit.web.models.collection.RemovalFee;
 import digit.web.models.collection.SlaughterFee;
 import digit.web.models.collection.SlaughterFeeResponse;
 import digit.web.models.collection.StableFee;
@@ -103,11 +101,11 @@ public class CollectionController {
     public ResponseEntity<Object> getRemovalFee(
             @ApiParam(value = "Get removal  Fee Details", required = true) @Valid @RequestBody CollectionRequest request) {
         try {
-            List<StableFee> common = service.getRemovalFee(request.getRequestInfo(), request.getCriteria());
+            List<RemovalFee> common = service.getRemovalFee(request.getRequestInfo(), request.getCriteria());
             ResponseInfo responseInfo = responseInfoFactory
                     .createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
             StableFeeResponse res = StableFeeResponse.builder()
-                    .details(common)
+                    .removalDetails(common)
                     .responseInfo(responseInfo)
                     .build();
             return new ResponseEntity<>(res, HttpStatus.OK);

@@ -79,6 +79,10 @@ public class SaveStakeholderQueryBuilder {
             licencenumber, registrationnumber, stakeholdertypename, animaltype 
             """;
     
+    private static final String GET_CITIZEN = """
+            SELECT id, stakeholdername, mobilenumber, email, 
+            NULL AS licencenumber, NULL AS registrationnumber, stakeholdertypename, NULL AS animaltype 
+            """;
     private static final String GET_ALL = """
             SELECT dl.stakeholdername AS stakeholdername,
             dl.mobilenumber AS mobilenumber,
@@ -142,6 +146,9 @@ public class SaveStakeholderQueryBuilder {
             query.append(UNION_ALL);
             query.append(GET_STAKEHOLDER);
             query.append(" FROM eg_deonar_deal_list_animal_trader ");
+            query.append(UNION_ALL);
+            query.append(GET_CITIZEN);
+            query.append(" FROM eg_deonar_list_citizen ");
         } else {
             query.append(" FROM eg_deonar_deal_list_animal_broker ");
             query.append(UNION_ALL);
@@ -159,6 +166,9 @@ public class SaveStakeholderQueryBuilder {
             query.append(UNION_ALL);
             query.append(GET_STAKEHOLDER);
             query.append(" FROM eg_deonar_deal_list_animal_trader ");
+            query.append(UNION_ALL);
+            query.append(GET_CITIZEN);
+            query.append(" FROM eg_deonar_list_citizen ");
         }
         query.append(") dl ");
         query.append(" LEFT JOIN eg_deonar_stakeholder sa ON dl.id = sa.id");

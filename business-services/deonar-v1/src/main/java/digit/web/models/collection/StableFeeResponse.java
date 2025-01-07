@@ -16,4 +16,7 @@ public class StableFeeResponse {
 
    @JsonProperty("Details")
    private List<StableFee> details;
+   
+   @JsonProperty("removalDetails")
+   private List<RemovalFee> removalDetails;
 }

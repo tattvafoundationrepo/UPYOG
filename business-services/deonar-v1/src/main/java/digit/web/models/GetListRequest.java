@@ -24,5 +24,7 @@ public class GetListRequest {
 
     private Boolean forStablingCollection;
 
+    private Boolean forRemovalCollection;
+
 
 }

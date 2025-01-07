@@ -59,14 +59,24 @@ public class CollectionQueryBuilder {
 
     public String getRemovalFeeQuery(CollectionSearchCriteria criteria, List<Object> preparedStmtList) {
         final String REMOVALFEE_QUERY = """
-                SELECT ddreference,animal,animalcount,feevalue,totalstablefee ,arrivalid
-                FROM eg_deonar_vremovalfee
+                SELECT arrivalid,licencenumber,stakeholderid,animal_details,animal_type_count,total_fee_with_stakeholder
+                FROM eg_deonar_collection_removal_fee
                 """;
         StringBuilder query = new StringBuilder(REMOVALFEE_QUERY);
         if (criteria.getSearch() != null) {
             addClauseIfRequired(query, preparedStmtList);
-            query.append(" ddreference = ? ");
+            query.append(" arrivalid = ? ");
             preparedStmtList.add(criteria.getSearch());
+        }
+        if (criteria.getLiceneceNumber() != null) {
+            addClauseIfRequired(query, preparedStmtList);
+            query.append(" licencenumber = ? ");
+            preparedStmtList.add(criteria.getLiceneceNumber());
+        }
+        if (criteria.getMobileNumber() != null) {
+            addClauseIfRequired(query, preparedStmtList);
+            query.append(" mobilenumber = ? ");
+            preparedStmtList.add(criteria.getMobileNumber());
         }
         return query.toString();
     }

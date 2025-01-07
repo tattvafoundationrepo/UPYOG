@@ -23,8 +23,18 @@ public class CommonQueryBuilder {
             , mobilenumber , stakeholdertypename as tradertype , registrationnumber
             """;
 
+    private static final String CITIZEN_VIEW_QUERY = """
+                select stakeholdername as name ,  id
+                , mobilenumber , stakeholdertypename as tradertype 
+                """;
+
     public String getStakeHolderQuery(CommonSearchCriteria criteria, List<Object> preparedStmtList) {
-        StringBuilder query = new StringBuilder(STAKEHOLDER_VIEW_QUERY);
+        StringBuilder query = new StringBuilder();
+        if(criteria.getOption().equals("citizen")){
+            query = new StringBuilder(CITIZEN_VIEW_QUERY);
+        } else {
+            query = new StringBuilder(STAKEHOLDER_VIEW_QUERY);
+        }
         String stakeHolder = criteria.getOption().toLowerCase();
         switch (stakeHolder) {
             case "trader":
@@ -50,7 +60,8 @@ public class CommonQueryBuilder {
                 query.append(" from eg_deonar_deal_list_animal_broker ");
 
                 break;
-
+            case "citizen":
+                query.append(" from eg_deonar_list_citizen ");
             default:
                 break;
         }

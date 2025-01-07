@@ -22,5 +22,9 @@ public class CollectionSearchCriteria {
     private String openTime;
     private String closeTime;
 
+    private String mobileNumber;
+
+
+
     
 }
