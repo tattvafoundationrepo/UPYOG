@@ -24,6 +24,8 @@ public class CollectionSearchCriteria {
 
     private String mobileNumber;
 
+    private Integer collectionType;
+
 
 
     

@@ -35,7 +35,7 @@ public class StakeholdersController {
     private ResponseInfoFactory responseInfoFactory;
 
     // POST endpoint for saving stakeholder details
-
+    @CrossOrigin("*")
     @PostMapping("/_save")
     public ResponseEntity<StakeholderResponse> saveStakeholderDetails(
             @RequestBody StakeholderRequest stakeholderRequest) {
@@ -66,7 +66,7 @@ public class StakeholdersController {
         }
     }
 
-
+    @CrossOrigin("*")
     @PostMapping("/_getAll")
     public ResponseEntity<StakeholderCheckResponse> getStakeholderDetails( @RequestBody StakeholderCheckRequest stakeholderCheckRequest){
         List<StakeholderCheckDetails> stakeholderDetails = new ArrayList<>();

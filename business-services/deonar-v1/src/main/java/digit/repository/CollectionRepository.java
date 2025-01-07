@@ -117,5 +117,13 @@ public class CollectionRepository {
         jdbcTemplate.execute(query);
     }
 
+    public String getAnimalDetails(CollectionSearchCriteria criteria) {
+        List<Object> preparedStmtList = new ArrayList<>();
+        String query = queryBuilder.getAnimalFeeDetailsWithDays(criteria, preparedStmtList);
+        log.info("Final query: " + query);
+        return jdbcTemplate.queryForObject(query, String.class, preparedStmtList.toArray());
+      
+    }
+
     
 }

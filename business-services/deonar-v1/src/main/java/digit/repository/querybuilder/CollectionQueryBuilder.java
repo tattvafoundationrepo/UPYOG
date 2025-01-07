@@ -76,7 +76,7 @@ public class CollectionQueryBuilder {
         if (criteria.getMobileNumber() != null) {
             addClauseIfRequired(query, preparedStmtList);
             query.append(" mobilenumber = ? ");
-            preparedStmtList.add(criteria.getMobileNumber());
+            preparedStmtList.add(Long.parseLong(criteria.getMobileNumber()));
         }
         return query.toString();
     }
@@ -233,4 +233,44 @@ public class CollectionQueryBuilder {
         query.append(" WHERE vehiclenumber = '").append(String.valueOf(vehiclenumber)).append("' ");
         return query.toString();
     }
-}
+
+    public String getAnimalFeeDetailsWithDays(CollectionSearchCriteria criteria, List<Object> preparedStmtList){
+
+        final String REMOVALFEE_QUERY = """
+                select animal_details 
+                """;
+        StringBuilder query = new StringBuilder(REMOVALFEE_QUERY);       
+        switch(criteria.getCollectionType())   {
+
+            case  1:
+                query.append(" from eg_deonar_collection_entry_fee  ");
+                break;
+            case  2:
+                query.append(" from eg_deonar_collection_stabling_fee  ");
+                break;
+            case  3:
+                query.append(" from eg_deonar_collection_removal_fee  ");
+                break;    
+            default:
+                break;    
+        }     
+        if (criteria.getSearch() != null) {
+            addClauseIfRequired(query, preparedStmtList);
+            query.append(" arrivalid = ? ");
+            preparedStmtList.add(criteria.getSearch());
+        }
+        if (criteria.getLiceneceNumber() != null) {
+            addClauseIfRequired(query, preparedStmtList);
+            query.append(" licencenumber = ? ");
+            preparedStmtList.add(criteria.getLiceneceNumber());
+        }
+        if (criteria.getMobileNumber() != null) {
+            addClauseIfRequired(query, preparedStmtList);
+            query.append(" mobilenumber = ? ");
+            preparedStmtList.add(Long.parseLong(criteria.getMobileNumber()));
+        }
+        return query.toString();
+    }
+
+    }
+

@@ -26,4 +26,6 @@ public class FeeDetail {
     private String arrivalid;
     private Long stakeholderId;
     private String licenceNumber;
+    private String mobileNumber;
+    private String animalDetail;
 }

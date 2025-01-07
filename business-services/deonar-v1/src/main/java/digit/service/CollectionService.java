@@ -113,12 +113,22 @@ public class CollectionService {
                 .audit(audit)
                 .build();
         producer.push("topic_deonar_savefee", common);
-        
+        CollectionSearchCriteria criteria = new CollectionSearchCriteria();
+
+        String animalDetails = null;
         if(common.getFeevalue() > 0 && collectionTypeList.contains(common.getFeetype().intValue())){
             if(feedetail.getLicenceNumber() != null){
                 common.setLicenceNumber(feedetail.getLicenceNumber());
+                criteria.setLiceneceNumber(feedetail.getLicenceNumber());
             }
+            if(feedetail.getMobileNumber() != null){
+                criteria.setMobileNumber(feedetail.getMobileNumber());
+            }
+            criteria.setSearch(feedetail.getUuid());
             common.setStakeholderId(feedetail.getStakeholderId());
+            criteria.setCollectionType(common.getFeetype().intValue());
+            animalDetails = commonRepository.getAnimalDetails(criteria);
+            common.setAnimalDetail(animalDetails);
             producer.push("topic_deonar_savefeedetails", common);
         }
         if(common.getFeevalue() > 0 && common.getFeetype() == 7){
