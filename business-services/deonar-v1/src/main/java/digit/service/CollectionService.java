@@ -36,7 +36,7 @@ public class CollectionService {
     @Autowired
     private IdgenUtil idgenUtil;
 
-    private static List<Integer> collectionTypeList  = List.of(1,2,3);
+    private static List<Integer> collectionTypeList  = List.of(1,2,3,4);
 
     public List<StableFee> getEntryFee(RequestInfo requestInfo, CollectionSearchCriteria criteria) {
         // Fetch applications from database according to the given search criteria

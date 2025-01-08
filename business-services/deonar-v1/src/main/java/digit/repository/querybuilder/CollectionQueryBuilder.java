@@ -275,7 +275,10 @@ public class CollectionQueryBuilder {
                 break;
             case  3:
                 query.append(" from eg_deonar_collection_removal_fee  ");
-                break;    
+                break;
+            case  4:
+                query.append(" from eg_deonar_collection_slaughter_fee  ");
+                break;            
             default:
                 break;    
         }     
