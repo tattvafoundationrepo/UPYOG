@@ -352,12 +352,17 @@ const CustomTable = ({
                 option={dropdownConfig.options}
                 optionKey={dropdownConfig.optionKey || "name"}
                 placeholder={dropdownConfig.placeholder || t("Select an Option")}
-                style={{ width: dropdownConfig.width || "17%" , marginTop: "8px" }}
+                style={{ width: dropdownConfig.width || "17%", marginTop: "8px" }}
               />
             ))}
           {showSearch && (
             <SearchField>
-              <TextInput value={searchTerm} placeholder={searchPlaceholder} onChange={handleSearchChange} style={{ width: "35%", marginBottom: "25px" }} />
+              <TextInput
+                value={searchTerm}
+                placeholder={searchPlaceholder}
+                onChange={handleSearchChange}
+                style={{ width: "35%", marginBottom: "25px" }}
+              />
             </SearchField>
           )}
         </div>
@@ -463,7 +468,7 @@ const CustomTable = ({
       </div>
 
       {showAddButton && (
-        <div style={{ paddingBottom: "1rem", marginTop: "100px" }}>
+        <div style={{ paddingBottom: "1rem" }}>
           <button onClick={onAddClick} className="bmc-card-button" style={{ borderBottom: "3px solid black", outline: "none" }} type="submit">
             {buttonText}
           </button>
