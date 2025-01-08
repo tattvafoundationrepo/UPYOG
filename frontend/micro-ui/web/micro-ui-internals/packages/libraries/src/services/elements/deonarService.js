@@ -22,7 +22,7 @@ const DeonarService = {
       userService: true,
     });
   },
-  
+
   getStakeholder: (data) => {
     return Request({
       data: data,
@@ -358,7 +358,7 @@ const DeonarService = {
       userService: true,
     });
   },
-  
+
   getCollectionWeighingList: (data) => {
     return Request({
       data: data,
@@ -380,7 +380,7 @@ const DeonarService = {
       userService: true,
     });
   },
-  
+
   saveSlaughterListData: (data) => {
     return Request({
       data: data,
@@ -479,6 +479,28 @@ const DeonarService = {
     return Request({
       data: data,
       url: Urls.deonar_security_check.getCollectionStablingList,
+      useCache: false,
+      method: "POST",
+      auth: true,
+      userService: true,
+    });
+  },
+
+  getCollectionEntryList: (data) => {
+    return Request({
+      data: data,
+      url: Urls.deonar_security_check.getCollectionEntryList,
+      useCache: false,
+      method: "POST",
+      auth: true,
+      userService: true,
+    });
+  },
+
+  getRemovalCollectionList: (data) => {
+    return Request({
+      data: data,
+      url: Urls.deonar_security_check.getRemovalCollectionList,
       useCache: false,
       method: "POST",
       auth: true,

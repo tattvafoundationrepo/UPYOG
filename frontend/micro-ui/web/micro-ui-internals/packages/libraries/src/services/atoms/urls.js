@@ -241,15 +241,15 @@ const Urls = {
     getCount: "/bmc-service-v1/application/_getcount",
     removeDocument: "/bmc-service-v1/user/remove/_document",
     saveDocuments: "/bmc-service-v1/user/document/_save",
-    saveQualifications:"/bmc-service-v1/user/qualification/_save",
-    saveBanks:"/bmc-service-v1/user/bank/_save"
+    saveQualifications: "/bmc-service-v1/user/qualification/_save",
+    saveBanks: "/bmc-service-v1/user/bank/_save",
   },
 
   users: {
     getUserDetails: "/bmc-service-v1/user/_get",
     saveUserDetails: "/bmc-service-v1/user/_save",
     getAllApplications: "/bmc-service-v1/application/_status",
-    getAllBMCInboxApplication:"/bmc-service-v1/application/_getAll",
+    getAllBMCInboxApplication: "/bmc-service-v1/application/_getAll",
   },
 
   banksDetails: {
@@ -257,7 +257,7 @@ const Urls = {
   },
 
   deonar_security_check: {
-    getStakeholder:"/deonar-v1/stakeholders/_getAll",
+    getStakeholder: "/deonar-v1/stakeholders/_getAll",
     getStakeholders: "/deonar-v1/stakeholder/_get",
     saveStakeholderDetails: "/deonar-v1/stakeholders/_save",
     saveDeonarDetails: "/deonar-v1/securityCheck/_save",
@@ -295,11 +295,13 @@ const Urls = {
     saveWashingDetails: "/deonar-v1/vehicleWashing/_save",
     getWashingDetails: "/deonar-v1/vehicleWashing/_washInVehicle",
     getEmergencySlaughterList: "/deonar-v1/animal/slaughterList/_emergency",
-    getEmergencyExportList: '/deonar-v1/animal/slaughter/_export',
-    getRemovalReport:"/deonar-v1/get/removal/_list",
+    getEmergencyExportList: "/deonar-v1/animal/slaughter/_export",
+    getRemovalReport: "/deonar-v1/get/removal/_list",
     saveSlaughterListDataBooking: "/deonar-v1/animal/slaughter/_booking",
     getNormalSlaughterList: "/deonar-v1/animal/slaughterList/_normal",
     getCollectionStablingList: "/deonar-v1/get/stabling/list/_collection",
+    getCollectionEntryList: "/deonar-v1/get/entry/list/_collection",
+    getRemovalCollectionList: "/deonar-v1/get/removal/list/_collection",
   },
   access_control: "/access/v1/actions/mdms/_get",
   billgenie: "/egov-searcher",

@@ -449,9 +449,9 @@ const Slaughtering = () => {
     {
       accessor: "slaughterByBmcEmployee",
       Header: () => (
-        <div className="flex items-center justify-center">
+        // <div className="flex items-center justify-center">
           <CheckBox label={t("Slaughter by BMC Employee")} onChange={handleSelectAll} checked={selectAll} style={{ margin: "0 auto", top: "3px" }} />
-        </div>
+        // </div>
       ),
       Cell: ({ row }) => {
         const rowIndex = row.index;
@@ -507,7 +507,7 @@ const Slaughtering = () => {
               {/* <div className="bmc-row-card-header" style={{ marginBottom: "40px" }}> */}
 
               {/* </div> */}
-              <div className="bmc-card-row" style={{ overflowY: "auto", maxHeight: "511px" }}>
+              <div className="bmc-card-row" style={{  maxHeight: "511px" }}>
               {/* <div className="bmc-row-card-header" style={{ overflowY: "auto", maxHeight: "300px" }}> */}
                 {/* {isMobileView && data.map((data, index) => <TableCard data={data} key={index} fields={fields} onUUIDClick={handleUUIDClick} />)} */}
                 <CustomTable

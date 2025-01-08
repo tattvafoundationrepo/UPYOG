@@ -31,7 +31,7 @@ const RemovalReport = () => {
       Cell: ({ row }) => (
         <span
           onClick={() => handleStakeholderClick(row)}
-          style={{ cursor: "pointer",  textDecoration: "underline" }}
+          style={{ cursor: "pointer", textDecoration: "underline" }}
         >
           {t(row.original.ownerName) || "N/A"}
         </span>
@@ -93,7 +93,7 @@ const RemovalReport = () => {
 
   ]
   useEffect(() => {
-    if (RemovalList) {  
+    if (RemovalList) {
       const mainTableData = RemovalList.SecurityCheckDetails.map((item) => ({
         ownerName: item.shopkeepername || "N/A",
         UUID: item.entryUnitId || "N/A",
@@ -101,7 +101,7 @@ const RemovalReport = () => {
         licenseNumber: item.licenceNumber || "N/A",
         mobileNumber: item.mobilenumber || "N/A",
       }));
-  
+
       const detailedData = RemovalList.SecurityCheckDetails.flatMap((item) =>
         item.animalDetails.map((animalDetail) => ({
           ownerName: item.shopkeepername || "N/A",
@@ -112,15 +112,15 @@ const RemovalReport = () => {
           licenseNumber: item.licenceNumber || "N/A",
           animalToken: animalDetail.token || "N/A",
           date: typeof item.dateOfRemoval === "string" ? item.dateOfRemoval : "Invalid Date",
-          time: (item.timeOfRemoval || "N/A").replace(/:/g, "."), 
+          time: (item.timeOfRemoval || "N/A").replace(/:/g, "."),
           mobileNumber: item.mobilenumber || "N/A",
         }))
       );
-  
+
       setGetApplicationData({ mainTableData, detailedData });
     }
   }, [RemovalList]);
-  
+
 
 
 
@@ -134,47 +134,49 @@ const RemovalReport = () => {
     <React.Fragment>
       <MainFormHeader title={"DEONAR_REMOVAL_REPORT"} />
       <div className="bmc-row-card-header">
-        <CustomTable
-          t={t}
-          pageSizeLimit={10}
-          columns={visibleColumns}
-          data={getApplicationData?.mainTableData || []}
-          manualPagination={false}
-          // tableClassName={"ebe-custom-scroll"}
-          showSearch={true}
-          showText={true}
-          isLoading={isLoading}
-        />
-      </div>
-      {isModalOpen && (
-        <div className="bmc-card-row">
-          
-          <CustomModal 
-      isOpen={isModalOpen} 
-      onClose={handleCloseModal} 
-      selectedUUID={selectedUUID} 
-      style={{ width: "100%" }} 
-      tableClassName={"ebe-custom-scroll"}
-    >
-            <div className="bmc-card-row" style={{ overflowY: "auto", maxHeight: "511px" }}>
-            <CustomTable
-          t={t}
-          columns={isVisibleColumns2}
-          manualPagination={false}
-          data={getApplicationData?.detailedData.filter(item => item.UUID === selectedUUID) || []}
-          totalRecords={totalRecords}
-          // tableClassName={"deonar-scrollable-table"}
-          autoSort={false}
-          isLoadingRows={false}
-        />
-      </div>
-    </CustomModal>
-          
+        <div className="bmc-card-row" style={{ overflowY: "auto", maxHeight: "511px" }}>
 
-
+          <CustomTable
+            t={t}
+            pageSizeLimit={10}
+            columns={visibleColumns}
+            data={getApplicationData?.mainTableData || []}
+            manualPagination={false}
+            // tableClassName={"ebe-custom-scroll"}
+            showSearch={true}
+            showText={true}
+            isLoading={isLoading}
+          />
         </div>
+      </div>
+        {isModalOpen && (
+          <div className="bmc-card-row">
+            <CustomModal
+              isOpen={isModalOpen}
+              onClose={handleCloseModal}
+              selectedUUID={selectedUUID}
+              style={{ width: "100%" }}
+              tableClassName={"ebe-custom-scroll"}
+            >
+              <div className="bmc-card-row" style={{ overflowY: "auto", maxHeight: "511px" }}>
+                <CustomTable
+                  t={t}
+                  columns={isVisibleColumns2}
+                  manualPagination={false}
+                  data={getApplicationData?.detailedData.filter(item => item.UUID === selectedUUID) || []}
+                  totalRecords={totalRecords}
+                  // tableClassName={"deonar-scrollable-table"}
+                  autoSort={false}
+                  isLoadingRows={false}
+                />
+              </div>
+            </CustomModal>
 
-      )}
+
+
+          </div>
+
+        )}
     </React.Fragment>
   );
 };

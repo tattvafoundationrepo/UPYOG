@@ -16,6 +16,7 @@ import useCollectionPoint from "@upyog/digit-ui-libraries/src/hooks/deonar/useCo
 // import { jsPDF } from "jspdf";
 // import html2canvas from "html2canvas";
 import SearchButtonField from "../commonFormFields/searchBtn";
+import EntryFeeReceipt from "../reciept/feeReceipt";
 
 const radioOptions = [
   { label: "Entry Collection Fee", value: "arrival", feeType: 1 },
@@ -157,21 +158,28 @@ const FeeCollection = () => {
     fetchweighingList,
     fetchweighingFee,
     fectchCollectionStablingList,
+    fetchCollectionEntryList,
+    fetchRemovalCollectionList,
   } = useCollectionPoint({ value: selectedRadioValue });
   // const { fetchEntryCollectionFee, fetchStablingCollectionFee } = useCollectionPoint({});
+  const selectedEntryliceneceNumberItem = animalCount.find((item) => item.entryUnitId === selectedUUID)?.licenceNumber;
+  const selectedEntryStakeholder = animalCount.find((item) => item.entryUnitId === selectedUUID)?.stakeholderId;
+
   const { data: entryData } = fetchEntryCollectionFee({ Search: { Search: selectedUUID } });
-  const { data: fetchedData, isLoading } = fetchEntryFeeDetailsbyUUID({ forCollection: true });
+  const { data: fetchedData, isLoading } = fetchCollectionEntryList({ forCollection: true });
   const { data: fetchedStablingData } = fectchCollectionStablingList(
     { forCollection: true },
     { executeOnRadioSelect: isStablingSelected, executeOnLoad: false, enabled: isStablingSelected }
   );
 
   const selectedItem = stablingListData.find((item) => item.entryUnitId === selectedUUID)?.licenceNumber;
+  const selectedStableStakeholder = stablingListData.find((item) => item.entryUnitId === selectedUUID)?.stakeholderId;
 
   const { data: stablingData } = fetchStablingCollectionFee(
     { Search: { Search: selectedUUID, liceneceNumber: selectedItem } },
     { executeOnRadioSelect: isStablingSelected, executeOnLoad: false, enabled: isStablingSelected }
   );
+
   const { data: parkingDetailsData } = fetchParkingCollectionDetails(
     {},
     {}, // Additional config if needed
@@ -208,15 +216,20 @@ const FeeCollection = () => {
     executeOnRadioSelect: isWashingSelected,
     enabled: isWashingSelected,
   });
+
+  const selectedRemovalliceneceNumberItem = removalListData.find((item) => item.entryUnitId === selectedUUID)?.licenceNumber;
+  const selectedRemovalMobileNumber = removalListData.find((item) => item.entryUnitId === selectedUUID)?.mobileNumber;
+  const selectedRemovalStakeholder = removalListData.find((item) => item.entryUnitId === selectedUUID)?.stakeholderId;
+
   const { data: removalFeeData } = fetchRemovalCollectionFee(
-    { Search: { Search: selectedUUID } },
+    { Search: { Search: selectedUUID, liceneceNumber: selectedRemovalliceneceNumberItem, mobileNumber: selectedRemovalMobileNumber } },
     {
       executeOnLoad: false,
       executeOnRadioSelect: isRemovalFeeSelected,
       enabled: isRemovalFeeSelected,
     }
   );
-  const { data: RemovalListData } = fetchRemovalList(
+  const { data: RemovalListData } = fetchRemovalCollectionList(
     { forCollection: true },
     { executeOnLoad: false, executeOnRadioSelect: isRemovalSelected, enabled: isRemovalSelected }
   );
@@ -332,7 +345,7 @@ const FeeCollection = () => {
 
   useEffect(() => {
     if (fetchedData) {
-      setAnimalCount(fetchedData.SecurityCheckDetails || []);
+      setAnimalCount(fetchedData.CollectionStablingList || []);
       setTotalRecords();
     }
   }, [fetchedData]);
@@ -380,7 +393,7 @@ const FeeCollection = () => {
           animalType: item?.animal || "-",
           animalCount: item?.count || "-",
           animalFee: item?.fee || "-",
-          totalFee: item?.totalFee  || "-",
+          totalFee: item?.totalFee || "-",
           total: detailItem?.total || "-",
         }))
       );
@@ -391,7 +404,7 @@ const FeeCollection = () => {
 
   useEffect(() => {
     if (RemovalListData) {
-      setRemovalListData(RemovalListData.SecurityCheckDetails || []);
+      setRemovalListData(RemovalListData.CollectionStablingList || []);
       setTotalRecords();
     }
   }, [RemovalListData]);
@@ -410,24 +423,14 @@ const FeeCollection = () => {
     }
   }, [weighingData]);
 
+  console.log(weighingData, "weighingData");
+
   const downloadFileName = `${radioOptions.find((option) => option.value === selectedRadioValue)?.label} Fee Collection Report`;
 
   const generatePDF = (data) => {
-    // Handle different data types
-    let receiptData = {};
-
-    // Convert array or object to a flat object if needed
-    if (Array.isArray(data)) {
-      receiptData = data[0] || {};
-    } else if (typeof data === "object" && data !== null) {
-      receiptData = data;
-    } else {
-      console.warn("Unsupported data structure for PDF generation");
-      return;
-    }
-
-    const downloadFileName = "Payment Receipt";
     const printWindow = window.open("", "", "height=600,width=800");
+
+    const receiptData = Array.isArray(data) ? data[0] : data;
 
     const htmlContent = `
       <!DOCTYPE html>
@@ -435,80 +438,51 @@ const FeeCollection = () => {
         <head>
           <title>${downloadFileName}</title>
           <style>
-            body {
-              font-family: Arial, sans-serif;
-              max-width: 600px;
+            /* Your existing styles */
+            .receipt-container {
+              max-width: 800px;
               margin: 0 auto;
               padding: 20px;
-              line-height: 1.6;
-            }
-            .receipt {
-              border: 2px solid #333;
-              padding: 20px;
-              background-color: #f9f9f9;
+              font-family: Arial, sans-serif;
             }
             .receipt-header {
               text-align: center;
-              border-bottom: 1px solid #ddd;
-              padding-bottom: 10px;
-              margin-bottom: 20px;
+              margin-bottom: 30px;
             }
-            .receipt-header h1 {
-              margin: 0;
-              color: #333;
-            }
-            .receipt-details {
-              margin-bottom: 20px;
-            }
-            .receipt-details div {
+            .detail-row {
               display: flex;
               justify-content: space-between;
               margin-bottom: 10px;
-              border-bottom: 1px dotted #ddd;
               padding-bottom: 5px;
+              border-bottom: 1px dotted #ddd;
             }
-            .receipt-details .label {
+            .label {
               font-weight: bold;
               color: #555;
             }
-            .receipt-details .value {
+            .value {
               text-align: right;
-              color: #333;
             }
-            .receipt-footer {
+            .animal-details {
+              margin: 15px 0;
+              padding: 10px;
+              background-color: #f9f9f9;
+            }
+            .authorized-signature {
+              margin-top: 50px;
+              border-top: 1px solid #000;
+              width: 200px;
+              float: right;
               text-align: center;
-              margin-top: 20px;
-              font-size: 0.8em;
-              color: #666;
+              padding-top: 10px;
             }
             @media print {
-              body { margin: 0; padding: 10px; }
               .no-print { display: none; }
             }
           </style>
         </head>
         <body>
-          <div class="receipt">
-            <div class="receipt-header">
-              <h1>${downloadFileName}</h1>
-            </div>
-            <div class="receipt-details">
-              ${Object.entries(receiptData)
-                .filter(([key]) => !["audit"].includes(key.toLowerCase()))
-                .map(
-                  ([key, value]) => `
-                  <div>
-                    <span class="label">${key.charAt(0).toUpperCase() + key.slice(1)}</span>
-                    <span class="value">${formatReceiptValue(value)}</span>
-                  </div>
-                `
-                )
-                .join("")}
-            </div>
-            <div class="receipt-footer">
-              Generated on ${new Date().toLocaleString()}
-            </div>
-          </div>
+          <div id="receipt-root"></div>
           <div class="no-print">
             <button onclick="window.print();window.close()" 
               style="display: block; width: 200px; margin: 20px auto; padding: 10px; 
@@ -521,8 +495,126 @@ const FeeCollection = () => {
     `;
 
     printWindow.document.write(htmlContent);
+
+    // Render the React component to string
+    const ReactDOMServer = require("react-dom/server");
+    const receiptHtml = ReactDOMServer.renderToString(<EntryFeeReceipt receiptData={receiptData} selectedRadioValue={selectedRadioValue} t={t} />);
+
+    printWindow.document.getElementById("receipt-root").innerHTML = receiptHtml;
     printWindow.document.close();
   };
+
+  // const generatePDF = (data) => {
+  //   // Handle different data types
+  //   let receiptData = {};
+
+  //   // Convert array or object to a flat object if needed
+  //   if (Array.isArray(data)) {
+  //     receiptData = data[0] || {};
+  //   } else if (typeof data === "object" && data !== null) {
+  //     receiptData = data;
+  //   } else {
+  //     console.warn("Unsupported data structure for PDF generation");
+  //     return;
+  //   }
+
+  //   const downloadFileName = "Payment Receipt";
+  //   const printWindow = window.open("", "", "height=600,width=800");
+
+  //   const htmlContent = `
+  //     <!DOCTYPE html>
+  //     <html>
+  //       <head>
+  //         <title>${downloadFileName}</title>
+  //         <style>
+  //           body {
+  //             font-family: Arial, sans-serif;
+  //             max-width: 600px;
+  //             margin: 0 auto;
+  //             padding: 20px;
+  //             line-height: 1.6;
+  //           }
+  //           .receipt {
+  //             border: 2px solid #333;
+  //             padding: 20px;
+  //             background-color: #f9f9f9;
+  //           }
+  //           .receipt-header {
+  //             text-align: center;
+  //             border-bottom: 1px solid #ddd;
+  //             padding-bottom: 10px;
+  //             margin-bottom: 20px;
+  //           }
+  //           .receipt-header h1 {
+  //             margin: 0;
+  //             color: #333;
+  //           }
+  //           .receipt-details {
+  //             margin-bottom: 20px;
+  //           }
+  //           .receipt-details div {
+  //             display: flex;
+  //             justify-content: space-between;
+  //             margin-bottom: 10px;
+  //             border-bottom: 1px dotted #ddd;
+  //             padding-bottom: 5px;
+  //           }
+  //           .receipt-details .label {
+  //             font-weight: bold;
+  //             color: #555;
+  //           }
+  //           .receipt-details .value {
+  //             text-align: right;
+  //             color: #333;
+  //           }
+  //           .receipt-footer {
+  //             text-align: center;
+  //             margin-top: 20px;
+  //             font-size: 0.8em;
+  //             color: #666;
+  //           }
+  //           @media print {
+  //             body { margin: 0; padding: 10px; }
+  //             .no-print { display: none; }
+  //           }
+  //         </style>
+  //       </head>
+  //       <body>
+  //         <div class="receipt">
+  //           <div class="receipt-header">
+  //             <h1>${downloadFileName}</h1>
+  //           </div>
+  //           <div class="receipt-details">
+  //             ${Object.entries(receiptData)
+  //               .filter(([key]) => !["audit"].includes(key.toLowerCase()))
+  //               .map(
+  //                 ([key, value]) => `
+  //                 <div>
+  //                   <span class="label">${key.charAt(0).toUpperCase() + key.slice(1)}</span>
+  //                   <span class="value">${formatReceiptValue(value)}</span>
+  //                 </div>
+  //               `
+  //               )
+  //               .join("")}
+  //           </div>
+  //           <div class="receipt-footer">
+  //             Generated on ${new Date().toLocaleString()}
+  //           </div>
+  //         </div>
+  //         <div class="no-print">
+  //           <button onclick="window.print();window.close()"
+  //             style="display: block; width: 200px; margin: 20px auto; padding: 10px;
+  //             background-color: #4a90e2; color: white; border: none; border-radius: 4px; cursor: pointer;">
+  //             Download Receipt
+  //           </button>
+  //         </div>
+  //       </body>
+  //     </html>
+  //   `;
+
+  //   printWindow.document.write(htmlContent);
+  //   printWindow.document.close();
+  // };
 
   // Helper function to format receipt values
   const formatReceiptValue = (value) => {
@@ -673,9 +765,7 @@ const FeeCollection = () => {
 
     // Add type-specific fields based on the selected radio value
     switch (selectedRadioValue) {
-      case "arrival":
       case "trading":
-      case "removal":
       case "slaughter":
         const matchingItems = animalCount.filter((item) => item.entryUnitId === selectedUUID);
         return {
@@ -692,6 +782,35 @@ const FeeCollection = () => {
           },
         };
 
+      case "arrival":
+        return {
+          ...basePayload,
+          FeeDetail: {
+            uuid: selectedUUID,
+            feetype: feeType,
+            paidby: selectedUUID,
+            method: formData.paymentMethod?.value || "Card",
+            referenceno: formData.transactionId || selectedUUID,
+            feevalue: tableData.length > 0 ? tableData[0].total : 0,
+            stakeholderId: selectedEntryStakeholder,
+            licenceNumber: selectedEntryliceneceNumberItem,
+          },
+        };
+
+      case "removal":
+        return {
+          ...basePayload,
+          FeeDetail: {
+            uuid: selectedUUID,
+            feetype: feeType,
+            paidby: selectedUUID,
+            method: formData.paymentMethod?.value || "Card",
+            referenceno: formData.transactionId || selectedUUID,
+            feevalue: tableData.length > 0 ? tableData[0].total : 0,
+            stakeholderId: selectedRemovalStakeholder,
+          },
+        };
+
       case "stabling":
         return {
           ...basePayload,
@@ -702,8 +821,8 @@ const FeeCollection = () => {
             method: formData.paymentMethod?.value || "Card",
             referenceno: formData.transactionId || selectedUUID,
             feevalue: tableData.length > 0 ? tableData[0].total : 0,
-            stakeholderId: tableData[0].stakeholderId,
-            licenceNumber: tableData[0].liceneceNumber,
+            stakeholderId: selectedStableStakeholder,
+            licenceNumber: selectedItem,
           },
         };
 
@@ -874,28 +993,49 @@ const FeeCollection = () => {
           if (entryData?.Details) {
             return entryData.Details.flatMap((item) =>
               item.details.map((detail) => ({
-                animalType: detail.animal,
-                animalCount: detail.count,
-                animalFee: detail.fee,
-                totalFee: detail.totalFee,
-                total: item.total,
+                animalType: detail.animal, // Animal type
+                animalCount: detail.count, // Animal count
+                animalFee: detail?.stableFeeDetails[0]?.fee_with_stakeholder,
+                totalFee: detail.totalFee, // Total fee for this specific animal
+                total: item.total, // Total fee for the entire group
               }))
             );
           }
+
           break;
+        // case "arrival":
+        //   if (entryData?.Details) {
+        //     return entryData.Details.flatMap((item) =>
+        //       item.details.map((detail) => ({
+        //         animalType: detail.animal,
+        //         animalCount: detail.count,
+        //         animalFee: detail.fee,
+        //         totalFee: detail.totalFee,
+        //         total: item.total,
+        //       }))
+        //     );
+        //   }
+        //   break;
 
         case "stabling":
           if (stablingData?.Details) {
             return stablingData.Details.flatMap((item) =>
               item.details.map((detail) => ({
-                animalType: detail.animal,
-                animalCount: detail.count,
-                animalFee: detail.fee,
-                totalFee: detail.totalFee,
-                total: item.total,
+                animalType: detail.animal, // Animal type
+                animalCount: detail.count, // Animal count
+                totalFee: detail.totalFee, // Total fee for this specific animal
+                total: item.total, // Total fee for the entire group
+                stableFeeDetails:
+                  detail.stableFeeDetails?.map((feeDetail) => ({
+                    token: feeDetail.token, // Stable fee token
+                    animalTypeId: feeDetail.animaltypeid, // Animal type ID
+                    daysWithStakeholder: feeDetail.days_with_stakeholder, // Days with the stakeholder
+                    feeWithStakeholder: feeDetail.fee_with_stakeholder, // Fee with the stakeholder
+                  })) || [], // Default to an empty array if there are no stableFeeDetails
               }))
             );
           }
+
           break;
         case "washing":
           if (vehicleData) {
@@ -959,14 +1099,22 @@ const FeeCollection = () => {
           break;
 
         case "removal":
-          if (removalFeeData?.Details) {
-            return removalFeeData?.Details.flatMap((item) =>
+          if (removalFeeData?.removalDetails) {
+            return removalFeeData?.removalDetails.flatMap((item) =>
               item?.details?.map((detail) => ({
-                animalType: detail?.animal,
-                animalCount: detail?.count,
-                animalFee: detail?.fee,
-                totalFee: detail?.totalFee,
-                total: item?.total,
+                animalType: detail.animal, // Animal type
+                animalCount: detail.count, // Animal count
+                totalFee: detail.totalFee, // Total fee for this specific animal
+                total: item.total, // Total fee for the entire group
+                stableFeeDetails:
+                  detail.stableFeeDetails?.map((feeDetail) => ({
+                    token: feeDetail.token, // Stable fee token
+                    animalTypeId: feeDetail.animaltypeid, // Animal type ID
+                    daysWithStakeholder: feeDetail.days_with_stakeholder, // Days with the stakeholder
+                    feeWithStakeholder: feeDetail.fee_with_stakeholder,
+                    removalType: feeDetail?.removal_type,
+                    // Fee with the stakeholder
+                  })) || [], // Default to an empty array if there are no stableFeeDetails
               }))
             );
           }
@@ -1105,23 +1253,47 @@ const FeeCollection = () => {
           </div>
 
           <div style={{ display: "flex", gap: "10px", float: "inline-end", width: "100%" }}>
-            <div className="bmc-col-large-header" style={{ width: "50%" }}>
-              <div className="bmc-row-card-header" style={{ display: "flex", flexDirection: "column", gap: "45px" }}>
+            <div className="bmc-col-large-header" style={{ width: "100%" }}>
+              <div className="bmc-row-card-header" style={{ display: "flex", flexDirection: "column" }}>
                 {selectedUUID ? (
                   <>
-                    <div style={{ paddingBottom: "20px", display: "flex", gap: "12px", alignItems: "center" }}>
-                      <h3 style={{ fontWeight: "600", fontSize: "20px" }}>Active Arrival UUID: </h3>
-                      <span
-                        style={{
-                          fontWeight: "bold",
-                          backgroundColor: "rgb(204, 204, 204)",
-                          borderRadius: "10px",
-                          padding: "8px",
-                          fontSize: "22px",
-                        }}
-                      >
-                        {selectedUUID}
-                      </span>
+                    <div style={{ paddingBottom: "20px", display: "flex", gap: "12px", alignItems: "center", justifyContent: "space-between" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
+                        <h3 style={{ fontWeight: "600", fontSize: "20px" }}>Active Arrival UUID: </h3>
+                        <span
+                          style={{
+                            fontWeight: "bold",
+                            backgroundColor: "rgb(204, 204, 204)",
+                            borderRadius: "10px",
+                            padding: "8px",
+                            fontSize: "22px",
+                          }}
+                        >
+                          {selectedUUID}
+                        </span>
+                      </div>
+
+                      <div>
+                        <button
+                          type="button"
+                          onClick={handlePDFDownload}
+                          className="print-pdf-button"
+                          style={{
+                            padding: "6px 10px",
+                            background: !feeCollectionResponse ? "grey" : "#a82227",
+                            borderRadius: "8px",
+                            display: "flex",
+                            alignItems: "center",
+                            color: "white",
+                            fontWeight: "600",
+                            border: "none",
+                            cursor: feeCollectionResponse ? "pointer" : "not-allowed",
+                          }}
+                          disabled={!feeCollectionResponse}
+                        >
+                          Print/Download PDF
+                        </button>
+                      </div>
                     </div>
                     {fields1.length > 0 && (
                       <>
@@ -1141,6 +1313,7 @@ const FeeCollection = () => {
                           showTable={true}
                           tableData={tableData}
                           onFieldChange={handleFieldChange}
+                          feeType={selectedRadioValue}
                         />
 
                         <div style={{ paddingBottom: "20px", display: "flex", gap: "12px", alignItems: "center", padding: "0 16px" }}>
@@ -1182,7 +1355,7 @@ const FeeCollection = () => {
                 )}
               </div>
             </div>
-            <div className="bmc-col-large-header" style={{ width: "50%" }}>
+            {/* <div className="bmc-col-large-header" style={{ width: "50%" }}>
               <div className="bmc-row-card-header">
                 {selectedUUID ? (
                   !isConfirmationPage && (
@@ -1225,7 +1398,7 @@ const FeeCollection = () => {
                   </div>
                 )}
               </div>
-            </div>
+            </div> */}
           </div>
         </form>
       </div>

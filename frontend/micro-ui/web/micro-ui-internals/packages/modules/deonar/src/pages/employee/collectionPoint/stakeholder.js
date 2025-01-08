@@ -25,7 +25,7 @@ const Stakeholder = () => {
   const { searchStakeholder } = useDeonarCommon();
   const { data: stakeData } = searchStakeholder();
   const [filteredStakeholderDetails, setFilteredStakeholderDetails] = useState([]);
-
+  const [showPlaceholderMessage, setShowPlaceholderMessage] = useState(true);
   const initialDefaultValues = useMemo(
     () => ({
       stakeholderName: "",
@@ -57,20 +57,17 @@ const Stakeholder = () => {
   const formValues = watch();
 
   const isFormValid = () => {
-    const requiredFields = [
-      "stakeholderName",
-      "traderType",
-      "animalType",
-      "licenseNumber",
-      "email",
-      "mobileNumber",
-      "pincode",
-      "address1",
-      "address2",
-    ];
+    const isCitizen = formValues.traderType?.name === "CITIZEN";
+
+    // Different required fields based on stakeholder type
+    const requiredFields = isCitizen
+      ? ["stakeholderName", "traderType", "email", "mobileNumber", "pincode", "address1", "address2"]
+      : ["stakeholderName", "traderType", "animalType", "licenseNumber", "email", "mobileNumber", "pincode", "address1", "address2"];
 
     return requiredFields.every((field) => {
       const value = formValues[field];
+
+      // Handle different types of values
       if (Array.isArray(value)) {
         return value.length > 0;
       }
@@ -80,7 +77,6 @@ const Stakeholder = () => {
       return !!value;
     });
   };
-
   useEffect(() => {
     if (stakeData) {
       console.log(stakeData, "stakeData");
@@ -104,10 +100,12 @@ const Stakeholder = () => {
 
   useEffect(() => {
     if (selectedOption) {
+      setShowPlaceholderMessage(false);
       const filteredData = getStakeholderDetails.filter((detail) => detail.stakeholderType.toLowerCase().includes(selectedOption.name.toLowerCase()));
       setFilteredStakeholderDetails(filteredData);
     } else {
-      setFilteredStakeholderDetails(getStakeholderDetails); // Reset to full data
+      setShowPlaceholderMessage(true);
+      setFilteredStakeholderDetails([]);
     }
   }, [selectedOption, getStakeholderDetails]);
 
@@ -243,8 +241,8 @@ const Stakeholder = () => {
         licenceNumbers: Array.isArray(formData.licenseNumber) ? formData.licenseNumber : formData.licenseNumber ? [formData.licenseNumber] : [],
 
         registrationNumber: formData?.referenceNumber || undefined,
-        validfromdate: formData.asigndate,
-        validtodate: formData.validtodate,
+        validfromdate: formData.asigndate || "",
+        validtodate: formData.validtodate || "",
       },
     };
     saveStakeholderDetails.mutate(payload, {
@@ -273,34 +271,49 @@ const Stakeholder = () => {
         <form onSubmit={handleSubmit(onSubmit)}>
           <MainFormHeader title={"DEONAR_STAKEHOLDER"} />
           {/* <div className="bmc-row-card-header"> */}
-          <div className="bmc-card-row"></div>
           <div className="bmc-row-card-header">
-            <CustomTable
-              t={t}
-              pageSizeLimit={10}
-              columns={visibleColumns}
-              data={filteredStakeholderDetails || []}
-              manualPagination={false}
-              totalRecords={getStakeholderDetails?.length}
-              onAddEmployeeClick={handleAddEmployee}
-              handleRowClick={handleRowClick}
-              config={myConfig}
-              // sortParams={{}}
-              // tableClassName={"ebe-custom-scroll"}
-              showSearch={true}
-              showDropdown={true}
-              dropdownOptions={[
-                {
-                  label: t("Stakeholder Name"),
-                  selectedOption: selectedOption,
-                  setSelectedOption: setSelectedOption,
-                  options: stakeholderData,
-                  optionKey: "name",
-                  placeholder: t("Select Stakeholder"),
-                },
-              ]}
-              showText={true}
-            />
+            <div className="bmc-card-row" style={{ overflowY: "auto", maxHeight: "511px" }}>
+              <CustomTable
+                t={t}
+                pageSizeLimit={10}
+                columns={visibleColumns}
+                data={filteredStakeholderDetails || []}
+                manualPagination={false}
+                totalRecords={getStakeholderDetails?.length}
+                onAddEmployeeClick={handleAddEmployee}
+                handleRowClick={handleRowClick}
+                config={myConfig}
+                // sortParams={{}}
+                // tableClassName={"ebe-custom-scroll"}
+                showSearch={true}
+                showDropdown={true}
+                dropdownOptions={[
+                  {
+                    label: t("Stakeholder Name"),
+                    selectedOption: selectedOption,
+                    setSelectedOption: setSelectedOption,
+                    options: stakeholderData,
+                    optionKey: "name",
+                    placeholder: t("Select Stakeholder"),
+                  },
+                ]}
+                showText={true}
+              />
+              {showPlaceholderMessage && (
+                <div
+                  style={{
+                    position: "absolute",
+                    left: "50%",
+                    transform: "translate(-50%, -50%)",
+                    textAlign: "center",
+                    fontSize: "16px",
+                    color: "#333",
+                  }}
+                >
+                  <p>{t("Please select a stakeholder type from the dropdown above.")}</p>
+                </div>
+              )}
+            </div>
             <CustomModal
               isOpen={isModalOpen}
               onClose={() => {

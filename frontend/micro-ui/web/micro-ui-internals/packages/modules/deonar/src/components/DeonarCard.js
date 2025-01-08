@@ -135,8 +135,13 @@ const DEONARCard = () => {
       roles: ["SUPERUSER","DEONAR_GENERIC"]
     },
     {
-      label: t("CITIZEN ASSIGNMENT"),
-      link: `/digit-ui/employee/deonar/religiousGatePass`,
+      label: t("Citizen Assignment"),
+      link: `/digit-ui/employee/deonar/citizenAssignment`,
+      roles: ["SUPERUSER","DEONAR_GENERIC"]
+    },
+    {
+      label: t("Citizen Gate Pass"),
+      link: `/digit-ui/employee/deonar/citizenGatePass`,
       roles: ["SUPERUSER","DEONAR_GENERIC"]
     }
   ];

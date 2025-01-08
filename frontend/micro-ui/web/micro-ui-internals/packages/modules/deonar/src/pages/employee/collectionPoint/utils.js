@@ -220,6 +220,46 @@ export const createDynamicColumns = (handleUUIDClick, tableType) => {
     ];
   }
 
+  if (tableType === "arrival") {
+    return [
+      {
+        Header: "ID",
+        accessor: "stakeholderId",
+        Cell: ({ row }) => row.index + 1,
+        isVisible: false,
+      },
+      {
+        Header: "DEONAR_ARRIVAL_UUID",
+        accessor: "entryUnitId",
+        Cell: ({ row }) => (
+          <span onClick={() => handleUUIDClick(row.original.entryUnitId)} style={{ cursor: "pointer", color: "blue" }}>
+            {row.original.entryUnitId}
+          </span>
+        ),
+      },
+      {
+        Header: "DEONAR_TRADER_NAME",
+        accessor: "traderName",
+      },
+      {
+        Header: "DEONAR_LICENSE_NUMBER",
+        accessor: "licenceNumber",
+      },
+      {
+        Header: "DEONAR_MOBILE_NUMBER",
+        accessor: "mobileNumber",
+      },
+      {
+        Header: "DEONAR_STAKEHOLDER_TYPE",
+        accessor: "stakeholderTypeName",
+      },
+      {
+        Header: "DEONAR_REGISTRATION_NUMBER",
+        accessor: "registrationNumber",
+      },
+    ];
+  }
+
   if (tableType === "parking") {
     return [
       {
@@ -394,12 +434,12 @@ export const createDynamicColumns = (handleUUIDClick, tableType) => {
     return [
       {
         Header: "ID",
-        accessor: "id",
+        accessor: "stakeholderId",
         Cell: ({ row }) => row.index + 1,
         isVisible: false,
       },
       {
-        Header: "Deonar_DD_Reference",
+        Header: "DEONAR_ARRIVAL_UUID",
         accessor: "entryUnitId",
         Cell: ({ row }) => (
           <span onClick={() => handleUUIDClick(row.original.entryUnitId)} style={{ cursor: "pointer", color: "blue" }}>
@@ -407,7 +447,6 @@ export const createDynamicColumns = (handleUUIDClick, tableType) => {
           </span>
         ),
       },
-
       {
         Header: "DEONAR_TRADER_NAME",
         accessor: "traderName",
@@ -417,17 +456,17 @@ export const createDynamicColumns = (handleUUIDClick, tableType) => {
         accessor: "licenceNumber",
       },
       {
-        Header: "DEONAR_ARRIVAL_UUID",
-        accessor: "arrivalId",
+        Header: "DEONAR_MOBILE_NUMBER",
+        accessor: "mobileNumber",
       },
       {
-        Header: "ARRIVAL_DATE_FIELD",
-        accessor: "date",
+        Header: "DEONAR_STAKEHOLDER_TYPE",
+        accessor: "stakeholderTypeName",
       },
-      {
-        Header: "ARRIVAL_TIME_FIELD",
-        accessor: "time",
-      },
+      // {
+      //   Header: "DEONAR_REGISTRATION_NUMBER",
+      //   accessor: "registrationNumber",
+      // },
     ];
   }
 
@@ -947,13 +986,12 @@ export const collectionDynamicColumns = {
       disableSortBy: true,
     },
     {
-      Header: "Stabling Fee",
-      accessor: "animalFee",
+      Header: "Total Stabling Fee",
+      accessor: "totalFee",
       disableSortBy: true,
     },
     {
-      Header: "Total Stabling Fee",
-      accessor: "totalFee",
+      Header: "Details",
       disableSortBy: true,
     },
   ],
@@ -1046,12 +1084,11 @@ export const collectionDynamicColumns = {
     },
     {
       Header: "Removal Fee",
-      accessor: "animalFee",
+      accessor: "totalFee",
       disableSortBy: true,
     },
     {
-      Header: "Removal Total Fee",
-      accessor: "totalFee",
+      Header: "Details",
       disableSortBy: true,
     },
   ],

@@ -104,31 +104,31 @@ const AnteMortemInspectionPage = () => {
   useEffect(() => {
     if (inspectionTableData && inspectionTableData.length > 0) {
       setValue("animalTokenNumber", inspectionTableData[0]?.animalTokenNumber || "");
-      setValue("species", inspectionTableData[0]?.species || "");
-      setValue("breed", inspectionTableData[0]?.breed || "");
-      setValue("sex", inspectionTableData[0]?.sex || "");
-      setValue("bodyColor", inspectionTableData[0]?.["bodyColor"] || "");
-      setValue("pregnancy", inspectionTableData[0]?.pregnancy || "");
-      setValue("gait", inspectionTableData[0]?.gait || "");
-      setValue("posture", inspectionTableData[0]?.posture || "");
-      setValue("pulseRate", inspectionTableData[0]?.["pulseRate"] || "");
-      setValue("bodyTemp", inspectionTableData[0]?.["bodyTemp"] || "");
-      setValue("appetite", inspectionTableData[0]?.appetite || "");
-      setValue("eyes", inspectionTableData[0]?.eyes || "");
-      setValue("nostrils", inspectionTableData[0]?.nostrils || "");
-      setValue("muzzle", inspectionTableData[0]?.muzzle || "");
+      setValue("species", inspectionTableData[0]?.species || "Caprine/Ovine");
+      setValue("breed", inspectionTableData[0]?.breed || "Non descripteur (ND)");
+      setValue("sex", inspectionTableData[0]?.sex || "Male/Female (mIf)");
+      setValue("bodyColor", inspectionTableData[0]?.["bodyColor"] || "Mixed");
+      setValue("pregnancy", inspectionTableData[0]?.pregnancy || "Yes");
+      setValue("gait", inspectionTableData[0]?.gait || "Staggering gait");
+      setValue("posture", inspectionTableData[0]?.posture || "Downer");
+      setValue("pulseRate", inspectionTableData[0]?.["pulseRate"] || "Other");
+      setValue("bodyTemp", inspectionTableData[0]?.["bodyTemp"] || "No Abnormality Detected (NAD)");
+      setValue("appetite", inspectionTableData[0]?.appetite || "Reduced appetite");
+      setValue("eyes", inspectionTableData[0]?.eyes || "Swollen");
+      setValue("nostrils", inspectionTableData[0]?.nostrils || "Other");
+      setValue("muzzle", inspectionTableData[0]?.muzzle || "Scabs");
       setValue("opinion", inspectionTableData[0]?.opinion || "");
       setValue("opinionId", inspectionTableData[0]?.opinionId || "");
-      setValue("approxAge", inspectionTableData[0]?.["approxAge"] || "");
-      setValue("visibleMucusMembrane", inspectionTableData[0]?.["visibleMucusMembrane"] || "");
-      setValue("thoracicCavity", inspectionTableData[0]?.["thoracicCavity"] || "");
-      setValue("abdominalCavity", inspectionTableData[0]?.["abdominalCavity"] || "");
-      setValue("pelvicCavity", inspectionTableData[0]?.["pelvicCavity"] || "");
-      setValue("specimenCollection", inspectionTableData[0]?.["specimenCollection"] || "");
-      setValue("specialObservation", inspectionTableData[0]?.["specialObservation"] || "");
-      setValue("other", inspectionTableData[0]?.other || "");
-      setValue("resultremark", inspectionTableData[0]?.resultremark || "");
-      setValue("slaughterReceiptNumber", inspectionTableData[0]?.slaughterReceiptNumber || "");
+      setValue("approxAge", inspectionTableData[0]?.["approxAge"] || ">3m");
+      setValue("visibleMucusMembrane", inspectionTableData[0]?.["visibleMucusMembrane"] || "Yes");
+      setValue("thoracicCavity", inspectionTableData[0]?.["thoracicCavity"] || "Yes");
+      setValue("abdominalCavity", inspectionTableData[0]?.["abdominalCavity"] || "Yes");
+      setValue("pelvicCavity", inspectionTableData[0]?.["pelvicCavity"] || "Yes");
+      setValue("specimenCollection", inspectionTableData[0]?.["specimenCollection"] || "Yes");
+      setValue("specialObservation", inspectionTableData[0]?.["specialObservation"] || "No");
+      setValue("other", inspectionTableData[0]?.other || "ok");
+      setValue("resultremark", inspectionTableData[0]?.resultremark || "ok");
+      setValue("slaughterReceiptNumber", inspectionTableData[0]?.slaughterReceiptNumber || "ok");
       setValue("animalQuarters", inspectionTableData[0]?.animalQuarters);
     }
   }, [inspectionTableData, setValue]);
@@ -587,7 +587,7 @@ const AnteMortemInspectionPage = () => {
           </div>
 
           <div className="bmc-card-row" style={{ overflowY: "auto", maxHeight: "511px" }}>
-            {isLoader && radioValueCheck ? (
+          {isLoader && radioValueCheck ? (
               <Loader />
             ) : (
               <React.Fragment>
@@ -618,6 +618,7 @@ const AnteMortemInspectionPage = () => {
                     showAddButton={true}
                     buttonText={t("Submit")}
                     onAddClick={handleInspectionDetail}
+                    enableMaxHeight={false}
                   />
                 )}
                 {!isSubmitted && !inspectionTableData?.length && (

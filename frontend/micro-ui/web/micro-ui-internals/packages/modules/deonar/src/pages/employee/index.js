@@ -32,7 +32,8 @@ const App = ({ path, stateCode, userType, tenants }) => {
 
   const Helkari = Digit.ComponentRegistryService?.getComponent("Helkari");
   const Stakeholder = Digit.ComponentRegistryService?.getComponent("Stakeholder");
-  const RegionalGatePass = Digit.ComponentRegistryService?.getComponent("RegionalGatePass");
+  const CitizenAssignment = Digit.ComponentRegistryService?.getComponent("CitizenAssignment");
+  const CitizenGatePass = Digit.ComponentRegistryService?.getComponent("CitizenGatePass");
   const Inbox = Digit?.ComponentRegistryService?.getComponent('DEONARInbox');
   const mobileView = innerWidth <= 640;
   const tenantId = Digit.ULBService.getCurrentTenantId();
@@ -86,7 +87,8 @@ const App = ({ path, stateCode, userType, tenants }) => {
         <PrivateRoute path={`${path}/penaltyCharge`} component={PenaltyCharge} />
         <PrivateRoute path={`${path}/gatePass`} component={GatePass} />
         <PrivateRoute path={`${path}/stakeholder`} component={Stakeholder} />
-        <PrivateRoute path={`${path}/religiousGatePass`} component={RegionalGatePass} />
+        <PrivateRoute path={`${path}/citizenAssignment`} component={CitizenAssignment} />
+        <PrivateRoute path={`${path}/CitizenGatePass`} component={CitizenGatePass} />
         <PrivateRoute path={`${path}/removalReport`} component={Removal} />
         <PrivateRoute path={`${path}/helkari`} component={Helkari} />
         <PrivateRoute path={`${path}/washing`} component = {WashingFeePage} />

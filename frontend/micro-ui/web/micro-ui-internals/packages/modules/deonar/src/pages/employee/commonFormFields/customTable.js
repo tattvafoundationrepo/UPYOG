@@ -43,6 +43,7 @@ const CustomTable = ({
   onAddClick,
   showDateColumn = false, // New prop to control date column visibility
   onDateChange,
+  enableMaxHeight = true,
   ...rest
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -326,20 +327,15 @@ const CustomTable = ({
   }, [columns, data]); // Re-run when columns or data change
 
   const tableWrapperStyle = {
-    maxHeight: '400px',
-    width: '100%',
-    overflow: needsScroll ? 'auto' : 'visible',
+    maxHeight: enableMaxHeight ? "400px" : "none", // Conditional application of maxHeight
+    width: "100%",
+    overflow: needsScroll ? "auto" : "visible",
   };
 
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "1rem" }}>
         <div style={{ display: "flex", gap: "1rem", alignItems: "center", flex: "1" }}>
-          {showSearch && (
-            <SearchField>
-              <TextInput value={searchTerm} placeholder={searchPlaceholder} onChange={handleSearchChange} style={{ width: "35%" }} />
-            </SearchField>
-          )}
           {showDropdown &&
             Array.isArray(dropdownOptions) &&
             dropdownOptions.map((dropdownConfig, index) => (
@@ -356,9 +352,14 @@ const CustomTable = ({
                 option={dropdownConfig.options}
                 optionKey={dropdownConfig.optionKey || "name"}
                 placeholder={dropdownConfig.placeholder || t("Select an Option")}
-                style={{ width: dropdownConfig.width || "35%" }}
+                style={{ width: dropdownConfig.width || "17%" , marginTop: "8px" }}
               />
             ))}
+          {showSearch && (
+            <SearchField>
+              <TextInput value={searchTerm} placeholder={searchPlaceholder} onChange={handleSearchChange} style={{ width: "35%", marginBottom: "25px" }} />
+            </SearchField>
+          )}
         </div>
 
         <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
@@ -431,37 +432,34 @@ const CustomTable = ({
       </div>
 
       <div style={tableWrapperStyle} ref={tableRef}>
-
-
-      <Table
-        className={`customTable table-fixed-first-column table-border-style  ${tableClassName}`}
-        columns={enhancedColumns.map((col) => ({
-          ...col,
-          sortFn: col.sortable ? () => handleSort(col.accessor) : undefined,
-          isSortable: col.sortable,
-          isSorted: col.sortable && sortConfig.some((config) => config.key === col.accessor),
-          sortOrder: col.sortable ? sortConfig.find((config) => config.key === col.accessor)?.direction : undefined,
-        }))}
-        currentPage={currentPage}
-        data={isLoadingRows ? [] : sortedData}
-        pageSizeLimit={pageSizeLimit}
-        disableSort={false}
-        manualPagination={manualPagination}
-        totalRecords={totalRecords}
-        onNextPage={onNextPage}
-        onPrevPage={onPrevPage}
-        onPageSizeChange={onPageSizeChange}
-        isPaginationRequired={isPaginationRequired && showPagination}
-        styles={{ border: "1px solid #ddd" }}
-        getCellProps={(cellInfo) => ({
-          style: {
-            padding: "5px 5px",
-            fontSize: "14px",
-          },
-        })}
-        {...rest}
-      />
-
+        <Table
+          className={`customTable table-fixed-first-column table-border-style  ${tableClassName}`}
+          columns={enhancedColumns.map((col) => ({
+            ...col,
+            sortFn: col.sortable ? () => handleSort(col.accessor) : undefined,
+            isSortable: col.sortable,
+            isSorted: col.sortable && sortConfig.some((config) => config.key === col.accessor),
+            sortOrder: col.sortable ? sortConfig.find((config) => config.key === col.accessor)?.direction : undefined,
+          }))}
+          currentPage={currentPage}
+          data={isLoadingRows ? [] : sortedData}
+          pageSizeLimit={pageSizeLimit}
+          disableSort={false}
+          manualPagination={manualPagination}
+          totalRecords={totalRecords}
+          onNextPage={onNextPage}
+          onPrevPage={onPrevPage}
+          onPageSizeChange={onPageSizeChange}
+          isPaginationRequired={isPaginationRequired && showPagination}
+          styles={{ border: "1px solid #ddd" }}
+          getCellProps={(cellInfo) => ({
+            style: {
+              padding: "5px 5px",
+              fontSize: "14px",
+            },
+          })}
+          {...rest}
+        />
       </div>
 
       {showAddButton && (

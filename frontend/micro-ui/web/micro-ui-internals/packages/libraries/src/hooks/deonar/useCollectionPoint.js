@@ -169,21 +169,21 @@ const useCollectionPoint = ({ value }) => {
   };
 
   const fetchweighingList = (data, config = {}) => {
-    const { enabled = true, executeOnLoad = false, executeOnRadioSelect = false } = config;
+    // const { enabled = true, executeOnLoad = false, executeOnRadioSelect = false } = config;
     return useQuery(["weighingList", data], () => DeonarService.getCollectionWeighingList(data), {
-      enabled: enabled && (executeOnLoad || executeOnRadioSelect),
+      // enabled: enabled && (executeOnLoad || executeOnRadioSelect),
       ...config,
       onSuccess: (data) => {
         console.log(data, "weighingList collection data");
       },
-      // enabled: value === "weighing",
+      enabled: value === "weighing",
     });
   };
 
   const fetchweighingFee = (data, config = {}) => {
-    const { enabled = true, executeOnLoad = false, executeOnRadioSelect = false } = config;
+    // const { enabled = true, executeOnLoad = false, executeOnRadioSelect = false } = config;
     return useQuery(["weighingFee", data], () => DeonarService.fetchWeighingCollectionFee(data), {
-      enabled: enabled && (executeOnLoad || executeOnRadioSelect),
+      // enabled: enabled && (executeOnLoad || executeOnRadioSelect),
       ...config,
       onSuccess: (data) => {
         console.log(data, "weighing collection data");
@@ -227,12 +227,34 @@ const useCollectionPoint = ({ value }) => {
   };
 
   const fectchCollectionStablingList = (data, config = {}) => {
-    const { enabled = true, executeOnLoad = false, executeOnRadioSelect = false } = config;
+    // const { enabled = true, executeOnLoad = false, executeOnRadioSelect = false } = config;
     return useQuery(["StablingList", data], () => DeonarService.getCollectionStablingList(data), {
-      enabled: enabled && (executeOnLoad || executeOnRadioSelect),
+      // enabled: enabled && (executeOnLoad || executeOnRadioSelect),
       ...config,
       onSuccess: (data) => {
         console.log(data, "StablingList collection data");
+      },
+    });
+  };
+
+  const fetchCollectionEntryList = (data, config = {}) => {
+    // const { enabled = true, executeOnLoad = false, executeOnRadioSelect = false } = config;
+    return useQuery(["EntryList", data], () => DeonarService.getCollectionEntryList(data), {
+      // enabled: enabled && (executeOnLoad || executeOnRadioSelect),
+      ...config,
+      onSuccess: (data) => {
+        console.log(data, "EntryList collection data");
+      },
+    });
+  };
+
+  const fetchRemovalCollectionList = (data, config = {}) => {
+    // const { enabled = true, executeOnLoad = false, executeOnRadioSelect = false } = config;
+    return useQuery(["RemovalList", data], () => DeonarService.getRemovalCollectionList(data), {
+      // enabled: enabled && (executeOnLoad || executeOnRadioSelect),
+      ...config,
+      onSuccess: (data) => {
+        console.log(data, "RemovalList collection data");
       },
     });
   };
@@ -259,7 +281,9 @@ const useCollectionPoint = ({ value }) => {
     saveWashingDetails,
     fetchWashingCollectionDetails,
     fetchNormalSlaughterList,
-    fectchCollectionStablingList
+    fectchCollectionStablingList,
+    fetchCollectionEntryList,
+    fetchRemovalCollectionList
   };
 };
 
