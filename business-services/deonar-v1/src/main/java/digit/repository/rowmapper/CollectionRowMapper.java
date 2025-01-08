@@ -182,6 +182,7 @@ public class CollectionRowMapper<T> implements ResultSetExtractor<List<T>> {
             if (stableFee == null) {
                 stableFee = StableFee.builder()
                         .arrivalid(arrivalId)
+                        .ddreference(isColumnPresent(rs,"ddreference")?rs.getString("ddreference"):null)
                         .stakeholderId(rs.getLong("stakeholderid"))
                         .stakeholdername(rs.getString("stakeholdername"))
                         .liceneceNumber(isColumnPresent(rs,"licencenumber")?rs.getString("licencenumber"):null)
