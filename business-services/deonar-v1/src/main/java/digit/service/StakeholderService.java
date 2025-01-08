@@ -96,7 +96,6 @@ public class StakeholderService {
             return -1; // Return -1 to indicate an error
         }
         long millis = date.getTime(); // Convert to milliseconds
-        System.out.println("Milliseconds: " + millis);
         return millis; // Return the milliseconds
     }
 }

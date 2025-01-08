@@ -22,6 +22,7 @@ public class StableFee {
     private String arrivalid;
     private List<Details> details;
     private Long stakeholderId;
+    private String stakeholdername;
     private String liceneceNumber;
     private Float total;
    

@@ -1,5 +1,6 @@
 package digit.web.models;
 
+import org.apache.kafka.common.protocol.types.Field.Bool;
 import org.egov.common.contract.request.RequestInfo;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -25,6 +26,8 @@ public class GetListRequest {
     private Boolean forStablingCollection;
 
     private Boolean forRemovalCollection;
+
+    private Boolean forSlaughterRecoveryFee;
 
 
 }

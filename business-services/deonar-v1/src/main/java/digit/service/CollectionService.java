@@ -1,4 +1,5 @@
 package digit.service;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -7,6 +8,10 @@ import org.egov.common.contract.request.RequestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import digit.kafka.Producer;
 import digit.repository.CollectionRepository;
@@ -20,7 +25,6 @@ import digit.web.models.collection.StableFee;
 import digit.web.models.collection.WashFee;
 import digit.web.models.collection.WeighingFee;
 
-
 @Service
 public class CollectionService {
     @Autowired
@@ -28,11 +32,11 @@ public class CollectionService {
 
     @Autowired
     private CollectionRepository commonRepository;
-    
+
     @Autowired
     private IdgenUtil idgenUtil;
 
-    private static List<Integer> collectionTypeList  = List.of(1,2,3,4,5);
+    private static List<Integer> collectionTypeList  = List.of(1,2,3);
 
     public List<StableFee> getEntryFee(RequestInfo requestInfo, CollectionSearchCriteria criteria) {
         // Fetch applications from database according to the given search criteria
@@ -82,9 +86,9 @@ public class CollectionService {
         return common;
     }
 
-    public List<SlaughterFee> getSlaughterFee(RequestInfo requestInfo, CollectionSearchCriteria criteria) {
+    public List<StableFee> getSlaughterFee(RequestInfo requestInfo, CollectionSearchCriteria criteria) {
         // Fetch applications from database according to the given search criteria
-        List<SlaughterFee> common = commonRepository.getSlaughterFee(criteria);
+        List<StableFee> common = commonRepository.getSlaughterFee(criteria);
         // If no applications are found matching the given criteria, return an empty
         // list
         if (CollectionUtils.isEmpty(common))
@@ -94,7 +98,8 @@ public class CollectionService {
 
     public FeeDetail saveFee(RequestInfo requestInfo, FeeDetail feedetail) {
         long epochTime = System.currentTimeMillis();
-        List<String> recieptNo = idgenUtil.getIdList(requestInfo,requestInfo.getUserInfo().getTenantId(), "deonar.paymentid", "", 1);
+        List<String> recieptNo = idgenUtil.getIdList(requestInfo, requestInfo.getUserInfo().getTenantId(),
+                "deonar.paymentid", "", 1);
         AuditDetails audit = AuditDetails.builder()
                 .createdBy(requestInfo.getUserInfo().getUuid())
                 .lastModifiedBy(requestInfo.getUserInfo().getUuid())
@@ -116,12 +121,12 @@ public class CollectionService {
         CollectionSearchCriteria criteria = new CollectionSearchCriteria();
 
         String animalDetails = null;
-        if(common.getFeevalue() > 0 && collectionTypeList.contains(common.getFeetype().intValue())){
-            if(feedetail.getLicenceNumber() != null){
+        if (common.getFeevalue() > 0 && collectionTypeList.contains(common.getFeetype().intValue())) {
+            if (feedetail.getLicenceNumber() != null) {
                 common.setLicenceNumber(feedetail.getLicenceNumber());
                 criteria.setLiceneceNumber(feedetail.getLicenceNumber());
             }
-            if(feedetail.getMobileNumber() != null){
+            if (feedetail.getMobileNumber() != null) {
                 criteria.setMobileNumber(feedetail.getMobileNumber());
             }
             criteria.setSearch(feedetail.getUuid());
@@ -131,10 +136,25 @@ public class CollectionService {
             common.setAnimalDetail(animalDetails);
             producer.push("topic_deonar_savefeedetails", common);
         }
-        if(common.getFeevalue() > 0 && common.getFeetype() == 7){
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            JsonNode rootNode = objectMapper.readTree(animalDetails);
+
+            if (rootNode.isArray()) {
+                rootNode.forEach(node -> {
+                    int token = node.get("token").asInt();
+                    int animalTypeId = node.get("animaltypeid").asInt();
+                    commonRepository.saveEntryFee(String.valueOf(token), String.valueOf(animalTypeId),
+                            common.getUuid());
+                });
+            }
+        } catch (JsonProcessingException ex) {
+            System.out.print("Exception");
+        }
+        if (common.getFeevalue() > 0 && common.getFeetype() == 7) {
             commonRepository.saveVehicleParking(System.currentTimeMillis(), common.getPaidby());
         }
-        if(common.getFeevalue() > 0 && common.getFeetype() == 6){
+        if (common.getFeevalue() > 0 && common.getFeetype() == 6) {
             commonRepository.saveVehicleWashing(System.currentTimeMillis(), common.getPaidby());
         }
         return common;
@@ -147,7 +167,7 @@ public class CollectionService {
         if (CollectionUtils.isEmpty(common))
             return new ArrayList<>();
         return common;
-        
+
     }
 
     public List<WeighingFee> getWeighingFee(RequestInfo requestInfo, CollectionSearchCriteria criteria) {
@@ -157,8 +177,7 @@ public class CollectionService {
         if (CollectionUtils.isEmpty(common))
             return new ArrayList<>();
         return common;
-       
+
     }
 
-    
 }

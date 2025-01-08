@@ -9,7 +9,6 @@ import org.springframework.stereotype.Repository;
 
 import digit.repository.querybuilder.CollectionQueryBuilder;
 import digit.repository.rowmapper.CollectionRowMapper;
-import digit.web.models.collection.EntryFee;
 import digit.web.models.collection.ParkingFee;
 import digit.web.models.collection.RemovalFee;
 import digit.web.models.collection.SlaughterFee;
@@ -87,12 +86,12 @@ public class CollectionRepository {
         return jdbcTemplate.query(query, entryfeerowMapper, preparedStmtList.toArray());
     }
 
-    public List<SlaughterFee> getSlaughterFee(CollectionSearchCriteria criteria) {
+    public List<StableFee> getSlaughterFee(CollectionSearchCriteria criteria) {
         List<Object> preparedStmtList = new ArrayList<>();
-        String query = queryBuilder.getSlaughterFee(criteria, preparedStmtList);
+        String query = queryBuilder.getSlaughterFeeQuery(criteria, preparedStmtList);
         log.info("Final query: " + query);
         // Create a new instance of the row mapper with the correct type
-        CollectionRowMapper<SlaughterFee> entryfeerowMapper = new CollectionRowMapper<>(SlaughterFee.class);
+        CollectionRowMapper<StableFee> entryfeerowMapper = new CollectionRowMapper<>(StableFee.class);
         return jdbcTemplate.query(query, entryfeerowMapper, preparedStmtList.toArray());
     }
 
@@ -114,6 +113,11 @@ public class CollectionRepository {
 
     public void saveVehicleWashing(long time, String vehiclenumber){
         String query = queryBuilder.saveVehicleWashDeparture(time, vehiclenumber);
+        jdbcTemplate.execute(query);
+    }
+
+    public void saveEntryFee(String token, String animaltypeid, String arrivalid){
+        String query = queryBuilder.saveEntryFee(token, animaltypeid, arrivalid);
         jdbcTemplate.execute(query);
     }
 

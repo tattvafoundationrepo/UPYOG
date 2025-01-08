@@ -1,6 +1,7 @@
 package digit.repository.rowmapper;
 
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -38,9 +39,9 @@ public class CollectionRowMapper<T> implements ResultSetExtractor<List<T>> {
     @Override
     @SuppressWarnings("unchecked")
     public List<T> extractData(ResultSet rs) throws SQLException {
-        if (type.equals(EntryFee.class)) {
-            return (List<T>) extractEntryFee(rs);
-        }
+        // if (type.equals(EntryFee.class)) {
+        //     return (List<T>) extractEntryFee(rs);
+        // }
         if (type.equals(StableFee.class)) {
             return (List<T>) extractStableFee(rs);
         }
@@ -75,6 +76,7 @@ public class CollectionRowMapper<T> implements ResultSetExtractor<List<T>> {
                 stableFee = RemovalFee.builder()
                         .arrivalid(arrivalId)
                         .stakeholderId(rs.getLong("stakeholderid"))
+                        .stakeholdername(rs.getString("stakeholdername"))
                         .liceneceNumber(rs.getString("licencenumber"))
                         .total(rs.getFloat("total_fee_with_stakeholder"))
                         .details(new ArrayList<>())
@@ -135,39 +137,39 @@ public class CollectionRowMapper<T> implements ResultSetExtractor<List<T>> {
         
     }
 
-    private List<EntryFee> extractEntryFee(ResultSet rs) throws SQLException {
-        // Use a map to store EntryFee objects by arrivalidLIC67891
-        Map<String, EntryFee> entryFeeMap = new LinkedHashMap<>();
-        while (rs.next()) {
-            String arrivalId = rs.getString("arrivalid");
-            float total = rs.getFloat("totalentryfee");
+    // private List<EntryFee> extractEntryFee(ResultSet rs) throws SQLException {
+    //     // Use a map to store EntryFee objects by arrivalidLIC67891
+    //     Map<String, EntryFee> entryFeeMap = new LinkedHashMap<>();
+    //     while (rs.next()) {
+    //         String arrivalId = rs.getString("arrivalid");
+    //         float total = rs.getFloat("totalentryfee");
 
-            // Check if an EntryFee object already exists for this arrivalId
-            EntryFee entryFee = entryFeeMap.get(arrivalId);
+    //         // Check if an EntryFee object already exists for this arrivalId
+    //         EntryFee entryFee = entryFeeMap.get(arrivalId);
 
-            if (entryFee == null) {
-                // If not, create a new EntryFee object and add it to the map
-                entryFee = EntryFee.builder()
-                        .arrivalid(arrivalId)
-                        .details(new ArrayList<>()) // Initialize the list of details
-                        .total(total)
-                        .build();
-                entryFeeMap.put(arrivalId, entryFee);
-            }
+    //         if (entryFee == null) {
+    //             // If not, create a new EntryFee object and add it to the map
+    //             entryFee = EntryFee.builder()
+    //                     .arrivalid(arrivalId)
+    //                     .details(new ArrayList<>()) // Initialize the list of details
+    //                     .total(total)
+    //                     .build();
+    //             entryFeeMap.put(arrivalId, entryFee);
+    //         }
 
-            // Create and add Details object for each row
-            EntryFee.Details details = EntryFee.Details.builder()
-                    .animal(rs.getString("animal"))
-                    .count(rs.getInt("animalcount"))
-                    .fee(rs.getFloat("feevalue"))
-                    .build();
-            details.setTotalFee(details.getCount() * details.getFee());
+    //         // Create and add Details object for each row
+    //         EntryFee.Details details = EntryFee.Details.builder()
+    //                 .animal(rs.getString("animal"))
+    //                 .count(rs.getInt("animalcount"))
+    //                 .fee(rs.getFloat("feevalue"))
+    //                 .build();
+    //         details.setTotalFee(details.getCount() * details.getFee());
 
-            // Add the Details to the EntryFee's list
-            entryFee.getDetails().add(details);
-        }
-        return new ArrayList<>(entryFeeMap.values());
-    }
+    //         // Add the Details to the EntryFee's list
+    //         entryFee.getDetails().add(details);
+    //     }
+    //     return new ArrayList<>(entryFeeMap.values());
+    // }
 
     private List<StableFee> extractStableFee(ResultSet rs) throws SQLException {
         Map<String, StableFee> stableFeeMap = new LinkedHashMap<>();
@@ -181,7 +183,8 @@ public class CollectionRowMapper<T> implements ResultSetExtractor<List<T>> {
                 stableFee = StableFee.builder()
                         .arrivalid(arrivalId)
                         .stakeholderId(rs.getLong("stakeholderid"))
-                        .liceneceNumber(rs.getString("licencenumber"))
+                        .stakeholdername(rs.getString("stakeholdername"))
+                        .liceneceNumber(isColumnPresent(rs,"licencenumber")?rs.getString("licencenumber"):null)
                         .total(rs.getFloat("total_fee_with_stakeholder"))
                         .details(new ArrayList<>())
                         .build();
@@ -351,5 +354,20 @@ public class CollectionRowMapper<T> implements ResultSetExtractor<List<T>> {
         }
         return new ArrayList<>(weighingFeeMap.values());
 
+    }
+
+
+    private boolean isColumnPresent(ResultSet rs, String columnName) {
+        try {
+            ResultSetMetaData metaData = rs.getMetaData();
+            int columnCount = metaData.getColumnCount();
+            for (int i = 1; i <= columnCount; i++) {
+                if (metaData.getColumnName(i).equalsIgnoreCase(columnName)) {
+                    return true;
+                }
+            }
+        } catch (SQLException e) {
+        }
+        return false;
     }
 }

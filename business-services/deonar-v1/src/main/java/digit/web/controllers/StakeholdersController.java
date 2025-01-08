@@ -7,7 +7,6 @@ import org.egov.common.contract.response.ResponseInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -35,7 +34,6 @@ public class StakeholdersController {
     private ResponseInfoFactory responseInfoFactory;
 
     // POST endpoint for saving stakeholder details
-    @CrossOrigin("*")
     @PostMapping("/_save")
     public ResponseEntity<StakeholderResponse> saveStakeholderDetails(
             @RequestBody StakeholderRequest stakeholderRequest) {
@@ -66,7 +64,6 @@ public class StakeholdersController {
         }
     }
 
-    @CrossOrigin("*")
     @PostMapping("/_getAll")
     public ResponseEntity<StakeholderCheckResponse> getStakeholderDetails( @RequestBody StakeholderCheckRequest stakeholderCheckRequest){
         List<StakeholderCheckDetails> stakeholderDetails = new ArrayList<>();

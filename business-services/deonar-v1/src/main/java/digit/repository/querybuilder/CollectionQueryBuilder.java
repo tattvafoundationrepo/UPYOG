@@ -10,7 +10,7 @@ import digit.repository.CollectionSearchCriteria;
 public class CollectionQueryBuilder {
     public String getEntryFee(CollectionSearchCriteria criteria, List<Object> preparedStmtList) {
         final String ENTRYFEE_QUERY = """
-                SELECT arrivalid,licencenumber,stakeholderid,animal_details,animal_type_count,total_fee_with_stakeholder
+                SELECT arrivalid,stakeholdername,licencenumber,stakeholderid,animal_details,animal_type_count,total_fee_with_stakeholder
                 FROM eg_deonar_collection_entry_fee
                 """;
         StringBuilder query = new StringBuilder(ENTRYFEE_QUERY);
@@ -39,7 +39,7 @@ public class CollectionQueryBuilder {
 
     public String getStableFee(CollectionSearchCriteria criteria, List<Object> preparedStmtList) {
         final String STABLEFEE_QUERY = """
-                SELECT arrivalid,licencenumber,stakeholderid,animal_details,animal_type_count,total_fee_with_stakeholder
+                SELECT arrivalid,stakeholdername,licencenumber,stakeholderid,animal_details,animal_type_count,total_fee_with_stakeholder
                 FROM eg_deonar_collection_stabling_fee
                 """;
         StringBuilder query = new StringBuilder(STABLEFEE_QUERY);
@@ -59,7 +59,7 @@ public class CollectionQueryBuilder {
 
     public String getRemovalFeeQuery(CollectionSearchCriteria criteria, List<Object> preparedStmtList) {
         final String REMOVALFEE_QUERY = """
-                SELECT arrivalid,licencenumber,stakeholderid,animal_details,animal_type_count,total_fee_with_stakeholder
+                SELECT arrivalid,stakeholdername,licencenumber,stakeholderid,animal_details,animal_type_count,total_fee_with_stakeholder
                 FROM eg_deonar_collection_removal_fee
                 """;
         StringBuilder query = new StringBuilder(REMOVALFEE_QUERY);
@@ -80,6 +80,31 @@ public class CollectionQueryBuilder {
         }
         return query.toString();
     }
+
+    public String getSlaughterFeeQuery(CollectionSearchCriteria criteria, List<Object> preparedStmtList) {
+        final String SLAUGHTERFEE_QUERY = """
+                SELECT arrivalid,stakeholdername,stakeholderid,animal_details,animal_type_count,total_fee_with_stakeholder
+                FROM eg_deonar_collection_slaughter_fee
+                """;
+        StringBuilder query = new StringBuilder(SLAUGHTERFEE_QUERY);
+        if (criteria.getSearch() != null) {
+            addClauseIfRequired(query, preparedStmtList);
+            query.append(" arrivalid = ? ");
+            preparedStmtList.add(criteria.getSearch());
+        }
+        if (criteria.getLiceneceNumber() != null) {
+            addClauseIfRequired(query, preparedStmtList);
+            query.append(" licencenumber = ? ");
+            preparedStmtList.add(criteria.getLiceneceNumber());
+        }
+        if (criteria.getMobileNumber() != null) {
+            addClauseIfRequired(query, preparedStmtList);
+            query.append(" mobilenumber = ? ");
+            preparedStmtList.add(Long.parseLong(criteria.getMobileNumber()));
+        }
+        return query.toString();
+    }
+
 
     public String getParkingFee(CollectionSearchCriteria criteria, List<Object> preparedStmtList) {
         final String PARKINGFEE_QUERY = """
@@ -120,67 +145,67 @@ public class CollectionQueryBuilder {
         return query.toString();
     }
 
-    public String getSlaughterFee(CollectionSearchCriteria criteria, List<Object> preparedStmtList) {
-        final String SLAUGHTERFEE_QUERY_OLD = """
-                 SELECT ddreference,assigneelic,animal,animalcount,feevalue,totalslaughterFee
-                    FROM eg_deonar_vslaughterfee
-                """;
+    // public String getSlaughterFee(CollectionSearchCriteria criteria, List<Object> preparedStmtList) {
+    //     final String SLAUGHTERFEE_QUERY_OLD = """
+    //              SELECT ddreference,assigneelic,animal,animalcount,feevalue,totalslaughterFee
+    //                 FROM eg_deonar_vslaughterfee
+    //             """;
 
-        final String SLAUGHTERFEE_QUERY_NEW = """
+    //     final String SLAUGHTERFEE_QUERY_NEW = """
 
-                        SELECT DISTINCT
-                    v.ddreference,
-                    a.assigneelic,
-                    a.assigneeid,
-                    d.name AS animal,
-                    COUNT(a.animaltypeid) OVER (PARTITION BY v.ddreference, a.animaltypeid) AS animalcount,
-                    (SELECT charges
-                     FROM eg_deonar_vslaughterunitcharges
-                     WHERE animaltypeid = a.animaltypeid
-                       AND name = ?
-                       AND opentime = ?
-                       AND closetime = ?) AS feevalue,
-                    SUM(
-                        (SELECT charges
-                         FROM eg_deonar_vslaughterunitcharges
-                         WHERE animaltypeid = a.animaltypeid
-                           AND name = ?
-                           AND opentime = ?
-                           AND closetime = ?)
-                    ) OVER (PARTITION BY v.ddreference) AS totalslaughterfee
-                FROM eg_deonar_vmainshopkeeper a
-                JOIN eg_deonar_animal_removal b
-                    ON b.arrivalid::text = a.arrivalid::text
-                    AND b.animaltypeid = a.animaltypeid
-                    AND b.tokennum = a.token
-                    AND b.removalid = 1
-                JOIN eg_deonar_vcurrentassignmentlist v
-                    ON v.animaltypeid = a.animaltypeid
-                    AND a.token = v.token
-                    AND a.arrivalid::text = v.arrivalid::text
-                LEFT JOIN eg_deonar_animal_type d
-                    ON d.id = a.animaltypeid
+    //                     SELECT DISTINCT
+    //                 v.ddreference,
+    //                 a.assigneelic,
+    //                 a.assigneeid,
+    //                 d.name AS animal,
+    //                 COUNT(a.animaltypeid) OVER (PARTITION BY v.ddreference, a.animaltypeid) AS animalcount,
+    //                 (SELECT charges
+    //                  FROM eg_deonar_vslaughterunitcharges
+    //                  WHERE animaltypeid = a.animaltypeid
+    //                    AND name = ?
+    //                    AND opentime = ?
+    //                    AND closetime = ?) AS feevalue,
+    //                 SUM(
+    //                     (SELECT charges
+    //                      FROM eg_deonar_vslaughterunitcharges
+    //                      WHERE animaltypeid = a.animaltypeid
+    //                        AND name = ?
+    //                        AND opentime = ?
+    //                        AND closetime = ?)
+    //                 ) OVER (PARTITION BY v.ddreference) AS totalslaughterfee
+    //             FROM eg_deonar_vmainshopkeeper a
+    //             JOIN eg_deonar_animal_removal b
+    //                 ON b.arrivalid::text = a.arrivalid::text
+    //                 AND b.animaltypeid = a.animaltypeid
+    //                 AND b.tokennum = a.token
+    //                 AND b.removalid = 1
+    //             JOIN eg_deonar_vcurrentassignmentlist v
+    //                 ON v.animaltypeid = a.animaltypeid
+    //                 AND a.token = v.token
+    //                 AND a.arrivalid::text = v.arrivalid::text
+    //             LEFT JOIN eg_deonar_animal_type d
+    //                 ON d.id = a.animaltypeid
                 
 
-                                """;
+    //                             """;
 
-        StringBuilder query = new StringBuilder(SLAUGHTERFEE_QUERY_NEW);
+    //     StringBuilder query = new StringBuilder(SLAUGHTERFEE_QUERY_NEW);
         
-        if (criteria.getSlaughterUnit() != null && criteria.getOpenTime() != null && criteria.getCloseTime() != null ) {
-            preparedStmtList.add(criteria.getSlaughterUnit().toLowerCase());
-            preparedStmtList.add(criteria.getOpenTime());
-            preparedStmtList.add(criteria.getCloseTime());
-            preparedStmtList.add(criteria.getSlaughterUnit().toLowerCase());
-            preparedStmtList.add(criteria.getOpenTime());
-            preparedStmtList.add(criteria.getCloseTime());
-        }
-        if (criteria.getSearch() != null) {
-            query.append(" where  v.ddreference = ? ORDER BY v.ddreference ");
-            preparedStmtList.add(criteria.getSearch());
-        }
+    //     if (criteria.getSlaughterUnit() != null && criteria.getOpenTime() != null && criteria.getCloseTime() != null ) {
+    //         preparedStmtList.add(criteria.getSlaughterUnit().toLowerCase());
+    //         preparedStmtList.add(criteria.getOpenTime());
+    //         preparedStmtList.add(criteria.getCloseTime());
+    //         preparedStmtList.add(criteria.getSlaughterUnit().toLowerCase());
+    //         preparedStmtList.add(criteria.getOpenTime());
+    //         preparedStmtList.add(criteria.getCloseTime());
+    //     }
+    //     if (criteria.getSearch() != null) {
+    //         query.append(" where  v.ddreference = ? ORDER BY v.ddreference ");
+    //         preparedStmtList.add(criteria.getSearch());
+    //     }
         
-        return query.toString();
-    }
+    //     return query.toString();
+    // }
 
     public String getTradingFeeQuery(CollectionSearchCriteria criteria, List<Object> preparedStmtList) {
 
@@ -269,6 +294,17 @@ public class CollectionQueryBuilder {
             query.append(" mobilenumber = ? ");
             preparedStmtList.add(Long.parseLong(criteria.getMobileNumber()));
         }
+        return query.toString();
+    }
+
+    public String saveEntryFee(String token, String animaltypeid, String arrivalid){
+        final String SET_ACTIVE_AT_ARRIVAL = """
+                UPDATE eg_deonar_animal_at_arrival an
+                """;
+        StringBuilder query = new StringBuilder(SET_ACTIVE_AT_ARRIVAL);
+        query.append(" SET active = true ");
+        query.append(" FROM eg_deonar_arrival a ");
+        query.append(" WHERE a.id = an.arrivalid ").append(" AND a.arrivalid = '").append(arrivalid).append("' AND an.animaltypeid = ").append(animaltypeid).append(" AND an.token = ").append(token);
         return query.toString();
     }
 

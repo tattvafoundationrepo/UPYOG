@@ -8,7 +8,6 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -33,7 +32,6 @@ public class VehicleWashingController {
         @Autowired
         private ResponseInfoFactory responseInfoFactory;
 
-        @CrossOrigin("*")
         @PostMapping("/vehicleWashing/_save")
         public ResponseEntity<List<VehicleWashingResponse>> vehicleWashingDetails(
                         @RequestBody VehicleWashingRequest vehicleWashingRequest) {
@@ -60,7 +58,6 @@ public class VehicleWashingController {
                 }
         }
 
-        @CrossOrigin("*")
         @PostMapping("/vehicleWashing/_search")
         public ResponseEntity<VehicleWashedCheckResponse> getVehicleWashingDetails(
                         @RequestBody VehicleWashedCheckRequest vehicleWashedCheckRequest) {
@@ -81,7 +78,6 @@ public class VehicleWashingController {
                 }
         }
 
-        @CrossOrigin("*")
         @PostMapping("/vehicleWashing/_washInVehicle")
         public ResponseEntity<VehicleWashedCheckResponse> getWashedInVehicle(
                         @RequestBody VehicleWashedCheckRequest vehicleWashedCheckRequest) {
@@ -120,64 +116,6 @@ public class VehicleWashingController {
                 return new ResponseEntity<>(response, HttpStatus.OK);
         }
 
-        // @PostMapping("/vehicleParking/_saveMonthlyParkingFee")
-        // public ResponseEntity<VehicleParkingFeeResponse> saveParkingFee(
-        // @RequestBody VehicleParkingFeeRequest vehicleParkingFeeRequest) {
-
-        // VehicleParkingFeeResponse response = new VehicleParkingFeeResponse();
-
-        // try {
-
-        // ResponseInfo responseInfo = responseInfoFactory
-        // .createResponseInfoFromRequestInfo(vehicleParkingFeeRequest.getRequestInfo(),
-        // true);
-        // response.setResponseInfo(responseInfo);
-        // response.setMessage("Vehicle monthly parking fee saved successfully");
-        // return new ResponseEntity<>(response, HttpStatus.OK);
-        // } catch (Exception e) {
-        // ResponseInfo responseInfo = responseInfoFactory
-        // .createResponseInfoFromRequestInfo(vehicleParkingFeeRequest.getRequestInfo(),
-        // true);
-        // response = VehicleParkingFeeResponse.builder()
-        // .message("Error occurred while trying to saving vehicle monthly parking fee:
-        // " + e.getMessage())
-        // .responseInfo(responseInfo).build();
-        // return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-        // }
-        // }
-
-        // @PostMapping("/vehicleParking/_searchVehicleMonthlyParkingFee")
-        // public ResponseEntity<VehicleParkingFeeResponse>
-        // getVehicleMonthlyParkingDetails(
-        // @RequestBody VehicleWashedCheckRequest vehicleWashedCheckRequest) {
-
-        // VehicleParkingFeeResponse response;
-        // try {
-        // List<VehicleParkingFeeResponseDetails> vehicleParkingFeeResponses =
-        // vehicleWashingService
-        // .getVehicleMonthlyDetails(vehicleWashedCheckRequest.getVehicleParkedCheckCriteria());
-        // ResponseInfo responseInfo = responseInfoFactory
-        // .createResponseInfoFromRequestInfo(vehicleWashedCheckRequest.getRequestInfo(),
-        // true);
-        // response =
-        // VehicleParkingFeeResponse.builder().vehicleParkingFeeResponseDetails(vehicleParkingFeeResponses)
-        // .responseInfo(responseInfo).message("Vehicle monthly parking fee details
-        // fetched successfully.")
-        // .build();
-        // return new ResponseEntity<>(response, HttpStatus.OK);
-        // } catch (Exception e) {
-        // ResponseInfo responseInfo = responseInfoFactory
-        // .createResponseInfoFromRequestInfo(vehicleWashedCheckRequest.getRequestInfo(),
-        // true);
-        // response = VehicleParkingFeeResponse.builder()
-        // .message("Error occurred while trying to retrieve parked vehicle details: " +
-        // e.getMessage())
-        // .responseInfo(responseInfo).build();
-        // return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-        // }
-        // }
-
-        @CrossOrigin("*")
         @PostMapping("/vehicleWashing/_VehicleWashingFee")
         public ResponseEntity<VehicleWashingFeesResponseWraper> getVehicleWashingFee(
                         @RequestBody VehicleWashedCheckRequest vehicleWashedCheckRequest) {

@@ -174,10 +174,10 @@ public class CollectionController {
     public ResponseEntity<Object> getSlaughterFee(
             @ApiParam(value = "Get Slaughtering Fee Details", required = true) @Valid @RequestBody CollectionRequest request) {
         try {
-            List<SlaughterFee> common = service.getSlaughterFee(request.getRequestInfo(), request.getCriteria());
+            List<StableFee> common = service.getSlaughterFee(request.getRequestInfo(), request.getCriteria());
             ResponseInfo responseInfo = responseInfoFactory
                     .createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
-            SlaughterFeeResponse res = SlaughterFeeResponse.builder()
+            StableFeeResponse res = StableFeeResponse.builder()
                     .details(common)
                     .responseInfo(responseInfo)
                     .build();
