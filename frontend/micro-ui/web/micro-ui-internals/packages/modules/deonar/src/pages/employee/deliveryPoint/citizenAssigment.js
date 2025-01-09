@@ -326,6 +326,7 @@ const CitizenAssignment = () => {
               <div className="bmc-card-row">
                 <CustomTable
                   t={t}
+                  searchPlaceholder={t("Search")}
                   columns={CitizenColumns(handleUUIDClick, t)}
                   data={animalCount}
                   manualPagination={false}
@@ -342,6 +343,7 @@ const CitizenAssignment = () => {
                       <div style={{ display: "flex", gap: "20px", justifyContent: "space-between", marginBottom: "40px" }}></div>
                       <CustomTable
                         t={t}
+                        searchPlaceholder={t("Search")}
                         columns={isAfterStablingVisibleColumns}
                         data={filteredGawaltable}
                         totalRecords={totalRecords}

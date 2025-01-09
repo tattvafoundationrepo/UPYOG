@@ -112,7 +112,7 @@ const Stakeholder = () => {
         address2: detail.address2 || "N/A",
       }));
       setStakeholderDetails(StakeholderData);
-     // setFilteredStakeholderDetails(StakeholderData);
+      // setFilteredStakeholderDetails(StakeholderData);
     }
   }, [stakeData]);
 
@@ -128,20 +128,16 @@ const Stakeholder = () => {
   // }, [selectedOption, getStakeholderDetails]);
   const handleDataSearch = () => {
     if (selectedOption) {
-     
-      const filteredData = getStakeholderDetails.filter((detail) => 
-        detail.stakeholderType.toLowerCase().includes(selectedOption.name.toLowerCase())
-      );
+      const filteredData = getStakeholderDetails.filter((detail) => detail.stakeholderType.toLowerCase().includes(selectedOption.name.toLowerCase()));
       setFilteredStakeholderDetails(filteredData);
       setShowPlaceholderMessage(true);
-    } 
+    }
   };
   const handleDropdownChange = (option) => {
     setSelectedOption(option);
     setDisabled(false);
-      setShowPlaceholderMessage(false);
-      setFilteredStakeholderDetails([]);
-    
+    setShowPlaceholderMessage(false);
+    setFilteredStakeholderDetails([]);
   };
 
   const handleRowClick = (rowData) => {
@@ -291,6 +287,7 @@ const Stakeholder = () => {
               <CustomTable
                 t={t}
                 pageSizeLimit={10}
+                searchPlaceholder={t("Search")}
                 columns={visibleColumns}
                 data={filteredStakeholderDetails || []}
                 manualPagination={false}
@@ -457,7 +454,8 @@ const Stakeholder = () => {
                         name="validtodate"
                         rules={{
                           required: t("CORE_COMMON_REQUIRED_ERRMSG"),
-                          validate: (value) => !assignDate || new Date(value) > new Date(assignDate) || t("Valid-to date must be later than the assign date."),
+                          validate: (value) =>
+                            !assignDate || new Date(value) > new Date(assignDate) || t("Valid-to date must be later than the assign date."),
                         }}
                         render={(props) => (
                           <div>
@@ -471,11 +469,11 @@ const Stakeholder = () => {
                               min={assignDate ? new Date(assignDate).toISOString().split("T")[0] : undefined}
                               disable={!assignDate}
                             />
-                             {errors.validtodate && errors.validtodate.type === "validate" && (
-              <span className="error-message" style={{ color: "red", fontSize: "14px" }}>
-                {errors.validtodate.message}
-              </span>
-            )}
+                            {errors.validtodate && errors.validtodate.type === "validate" && (
+                              <span className="error-message" style={{ color: "red", fontSize: "14px" }}>
+                                {errors.validtodate.message}
+                              </span>
+                            )}
                           </div>
                         )}
                       />

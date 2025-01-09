@@ -1354,220 +1354,457 @@ export const feeConfigs = {
   },
 };
 
-export const collectionDynamicColumns = {
-  arrival: [
-    {
-      Header: "Animal Type",
-      accessor: "animalType",
-      disableSortBy: true,
-    },
-    {
-      Header: "Animal Count",
-      accessor: "animalCount",
-      disableSortBy: true,
-    },
-    {
-      Header: "Animal Fee",
-      accessor: "animalFee",
-      disableSortBy: true,
-    },
-    {
-      Header: "Animal Total Fee",
-      accessor: "totalFee",
-      disableSortBy: true,
-    },
-  ],
-  stabling: [
-    {
-      Header: "Animal Type",
-      accessor: "animalType",
-      disableSortBy: true,
-    },
-    {
-      Header: "Animal Count",
-      accessor: "animalCount",
-      disableSortBy: true,
-    },
-    {
-      Header: "Total Stabling Fee",
-      accessor: "totalFee",
-      disableSortBy: true,
-    },
-    {
-      Header: "Details",
-      disableSortBy: true,
-    },
-  ],
-  washing: [
-    {
-      Header: "Vehicle Number",
-      accessor: "vehiclenumber",
-      disableSortBy: true,
-    },
-    {
-      Header: "Vehicle Type",
-      accessor: "vehicletype",
-      disableSortBy: true,
-    },
-    {
-      Header: "Total Washing Fee",
-      accessor: "total",
-      disableSortBy: true,
-    },
-  ],
-  parking: [
-    {
-      Header: "Vehicle Number",
-      accessor: "vehiclenumber",
-      disableSortBy: true,
-    },
-    {
-      Header: "Vehicle Type",
-      accessor: "vehicletype",
-      disableSortBy: true,
-    },
-    {
-      Header: "Parking Date",
-      accessor: "parkingdate",
-      disableSortBy: true,
-    },
-    {
-      Header: "Parking Time",
-      accessor: "parkingtime",
-      disableSortBy: true,
-    },
-    {
-      Header: "Departure Date",
-      accessor: "departuredate",
-      disableSortBy: true,
-    },
-    {
-      Header: "Departure Time",
-      accessor: "departuretime",
-      disableSortBy: true,
-    },
-    {
-      Header: "Total Hours",
-      accessor: "totalhours",
-      disableSortBy: true,
-    },
-  ],
-  slaughter: [
-    {
-      Header: "Animal",
-      accessor: "animalType",
-      disableSortBy: true,
-    },
-    {
-      Header: "Animal Count",
-      accessor: "animalCount",
-      disableSortBy: true,
-    },
-    {
-      Header: "Slaughter Fee",
-      accessor: "animalFee",
-      disableSortBy: true,
-    },
-    {
-      Header: "Total Slaughter Fee",
-      accessor: "totalFee",
-      disableSortBy: true,
-    },
-    {
-      Header: "Details",
-      disableSortBy: true,
-    },
-  ],
-  removal: [
-    {
-      Header: "Animal Type",
-      accessor: "animalType",
-      disableSortBy: true,
-    },
-    {
-      Header: "Animal Count",
-      accessor: "animalCount",
-      disableSortBy: true,
-    },
-    {
-      Header: "Removal Fee",
-      accessor: "totalFee",
-      disableSortBy: true,
-    },
-    {
-      Header: "Details",
-      disableSortBy: true,
-    },
-  ],
-  trading: [
-    {
-      Header: "Animal Type",
-      accessor: "animalType",
-      disableSortBy: true,
-    },
-    {
-      Header: "Animal Count",
-      accessor: "animalCount",
-      disableSortBy: true,
-    },
-    {
-      Header: "Animal Fee",
-      accessor: "animalFee",
-      disableSortBy: true,
-    },
-    {
-      Header: "Animal Total Fee",
-      accessor: "totalFee",
-      disableSortBy: true,
-    },
-  ],
-  penalty: [
-    {
-      Header: "DEONAR_Penalty_Unit",
-      accessor: "unit",
-    },
-    {
-      Header: "ARRIVAL_Penalty_Amount",
-      accessor: "total",
-    },
-  ],
+// export const collectionDynamicColumns ={ 
+  
+//   arrival: [
+//     {
+//       Header: "Animal Type",
+//       accessor: "animalType",
+//       disableSortBy: true,
+//     },
+//     {
+//       Header: "Animal Count",
+//       accessor: "animalCount",
+//       disableSortBy: true,
+//     },
+//     {
+//       Header: "Animal Fee",
+//       accessor: "animalFee",
+//       disableSortBy: true,
+//     },
+//     {
+//       Header: "Animal Total Fee",
+//       accessor: "totalFee",
+//       disableSortBy: true,
+//     },
+//   ],
+//   stabling: [
+//     {
+//       Header: "Animal Type",
+//       accessor: "animalType",
+//       disableSortBy: true,
+//     },
+//     {
+//       Header: "Animal Count",
+//       accessor: "animalCount",
+//       disableSortBy: true,
+//     },
+//     {
+//       Header: "Total Stabling Fee",
+//       accessor: "totalFee",
+//       disableSortBy: true,
+//     },
+//     {
+//       Header: "Details",
+//       disableSortBy: true,
+//     },
+//   ],
+//   washing: [
+//     {
+//       Header: "Vehicle Number",
+//       accessor: "vehiclenumber",
+//       disableSortBy: true,
+//     },
+//     {
+//       Header: "Vehicle Type",
+//       accessor: "vehicletype",
+//       disableSortBy: true,
+//     },
+//     {
+//       Header: "Total Washing Fee",
+//       accessor: "total",
+//       disableSortBy: true,
+//     },
+//   ],
+//   parking: [
+//     {
+//       Header: "Vehicle Number",
+//       accessor: "vehiclenumber",
+//       disableSortBy: true,
+//     },
+//     {
+//       Header: "Vehicle Type",
+//       accessor: "vehicletype",
+//       disableSortBy: true,
+//     },
+//     {
+//       Header: "Parking Date",
+//       accessor: "parkingdate",
+//       disableSortBy: true,
+//     },
+//     {
+//       Header: "Parking Time",
+//       accessor: "parkingtime",
+//       disableSortBy: true,
+//     },
+//     {
+//       Header: "Departure Date",
+//       accessor: "departuredate",
+//       disableSortBy: true,
+//     },
+//     {
+//       Header: "Departure Time",
+//       accessor: "departuretime",
+//       disableSortBy: true,
+//     },
+//     {
+//       Header: "Total Hours",
+//       accessor: "totalhours",
+//       disableSortBy: true,
+//     },
+//   ],
+//   slaughter: [
+//     {
+//       Header: "Animal",
+//       accessor: "animalType",
+//       disableSortBy: true,
+//     },
+//     {
+//       Header: "Animal Count",
+//       accessor: "animalCount",
+//       disableSortBy: true,
+//     },
+//     {
+//       Header: "Slaughter Fee",
+//       accessor: "animalFee",
+//       disableSortBy: true,
+//     },
+//     {
+//       Header: "Total Slaughter Fee",
+//       accessor: "totalFee",
+//       disableSortBy: true,
+//     },
+//     {
+//       Header: "Details",
+//       disableSortBy: true,
+//     },
+//   ],
+//   removal: [
+//     {
+//       Header: "Animal Type",
+//       accessor: "animalType",
+//       disableSortBy: true,
+//     },
+//     {
+//       Header: "Animal Count",
+//       accessor: "animalCount",
+//       disableSortBy: true,
+//     },
+//     {
+//       Header: "Removal Fee",
+//       accessor: "totalFee",
+//       disableSortBy: true,
+//     },
+//     {
+//       Header: "Details",
+//       disableSortBy: true,
+//     },
+//   ],
+//   trading: [
+//     {
+//       Header: "Animal Type",
+//       accessor: "animalType",
+//       disableSortBy: true,
+//     },
+//     {
+//       Header: "Animal Count",
+//       accessor: "animalCount",
+//       disableSortBy: true,
+//     },
+//     {
+//       Header: "Animal Fee",
+//       accessor: "animalFee",
+//       disableSortBy: true,
+//     },
+//     {
+//       Header: "Animal Total Fee",
+//       accessor: "totalFee",
+//       disableSortBy: true,
+//     },
+//   ],
+//   penalty: [
+//     {
+//       Header: "DEONAR_Penalty_Unit",
+//       accessor: "unit",
+//     },
+//     {
+//       Header: "ARRIVAL_Penalty_Amount",
+//       accessor: "total",
+//     },
+//   ],
 
-  weighing: [
-    {
-      Header: "Animal Type",
-      accessor: "animal",
-      disableSortBy: true,
-    },
-    {
-      Header: "Animal unit",
-      accessor: "unit",
-      disableSortBy: true,
-    },
-    {
-      Header: "Weighing Charge",
-      accessor: "fee",
-      disableSortBy: true,
-    },
-    {
-      Header: "DEONAR_Skin_Unit",
-      accessor: "skinunit",
-    },
-    {
-      Header: "DEONAR_Skin_Fee",
-      accessor: "skinfee",
-    },
-    {
-      Header: "Weighing Subtotal",
-      accessor: "subtotal",
-      disableSortBy: true,
-    },
-    {
-      Header: "DEONAR_Weighing_Total",
-      accessor: "total",
-    },
-  ],
-  // Add other fee types as needed
+//   weighing: [
+//     {
+//       Header: "Animal Type",
+//       accessor: "animal",
+//       disableSortBy: true,
+//     },
+//     {
+//       Header: "Animal unit",
+//       accessor: "unit",
+//       disableSortBy: true,
+//     },
+//     {
+//       Header: "Weighing Charge",
+//       accessor: "fee",
+//       disableSortBy: true,
+//     },
+//     {
+//       Header: "DEONAR_Skin_Unit",
+//       accessor: "skinunit",
+//     },
+//     {
+//       Header: "DEONAR_Skin_Fee",
+//       accessor: "skinfee",
+//     },
+//     {
+//       Header: "Weighing Subtotal",
+//       accessor: "subtotal",
+//       disableSortBy: true,
+//     },
+//     {
+//       Header: "DEONAR_Weighing_Total",
+//       accessor: "total",
+//     },
+//   ],
+// }
+  
+ export const collectionDynamicColumns = (handleUUIDClick, tableType, t = (text) => text) => {
+  if (typeof t !== "function") {
+    console.warn("Translation function not provided, using default");
+    t = (text) => text;
+  }
+
+  try {
+    switch (tableType) {
+      case "arrival":
+        return [
+          {
+            Header: t("Animal Type"),
+            accessor: "animalType",
+            disableSortBy: true,
+          },
+          {
+            Header: t("Animal Count"),
+            accessor: "animalCount",
+            disableSortBy: true,
+          },
+          {
+            Header: t("Animal Fee"),
+            accessor: "animalFee",
+            disableSortBy: true,
+          },
+          {
+            Header: t("Animal Total Fee"),
+            accessor: "totalFee",
+            disableSortBy: true,
+          },
+        ];
+      case "stabling":
+        return [
+          {
+            Header: t("Animal Type"),
+            accessor: "animalType",
+            disableSortBy: true,
+          },
+          {
+            Header: t("Animal Count"),
+            accessor: "animalCount",
+            disableSortBy: true,
+          },
+          {
+            Header: t("Total Stabling Fee"),
+            accessor: "totalFee",
+            disableSortBy: true,
+          },
+          {
+            Header: t("Details"),
+            disableSortBy: true,
+          },
+        ];
+      case "washing":
+        return [
+          {
+            Header: t("Vehicle Number"),
+            accessor: "vehiclenumber",
+            disableSortBy: true,
+          },
+          {
+            Header: t("Vehicle Type"),
+            accessor: "vehicletype",
+            disableSortBy: true,
+          },
+          {
+            Header: t("Total Washing Fee"),
+            accessor: "total",
+            disableSortBy: true,
+          },
+        ];
+      case "parking":
+        return [
+          {
+            Header: t("Vehicle Number"),
+            accessor: "vehiclenumber",
+            disableSortBy: true,
+          },
+          {
+            Header: t("Vehicle Type"),
+            accessor: "vehicletype",
+            disableSortBy: true,
+          },
+          {
+            Header: t("Parking Date"),
+            accessor: "parkingdate",
+            disableSortBy: true,
+          },
+          {
+            Header: t("Parking Time"),
+            accessor: "parkingtime",
+            disableSortBy: true,
+          },
+          {
+            Header: t("Departure Date"),
+            accessor: "departuredate",
+            disableSortBy: true,
+          },
+          {
+            Header: t("Departure Time"),
+            accessor: "departuretime",
+            disableSortBy: true,
+          },
+          {
+            Header: t("Total Hours"),
+            accessor: "totalhours",
+            disableSortBy: true,
+          },
+        ];
+      case "slaughter":
+        return [
+          {
+            Header: t("Animal"),
+            accessor: "animalType",
+            disableSortBy: true,
+          },
+          {
+            Header: t("Animal Count"),
+            accessor: "animalCount",
+            disableSortBy: true,
+          },
+          {
+            Header: t("Slaughter Fee"),
+            accessor: "animalFee",
+            disableSortBy: true,
+          },
+          {
+            Header: t("Total Slaughter Fee"),
+            accessor: "totalFee",
+            disableSortBy: true,
+          },
+          {
+            Header: t("Details"),
+            disableSortBy: true,
+          },
+        ];
+      case "removal":
+        return [
+          {
+            Header: t("Animal Type"),
+            accessor: "animalType",
+            disableSortBy: true,
+          },
+          {
+            Header: t("Animal Count"),
+            accessor: "animalCount",
+            disableSortBy: true,
+          },
+          {
+            Header: t("Removal Fee"),
+            accessor: "totalFee",
+            disableSortBy: true,
+          },
+          {
+            Header: t("Details"),
+            disableSortBy: true,
+          },
+        ];
+      case "trading":
+        return [
+          {
+            Header: t("Animal Type"),
+            accessor: "animalType",
+            disableSortBy: true,
+          },
+          {
+            Header: t("Animal Count"),
+            accessor: "animalCount",
+            disableSortBy: true,
+          },
+          {
+            Header: t("Animal Fee"),
+            accessor: "animalFee",
+            disableSortBy: true,
+          },
+          {
+            Header: t("Animal Total Fee"),
+            accessor: "totalFee",
+            disableSortBy: true,
+          },
+        ];
+      case "penalty":
+        return [
+          {
+            Header: t("DEONAR_Penalty_Unit"),
+            accessor: "unit",
+          },
+          {
+            Header: t("ARRIVAL_Penalty_Amount"),
+            accessor: "total",
+          },
+        ];
+      case "weighing":
+        return [
+          {
+            Header: t("Animal Type"),
+            accessor: "animal",
+            disableSortBy: true,
+          },
+          {
+            Header: t("Animal unit"),
+            accessor: "unit",
+            disableSortBy: true,
+          },
+          {
+            Header: t("Weighing Charge"),
+            accessor: "fee",
+            disableSortBy: true,
+          },
+          {
+            Header: t("DEONAR_Skin_Unit"),
+            accessor: "skinunit",
+          },
+          {
+            Header: t("DEONAR_Skin_Fee"),
+            accessor: "skinfee",
+          },
+          {
+            Header: t("Weighing Subtotal"),
+            accessor: "subtotal",
+            disableSortBy: true,
+          },
+          {
+            Header: t("DEONAR_Weighing_Total"),
+            accessor: "total",
+          },
+        ];
+      default:
+        console.warn("Unhandled table type in collectionDynamicColumns:", tableType);
+        return [];
+    }
+  } catch (error) {
+    console.error("Error in collectionDynamicColumns:", error);
+    return [];
 };
+ }
 
 export const toastMessages = {
   arrival: {
@@ -1643,4 +1880,385 @@ export const handleDownload = (elementId, fileName = "download.html") => {
   document.body.appendChild(downloadLink);
   downloadLink.click();
   document.body.removeChild(downloadLink);
+};
+
+
+//generic functions for fee collection 
+
+// utils/feeCollectionUtils.js
+
+// Scroll handling utility
+export const scrollToElementFee = (elementId, offset = -10) => {
+  const scrollAttempts = [100, 300, 500];
+  
+  scrollAttempts.forEach((delay) => {
+    setTimeout(() => {
+      const element = document.getElementById(elementId);
+      if (element) {
+        try {
+          const y = element.getBoundingClientRect().top + window.pageYOffset + offset;
+          window.scrollTo({ top: y, behavior: "smooth" });
+        } catch (error) {
+          console.error(`Scroll attempt failed after ${delay}ms:`, error);
+        }
+      }
+    }, delay);
+  });
+};
+
+// PDF Generation utility
+export const generatePDF = (data, downloadFileName, ReactDOMServer, ReceiptComponent, t) => {
+  const printWindow = window.open("", "", "height=600,width=800");
+  const receiptData = Array.isArray(data) ? data[0] : data;
+  
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>${downloadFileName}</title>
+        <style>
+          .receipt-container { max-width: 800px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif; }
+          .receipt-header { text-align: center; margin-bottom: 30px; }
+          .detail-row { display: flex; justify-content: space-between; margin-bottom: 10px; padding-bottom: 5px; border-bottom: 1px dotted #ddd; }
+          .label { font-weight: bold; color: #555; }
+          .value { text-align: right; }
+          .animal-details { margin: 15px 0; padding: 10px; background-color: #f9f9f9; }
+          .authorized-signature { margin-top: 50px; border-top: 1px solid #000; width: 200px; float: right; text-align: center; padding-top: 10px; }
+          @media print { .no-print { display: none; } }
+        </style>
+      </head>
+      <body>
+        <div id="receipt-root"></div>
+        <div class="no-print">
+          <button onclick="window.print();window.close()" 
+            style="display: block; width: 200px; margin: 20px auto; padding: 10px; 
+            background-color: #4a90e2; color: white; border: none; border-radius: 4px; cursor: pointer;">
+            Download Receipt
+          </button>
+        </div>
+      </body>
+    </html>
+  `;
+
+  printWindow.document.write(htmlContent);
+  const receiptHtml = ReactDOMServer.renderToString(
+    <ReceiptComponent receiptData={receiptData} t={t} />
+  );
+  printWindow.document.getElementById("receipt-root").innerHTML = receiptHtml;
+  printWindow.document.close();
+};
+
+// Data formatting utility
+export const formatFeeDataCollection = (data, type) => {
+  const formatters = {
+    arrival: (details) => details?.Details?.flatMap(item =>
+      item.details.map(detail => ({
+        animalType: detail.animal,
+        animalCount: detail.count,
+        animalFee: detail?.stableFeeDetails[0]?.fee_with_stakeholder,
+        totalFee: detail.totalFee,
+        total: item.total,
+      }))
+    ),
+
+    stabling: (data) => data?.Details?.flatMap(item =>
+      item.details.map(detail => ({
+        animalType: detail.animal,
+        animalCount: detail.count,
+        totalFee: detail.totalFee,
+        total: item.total,
+        stableFeeDetails: detail.stableFeeDetails?.map(feeDetail => ({
+          token: feeDetail.token,
+          animalTypeId: feeDetail.animaltypeid,
+          daysWithStakeholder: feeDetail.days_with_stakeholder,
+          feeWithStakeholder: feeDetail.fee_with_stakeholder,
+        })) || [],
+      }))
+    ),
+
+    washing: (data) => {
+      const washingData = data?.VehicleVehicleWashingFeesResponse;
+      return washingData ? [{
+        vehiclenumber: washingData.vehicleNumber,
+        vehicletype: washingData.vehicleType,
+        washingTime: washingData.washingTime || "N/A",
+        washingDate: washingData.washingDate,
+        total: washingData.washingFee,
+      }] : [];
+    },
+
+    parking: (data, parkingDetails) => {
+      if (!data?.vehicleParkingFeeResponseDetails) return [];
+      
+      const now = new Date();
+      const currentDate = now.toISOString().split("T")[0];
+      const currentTime = now.toTimeString().split(" ")[0];
+
+      const calculateHours = (parkingDate, parkingTime, departureDate, departureTime) => {
+        if (!parkingDate || !parkingTime) return 0;
+        const parkingDateTime = new Date(`${parkingDate}T${parkingTime}`);
+        const departureDateTime = new Date(`${departureDate}T${departureTime}`);
+        const diffMs = departureDateTime - parkingDateTime;
+        const hours = Math.round((diffMs / (1000 * 60 * 60)) * 100) / 100;
+        return hours > 0 ? hours : 0;
+      };
+
+      return data.vehicleParkingFeeResponseDetails.map(data => {
+        const matchingParkingDetail = parkingDetails?.find(detail => 
+          detail.vehicleNumber === data.vehicleNumber
+        );
+        const totalHours = calculateHours(
+          matchingParkingDetail?.parkingDate,
+          matchingParkingDetail?.parkingTime,
+          currentDate,
+          currentTime
+        );
+
+        return {
+          vehiclenumber: data.vehicleNumber,
+          vehicletype: data.vehicleType,
+          parkingdate: matchingParkingDetail?.parkingDate || data.parkingdate,
+          parkingtime: matchingParkingDetail?.parkingTime || data.parkingtime,
+          departuredate: currentDate,
+          departuretime: currentTime,
+          totalhours: totalHours || data.totalhours,
+          total: data.parkingFee,
+        };
+      });
+    },
+
+    slaughter: (data) => data?.Details?.flatMap(item =>
+      item?.details?.map(detail => ({
+        animalType: detail?.animal,
+        animalCount: detail?.count,
+        animalFee: detail?.stableFeeDetails[0]?.fee_with_stakeholder,
+        totalFee: detail?.totalFee,
+        total: item?.total,
+        stableFeeDetails: detail.stableFeeDetails?.map(feeDetail => ({
+          token: feeDetail.token,
+          animalTypeId: feeDetail.animaltypeid,
+          daysWithStakeholder: feeDetail.days_with_stakeholder,
+          feeWithStakeholder: feeDetail.fee_with_stakeholder,
+        })) || [],
+      }))
+    ),
+
+    removal: (data) => data?.removalDetails?.flatMap(item =>
+      item?.details?.map(detail => ({
+        animalType: detail.animal,
+        animalCount: detail.count,
+        totalFee: detail.totalFee,
+        total: item.total,
+        stableFeeDetails: detail.stableFeeDetails?.map(feeDetail => ({
+          token: feeDetail.token,
+          animalTypeId: feeDetail.animaltypeid,
+          daysWithStakeholder: feeDetail.days_with_stakeholder,
+          feeWithStakeholder: feeDetail.fee_with_stakeholder,
+          removalType: feeDetail?.removal_type,
+        })) || [],
+      }))
+    ),
+
+    trading: (data) => data?.Details?.flatMap(item =>
+      item?.details?.map(detail => ({
+        animalType: detail?.animal,
+        animalCount: detail?.count,
+        animalFee: detail?.fee,
+        totalFee: detail?.totalFee,
+        total: item?.total,
+      }))
+    ),
+
+    penalty: (data, selectedUUID) => {
+      if (!data?.PenaltyLists) return [];
+      return data.PenaltyLists
+        .filter(item => item.penaltyReference === selectedUUID)
+        .map(value => ({
+          total: value.total,
+          unit: value.unit === null ? 1 : value.unit,
+        }));
+    },
+
+    weighing: (data) => data?.Details?.flatMap(item =>
+      item?.details?.map(detail => ({
+        animal: detail?.animal,
+        unit: detail?.unit,
+        fee: detail?.fee,
+        subtotal: detail?.subtotal,
+        skinunit: detail?.skinunit,
+        skinfee: detail?.skinfee,
+        total: item?.total,
+      }))
+    ),
+  };
+
+  return formatters[type] ? formatters[type](data) : [];
+};
+
+// Generic API payload generator
+export const generateFeePayload = (type, data, additionalData = {}) => {
+  const payloadGenerators = {
+    arrival: (formattedData) => {
+      const details = formattedData.map(item => ({
+        animal: item.animalType,
+        count: item.animalCount,
+        fee: item.animalFee,
+        totalFee: item.totalFee
+      }));
+
+      return {
+        Details: [{
+          details,
+          total: formattedData[0]?.total || 0
+        }]
+      };
+    },
+
+    stabling: (formattedData) => {
+      const details = formattedData.map(item => ({
+        animal: item.animalType,
+        count: item.animalCount,
+        totalFee: item.totalFee,
+        stableFeeDetails: item.stableFeeDetails.map(detail => ({
+          token: detail.token,
+          animaltypeid: detail.animalTypeId,
+          days_with_stakeholder: detail.daysWithStakeholder,
+          fee_with_stakeholder: detail.feeWithStakeholder
+        }))
+      }));
+
+      return {
+        Details: [{
+          details,
+          total: formattedData[0]?.total || 0
+        }]
+      };
+    },
+
+    washing: (formattedData) => ({
+      VehicleVehicleWashingFeesResponse: {
+        vehicleNumber: formattedData[0]?.vehiclenumber,
+        vehicleType: formattedData[0]?.vehicletype,
+        washingTime: formattedData[0]?.washingTime,
+        washingDate: formattedData[0]?.washingDate,
+        washingFee: formattedData[0]?.total
+      }
+    }),
+
+    parking: (formattedData) => ({
+      vehicleParkingFeeResponseDetails: formattedData.map(item => ({
+        vehicleNumber: item.vehiclenumber,
+        vehicleType: item.vehicletype,
+        parkingdate: item.parkingdate,
+        parkingtime: item.parkingtime,
+        departuredate: item.departuredate,
+        departuretime: item.departuretime,
+        totalhours: item.totalhours,
+        parkingFee: item.total
+      }))
+    }),
+
+    slaughter: (formattedData) => {
+      const details = formattedData.map(item => ({
+        animal: item.animalType,
+        count: item.animalCount,
+        totalFee: item.totalFee,
+        stableFeeDetails: item.stableFeeDetails.map(detail => ({
+          token: detail.token,
+          animaltypeid: detail.animalTypeId,
+          days_with_stakeholder: detail.daysWithStakeholder,
+          fee_with_stakeholder: detail.feeWithStakeholder
+        }))
+      }));
+
+      return {
+        Details: [{
+          details,
+          total: formattedData[0]?.total || 0
+        }]
+      };
+    },
+
+    removal: (formattedData) => {
+      const details = formattedData.map(item => ({
+        animal: item.animalType,
+        count: item.animalCount,
+        totalFee: item.totalFee,
+        stableFeeDetails: item.stableFeeDetails.map(detail => ({
+          token: detail.token,
+          animaltypeid: detail.animalTypeId,
+          days_with_stakeholder: detail.daysWithStakeholder,
+          fee_with_stakeholder: detail.feeWithStakeholder,
+          removal_type: detail.removalType
+        }))
+      }));
+
+      return {
+        removalDetails: [{
+          details,
+          total: formattedData[0]?.total || 0
+        }]
+      };
+    },
+
+    trading: (formattedData) => {
+      const details = formattedData.map(item => ({
+        animal: item.animalType,
+        count: item.animalCount,
+        fee: item.animalFee,
+        totalFee: item.totalFee
+      }));
+
+      return {
+        Details: [{
+          details,
+          total: formattedData[0]?.total || 0
+        }]
+      };
+    },
+
+    penalty: (formattedData, { penaltyReference }) => ({
+      PenaltyLists: formattedData.map(item => ({
+        penaltyReference,
+        total: item.total,
+        unit: item.unit
+      }))
+    }),
+
+    weighing: (formattedData) => {
+      const details = formattedData.map(item => ({
+        animal: item.animal,
+        unit: item.unit,
+        fee: item.fee,
+        subtotal: item.subtotal,
+        skinunit: item.skinunit,
+        skinfee: item.skinfee
+      }));
+
+      return {
+        Details: [{
+          details,
+          total: formattedData[0]?.total || 0
+        }]
+      };
+    }
+  };
+
+  const generator = payloadGenerators[type];
+  if (!generator) return null;
+
+  return generator(data, additionalData);
+};
+
+// Cache utility for handling data persistence
+export const createDataCache = () => {
+  const cache = new Map();
+  
+  return {
+    getData: (key) => cache.get(key),
+    setData: (key, data) => cache.set(key, data),
+    hasData: (key) => cache.has(key),
+    clearData: (key) => cache.delete(key),
+    clearAll: () => cache.clear(),
+  };
 };

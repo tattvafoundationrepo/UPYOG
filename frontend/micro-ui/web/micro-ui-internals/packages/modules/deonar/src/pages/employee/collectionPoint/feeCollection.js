@@ -4,7 +4,18 @@ import { Controller, useForm } from "react-hook-form";
 import MainFormHeader from "../commonFormFields/formMainHeading";
 import useSubmitForm from "../../../hooks/useSubmitForm";
 import { COLLECTION_POINT_ENDPOINT } from "../../../constants/apiEndpoints";
-import { collectionDynamicColumns, columns, feeConfigs, createDynamicColumns, toastMessages } from "./utils";
+import {
+  collectionDynamicColumns,
+  columns,
+  feeConfigs,
+  createDynamicColumns,
+  toastMessages,
+  formatFeeDataCollection,
+  createDataCache,
+  scrollToElementFee,
+  generatePDF,
+} from "./utils.js";
+
 import CustomTable from "../commonFormFields/customTable";
 import TableCard from "../commonFormFields/tableCard";
 import { Loader, RadioButtons, TextInput, Toast } from "@upyog/digit-ui-react-components";
@@ -50,7 +61,7 @@ const FeeCollection = () => {
   const [parkingDetails, setParkingDetails] = useState([]);
   const [washingDetails, setWashingDetails] = useState([]);
   const [slaughterList, setSlaughterList] = useState([]);
-  const [tableColumns, setTableColumns] = useState(collectionDynamicColumns[selectedRadioValue]);
+  const [tableColumns, setTableColumns] = useState(collectionDynamicColumns(() => {}, selectedRadioValue));
   const [customTableColumns, setCustomTableColumns] = useState(createDynamicColumns(() => {}, selectedRadioValue));
   const [removalListData, setRemovalListData] = useState([]);
   const [penaltyListData, setPenaltyListData] = useState([]);
@@ -69,19 +80,10 @@ const FeeCollection = () => {
   const [isParkingSelected, setIsParkingSelected] = useState(false);
   const [isWashingSelected, setIsWashingSelected] = useState(false);
   const [isRemovalFeeSelected, SetIsRemovalFeeSelected] = useState(false);
-  // const [isShiftSelected, SetIsShiftSelected] = useState(false);
-
-  // const [refreshCollectionFeeCard, setRefreshCollectionFeeCard] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
-
   const [isLoader, setIsLoader] = useState(false);
 
-  // const [slaughterData, setSlaughterData] = useState([]);
-
-  // const [dynamicOptions, setDynamicOptions] = useState({
-  //   slaughterUnit: [],
-  //   unitShift: [],
-  // });
+  const dataCache = createDataCache();
 
   const getDynamicDefaultValues = (selectedRadioValue) => {
     const baseDefaultValues = {
@@ -259,104 +261,8 @@ const FeeCollection = () => {
     { executeOnLoad: false, executeOnRadioSelect: isWeighingSelected, enabled: isWeighingSelected }
   );
 
-  // const useFetchOptions = (optionType) => {
-  //   const { data } = fetchDeonarCommon({
-  //     CommonSearchCriteria: {
-  //       Option: optionType,
-  //     },
-  //   });
-  //   return data
-  //     ? data.CommonDetails.map((item) => ({
-  //         name: item.name,
-  //         id: item.id,
-  //       }))
-  //     : [];
-  // };
-
-  // const slaughterUnitData = useFetchOptions("slaughterunit");
-
-  // const useFetchShiftOptions = () => {
-  //   const slaughterUnitId = slaughterUnitData[0]?.id;
-  //   const { data } = fetchSlaughterUnit(
-  //     { slaughterUnitId },
-  //     { executeOnLoad: false, executeOnRadioSelect: isShiftSelected, enabled: isShiftSelected }
-  //   );
-
-  //   return (
-  //     data?.unit?.map((shift) => ({
-  //       label: `${shift.openTime} - ${shift.closeTime}`,
-  //     })) || []
-  //   );
-  // };
-
-  // const slaughterUnitShiftData = useFetchShiftOptions({});
-
-  // useEffect(() => {
-  //   if (slaughterUnitData && Array.isArray(slaughterUnitData)) {
-  //     setDynamicOptions((prevOptions) => {
-  //       const newOptions = slaughterUnitData.map((unit) => ({
-  //         label: unit.name,
-  //         value: unit.id,
-  //       }));
-
-  //       // Compare to avoid unnecessary state updates
-  //       if (JSON.stringify(prevOptions.slaughterUnit) === JSON.stringify(newOptions)) {
-  //         return prevOptions; // No update needed
-  //       }
-
-  //       return {
-  //         ...prevOptions,
-  //         slaughterUnit: newOptions,
-  //       };
-  //     });
-  //   }
-  // }, [slaughterUnitData]); // Add slaughterUnitData to dependency array
-
-  // useEffect(() => {
-  //   if (Array.isArray(slaughterUnitShiftData) && slaughterUnitShiftData.length > 0) {
-  //     setDynamicOptions((prevOptions) => {
-  //       const newOptions = slaughterUnitShiftData.map((shift) => ({
-  //         label: shift.label, // This should be formatted as 'openTime - closeTime'
-  //       }));
-
-  //       // Compare to avoid unnecessary state updates
-  //       if (JSON.stringify(prevOptions.unitShift) === JSON.stringify(newOptions)) {
-  //         return prevOptions;
-  //       }
-
-  //       return {
-  //         ...prevOptions,
-  //         unitShift: newOptions,
-  //       };
-  //     });
-  //   }
-  // }, [slaughterUnitShiftData]);
-
-  // const handleSearchData = fetchSlaughterCollectionFee();
-
-  // const handleSearch = () => {
-  //   const selectedSlaughterUnit = dynamicOptions.slaughterUnit.find(
-  //     (item) => item.value === dynamicOptions.slaughterUnit[0]?.value || item.id === dynamicOptions.slaughterUnit[0]?.id // Or however you determine the correct unit
-  //   );
-
-  //   const payload = {
-  //     Search: {
-  //       Search: selectedUUID, // Your original reference number
-  //       slaughterUnit: selectedSlaughterUnit.label,
-  //       openTime: dynamicOptions.unitShift[0].label.split(" - ")[0],
-  //       closeTime: dynamicOptions.unitShift[0].label.split(" - ")[1],
-  //     },
-  //   };
-
-  //   handleSearchData.mutate(payload, {
-  //     onSuccess: (data) => {
-  //       setSlaughterData(data);
-  //     },
-  //   });
-  // };
-
   useEffect(() => {
-    setTableColumns(collectionDynamicColumns[radioOptions[0].value]);
+    setTableColumns(collectionDynamicColumns(handleUUIDClick, radioOptions[0].value, t));
     setCustomTableColumns(createDynamicColumns(handleUUIDClick, radioOptions[0].value, t));
   }, []);
 
@@ -402,23 +308,6 @@ const FeeCollection = () => {
     }
   }, [SlaughterListData]);
 
-  // useEffect(() => {
-  //   if (slaughterData) {
-  //     const details = slaughterData?.Details || [];
-  //     const mappedDetails = details.flatMap((detailItem) =>
-  //       detailItem.details.map((item) => ({
-  //         animalType: item?.animal || "-",
-  //         animalCount: item?.count || "-",
-  //         animalFee: item?.fee || "-",
-  //         totalFee: item?.totalFee || "-",
-  //         total: detailItem?.total || "-",
-  //       }))
-  //     );
-  //     setSlaughterList(mappedDetails);
-  //     setTotalRecords(mappedDetails.length);
-  //   }
-  // }, [slaughterData]);
-
   useEffect(() => {
     if (RemovalListData) {
       setRemovalListData(RemovalListData.CollectionStablingList || []);
@@ -440,223 +329,16 @@ const FeeCollection = () => {
     }
   }, [weighingData]);
 
-  const downloadFileName = `${radioOptions.find((option) => option.value === selectedRadioValue)?.label} Fee Collection Report`;
-
-  const generatePDF = (data) => {
-    const printWindow = window.open("", "", "height=600,width=800");
-
-    const receiptData = Array.isArray(data) ? data[0] : data;
-    const htmlContent = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>${downloadFileName}</title>
-          <style>
-            /* Your existing styles */
-            .receipt-container {
-              max-width: 800px;
-              margin: 0 auto;
-              padding: 20px;
-              font-family: Arial, sans-serif;
-            }
-            .receipt-header {
-              text-align: center;
-              margin-bottom: 30px;
-            }
-            .detail-row {
-              display: flex;
-              justify-content: space-between;
-              margin-bottom: 10px;
-              padding-bottom: 5px;
-              border-bottom: 1px dotted #ddd;
-            }
-            .label {
-              font-weight: bold;
-              color: #555;
-            }
-            .value {
-              text-align: right;
-            }
-            .animal-details {
-              margin: 15px 0;
-              padding: 10px;
-              background-color: #f9f9f9;
-            }
-            .authorized-signature {
-              margin-top: 50px;
-              border-top: 1px solid #000;
-              width: 200px;
-              float: right;
-              text-align: center;
-              padding-top: 10px;
-            }
-            @media print {
-              .no-print { display: none; }
-            }
-          </style>
-        </head>
-        <body>
-          <div id="receipt-root"></div>
-          <div class="no-print">
-            <button onclick="window.print();window.close()" 
-              style="display: block; width: 200px; margin: 20px auto; padding: 10px; 
-              background-color: #4a90e2; color: white; border: none; border-radius: 4px; cursor: pointer;">
-              Download Receipt
-            </button>
-          </div>
-        </body>
-      </html>
-    `;
-
-    printWindow.document.write(htmlContent);
-
-    const ReactDOMServer = require("react-dom/server");
-    const receiptHtml = ReactDOMServer.renderToString(<EntryFeeReceipt receiptData={receiptData} selectedRadioValue={selectedRadioValue} t={t} />);
-
-    printWindow.document.getElementById("receipt-root").innerHTML = receiptHtml;
-    printWindow.document.close();
-  };
-
-  // const generatePDF = (data) => {
-  //   // Handle different data types
-  //   let receiptData = {};
-
-  //   // Convert array or object to a flat object if needed
-  //   if (Array.isArray(data)) {
-  //     receiptData = data[0] || {};
-  //   } else if (typeof data === "object" && data !== null) {
-  //     receiptData = data;
-  //   } else {
-  //     console.warn("Unsupported data structure for PDF generation");
-  //     return;
-  //   }
-
-  //   const downloadFileName = "Payment Receipt";
-  //   const printWindow = window.open("", "", "height=600,width=800");
-
-  //   const htmlContent = `
-  //     <!DOCTYPE html>
-  //     <html>
-  //       <head>
-  //         <title>${downloadFileName}</title>
-  //         <style>
-  //           body {
-  //             font-family: Arial, sans-serif;
-  //             max-width: 600px;
-  //             margin: 0 auto;
-  //             padding: 20px;
-  //             line-height: 1.6;
-  //           }
-  //           .receipt {
-  //             border: 2px solid #333;
-  //             padding: 20px;
-  //             background-color: #f9f9f9;
-  //           }
-  //           .receipt-header {
-  //             text-align: center;
-  //             border-bottom: 1px solid #ddd;
-  //             padding-bottom: 10px;
-  //             margin-bottom: 20px;
-  //           }
-  //           .receipt-header h1 {
-  //             margin: 0;
-  //             color: #333;
-  //           }
-  //           .receipt-details {
-  //             margin-bottom: 20px;
-  //           }
-  //           .receipt-details div {
-  //             display: flex;
-  //             justify-content: space-between;
-  //             margin-bottom: 10px;
-  //             border-bottom: 1px dotted #ddd;
-  //             padding-bottom: 5px;
-  //           }
-  //           .receipt-details .label {
-  //             font-weight: bold;
-  //             color: #555;
-  //           }
-  //           .receipt-details .value {
-  //             text-align: right;
-  //             color: #333;
-  //           }
-  //           .receipt-footer {
-  //             text-align: center;
-  //             margin-top: 20px;
-  //             font-size: 0.8em;
-  //             color: #666;
-  //           }
-  //           @media print {
-  //             body { margin: 0; padding: 10px; }
-  //             .no-print { display: none; }
-  //           }
-  //         </style>
-  //       </head>
-  //       <body>
-  //         <div class="receipt">
-  //           <div class="receipt-header">
-  //             <h1>${downloadFileName}</h1>
-  //           </div>
-  //           <div class="receipt-details">
-  //             ${Object.entries(receiptData)
-  //               .filter(([key]) => !["audit"].includes(key.toLowerCase()))
-  //               .map(
-  //                 ([key, value]) => `
-  //                 <div>
-  //                   <span class="label">${key.charAt(0).toUpperCase() + key.slice(1)}</span>
-  //                   <span class="value">${formatReceiptValue(value)}</span>
-  //                 </div>
-  //               `
-  //               )
-  //               .join("")}
-  //           </div>
-  //           <div class="receipt-footer">
-  //             Generated on ${new Date().toLocaleString()}
-  //           </div>
-  //         </div>
-  //         <div class="no-print">
-  //           <button onclick="window.print();window.close()"
-  //             style="display: block; width: 200px; margin: 20px auto; padding: 10px;
-  //             background-color: #4a90e2; color: white; border: none; border-radius: 4px; cursor: pointer;">
-  //             Download Receipt
-  //           </button>
-  //         </div>
-  //       </body>
-  //     </html>
-  //   `;
-
-  //   printWindow.document.write(htmlContent);
-  //   printWindow.document.close();
-  // };
-
-  // Helper function to format receipt values
-  // const formatReceiptValue = (value) => {
-  //   // Handle null or undefined
-  //   if (value === null || value === undefined) return "N/A";
-
-  //   // Handle objects (like audit)
-  //   if (typeof value === "object") {
-  //     // For nested objects, return a formatted string
-  //     return Object.entries(value)
-  //       .map(([k, v]) => `${k}: ${v}`)
-  //       .join(", ");
-  //   }
-
-  //   // Convert other types to string
-  //   return String(value);
-  // };
-
   const handlePDFDownload = (e) => {
     e.stopPropagation();
     if (isDownloading) return;
+
     try {
       setIsDownloading(true);
       const downloadData = feeCollectionResponse || tableData;
-      // if (!downloadData) {
-      //   console.warn("No data available for download");
-      //   return;
-      // }
-      generatePDF(downloadData);
+      const downloadFileName = `${radioOptions.find((option) => option.value === selectedRadioValue)?.label} Fee Collection Report`;
+
+      generatePDF(downloadData, downloadFileName, require("react-dom/server"), EntryFeeReceipt, t);
     } catch (error) {
       console.error("Error downloading PDF:", error);
     } finally {
@@ -689,20 +371,6 @@ const FeeCollection = () => {
     }
   };
 
-  // const handleUUIDClick = (entryUnitId, vehicleId, tableType) => {
-  //   if (tableType === "parking" || tableType === "washing") {
-  //     setSelectedVehicleId(vehicleId);
-  //   } else {
-  //     console.log("VehicleId is not available for this option.");
-  //     setSelectedVehicleId(null);
-  //   }
-  //   setSelectedUUID(entryUnitId);
-  //   setIsModalOpen(!isModalOpen);
-
-  //   const updatedData = getTableData();
-  //   console.log(updatedData, "checkpoint 01")
-  //   setTableData(updatedData);
-  // };
   const handleUUIDClick = (entryUnitId, vehicleId, tableType) => {
     if (tableType === "parking" || tableType === "washing") {
       setSelectedVehicleId(vehicleId);
@@ -721,29 +389,7 @@ const FeeCollection = () => {
 
   useEffect(() => {
     if (selectedUUID) {
-      const scrollAttempts = [100, 300, 500];
-      scrollAttempts.forEach((delay) => {
-        setTimeout(() => {
-          const element = document.getElementById("collection-fee-section");
-          if (element) {
-            try {
-              const yOffset = -10;
-              const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
-
-              window.scrollTo({
-                top: y,
-                behavior: "smooth",
-              });
-
-              console.log(`Scroll successful after ${delay}ms`);
-            } catch (error) {
-              console.error(`Scroll attempt failed after ${delay}ms:`, error);
-            }
-          } else {
-            console.log(`Element not found after ${delay}ms`);
-          }
-        }, delay);
-      });
+      scrollToElementFee("collection-fee-section");
     }
   }, [selectedUUID]);
 
@@ -761,7 +407,7 @@ const FeeCollection = () => {
   const handleRadioChange = (value) => {
     setSelectedRadioValue(value);
     setIsConfirmationPage(false);
-    setTableColumns(collectionDynamicColumns[value]);
+    setTableColumns(collectionDynamicColumns(handleUUIDClick, value, t));
 
     setCustomTableColumns(createDynamicColumns(handleUUIDClick, value, t));
     setTableData([]);
@@ -894,36 +540,25 @@ const FeeCollection = () => {
     }
   };
 
-  // const generateParkingPayload = (selectedUUID) => {
-  //   return {
-  //     vehicleParking: {
-  //       vehicleType: selectedVehicleId,
-  //       vehicleNumber: selectedUUID,
-  //       In: false,
-  //       Out: true,
-  //     },
-  //   };
-  // };
-
   const onSubmit = async () => {
     if (!selectedUUID) {
       setToast({ key: "error", message: "No UUID selected" });
       return;
     }
+
     setIsLoader(true);
     try {
-      const payload = generatePayload(formData, selectedRadioValue, selectedUUID, tableData);
+      const payload = generatePayload(formData, selectedRadioValue, selectedUUID, tableData, radioOptions);
+
       const collectionResponse = await saveCollectionEntryFee(payload);
 
       if (collectionResponse?.Details && collectionResponse?.ResponseInfo?.status === "successful") {
         setFeeCollectionResponse(collectionResponse?.Details);
         setToast({ key: "success", message: "Entry fee saved successfully!" });
         setSubmittedData(formData);
-        // setRefreshCollectionFeeCard(true);
-        // reset(getDynamicDefaultValues(selectedRadioValue));
-        // updateTableDataAfterPayment(selectedUUID);
-        // setSelectedUUID(null);
-        // setTableData([]);
+
+        // Clear cache for this entry
+        dataCache.clearData(`${selectedRadioValue}-${selectedUUID}`);
       } else {
         setToast({ key: "error", message: "An unexpected response was received." });
       }
@@ -935,72 +570,6 @@ const FeeCollection = () => {
     }
   };
 
-  // useEffect(() => {
-  //   if (refreshCollectionFeeCard) {
-  //     setRefreshCollectionFeeCard(false);
-  //   }
-  // }, [refreshCollectionFeeCard]);
-
-  // New function to update table data after payment
-  // const updateTableDataAfterPayment = (paidUUID) => {
-  //   let updatedTableData;
-  //   switch (selectedRadioValue) {
-  //     case "arrival":
-  //       updatedTableData = animalCount.filter((item) => item.entryUnitId !== paidUUID);
-  //       setAnimalCount(updatedTableData);
-  //       break;
-  //     case "stabling":
-  //       updatedTableData = stablingListData.filter((item) => item.entryUnitId !== paidUUID);
-  //       setStablingListData(updatedTableData);
-  //       break;
-  //     case "trading":
-  //       updatedTableData = tradingListData.filter((item) => item.entryUnitId !== paidUUID);
-  //       setTradingListData(updatedTableData);
-  //       break;
-  //     case "parking":
-  //       updatedTableData = parkingDetails.filter((item) => item.vehicleNumber !== paidUUID);
-  //       setParkingDetails(updatedTableData);
-  //       break;
-  //     case "washing":
-  //       updatedTableData = washingDetails.filter((item) => item.vehicleNumber !== paidUUID);
-  //       setWashingDetails(updatedTableData);
-  //       break;
-  //     case "slaughter":
-  //       updatedTableData = slaughterList.filter((item) => item.entryUnitId !== paidUUID);
-  //       setSlaughterList(updatedTableData);
-  //       break;
-  //     case "removal":
-  //       updatedTableData = removalListData.filter((item) => item.entryUnitId !== paidUUID);
-  //       setRemovalListData(updatedTableData);
-  //       break;
-  //     case "penalty":
-  //       updatedTableData = penaltyListData.filter((item) => item.penaltyReference !== paidUUID);
-  //       setPenaltyListData(updatedTableData);
-  //       break;
-  //     case "weighing":
-  //       updatedTableData = weighingListData.filter((item) => item.entryUnitId !== paidUUID);
-  //       setWeighingListData(updatedTableData);
-  //       break;
-  //   }
-  // };
-
-  // Modify useEffect for table data to reset when selectedRadioValue changes
-  // useEffect(() => {
-  //   const updatedTableData = getTableData();
-  //   setTableData(updatedTableData);
-  // }, [
-  //   selectedRadioValue,
-  //   animalCount,
-  //   stablingListData,
-  //   tradingListData,
-  //   parkingDetails,
-  //   washingDetails,
-  //   slaughterList,
-  //   removalListData,
-  //   penaltyListData,
-  //   weighingListData,
-  // ]);
-
   const handleFieldChange = (fieldName, value) => {
     setFormData((prevData) => ({
       ...prevData,
@@ -1010,247 +579,69 @@ const FeeCollection = () => {
   };
 
   const fields1 = feeConfigs[selectedRadioValue]?.fields || [];
-  // const options = feeConfigs[selectedRadioValue]?.options || {};
 
   useEffect(() => {
     if (!selectedUUID) return;
 
     const formatDataBasedOnType = () => {
-      // if (!selectedUUID) return;
+      const formattedData = formatFeeDataCollection(
+        {
+          arrival: entryData,
+          stabling: stablingData,
+          washing: vehicleData,
+          parking: ParkingData,
+          slaughter: slaughterFeeData,
+          removal: removalFeeData,
+          trading: tradingFeeData,
+          penalty: PenaltiesData,
+          weighing: weighingFeeData,
+        }[selectedRadioValue],
+        selectedRadioValue
+      );
 
-      switch (selectedRadioValue) {
-        case "arrival":
-          if (entryData?.Details) {
-            return entryData.Details.flatMap((item) =>
-              item.details.map((detail) => ({
-                animalType: detail.animal, // Animal type
-                animalCount: detail.count, // Animal count
-                animalFee: detail?.stableFeeDetails[0]?.fee_with_stakeholder,
-                totalFee: detail.totalFee, // Total fee for this specific animal
-                total: item.total, // Total fee for the entire group
-              }))
-            );
-          }
-
-          break;
-        // case "arrival":
-        //   if (entryData?.Details) {
-        //     return entryData.Details.flatMap((item) =>
-        //       item.details.map((detail) => ({
-        //         animalType: detail.animal,
-        //         animalCount: detail.count,
-        //         animalFee: detail.fee,
-        //         totalFee: detail.totalFee,
-        //         total: item.total,
-        //       }))
-        //     );
-        //   }
-        //   break;
-
-        case "stabling":
-          if (stablingData?.Details) {
-            return stablingData.Details.flatMap((item) =>
-              item.details.map((detail) => ({
-                animalType: detail.animal, // Animal type
-                animalCount: detail.count, // Animal count
-                totalFee: detail.totalFee, // Total fee for this specific animal
-                total: item.total, // Total fee for the entire group
-                stableFeeDetails:
-                  detail.stableFeeDetails?.map((feeDetail) => ({
-                    token: feeDetail.token, // Stable fee token
-                    animalTypeId: feeDetail.animaltypeid, // Animal type ID
-                    daysWithStakeholder: feeDetail.days_with_stakeholder, // Days with the stakeholder
-                    feeWithStakeholder: feeDetail.fee_with_stakeholder, // Fee with the stakeholder
-                  })) || [], // Default to an empty array if there are no stableFeeDetails
-              }))
-            );
-          }
-
-          break;
-        case "washing":
-          if (vehicleData) {
-            const washingData = vehicleData?.VehicleVehicleWashingFeesResponse;
-            if (washingData && typeof washingData === "object") {
-              return [
-                {
-                  vehiclenumber: washingData.vehicleNumber,
-                  vehicletype: washingData.vehicleType,
-                  washingTime: washingData.washingTime || "N/A",
-                  washingDate: washingData.washingDate,
-                  total: washingData.washingFee,
-                },
-              ];
-            }
-          }
-          break;
-
-        case "parking":
-          if (ParkingData) {
-            return ParkingData.vehicleParkingFeeResponseDetails.map((data) => {
-              const matchingParkingDetail = parkingDetails.find((detail) => detail.vehicleNumber === data.vehicleNumber);
-              const now = new Date();
-              const currentDate = now.toISOString().split("T")[0];
-              const currentTime = now.toTimeString().split(" ")[0];
-              const calculateHours = (parkingDate, parkingTime, departureDate, departureTime) => {
-                if (!parkingDate || !parkingTime) return 0;
-                const parkingDateTime = new Date(`${parkingDate}T${parkingTime}`);
-                const departureDateTime = new Date(`${departureDate}T${departureTime}`);
-                const diffMs = departureDateTime - parkingDateTime;
-                const hours = Math.round((diffMs / (1000 * 60 * 60)) * 100) / 100;
-                return hours > 0 ? hours : 0;
-              };
-              const totalHours = calculateHours(matchingParkingDetail?.parkingDate, matchingParkingDetail?.parkingTime, currentDate, currentTime);
-              return {
-                vehiclenumber: data.vehicleNumber,
-                vehicletype: data.vehicleType,
-                parkingdate: matchingParkingDetail?.parkingDate || data.parkingdate,
-                parkingtime: matchingParkingDetail?.parkingTime || data.parkingtime,
-                departuredate: currentDate,
-                departuretime: currentTime,
-                totalhours: totalHours || data.totalhours,
-                total: data.parkingFee,
-              };
-            });
-          }
-          break;
-
-        case "slaughter":
-          if (slaughterFeeData?.Details) {
-            return slaughterFeeData?.Details?.flatMap((item) =>
-              item?.details?.map((detail) => ({
-                animalType: detail?.animal,
-                animalCount: detail?.count,
-                animalFee: detail?.stableFeeDetails[0]?.fee_with_stakeholder,
-                totalFee: detail?.totalFee,
-                total: item?.total,
-                stableFeeDetails:
-                  detail.stableFeeDetails?.map((feeDetail) => ({
-                    token: feeDetail.token, // Stable fee token
-                    animalTypeId: feeDetail.animaltypeid, // Animal type ID
-                    daysWithStakeholder: feeDetail.days_with_stakeholder, // Days with the stakeholder
-                    feeWithStakeholder: feeDetail.fee_with_stakeholder,
-                  })) || [],
-              }))
-            );
-          }
-          break;
-
-        case "removal":
-          if (removalFeeData?.removalDetails) {
-            return removalFeeData?.removalDetails.flatMap((item) =>
-              item?.details?.map((detail) => ({
-                animalType: detail.animal, // Animal type
-                animalCount: detail.count, // Animal count
-                totalFee: detail.totalFee, // Total fee for this specific animal
-                total: item.total, // Total fee for the entire group
-                stableFeeDetails:
-                  detail.stableFeeDetails?.map((feeDetail) => ({
-                    token: feeDetail.token, // Stable fee token
-                    animalTypeId: feeDetail.animaltypeid, // Animal type ID
-                    daysWithStakeholder: feeDetail.days_with_stakeholder, // Days with the stakeholder
-                    feeWithStakeholder: feeDetail.fee_with_stakeholder,
-                    removalType: feeDetail?.removal_type,
-                    // Fee with the stakeholder
-                  })) || [], // Default to an empty array if there are no stableFeeDetails
-              }))
-            );
-          }
-          break;
-
-        case "trading":
-          if (tradingFeeData?.Details) {
-            return tradingFeeData?.Details.flatMap((item) =>
-              item?.details?.map((detail) => ({
-                animalType: detail?.animal,
-                animalCount: detail?.count,
-                animalFee: detail?.fee,
-                totalFee: detail?.totalFee,
-                total: item?.total,
-              }))
-            );
-          }
-          break;
-
-        case "penalty":
-          if (PenaltiesData?.PenaltyLists) {
-            const selectedPenalty = selectedUUID;
-            const selectedPenalties = PenaltiesData?.PenaltyLists?.filter((item) => item.penaltyReference === selectedPenalty).map((value) => ({
-              total: value.total,
-              unit: value.unit === null ? 1 : value.unit,
-            }));
-            return selectedPenalties;
-          }
-          break;
-
-        case "weighing":
-          if (weighingFeeData?.Details) {
-            return weighingFeeData?.Details.flatMap((item) =>
-              item?.details?.map((detail) => ({
-                animal: detail?.animal,
-                unit: detail?.unit,
-                fee: detail?.fee,
-                subtotal: detail?.subtotal,
-                skinunit: detail?.skinunit,
-                skinfee: detail?.skinfee,
-                total: item?.total,
-              }))
-            );
-          }
-
-          break;
-
-        default:
-          return [];
+      if (formattedData && formattedData.length > 0) {
+        setTableData(formattedData);
+        // Cache the formatted data
+        dataCache.setData(`${selectedRadioValue}-${selectedUUID}`, formattedData);
       }
-      return [];
     };
-    const formattedData = formatDataBasedOnType();
-    if (formattedData && formattedData.length > 0) {
-      setTableData(formattedData);
+
+    // Check cache first
+    const cachedData = dataCache.getData(`${selectedRadioValue}-${selectedUUID}`);
+    if (cachedData) {
+      setTableData(cachedData);
+    } else {
+      formatDataBasedOnType();
     }
   }, [
     selectedUUID,
     selectedRadioValue,
     entryData,
+    stablingData,
     vehicleData,
     ParkingData,
-    stablingData,
+    slaughterFeeData,
     removalFeeData,
     tradingFeeData,
     PenaltiesData,
     weighingFeeData,
-    animalCount,
-    stablingListData,
-    tradingListData,
-    parkingDetails,
-    washingDetails,
-    slaughterFeeData,
-    removalListData,
-    penaltyListData,
-    weighingListData,
   ]);
 
-  // useEffect(() => {
-  //   if (toast) {
-  //     const timer = setTimeout(() => {
-  //       setToast(null);
-  //     }, 3000);
-  //     return () => clearTimeout(timer);
-  //   }
-  // }, [toast]);
   useEffect(() => {
     return () => {
-      setTableData([]); // Clean up when component unmounts
+      dataCache.clearAll();
+      setTableData([]);
     };
   }, []);
 
-  // const tableData1 = useMemo(() => getTableData(), []);
-
-  // const shouldDisplaySearchButton = (selectedUUID, context) => {
-  //   return context === "slaughter" && selectedUUID;
-  // };
-
-  // const context = "slaughter";
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => {
+        setToast(null);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
 
   return (
     <React.Fragment>
@@ -1293,6 +684,7 @@ const FeeCollection = () => {
                   t={t}
                   columns={customTableColumns}
                   data={getTableData()}
+                  searchPlaceholder={t("Search")}
                   // tableClassName={"deonar-custom-scroll"}
                   manualPagination={false}
                   totalRecords={totalRecords}
@@ -1408,50 +800,6 @@ const FeeCollection = () => {
                 )}
               </div>
             </div>
-            {/* <div className="bmc-col-large-header" style={{ width: "50%" }}>
-              <div className="bmc-row-card-header">
-                {selectedUUID ? (
-                  !isConfirmationPage && (
-                    <div style={{ flex: 1, paddingLeft: "20px" }}>
-                      <button
-                        type="button"
-                        onClick={handlePDFDownload}
-                        className="print-pdf-button"
-                        style={{
-                          padding: "6px 10px",
-                          background: !feeCollectionResponse ? "grey" : "#a82227",
-                          borderRadius: "8px",
-                          display: "flex",
-                          alignItems: "center",
-                          color: "white",
-                          fontWeight: "600",
-                          border: "none",
-                          cursor: feeCollectionResponse ? "pointer" : "not-allowed",
-                        }}
-                        disabled={!feeCollectionResponse}
-                      >
-                        Print/Download PDF
-                      </button>
-                      <FeeConfirmationPage
-                        label={`${radioOptions.find((option) => option.value === selectedRadioValue)?.label} Confirmation`}
-                        // fields={fields}
-                        values={submittedData}
-                        options={options}
-                        Tablecolumns={tableColumns}
-                        isLoading={isLoading}
-                        showTable={true}
-                        tableData={tableData}
-                        feeCollectionResponse={feeCollectionResponse}
-                      />
-                    </div>
-                  )
-                ) : (
-                  <div className="no-uuid-message">
-                    <p style={{ fontSize: "20px" }}>{t("Please select an Deonar arrival ID to view fee confirmation")}</p>
-                  </div>
-                )}
-              </div>
-            </div> */}
           </div>
         </form>
       </div>

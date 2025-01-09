@@ -495,6 +495,7 @@ const Slaughtering = () => {
                 columns={Tablecolumns}
                 data={slaughterList}
                 manualPagination={false}
+                searchPlaceholder={t("Search")}
                 // tableClassName={"deonar-scrollable-table"}
                 totalRecords={totalRecords}
                 autoSort={false}
@@ -516,6 +517,7 @@ const Slaughtering = () => {
                   manualPagination={false}
                   data={slaughterAssignment}
                   totalRecords={totalRecords}
+                  searchPlaceholder={t("Search")}
                   // tableClassName={"deonar-scrollable-table"}
                   autoSort={false}
                   isLoadingRows={""}

@@ -327,6 +327,7 @@ const Helkari = () => {
               {isMobileView && animalCount.map((data, index) => <TableCard data={data} key={index} fields={fields} onUUIDClick={handleUUIDClick} />)}
               <CustomTable
                 t={t}
+                searchPlaceholder={t("Search")}
                 columns={helkariColumns(handleUUIDClick, t)}
                 data={animalCount}
                 manualPagination={false}
@@ -372,6 +373,7 @@ const Helkari = () => {
                     <div className="bmc-card-row" style={{ overflowY: "auto", maxHeight: "511px" }}>
                     <CustomTable
                         t={t}
+                        searchPlaceholder={t("Search")}
                         columns={isAfterStablingVisibleColumns}
                         data={filteredGawaltable}
                         totalRecords={totalRecords}

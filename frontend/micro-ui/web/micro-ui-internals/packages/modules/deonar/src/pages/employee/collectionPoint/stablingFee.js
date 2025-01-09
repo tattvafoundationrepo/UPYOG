@@ -511,18 +511,18 @@ const StablingFeePage = () => {
             <div className="bmc-row-card-header">
               {isMobileView && animalCount.map((data, index) => <TableCard data={data} key={index} fields={fields} onUUIDClick={handleUUIDClick} />)}
               <div className="bmc-card-row" style={{ overflowY: "auto", maxHeight: "511px" }}>
-
-              <CustomTable
-                t={t}
-                columns={columns(handleUUIDClick, t)}
-                data={animalCount}
-                manualPagination={false}
-                // tableClassName={"deonar-scrollable-table"}
-                totalRecords={totalRecords}
-                isLoadingRows={isLoading}
-                // onSort={handleSort}
-                //  fileName="YourCustomFileName"
-              />
+                <CustomTable
+                  t={t}
+                  searchPlaceholder={t("Search")}
+                  columns={columns(handleUUIDClick, t)}
+                  data={animalCount}
+                  manualPagination={false}
+                  // tableClassName={"deonar-scrollable-table"}
+                  totalRecords={totalRecords}
+                  isLoadingRows={isLoading}
+                  // onSort={handleSort}
+                  //  fileName="YourCustomFileName"
+                />
               </div>
               {isModalOpen && (
                 <CustomModal isOpen={isModalOpen} onClose={toggleModal} selectedUUID={selectedUUID} style={{ width: "100%" }}>
@@ -574,10 +574,11 @@ const StablingFeePage = () => {
                   </div>
                   {/* </div> */}
                   <div className="bmc-card-row" style={{ overflowY: "auto", maxHeight: "511px" }}>
-                  {/* <div className="bmc-row-card-header" style={{ overflowY: "auto", maxHeight: "300px" }}> */}
+                    {/* <div className="bmc-row-card-header" style={{ overflowY: "auto", maxHeight: "300px" }}> */}
                     {/* {isMobileView && data.map((data, index) => <TableCard data={data} key={index} fields={fields} onUUIDClick={handleUUIDClick} />)} */}
                     <CustomTable
                       t={t}
+                      searchPlaceholder={t("Search")}
                       columns={isVisibleColumns}
                       manualPagination={false}
                       data={filteredGawaltable}

@@ -98,9 +98,7 @@ const WashingFeePage = () => {
     setIsModalOpen(!isModalOpen);
   };
   const onSubmit = async () => {
-    const selectedDetails = parkingDetails.filter((detail) =>
-      selectedRows.includes(detail.vehicleNumber)
-    );
+    const selectedDetails = parkingDetails.filter((detail) => selectedRows.includes(detail.vehicleNumber));
     const payload = {
       vehicleWashing: selectedDetails.map((detail) => ({
         vehicleType: detail.vehicleId,
@@ -125,8 +123,7 @@ const WashingFeePage = () => {
     setSelectedRows([]);
     setIsCheckboxChecked(false);
   };
-  
-  
+
   const Tablecolumns = [
     {
       Header: t("Vehicle Number"),
@@ -209,6 +206,7 @@ const WashingFeePage = () => {
                   t={t}
                   columns={Tablecolumns}
                   data={tableData}
+                  searchPlaceholder={t("Search")}
                   // tableClassName={"deonar-scrollable-table"}
                   disableSort={false}
                   autoSort={false}
@@ -228,13 +226,14 @@ const WashingFeePage = () => {
             </div>
           </div>
           {isModalOpen && (
-            <CustomModal isOpen={isModalOpen} onClose={toggleModal} style={{ width: "100%" }}>
-            <div className="bmc-card-row" style={{ overflowY: "auto", maxHeight: "511px" }}>
-            <CustomTable
+            <CustomModal isOpen={isModalOpen} onClose={toggleModal} style={{ width: "100%" }} title={t("Washing Details")}>
+              <div className="bmc-card-row" style={{ overflowY: "auto", maxHeight: "511px" }}>
+                <CustomTable
                   t={t}
                   columns={isVisibleColumns2}
                   manualPagination={false}
                   data={parkingDetails}
+                  searchPlaceholder={t("Search")}
                   // totalRecords={totalRecords}
                   // tableClassName={"deonar-scrollable-table"}
                   autoSort={false}

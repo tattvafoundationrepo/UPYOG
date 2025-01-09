@@ -183,6 +183,7 @@ const ParkingFeePage = () => {
               ) : (
                 <CustomTable
                   t={t}
+                  searchPlaceholder={t("Search")}
                   columns={Tablecolumns}
                   data={tableData}
                   // tableClassName={"deonar-scrollable-table"}

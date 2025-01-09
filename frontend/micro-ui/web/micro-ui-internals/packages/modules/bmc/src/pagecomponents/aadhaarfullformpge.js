@@ -108,10 +108,10 @@ const AadhaarFullFormPage = () => {
     const data = {
       updatedAddress,
       updatedDisability,
-   //   updatedQualifications,
+      // updatedQualifications,
       updatedPersonalDetails,
-    //  updatedBank,
-     // updatedDocument,
+      // updatedBank,
+      // updatedDocument,
       updateOthersDetails,
     };
 
@@ -124,17 +124,17 @@ const AadhaarFullFormPage = () => {
       },
       onError: (error) => {
         console.error("Failed to save user details:", error);
-        showToast("error", t("Please fill all the required fields !"));
+        showToast("error", t("Please fill all the required fields"));
       },
     });
   }, [
     updatedAddress,
     updatedDisability,
-   // updatedQualifications,
+    // updatedQualifications,
     updatedPersonalDetails,
-   // updatedBank,
+    // updatedBank,
     saveUserDetail,
-  //  updatedDocument,
+    // updatedDocument,
     updateOthersDetails,
     history,
     t,
@@ -144,11 +144,11 @@ const AadhaarFullFormPage = () => {
     validateForm();
   }, [
     updatedPersonalDetails,
-  //  updatedQualifications,
+    // updatedQualifications,
     updatedDisability,
     updatedAddress,
-  //  updatedBank,
-  //  updatedDocument,
+    // updatedBank,
+    // updatedDocument,
     updateOthersDetails,
   ]);
 

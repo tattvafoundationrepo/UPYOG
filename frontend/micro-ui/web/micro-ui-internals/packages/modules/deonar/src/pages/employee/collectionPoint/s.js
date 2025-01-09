@@ -79,7 +79,6 @@ const Trading = () => {
   // const { data: fetchedData, isLoading } = fetchTradingList({});
   const { data: fetchedData, isLoading } = fetchTradingList({}, { executeOnLoad: true, executeOnRadioSelect: false });
 
-
   useEffect(() => {
     if (fetchedData) {
       setAnimalCount(fetchedData.SecurityCheckDetails);
@@ -237,8 +236,8 @@ const Trading = () => {
           showColumnHeaders={true}
           headerMappings={{
             label: t("Name"),
-              licenceNumber: t("License"),
-              mobileNumber: t("Mobile Number"),
+            licenceNumber: t("License"),
+            mobileNumber: t("Mobile Number"),
           }}
         />
       ),
@@ -391,17 +390,17 @@ const Trading = () => {
             <div className="bmc-row-card-header">
               {isMobileView && animalCount.map((data, index) => <TableCard data={data} key={index} fields={fields} onUUIDClick={handleUUIDClick} />)}
               <div className="bmc-card-row" style={{ overflowY: "auto", maxHeight: "511px" }}>
-
-              <CustomTable
-                t={t}
-                columns={columns(handleUUIDClick, t)}
-                data={animalCount}
-                manualPagination={false}
-                // tableClassName={"deonar-scrollable-table"}
-                totalRecords={totalRecords}
-                autoSort={false}
-                isLoadingRows={isLoading}
-              />
+                <CustomTable
+                  t={t}
+                  searchPlaceholder={t("Search")}
+                  columns={columns(handleUUIDClick, t)}
+                  data={animalCount}
+                  manualPagination={false}
+                  // tableClassName={"deonar-scrollable-table"}
+                  totalRecords={totalRecords}
+                  autoSort={false}
+                  isLoadingRows={isLoading}
+                />
               </div>
               {isModalOpen && (
                 <CustomModal isOpen={isModalOpen} onClose={toggleModal} selectedUUID={selectedUUID} style={{ width: "100%" }}>
@@ -431,7 +430,9 @@ const Trading = () => {
                           />
                         </div>
                         <div className="no-uuid-message">
-                          {showIndividualMessage && <p style={{ fontSize: "20px" }}>{t("Note - You can select the Stakeholders individually also.")}</p>}
+                          {showIndividualMessage && (
+                            <p style={{ fontSize: "20px" }}>{t("Note - You can select the Stakeholders individually also.")}</p>
+                          )}
                         </div>
                         {/* </div> */}
                       </div>
@@ -440,13 +441,14 @@ const Trading = () => {
 
                       <CustomTable
                         t={t}
+                        searchPlaceholder={t("Search")}
                         columns={isAfterStablingVisibleColumns}
                         data={filteredGawaltable}
                         totalRecords={totalRecords}
                         autoSort={false}
                         manualPagination={false}
                         // tableClassName={"deonar-scrollable-table"}
-                        />
+                      />
                       {/* </div> */}
                     </div>
                     <SubmitButtonField control={control} disabled={!isDirty} />
@@ -454,7 +456,7 @@ const Trading = () => {
                   </Fragment>
                 </CustomModal>
               )}
-            </div>{" "}
+            </div>
           </div>
           {isConfirmModalOpen && (
             <ConfirmationDialog

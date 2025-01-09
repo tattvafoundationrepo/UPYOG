@@ -22,7 +22,7 @@ const DocumentCard = ({ tenantId, onUpdate, initialRows = [], AllowEdit = true, 
   const [selectedRow, setSelectedRow] = useState(null);
 
   const [isMobileView, setIsMobileView] = useState(window.innerWidth < 769);
-  const [toast, setToast] = useState('')
+  const [toast, setToast] = useState("");
 
   const initialDefaultValues = useMemo(
     () => ({
@@ -96,27 +96,27 @@ const DocumentCard = ({ tenantId, onUpdate, initialRows = [], AllowEdit = true, 
 
   const removeDocumentRow = (id) => {
     const documentToRemove = rows.find((item) => item.document.id === id);
-  
+
     if (!documentToRemove) {
       return;
     }
-  
+
     const payload = {
       removalcriteria: {
         id: documentToRemove.document.id,
         option: "document",
       },
     };
-  
+
     removeRows.mutate(payload, {
       onSuccess: () => {
         setRows((prevRows) => prevRows.filter((row) => row.document.id !== id));
-  
+
         setToastWithTimeout("success", t("DOCUMENT REMOVED SUCCESSFULLY"));
       },
       onError: (error) => {
         console.error("Failed to remove document:", error);
-  
+
         setToastWithTimeout("error", t("FAILED TO REMOVE DOCUMENT. PLEASE TRY AGAIN!"));
       },
     });
@@ -145,19 +145,15 @@ const DocumentCard = ({ tenantId, onUpdate, initialRows = [], AllowEdit = true, 
 
     saveDocumentData.mutate(newRow, {
       onSuccess: (response) => {
-
-        
         setRows((prevRows) => [
           ...prevRows,
           ...newRow.updatedDocument.map((doc) => ({
             document: doc.document,
             documentNo: doc.documentNo,
           })),
-
         ]);
-        
-        setToastWithTimeout("success", t("DOCUMENT ADDED SUCCESSFULLY"));
 
+        setToastWithTimeout("success", t("DOCUMENT ADDED SUCCESSFULLY"));
 
         toggleModal();
 
@@ -171,19 +167,17 @@ const DocumentCard = ({ tenantId, onUpdate, initialRows = [], AllowEdit = true, 
               documentNo: doc.documentNo,
             })),
           ]);
-          
         }
       },
       onError: (error) => {
         console.error("Failed to save document:", error);
         setToastWithTimeout("error", t("Please fill all the required fields !"));
-
       },
     });
   };
   const setToastWithTimeout = (key, action) => {
     setToast({ key, action });
-  
+
     setTimeout(() => {
       setToast(null);
     }, 3000);
@@ -368,7 +362,11 @@ const DocumentCard = ({ tenantId, onUpdate, initialRows = [], AllowEdit = true, 
               setIsEditing(false);
               reset(initialDefaultValues);
             }}
-            title={<h1 style={{marginLeft:'0px'}} className="heading-m">{isEditing ? t("Edit Document Details") : t("Add Document Details")}</h1>}
+            title={
+              <h1 style={{ marginLeft: "0px" }} className="heading-m">
+                {isEditing ? t("Edit Document Details") : t("Add Document Details")}
+              </h1>
+            }
             actionCancelLabel={t("Cancel")}
             actionCancelOnSubmit={() => {
               toggleModal();
@@ -432,14 +430,7 @@ const DocumentCard = ({ tenantId, onUpdate, initialRows = [], AllowEdit = true, 
           </CustomModal>
         </div>
       </div>
-      {toast && (
-        <Toast
-          error={toast.key === "error"}
-          label={t(toast.action)}
-          onClose={() => setToast(null)}
-          style={{ maxWidth: "670px" }}
-        />
-      )}
+      {toast && <Toast error={toast.key === "error"} label={t(toast.action)} onClose={() => setToast(null)} style={{ maxWidth: "670px" }} />}
     </div>
   );
 };

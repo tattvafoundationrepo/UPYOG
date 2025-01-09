@@ -448,6 +448,7 @@ const SecurityCheckPage = ({ optionalFields = false, maxAllowedCount = 100 }) =>
               <div className="bmc-card-row">
                 <CustomTable
                   t={t}
+                  searchPlaceholder={t("Search")}
                   columns={Tablecolumns}
                   // tableClassName="deonar-custom-scroll"
                   data={tableData}

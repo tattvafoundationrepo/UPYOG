@@ -103,7 +103,7 @@ const TopBar = ({
   return (
     <div className="topbar">
       {mobileView ? <Hamburger handleClick={toggleSidebar} color="#9E9E9E" /> : null}
-      <img className="city" src="https://ukpfms-digit-repo.s3.ap-south-1.amazonaws.com/logo.png" />
+      <img className="city" src="https://gambia-terraform.s3.ap-south-1.amazonaws.com/image.png" />
       <span style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
         {loggedin &&
           (cityDetails?.city?.ulbGrade ? (
@@ -147,7 +147,7 @@ const TopBar = ({
                 />
               </div>
             )}
-            <img className="state" src="https://ukpfms-digit-repo.s3.ap-south-1.amazonaws.com/logo.png" />
+            <img className="state" src="https://gambia-terraform.s3.ap-south-1.amazonaws.com/image.png" />
           </div>
         )}
       </span>

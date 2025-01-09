@@ -508,6 +508,7 @@ const AnteMortemInspectionPage = () => {
               <div className="bmc-card-row" style={{ overflowY: "auto", maxHeight: "511px" }}>
                 <CustomTable
                   t={t}
+                  searchPlaceholder={t("Search")}
                   columns={TableMainColumns}
                   data={ArrivalData}
                   disableSort={false}
@@ -613,6 +614,7 @@ const AnteMortemInspectionPage = () => {
                     ]}
                     // tableClassName={"deonar-scrollable-table"}
                     data={inspectionTableData}
+                    searchPlaceholder={t("Search")}
                     disableSort={false}
                     autoSort={false}
                     manualPagination={false}

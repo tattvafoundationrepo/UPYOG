@@ -37,7 +37,7 @@ const TopBar = ({
           <a href={window.location.href.includes("citizen")?"/digit-ui/citizen":"/digit-ui/employee"}><img
             className="city"
             id="topbar-logo"
-            src={"https://in-egov-assets.s3.ap-south-1.amazonaws.com/images/Upyog-logo.png" || "https://cdn.jsdelivr.net/npm/@egovernments/digit-ui-css@1.0.7/img/m_seva_white_logo.png"}
+            src={"https://gambia-terraform.s3.ap-south-1.amazonaws.com/mSeva+BMC+logo.png" || "https://cdn.jsdelivr.net/npm/@egovernments/digit-ui-css@1.0.7/img/m_seva_white_logo.png"}
             alt="UPYOG"
           />
           </a>
@@ -60,7 +60,7 @@ const TopBar = ({
           <img
           className="city"
           id="topbar-logo" 
-          src={"https://in-egov-assets.s3.ap-south-1.amazonaws.com/images/Upyog-logo.png" || "https://cdn.jsdelivr.net/npm/@egovernments/digit-ui-css@1.0.7/img/m_seva_white_logo.png"}
+          src={"https://gambia-terraform.s3.ap-south-1.amazonaws.com/mSeva+BMC+logo.png" || "https://cdn.jsdelivr.net/npm/@egovernments/digit-ui-css@1.0.7/img/m_seva_white_logo.png"}
           alt="mSeva"
           style={{marginLeft:"10px"}}
         />

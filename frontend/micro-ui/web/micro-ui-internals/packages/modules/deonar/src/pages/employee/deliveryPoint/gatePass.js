@@ -1,15 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import SearchButtonField from "../commonFormFields/searchBtn";
-import VehicleNumberField from "../commonFormFields/vehicleNumber";
 import SubmitPrintButtonFields from "../commonFormFields/submitPrintBtn";
 import ReceiverField from "../commonFormFields/receiverName";
 import MultiColumnDropdown from "../commonFormFields/multiColumnDropdown";
 import CustomTable from "../commonFormFields/customTable";
 import useDeonarCommon from "@upyog/digit-ui-libraries/src/hooks/deonar/useCommonDeonar";
 import MainFormHeader from "../commonFormFields/formMainHeading";
-import { Label, Toast } from "@upyog/digit-ui-react-components";
+import { Label, Toast, Dropdown, LabelFieldPair, CardLabel } from "@upyog/digit-ui-react-components";
+import useCollectionPoint from "@upyog/digit-ui-libraries/src/hooks/deonar/useCollectionPoint";
+import CustomModal from "../commonFormFields/customModal";
 
 const GatePass = () => {
   const { t } = useTranslation();
@@ -19,8 +20,14 @@ const GatePass = () => {
   const [tableGateData, setTableGateData] = useState([]);
   const [referenceNumberMessages, setReferenceNumberMessages] = useState(null);
   const [toast, setToast] = useState(null);
+  const [parkingDetails, setParkingDetails] = useState([]);
+  const [selectedVehicleNumber, setSelectedVehicleNumber] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const { fetchGatePassSearchData, saveGatePassData, searchDeonarCommon } = useDeonarCommon();
+  const { fetchParkingCollectionDetails } = useCollectionPoint({});
+
+  const { data: parkingDetailsData } = fetchParkingCollectionDetails();
 
   const gatePassSearchData = fetchGatePassSearchData();
   const gatePassSaveData = saveGatePassData();
@@ -85,6 +92,9 @@ const GatePass = () => {
       }
     }
   }, [shopkeeperData, shopKeeper]);
+  const toggleModal = () => {
+    setIsModalOpen(!isModalOpen);
+  };
 
   const handleSearch = async () => {
     const payload = {
@@ -103,6 +113,10 @@ const GatePass = () => {
     });
   };
 
+  // const handleSearch = async () => {
+  //   setIsModalOpen(true);
+  // };
+
   const tableData = tableGateData?.gatePassDetails
     ? tableGateData?.gatePassDetails.map((item) => ({
         ddReference: item.ddReference,
@@ -119,6 +133,12 @@ const GatePass = () => {
       setToast(null);
     }, duration);
   };
+
+  useEffect(() => {
+    if (parkingDetailsData) {
+      setParkingDetails(parkingDetailsData.VehicleParkedCheckDetails || []);
+    }
+  }, [parkingDetailsData]);
 
   const onSubmit = (formData) => {
     const animalDetails = tableData.map((item) => ({
@@ -183,6 +203,25 @@ const GatePass = () => {
     },
   ];
 
+  const tableBalanceColumns = [
+    {
+      Header: t("Type of Service"),
+      accessor: "typeOfAnimal",
+    },
+    {
+      Header: t("Total"),
+      accessor: "carcas",
+    },
+    {
+      Header: t("Paid"),
+      accessor: "kena",
+    },
+    {
+      Header: t("Balance"),
+      accessor: "total",
+    },
+  ];
+
   return (
     <React.Fragment>
       <div className="bmc-card-full">
@@ -210,13 +249,52 @@ const GatePass = () => {
                 />
               </div>
 
-              <SearchButtonField onSearch={handleSearch} />
+              <SearchButtonField onSearch={handleSearch} disabled={!globalShopkeeper} />
+              <CustomModal isOpen={isModalOpen} onClose={toggleModal} title={t("DEONAR_GATE_PASS_DETAILS")}>
+                <CustomTable
+                  t={t}
+                  columns={tableBalanceColumns}
+                  tableClassName="deonar-scrollable-table"
+                  data={tableData}
+                  disableSort={true}
+                  autoSort={true}
+                  manualPagination={false}
+                  showSearch={false}
+                  showTotalRecords={false}
+                  showPagination={false}
+                  getCellProps={(cellInfo) => ({
+                    style: { fontSize: "16px" },
+                  })}
+                />
+                <div className="bmc-card-row">
+                  <SubmitPrintButtonFields isValid={isValid} />
+                </div>
+              </CustomModal>
             </div>
           </div>
           <div className="bmc-row-card-header">
             <div className="bmc-card-row">
               <div className="bmc-col3-card">
-                <VehicleNumberField control={control} setData={setData} data={data} />
+                <LabelFieldPair>
+                  <CardLabel className="bmc-label">{t("DEONAR_vehicleNumber")}</CardLabel>
+                  <Controller
+                    control={control}
+                    name="vehicleNumber"
+                    render={(props) => (
+                      <Dropdown
+                        option={parkingDetails.map((item) => item.vehicleNumber)}
+                        select={(selectedVehicle) => {
+                          setSelectedVehicleNumber(selectedVehicle);
+                          props.onChange(selectedVehicle);
+                        }}
+                        selected={props.value}
+                        t={t}
+                        onBlur={props.onBlur}
+                        placeholder={t("DEONAR_vehicleNumber")}
+                      />
+                    )}
+                  />
+                </LabelFieldPair>
               </div>
               <ReceiverField control={control} setData={setData} data={data} label={t("DEONAR_RECEIVERNAME")} name={"receiverName"} />
               <ReceiverField control={control} setData={setData} data={data} label={t("DEONAR_RECEIVERCONTACT")} name={"receiverContact"} />
@@ -258,7 +336,7 @@ const GatePass = () => {
                       {t("DEONAR_SHOPKEEPER")}: {globalShopkeeper?.label ? globalShopkeeper?.label : "N/A"}
                     </Label>
                     <Label>
-                      {t("DEONAR_VEHICLENUMBER")}: {data.vehicleNumber || "N/A"}
+                      {t("DEONAR_VEHICLENUMBER")}: {selectedVehicleNumber || "N/A"}
                     </Label>
                   </div>
                 </div>

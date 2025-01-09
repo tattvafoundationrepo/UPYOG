@@ -14,7 +14,7 @@ const RemovalReport = () => {
   const [selectedUUID, setSelectedUUID] = useState(null);
   const { fetchRemovalReport } = useCollectionPoint({});
   const { data: RemovalList } = fetchRemovalReport({}, { executeOnLoad: true });
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleStakeholderClick = (row) => {
     setSelectedUUID(row.original.UUID);
@@ -29,10 +29,7 @@ const RemovalReport = () => {
       Header: t("Stakeholder's Name"),
       accessor: "ownerName",
       Cell: ({ row }) => (
-        <span
-          onClick={() => handleStakeholderClick(row)}
-          style={{ cursor: "pointer", textDecoration: "underline" }}
-        >
+        <span onClick={() => handleStakeholderClick(row)} style={{ cursor: "pointer", textDecoration: "underline" }}>
           {t(row.original.ownerName) || "N/A"}
         </span>
       ),
@@ -41,7 +38,6 @@ const RemovalReport = () => {
       Header: t("Stakeholder's Type"),
       accessor: "type",
       Cell: ({ row }) => t(row.original.type) || "N/A",
-
     },
     {
       Header: t("Arrival UUID"),
@@ -90,8 +86,7 @@ const RemovalReport = () => {
       accessor: "time",
       Cell: ({ row }) => t(row.original.time) || "N/A",
     },
-
-  ]
+  ];
   useEffect(() => {
     if (RemovalList) {
       const mainTableData = RemovalList.SecurityCheckDetails.map((item) => ({
@@ -121,10 +116,6 @@ const RemovalReport = () => {
     }
   }, [RemovalList]);
 
-
-
-
-
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedUUID(null);
@@ -135,10 +126,10 @@ const RemovalReport = () => {
       <MainFormHeader title={"DEONAR_REMOVAL_REPORT"} />
       <div className="bmc-row-card-header">
         <div className="bmc-card-row" style={{ overflowY: "auto", maxHeight: "511px" }}>
-
           <CustomTable
             t={t}
             pageSizeLimit={10}
+            searchPlaceholder={t("Search")}
             columns={visibleColumns}
             data={getApplicationData?.mainTableData || []}
             manualPagination={false}
@@ -149,37 +140,32 @@ const RemovalReport = () => {
           />
         </div>
       </div>
-        {isModalOpen && (
-          <div className="bmc-card-row">
-            <CustomModal
-              isOpen={isModalOpen}
-              onClose={handleCloseModal}
-              selectedUUID={selectedUUID}
-              style={{ width: "100%" }}
-              tableClassName={"ebe-custom-scroll"}
-            >
-              <div className="bmc-card-row" style={{ overflowY: "auto", maxHeight: "511px" }}>
-                <CustomTable
-                  t={t}
-                  columns={isVisibleColumns2}
-                  manualPagination={false}
-                  data={getApplicationData?.detailedData.filter(item => item.UUID === selectedUUID) || []}
-                  totalRecords={totalRecords}
-                  // tableClassName={"deonar-scrollable-table"}
-                  autoSort={false}
-                  isLoadingRows={false}
-                />
-              </div>
-            </CustomModal>
-
-
-
-          </div>
-
-        )}
+      {isModalOpen && (
+        <div className="bmc-card-row">
+          <CustomModal
+            isOpen={isModalOpen}
+            onClose={handleCloseModal}
+            selectedUUID={selectedUUID}
+            style={{ width: "100%" }}
+            tableClassName={"ebe-custom-scroll"}
+          >
+            <div className="bmc-card-row" style={{ overflowY: "auto", maxHeight: "511px" }}>
+              <CustomTable
+                t={t}
+                columns={isVisibleColumns2}
+                manualPagination={false}
+                data={getApplicationData?.detailedData.filter((item) => item.UUID === selectedUUID) || []}
+                totalRecords={totalRecords}
+                // tableClassName={"deonar-scrollable-table"}
+                autoSort={false}
+                isLoadingRows={false}
+              />
+            </div>
+          </CustomModal>
+        </div>
+      )}
     </React.Fragment>
   );
 };
 
 export default RemovalReport;
-

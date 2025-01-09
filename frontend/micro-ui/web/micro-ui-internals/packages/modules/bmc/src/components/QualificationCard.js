@@ -118,7 +118,9 @@ const QualificationCard = ({ tenantId, onUpdate, initialRows = [], AddOption = t
           board: formData.board || "",
           percentage: formData.percentage || "",
         },
+
       ]
+
     };
 
     // Save the document data (API call)
@@ -195,6 +197,7 @@ const QualificationCard = ({ tenantId, onUpdate, initialRows = [], AddOption = t
         setToastWithTimeout("success", t('QUALIFICATION REMOVED SUCCESSFULLY'))
 
       },
+      
       onError: (error) => {
         console.error("Failed to delete document row:", error);
       },

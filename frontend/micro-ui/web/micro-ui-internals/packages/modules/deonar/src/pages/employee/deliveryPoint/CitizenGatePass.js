@@ -29,8 +29,7 @@ const CitizenGatePass = () => {
   const [toast, setToast] = useState(null);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
-    const [isDownloading, setIsDownloading] = useState(false);
-  
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const {
     control,
@@ -50,68 +49,68 @@ const CitizenGatePass = () => {
 
     return data
       ? data.CommonDetails.map((item) => ({
-        name: item.name || "Unknown",
-        value: item.id,
-        licenceNumber: item.licenceNumber,
-        mobileNumber: item.mobileNumber,
-        registrationNumber: item.registrationnumber,
-        traderType: item.tradertype,
-        animalType: item.animalType,
-      }))
+          name: item.name || "Unknown",
+          value: item.id,
+          licenceNumber: item.licenceNumber,
+          mobileNumber: item.mobileNumber,
+          registrationNumber: item.registrationnumber,
+          traderType: item.tradertype,
+          animalType: item.animalType,
+        }))
       : [];
   };
 
   const dawanwalaData = useFetchOptions("dawanwala");
   const shopkeeperData = useFetchOptions("citizen");
 
-//   const { data: fetchedData, isLoading } = fetchTradingList({}, { executeOnLoad: true, executeOnRadioSelect: false });
+  //   const { data: fetchedData, isLoading } = fetchTradingList({}, { executeOnLoad: true, executeOnRadioSelect: false });
 
-//   useEffect(() => {
-//     if (fetchedData) {
-//       setAnimalCount(fetchedData.SecurityCheckDetails);
-//       setTotalRecords();
-//     }
-//   }, [fetchedData]);
+  //   useEffect(() => {
+  //     if (fetchedData) {
+  //       setAnimalCount(fetchedData.SecurityCheckDetails);
+  //       setTotalRecords();
+  //     }
+  //   }, [fetchedData]);
 
-//   useEffect(() => {
-//     if (dawanwalaData.length) {
-//       const combinedData = dawanwalaData.map((item) => {
-//         const animalTypes = item.animalType.map((animal) => animal.name).join(", ");
-//         return {
-//           label: item.name || "Unknown",
-//           licenceNumber: item.licenceNumber,
-//           mobileNumber: item.mobileNumber,
-//           registrationNumber: item.registrationNumber,
-//           animalTypes: animalTypes || "No Animal Type",
-//           traderType: item.traderType,
-//           value: item.value,
-//         };
-//       });
-//       if (JSON.stringify(combinedData) !== JSON.stringify(dawanwala)) {
-//         setDawanwala(combinedData);
-//       }
-//     }
-//   }, [dawanwalaData, dawanwala]);
+  //   useEffect(() => {
+  //     if (dawanwalaData.length) {
+  //       const combinedData = dawanwalaData.map((item) => {
+  //         const animalTypes = item.animalType.map((animal) => animal.name).join(", ");
+  //         return {
+  //           label: item.name || "Unknown",
+  //           licenceNumber: item.licenceNumber,
+  //           mobileNumber: item.mobileNumber,
+  //           registrationNumber: item.registrationNumber,
+  //           animalTypes: animalTypes || "No Animal Type",
+  //           traderType: item.traderType,
+  //           value: item.value,
+  //         };
+  //       });
+  //       if (JSON.stringify(combinedData) !== JSON.stringify(dawanwala)) {
+  //         setDawanwala(combinedData);
+  //       }
+  //     }
+  //   }, [dawanwalaData, dawanwala]);
 
-//   useEffect(() => {
-//     if (shopkeeperData.length) {
-//       const combinedData = shopkeeperData.map((item) => {
-//         const animalTypes = item.animalType.map((animal) => animal.name).join(", ");
-//         return {
-//           label: item.name || "Unknown",
-//           licenceNumber: item.licenceNumber,
-//           mobileNumber: item.mobileNumber,
-//           registrationNumber: item.registrationNumber,
-//           animalTypes: animalTypes || "No Animal Type",
-//           traderType: item.traderType,
-//           value: item.value,
-//         };
-//       });
-//       if (JSON.stringify(combinedData) !== JSON.stringify(shopKeeper)) {
-//         setShopKeeper(combinedData);
-//       }
-//     }
-//   }, [shopkeeperData, shopKeeper]);
+  //   useEffect(() => {
+  //     if (shopkeeperData.length) {
+  //       const combinedData = shopkeeperData.map((item) => {
+  //         const animalTypes = item.animalType.map((animal) => animal.name).join(", ");
+  //         return {
+  //           label: item.name || "Unknown",
+  //           licenceNumber: item.licenceNumber,
+  //           mobileNumber: item.mobileNumber,
+  //           registrationNumber: item.registrationNumber,
+  //           animalTypes: animalTypes || "No Animal Type",
+  //           traderType: item.traderType,
+  //           value: item.value,
+  //         };
+  //       });
+  //       if (JSON.stringify(combinedData) !== JSON.stringify(shopKeeper)) {
+  //         setShopKeeper(combinedData);
+  //       }
+  //     }
+  //   }, [shopkeeperData, shopKeeper]);
 
   const handleUUIDClick = (entryUnitId) => {
     setSelectedUUID(entryUnitId);
@@ -155,42 +154,42 @@ const CitizenGatePass = () => {
     };
   }, []);
 
-//   useEffect(() => {
-//     if (fetchedData && fetchedData.SecurityCheckDetails) {
-//       const securityCheckDetails = fetchedData.SecurityCheckDetails;
-//       const mappedAnimalCount = securityCheckDetails.flatMap((detail) =>
-//         detail.animalDetails.map((animal) => ({
-//           arrivalId: detail.entryUnitId,
-//           animalTypeId: animal.animalTypeId,
-//           animalType: animal.animalType,
-//           count: animal.token,
-//           tradable: animal.tradable,
-//           stable: animal.stable,
-//         }))
-//       );
-//       setGawaltable(mappedAnimalCount);
-//     }
-//   }, [fetchedData]);
+  //   useEffect(() => {
+  //     if (fetchedData && fetchedData.SecurityCheckDetails) {
+  //       const securityCheckDetails = fetchedData.SecurityCheckDetails;
+  //       const mappedAnimalCount = securityCheckDetails.flatMap((detail) =>
+  //         detail.animalDetails.map((animal) => ({
+  //           arrivalId: detail.entryUnitId,
+  //           animalTypeId: animal.animalTypeId,
+  //           animalType: animal.animalType,
+  //           count: animal.token,
+  //           tradable: animal.tradable,
+  //           stable: animal.stable,
+  //         }))
+  //       );
+  //       setGawaltable(mappedAnimalCount);
+  //     }
+  //   }, [fetchedData]);
 
   const filteredGawaltable = gawaltable.filter((animal) => animal.arrivalId === selectedUUID);
 
-//   const handleShopkeeperSelect = (rowIndex, selectedOptionsForDropdown) => {
-//     setShopkeeperOption((prevSelectedOptions) => ({
-//       ...prevSelectedOptions,
-//       [rowIndex]: selectedOptionsForDropdown,
-//     }));
-//     setIsDirty(true);
-//   };
+  //   const handleShopkeeperSelect = (rowIndex, selectedOptionsForDropdown) => {
+  //     setShopkeeperOption((prevSelectedOptions) => ({
+  //       ...prevSelectedOptions,
+  //       [rowIndex]: selectedOptionsForDropdown,
+  //     }));
+  //     setIsDirty(true);
+  //   };
 
-//   const handleRemovalSelect = (rowIndex, selectedOptionsForDropdown) => {
-//     setRemovalType((prevSelectedOptions) => ({
-//       ...prevSelectedOptions,
-//       [rowIndex]: selectedOptionsForDropdown,
-//     }));
-//     setIsDirty(true);
-//   };
+  //   const handleRemovalSelect = (rowIndex, selectedOptionsForDropdown) => {
+  //     setRemovalType((prevSelectedOptions) => ({
+  //       ...prevSelectedOptions,
+  //       [rowIndex]: selectedOptionsForDropdown,
+  //     }));
+  //     setIsDirty(true);
+  //   };
 
-//   const dropdownOptions = [{ label: t("RELIGIOUS_PERSONAL_PURPOSE"), value: "test2", id: 2 }];
+  //   const dropdownOptions = [{ label: t("RELIGIOUS_PERSONAL_PURPOSE"), value: "test2", id: 2 }];
 
   const isAfterStablingVisibleColumns = [
     { Header: t("Animal Type"), accessor: "animalType" },
@@ -204,8 +203,9 @@ const CitizenGatePass = () => {
       },
     },
     {
-        Header: t("Citizen's Name"), accessor: "citizenname"
-    }
+      Header: t("Citizen's Name"),
+      accessor: "citizenname",
+    },
     // {
     //   accessor: "shopKeeperDetails",
     //   Header: t("Assign Citizen"),
@@ -426,7 +426,6 @@ const CitizenGatePass = () => {
             <div className="bmc-row-card-header">
               {isMobileView && animalCount.map((data, index) => <TableCard data={data} key={index} fields={fields} onUUIDClick={handleUUIDClick} />)}
               <div className="bmc-card-row" style={{ overflowY: "auto", maxHeight: "511px" }}>
-
                 <CustomTable
                   t={t}
                   columns={CitizenColumns(handleUUIDClick, t)}
@@ -435,16 +434,14 @@ const CitizenGatePass = () => {
                   // tableClassName={"deonar-scrollable-table"}
                   totalRecords={totalRecords}
                   autoSort={false}
-                //   isLoadingRows={isLoading}
+                  //   isLoadingRows={isLoading}
                 />
               </div>
               {isModalOpen && (
                 <CustomModal isOpen={isModalOpen} onClose={toggleModal} selectedUUID={selectedUUID} style={{ width: "100%" }}>
                   <Fragment>
                     <div className="bmc-card-row" style={{ overflowY: "auto", maxHeight: "511px" }}>
-                      <div style={{ display: "flex", gap: "20px", justifyContent: "space-between", marginBottom: "40px" }}>
-                      
-                      </div>
+                      <div style={{ display: "flex", gap: "20px", justifyContent: "space-between", marginBottom: "40px" }}></div>
                       <CustomTable
                         t={t}
                         columns={isAfterStablingVisibleColumns}
@@ -452,33 +449,32 @@ const CitizenGatePass = () => {
                         totalRecords={totalRecords}
                         autoSort={false}
                         manualPagination={false}
-                      // tableClassName={"deonar-scrollable-table"}
+                        // tableClassName={"deonar-scrollable-table"}
                       />
                     </div>
                   </Fragment>
-                  <div style={{float:'right'}}>
-                        <button
-                          type="button"
-                          onClick={handlePDFDownload}
-                          className="print-pdf-button"
-                          style={{
-                            padding: "6px 10px",
-                            // background: !feeCollectionResponse ? "grey" : "#a82227",
-                            borderRadius: "8px",
-                            display: "flex",
-                            alignItems: "center",
-                            color: "black",
-                            fontWeight: "600",
-                            border: "none",
-                            background:'red'
-                            // cursor: feeCollectionResponse ? "pointer" : "not-allowed",
-                          }}
-                        //   disabled={!feeCollectionResponse}
-                        >
-                          Print/Download PDF
-                        </button>
-                      </div>
-                 
+                  <div style={{ float: "right" }}>
+                    <button
+                      type="button"
+                      onClick={handlePDFDownload}
+                      className="print-pdf-button"
+                      style={{
+                        padding: "6px 10px",
+                        // background: !feeCollectionResponse ? "grey" : "#a82227",
+                        borderRadius: "8px",
+                        display: "flex",
+                        alignItems: "center",
+                        color: "black",
+                        fontWeight: "600",
+                        border: "none",
+                        background: "red",
+                        // cursor: feeCollectionResponse ? "pointer" : "not-allowed",
+                      }}
+                      //   disabled={!feeCollectionResponse}
+                    >
+                      Print/Download PDF
+                    </button>
+                  </div>
                 </CustomModal>
               )}
             </div>
@@ -505,5 +501,3 @@ const CitizenGatePass = () => {
 };
 
 export default CitizenGatePass;
-
-

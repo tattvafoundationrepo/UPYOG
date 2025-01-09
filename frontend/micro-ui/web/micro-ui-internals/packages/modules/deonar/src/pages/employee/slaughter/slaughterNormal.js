@@ -239,6 +239,7 @@ const SlaughteringNormal = () => {
               <CustomTable
                 t={t}
                 columns={Tablecolumns}
+                searchPlaceholder={t("Search")}
                 data={slaughterList}
                 manualPagination={false}
                 // tableClassName={"deonar-scrollable-table"}
@@ -250,12 +251,13 @@ const SlaughteringNormal = () => {
 
           {isModalOpen && (
             <CustomModal isOpen={isModalOpen} onClose={toggleModal} selectedUUID={selectedUUID} style={{ width: "100%" }}>
-            <div className="bmc-card-row" style={{ overflowY: "auto", maxHeight: "511px" }}>
-            <CustomTable
+              <div className="bmc-card-row" style={{ overflowY: "auto", maxHeight: "511px" }}>
+                <CustomTable
                   t={t}
                   columns={isVisibleColumns2}
                   manualPagination={false}
                   data={animalAssignmentData}
+                  searchPlaceholder={t("Search")}
                   totalRecords={totalRecords}
                   // tableClassName={"deonar-scrollable-table"}
                   autoSort={false}

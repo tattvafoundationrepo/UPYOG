@@ -12,7 +12,7 @@ const CustomTable = ({
   pageSizeLimit,
   manualPagination,
   totalRecords,
-  searchPlaceholder = "Search...",
+  searchPlaceholder,
   onSearchChange,
   filters = [],
   applyFilters,
@@ -31,13 +31,13 @@ const CustomTable = ({
   dropdownOptions = [],
   showTotalRecords = true,
   showPagination = true,
-  showPdfDownload = false,
-  showExcelDownload = false,
+  // showPdfDownload = false,
+  // showExcelDownload = false,
   downloadFileName = "table-data",
   downloadableColumns,
   getDownloadData,
-  pdfButtonText = "PDF",
-  excelButtonText = "Excel",
+  // pdfButtonText = "PDF",
+  // excelButtonText = "Excel",
   customDownloadButtonStyles = {},
   showAddButton = false,
   buttonText = "Add Employee",
@@ -58,8 +58,8 @@ const CustomTable = ({
       return { key, direction: direction || "asc" };
     })
   );
-  const [isDownloading, setIsDownloading] = useState(false);
-  const [isExportMenuOpen, setIsExportMenuOpen] = useState(false); // State for dropdown
+  // const [isDownloading, setIsDownloading] = useState(false);
+  // const [isExportMenuOpen, setIsExportMenuOpen] = useState(false); // State for dropdown
   const [needsScroll, setNeedsScroll] = useState(false);
 
   const tableRef = useRef(null);
@@ -135,149 +135,149 @@ const CustomTable = ({
     });
   };
 
-  const generateCSV = (data) => {
-    if (!data.length) return "";
+  // const generateCSV = (data) => {
+  //   if (!data.length) return "";
 
-    const headers = Object.keys(data[0]);
-    const csvRows = [
-      headers.join(","),
-      ...data.map((row) =>
-        headers
-          .map((header) => {
-            const cell = row[header]?.toString() || "";
-            return cell.includes(",") || cell.includes('"') ? `"${cell.replace(/"/g, '""')}"` : cell;
-          })
-          .join(",")
-      ),
-    ];
-    return csvRows.join("\n");
-  };
+  //   const headers = Object.keys(data[0]);
+  //   const csvRows = [
+  //     headers.join(","),
+  //     ...data.map((row) =>
+  //       headers
+  //         .map((header) => {
+  //           const cell = row[header]?.toString() || "";
+  //           return cell.includes(",") || cell.includes('"') ? `"${cell.replace(/"/g, '""')}"` : cell;
+  //         })
+  //         .join(",")
+  //     ),
+  //   ];
+  //   return csvRows.join("\n");
+  // };
 
-  // New PDF generation using HTML
-  const generatePDF = (data) => {
-    if (!data.length) return;
+  // // New PDF generation using HTML
+  // const generatePDF = (data) => {
+  //   if (!data.length) return;
 
-    const headers = Object.keys(data[0]);
-    const printWindow = window.open("", "", "height=600,width=800");
+  //   const headers = Object.keys(data[0]);
+  //   const printWindow = window.open("", "", "height=600,width=800");
 
-    const htmlContent = `
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <title>${downloadFileName}</title>
-            <style>
-              body {
-                font-family: Arial, sans-serif;
-                margin: 20px;
-              }
-              table {
-                width: 100%;
-                border-collapse: collapse;
-                margin-bottom: 20px;
-              }
-              th, td {
-                border: 1px solid #ddd;
-                padding: 12px 8px;
-                text-align: left;
-              }
-              th {
-                background-color: #f4f4f4;
-                font-weight: bold;
-              }
-              tr:nth-child(even) {
-                background-color: #f9f9f9;
-              }
-              .header {
-                font-size: 24px;
-                margin-bottom: 20px;
-              }
-              .footer {
-                margin-top: 20px;
-                font-size: 12px;
-                color: #666;
-              }
-              @media print {
-                body { margin: 0; padding: 20px; }
-                .no-print { display: none; }
-              }
-            </style>
-          </head>
-          <body>
-            <div class="header">${downloadFileName}</div>
-            <table>
-              <thead>
-                <tr>${headers.map((header) => `<th>${header}</th>`).join("")}</tr>
-              </thead>
-              <tbody>
-                ${data
-                  .map(
-                    (row) => `
-                  <tr>
-                    ${headers.map((header) => `<td>${row[header] || ""}</td>`).join("")}
-                  </tr>
-                `
-                  )
-                  .join("")}
-              </tbody>
-            </table>
-            <div class="footer">Generated on ${new Date().toLocaleString()}</div>
-            <div class="no-print">
-              <button onclick="window.print();window.close()" 
-                style="padding: 10px 20px; background-color: #4a90e2; color: white; 
-                border: none; border-radius: 4px; cursor: pointer; margin-top: 20px;">
-                Download PDF
-              </button>
-            </div>
-          </body>
-        </html>
-      `;
+  //   const htmlContent = `
+  //       <!DOCTYPE html>
+  //       <html>
+  //         <head>
+  //           <title>${downloadFileName}</title>
+  //           <style>
+  //             body {
+  //               font-family: Arial, sans-serif;
+  //               margin: 20px;
+  //             }
+  //             table {
+  //               width: 100%;
+  //               border-collapse: collapse;
+  //               margin-bottom: 20px;
+  //             }
+  //             th, td {
+  //               border: 1px solid #ddd;
+  //               padding: 12px 8px;
+  //               text-align: left;
+  //             }
+  //             th {
+  //               background-color: #f4f4f4;
+  //               font-weight: bold;
+  //             }
+  //             tr:nth-child(even) {
+  //               background-color: #f9f9f9;
+  //             }
+  //             .header {
+  //               font-size: 24px;
+  //               margin-bottom: 20px;
+  //             }
+  //             .footer {
+  //               margin-top: 20px;
+  //               font-size: 12px;
+  //               color: #666;
+  //             }
+  //             @media print {
+  //               body { margin: 0; padding: 20px; }
+  //               .no-print { display: none; }
+  //             }
+  //           </style>
+  //         </head>
+  //         <body>
+  //           <div class="header">${downloadFileName}</div>
+  //           <table>
+  //             <thead>
+  //               <tr>${headers.map((header) => `<th>${header}</th>`).join("")}</tr>
+  //             </thead>
+  //             <tbody>
+  //               ${data
+  //                 .map(
+  //                   (row) => `
+  //                 <tr>
+  //                   ${headers.map((header) => `<td>${row[header] || ""}</td>`).join("")}
+  //                 </tr>
+  //               `
+  //                 )
+  //                 .join("")}
+  //             </tbody>
+  //           </table>
+  //           <div class="footer">Generated on ${new Date().toLocaleString()}</div>
+  //           <div class="no-print">
+  //             <button onclick="window.print();window.close()" 
+  //               style="padding: 10px 20px; background-color: #4a90e2; color: white; 
+  //               border: none; border-radius: 4px; cursor: pointer; margin-top: 20px;">
+  //               Download PDF
+  //             </button>
+  //           </div>
+  //         </body>
+  //       </html>
+  //     `;
 
-    printWindow.document.write(htmlContent);
-    printWindow.document.close();
-  };
+  //   printWindow.document.write(htmlContent);
+  //   printWindow.document.close();
+  // };
 
-  const handleExcelDownload = async (e) => {
-    e.stopPropagation();
-    if (isDownloading) return;
-    try {
-      setIsDownloading(true);
-      const downloadData = sortedData;
-      if (!downloadData.length) {
-        console.warn("No data available for download");
-        return;
-      }
-      const csv = generateCSV(downloadData);
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = `${downloadFileName}.csv`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } catch (error) {
-      console.error("Error downloading Excel:", error);
-    } finally {
-      setIsDownloading(false);
-    }
-  };
+  // const handleExcelDownload = async (e) => {
+  //   e.stopPropagation();
+  //   if (isDownloading) return;
+  //   try {
+  //     setIsDownloading(true);
+  //     const downloadData = sortedData;
+  //     if (!downloadData.length) {
+  //       console.warn("No data available for download");
+  //       return;
+  //     }
+  //     const csv = generateCSV(downloadData);
+  //     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  //     const link = document.createElement("a");
+  //     link.href = URL.createObjectURL(blob);
+  //     link.download = `${downloadFileName}.csv`;
+  //     document.body.appendChild(link);
+  //     link.click();
+  //     document.body.removeChild(link);
+  //   } catch (error) {
+  //     console.error("Error downloading Excel:", error);
+  //   } finally {
+  //     setIsDownloading(false);
+  //   }
+  // };
 
-  const handlePDFDownload = (e) => {
-    e.stopPropagation();
-    if (isDownloading) return;
-    try {
-      setIsDownloading(true);
-      const downloadData = sortedData;
-      if (!downloadData.length) {
-        console.warn("No data available for download");
-        return;
-      }
-      generatePDF(downloadData);
-    } catch (error) {
-      console.error("Error downloading PDF:", error);
-    } finally {
-      setIsDownloading(false);
-    }
-  };
+  // const handlePDFDownload = (e) => {
+  //   e.stopPropagation();
+  //   if (isDownloading) return;
+  //   try {
+  //     setIsDownloading(true);
+  //     const downloadData = sortedData;
+  //     if (!downloadData.length) {
+  //       console.warn("No data available for download");
+  //       return;
+  //     }
+  //     generatePDF(downloadData);
+  //   } catch (error) {
+  //     console.error("Error downloading PDF:", error);
+  //   } finally {
+  //     setIsDownloading(false);
+  //   }
+  // };
 
   const enhancedColumns = useMemo(() => {
     if (!showDateColumn) return columns;
@@ -355,7 +355,7 @@ const CustomTable = ({
               option={dropdownConfig.options}
               optionKey={dropdownConfig.optionKey || "name"}
               placeholder={dropdownConfig.placeholder || t("Select an Option")}
-              style={{ width: dropdownConfig.width || "15%", margin: "0", display: "flex", alignItems: "center" }}
+              style={{ width: dropdownConfig.width || "15%", margin: "0"}}
             />
           ))}
         {showDropdown && (
@@ -398,7 +398,7 @@ const CustomTable = ({
         </div>
 
         <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
-          {(showPdfDownload || showExcelDownload) && (
+          {/* {(showPdfDownload || showExcelDownload) && (
             <div style={{ position: "relative" }}>
               <button
                 style={{
@@ -455,7 +455,7 @@ const CustomTable = ({
                 </div>
               )}
             </div>
-          )}
+          )} */}
           {renderElements()}
 
           {showTotalRecords && (

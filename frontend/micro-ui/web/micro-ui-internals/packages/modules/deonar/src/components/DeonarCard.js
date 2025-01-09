@@ -104,13 +104,13 @@ const DEONARCard = () => {
       link: `/digit-ui/employee/deonar/penaltyCharge`,
       roles: ["SUPERUSER","DEONAR_COLLECTION_PENALTY"]
     },
+    // {
+    //   label: t("GATE PASS"),
+    //   link: `/digit-ui/employee/deonar/gatePass`,
+    //   roles: ["SUPERUSER","DEONAR_COUNTER_GATEPASS"]
+    // },
     {
       label: t("GATE PASS"),
-      link: `/digit-ui/employee/deonar/gatePass`,
-      roles: ["SUPERUSER","DEONAR_COUNTER_GATEPASS"]
-    },
-    {
-      label: t("GATE PASS ISSUE"),
       link: `/digit-ui/employee/deonar/gate`,
       roles: ["SUPERUSER","DEONAR_COUNTER_GATEPASS"]
     },
