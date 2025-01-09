@@ -1,8 +1,10 @@
 import React from "react";
 
-const PrintableReceipt = ({ selectedUUID, filteredGawaltable, generateTokenNumber }) => {
+const PrintableReceipt = ( props ) => {
+    const currentDate = new Date().toLocaleDateString("en-GB");
+
   return (
-    <div>
+    <div style={{position: "relative", minHeight: "600px"}}>
       <style>
         {`
          /* General Container */
@@ -14,7 +16,9 @@ const PrintableReceipt = ({ selectedUUID, filteredGawaltable, generateTokenNumbe
   padding: 20px;
   background-color: white;
   box-sizing: border-box;
-}
+
+        }
+        
 
 /* Top Header */
 .top-header {
@@ -107,27 +111,52 @@ table td {
 
           `}
       </style>
-      <div className="form-container">
-        <div className="top-header">
-          <p>Gen-212-BMPP-27858-2017-18-1040 Bks (50x3) Lvs</p>
-          <p className="right-align">Sa.-212</p>
-        </div>
+
+     
+      <div className="form-container" >
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          pointerEvents: "none",
+          overflow: "hidden",
+        }}
+      >
+        <img
+          src="https://portal.mcgm.gov.in/com.mcgm.newframework/images/logo.png"
+          alt="Watermark"
+          style={{
+            width: "50%",
+            height: "50%",
+            objectFit: "contain",
+            opacity: 0.1,
+            transform: "rotate(-30deg) scale(1.5)",
+            // filter: 'grayscale(100%)'
+          }}
+        />
+      </div>
         <h2 className="main-header">BRIHANMUMBAI MUNICIPAL CORPORATION</h2>
         <p className="original-copy">Original Copy</p>
 
         <div className="form-section">
           <div className="to-date">
             <p>To,</p>
-            <p>Date ..............</p>
+            <p>Date: {currentDate}</p>
           </div>
-          <p>No. 010434</p>
+          <p>No. </p>
           <div className="security-section">
             <p>Security Guard ..............</p>
             <p>Department No. ..............</p>
           </div>
           <p>On duty at this place ....................................................</p>
           <p className="allow-text">
-            Please allow Mr/Mrs ................................................ to take the following items from ..................................
+            Please allow Mr/Mrs <strong> {props.citizenName} </strong> to take the following items from ..................................
             office/work school to ................................................ this place.
           </p>
           <table>

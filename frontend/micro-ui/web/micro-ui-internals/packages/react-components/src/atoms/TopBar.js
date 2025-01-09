@@ -32,19 +32,21 @@ const TopBar = ({
   return (
     <div className="navbar">
       <div className="center-container back-wrapper" style={{display:"flex",marginRight:"2rem",marginLeft:"2rem",justifyContent:"space-between"}}>
-        <div className="hambuger-back-wrapper" style={{display:"flex"}}>
+        <div className="hambuger-back-wrapper" style={{display:"flex", alignItems:"center"}}>
           {window.innerWidth <= 660  && <Hamburger handleClick={toggleSidebar} />}
-          <a href={window.location.href.includes("citizen")?"/digit-ui/citizen":"/digit-ui/employee"}><img
+          <a href={window.location.href.includes("citizen")?"/digit-ui/citizen":"/digit-ui/employee"}>
+          <img
             className="city"
             id="topbar-logo"
             src={"https://gambia-terraform.s3.ap-south-1.amazonaws.com/mSeva+BMC+logo.png" || "https://cdn.jsdelivr.net/npm/@egovernments/digit-ui-css@1.0.7/img/m_seva_white_logo.png"}
             alt="UPYOG"
+            style={{objectFit: "contain", maxHeight: "33px", width: "auto", height: "auto"}}
           />
           </a>
           <h3>{cityOfCitizenShownBesideLogo}</h3>
         </div>
 
-        <div className="RightMostTopBarOptions">
+        <div className="RightMostTopBarOptions" style={{alignItems:"center"}}>
           {!hideNotificationIconOnSomeUrlsWhenNotLoggedIn ? changeLanguage : null}
           {!hideNotificationIconOnSomeUrlsWhenNotLoggedIn ? (
             <div className="EventNotificationWrapper" onClick={onNotificationIconClick}>
@@ -62,7 +64,8 @@ const TopBar = ({
           id="topbar-logo" 
           src={"https://gambia-terraform.s3.ap-south-1.amazonaws.com/mSeva+BMC+logo.png" || "https://cdn.jsdelivr.net/npm/@egovernments/digit-ui-css@1.0.7/img/m_seva_white_logo.png"}
           alt="mSeva"
-          style={{marginLeft:"10px"}}
+          style={{objectFit: "contain", maxHeight: "33px", width: "auto", height: "auto", marginLeft:"10px"}}
+
         />
         </div>
       </div>

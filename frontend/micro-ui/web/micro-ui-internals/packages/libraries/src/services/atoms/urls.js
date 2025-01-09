@@ -302,6 +302,7 @@ const Urls = {
     getCollectionStablingList: "/deonar-v1/get/stabling/list/_collection",
     getCollectionEntryList: "/deonar-v1/get/entry/list/_collection",
     getRemovalCollectionList: "/deonar-v1/get/removal/list/_collection",
+    getCitizensList: "/deonar-v1/citizenGatePass/_get",
     getSlaughterCollectionList: "/deonar-v1//get/slaughter/list/_collection",
   },
   access_control: "/access/v1/actions/mdms/_get",

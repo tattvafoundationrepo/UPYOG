@@ -13,11 +13,11 @@ const AllApplicationsPage = ({isLoading}) => {
       accessor: "applicationNumber",
       Cell: ({ value }) => t(value) || "N/A", 
     },
-    {
-      Header: t("Name"),
-      accessor: "Name",
-      Cell: ({ value }) => t(value) || "N/A", 
-    },
+    // {
+    //   Header: t("Name"),
+    //   accessor: "Name",
+    //   Cell: ({ value }) => t(value) || "N/A", 
+    // },
     {
       Header: t("BMC_SchemeName"),
       accessor: "name",
@@ -57,8 +57,6 @@ const AllApplicationsPage = ({isLoading}) => {
   };
 
   Digit.Hooks.bmc.useBMCApplicationStatus({}, { select: applicationFunction });
-
-  console.log("Applications Status:", applicationsStatus);
   return (
     <React.Fragment>
       <div className="bmc-card-full">

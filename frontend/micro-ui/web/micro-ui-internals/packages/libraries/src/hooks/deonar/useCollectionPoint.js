@@ -273,6 +273,18 @@ const useCollectionPoint = ({ value }) => {
       },
     });
   };
+  const fetchCitizensList = (data, config = {}) => {
+    // const { enabled = true, executeOnLoad = false, executeOnRadioSelect = false } = config;
+    return useQuery(["CistizenList", data], () => DeonarService.getCitizenList(data), {
+      // enabled: enabled && (executeOnLoad || executeOnRadioSelect),
+      ...config,
+      onSuccess: (data) => {
+        console.log(data, "Citizen collection data");
+      },
+    });
+  };
+ 
+
 
   return {
     fetchEntryCollectionFee,
@@ -300,6 +312,8 @@ const useCollectionPoint = ({ value }) => {
     fetchCollectionEntryList,
     fetchRemovalCollectionList,
     fetchCollectionSlaughterList,
+    fetchCitizensList,
+    
   };
 };
 
