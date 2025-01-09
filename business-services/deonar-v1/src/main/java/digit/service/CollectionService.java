@@ -136,20 +136,22 @@ public class CollectionService {
             common.setAnimalDetail(animalDetails);
             producer.push("topic_deonar_savefeedetails", common);
         }
-        ObjectMapper objectMapper = new ObjectMapper();
-        try {
-            JsonNode rootNode = objectMapper.readTree(animalDetails);
+        if(common.getFeetype() == 1){
+            ObjectMapper objectMapper = new ObjectMapper();
+            try {
+                JsonNode rootNode = objectMapper.readTree(animalDetails);
 
-            if (rootNode.isArray()) {
-                rootNode.forEach(node -> {
-                    int token = node.get("token").asInt();
-                    int animalTypeId = node.get("animaltypeid").asInt();
-                    commonRepository.saveEntryFee(String.valueOf(token), String.valueOf(animalTypeId),
-                            common.getUuid());
-                });
+                if (rootNode.isArray()) {
+                    rootNode.forEach(node -> {
+                        int token = node.get("token").asInt();
+                        int animalTypeId = node.get("animaltypeid").asInt();
+                        commonRepository.saveEntryFee(String.valueOf(token), String.valueOf(animalTypeId),
+                                common.getUuid());
+                    });
+                }
+            } catch (JsonProcessingException ex) {
+                System.out.print("Exception");
             }
-        } catch (JsonProcessingException ex) {
-            System.out.print("Exception");
         }
         if (common.getFeevalue() > 0 && common.getFeetype() == 7) {
             commonRepository.saveVehicleParking(System.currentTimeMillis(), common.getPaidby());

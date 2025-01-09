@@ -15,6 +15,8 @@ import digit.web.models.GatePassDetails;
 import digit.web.models.GatePassMapper;
 import digit.web.models.GatePassRequest;
 import digit.web.models.GatePassSearchCriteria;
+import digit.web.models.citizen.CitizenGatePassDetails;
+import digit.web.models.citizen.CitizenGatePassRequest;
 
 
 @Service
@@ -52,6 +54,10 @@ public class GatePassService {
         request.getGatePassDetails().setJsonAnimalDetails(gson.toJson(request.getGatePassDetails().getAnimalDetails()));
         producer.push("save-gate-pass-details",request);
         return request.getGatePassDetails();    
+    }
+
+    public List<CitizenGatePassDetails> getListOfAssignedCitizens(CitizenGatePassRequest request){
+        return repository.getListOfAssignedCitizens(request);
     }
 
 }

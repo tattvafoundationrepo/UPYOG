@@ -23,13 +23,13 @@ public class SlaughterQueryBuilder {
 
         if (criteria.getSlaughterUnitType().equalsIgnoreCase("emergency")) {
             query.append(BOOKED_QUERY);
-            query.append(" where opinionid in (16,17,18)  and  edbfs.unitshiftid in (4,5,6) ");
+            query.append(" where opinionid in (16,17,18)  and  edbfs.unitshiftid in (4,5,6) and edbfs.flag = true ");
         }  else if (criteria.getSlaughterUnitType().equalsIgnoreCase("normal")){
             query.append(BOOKED_QUERY);
-            query.append(" where opinionid = 3 and  unitshiftid in (1,2,3) ");
+            query.append(" where opinionid = 3 and  unitshiftid in (1,2,3) and edbfs.flag = true ");
         } else if (criteria.getSlaughterUnitType().equalsIgnoreCase("export")) {
             query.append(BOOKED_QUERY);
-            query.append(" where opinionid = 3 and  unitshiftid in (7,8,9) ");
+            query.append(" where opinionid = 3 and  unitshiftid in (7,8,9) and edbfs.flag = true ");
         }else if (criteria.getSlaughterUnitType().equalsIgnoreCase("booking")) {
         }
 

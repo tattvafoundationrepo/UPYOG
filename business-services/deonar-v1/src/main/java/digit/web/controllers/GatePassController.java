@@ -19,6 +19,9 @@ import digit.web.models.GatePassDetails;
 import digit.web.models.GatePassDetailsResponse;
 import digit.web.models.GatePassMapper;
 import digit.web.models.GatePassRequest;
+import digit.web.models.citizen.CitizenGatePassDetails;
+import digit.web.models.citizen.CitizenGatePassRequest;
+import digit.web.models.citizen.CitizenGatePassResponse;
 import io.swagger.annotations.ApiParam;
 
 @Controller
@@ -66,5 +69,18 @@ public class GatePassController {
         }
     }
 
+    @PostMapping("/citizenGatePass/_get")
+    public ResponseEntity<CitizenGatePassResponse> getListOfAssignedCitizens(
+        @ApiParam(value = " List of Assigned Citizens ", required = true)
+        @RequestBody CitizenGatePassRequest request){
+            List<CitizenGatePassDetails> details = service.getListOfAssignedCitizens(request);
+            ResponseInfo responseInfo = responseInfoFactory
+                    .createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
+            CitizenGatePassResponse response = CitizenGatePassResponse.builder()
+                    .responseInfo(responseInfo)
+                    .details(details)
+                    .build();
+            return new ResponseEntity<>(response, HttpStatus.OK);
+    }
 
 }

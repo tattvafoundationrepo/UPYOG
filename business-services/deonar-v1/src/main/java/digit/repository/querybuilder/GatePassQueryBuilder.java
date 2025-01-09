@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.stereotype.Component;
 
 import digit.web.models.GatePassSearchCriteria;
+import digit.web.models.citizen.CitizenGatePassCriteria;
 
 
 @Component
@@ -21,6 +22,23 @@ public class GatePassQueryBuilder {
         addClauseIfRequired(query, preparedStmtList);
         query.append(  " licencenumber  = ? ");
         preparedStmtList.add(criteria.getLicenceNumber()); 
+        return query.toString();
+    }
+
+    public String getCitizenGatePassQuery(CitizenGatePassCriteria criteria, List<Object> preparedStmtList){
+        final String CITIZEN_GATE_PASS_QUERY = """
+                SELECT eds.stakeholdername,
+                edlac.stakeholdertype,
+                edlac.arrivalid,
+                edat."name" ,
+                token,
+                assigndate,
+                assigntime
+                from eg_deonar_list_assigned_citizen edlac 
+                left join eg_deonar_stakeholder eds on edlac.stakeholderid = eds.id
+                left join eg_deonar_animal_type edat on edlac.animaltypeid = edat.id 
+                """;
+        StringBuilder query = new StringBuilder(CITIZEN_GATE_PASS_QUERY);
         return query.toString();
     }
 
