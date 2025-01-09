@@ -220,15 +220,19 @@ const FeeCollection = () => {
       enabled: isParkingSelected,
     }
   );
-  const { data: vehicleData } = fetchWashingCollectionFee({
-    vehicleWashing: {
-      vehicleType: selectedVehicleId,
-      vehicleNumber: selectedUUID,
+  const { data: vehicleData } = fetchWashingCollectionFee(
+    {
+      vehicleWashing: {
+        vehicleType: selectedVehicleId,
+        vehicleNumber: selectedUUID,
+      },
     },
-    executeOnLoad: false,
-    executeOnRadioSelect: isWashingSelected,
-    enabled: isWashingSelected,
-  });
+    {
+      executeOnLoad: false,
+      executeOnRadioSelect: isWashingSelected,
+      enabled: isWashingSelected,
+    }
+  );
 
   const selectedRemovalliceneceNumberItem = removalListData.find((item) => item.entryUnitId === selectedUUID)?.licenceNumber;
   const selectedRemovalMobileNumber = removalListData.find((item) => item.entryUnitId === selectedUUID)?.mobileNumber;

@@ -80,7 +80,7 @@ const useCollectionPoint = ({ value }) => {
       enabled: enabled && (executeOnLoad || executeOnRadioSelect),
       ...config,
       onSuccess: (data) => {
-        console.log(data, "RemovalList collection data");
+        console.log(data, "washing collection data");
       },
     });
   };
@@ -283,8 +283,6 @@ const useCollectionPoint = ({ value }) => {
       },
     });
   };
- 
-
 
   return {
     fetchEntryCollectionFee,
@@ -313,7 +311,6 @@ const useCollectionPoint = ({ value }) => {
     fetchRemovalCollectionList,
     fetchCollectionSlaughterList,
     fetchCitizensList,
-    
   };
 };
 
