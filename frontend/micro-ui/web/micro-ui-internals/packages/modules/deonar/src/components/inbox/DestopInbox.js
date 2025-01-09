@@ -258,6 +258,8 @@ console.log('Details Data:', detailsData);
       )}
       {
         <div className="result" style={{ marginLeft: !props?.isSearch ? "24px" : "", flex: 1 }}>
+          <div className="bmc-card-row" style={{ overflowY: "auto", maxHeight: "511px" }}>
+
           <CustomTable
             t={t}
             columns={baseColumns}
@@ -279,6 +281,7 @@ console.log('Details Data:', detailsData);
               fontWeight: "bold",
             }}
           />
+          </div>
           <InteractiveCharts pieChartData={pieChartData} detailsData={detailsData}></InteractiveCharts>
         </div>
       }

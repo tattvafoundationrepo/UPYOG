@@ -47,14 +47,14 @@ const CitizenAssignment = () => {
 
     return data
       ? data.CommonDetails.map((item) => ({
-        name: item.name || "Unknown",
-        value: item.id,
-        licenceNumber: item.licenceNumber,
-        mobileNumber: item.mobileNumber,
-        registrationNumber: item.registrationnumber,
-        traderType: item.tradertype,
-        animalType: item.animalType,
-      }))
+          name: item.name || "Unknown",
+          value: item.id,
+          licenceNumber: item.licenceNumber,
+          mobileNumber: item.mobileNumber,
+          registrationNumber: item.registrationnumber,
+          traderType: item.tradertype,
+          animalType: item.animalType,
+        }))
       : [];
   };
 
@@ -323,8 +323,7 @@ const CitizenAssignment = () => {
           <div className="bmc-card-row">
             <div className="bmc-row-card-header">
               {isMobileView && animalCount.map((data, index) => <TableCard data={data} key={index} fields={fields} onUUIDClick={handleUUIDClick} />)}
-              <div className="bmc-card-row" style={{ overflowY: "auto", maxHeight: "511px" }}>
-
+              <div className="bmc-card-row">
                 <CustomTable
                   t={t}
                   columns={CitizenColumns(handleUUIDClick, t)}
@@ -339,7 +338,7 @@ const CitizenAssignment = () => {
               {isModalOpen && (
                 <CustomModal isOpen={isModalOpen} onClose={toggleModal} selectedUUID={selectedUUID} style={{ width: "100%" }}>
                   <Fragment>
-                    <div className="bmc-card-row" style={{ overflowY: "auto", maxHeight: "511px" }}>
+                    <div className="bmc-card-row">
                       <div style={{ display: "flex", gap: "20px", justifyContent: "space-between", marginBottom: "40px" }}></div>
                       <CustomTable
                         t={t}
@@ -348,7 +347,7 @@ const CitizenAssignment = () => {
                         totalRecords={totalRecords}
                         autoSort={false}
                         manualPagination={false}
-                      // tableClassName={"deonar-scrollable-table"}
+                        // tableClassName={"deonar-scrollable-table"}
                       />
                     </div>
                     <SubmitButtonField control={control} disabled={!isDirty} />

@@ -37,11 +37,11 @@ const ParkingFeePage = () => {
         departureTime: detail.departureTime,
         departureDate: detail.departureDate,
       }));
-  
+
       setTableData(vehicleParkedCheckDetails);
     }
   }, [parkingDetailsData]);
-  
+
   const {
     control,
     handleSubmit,
@@ -171,17 +171,14 @@ const ParkingFeePage = () => {
     ],
   };
 
- 
-  
-
   return (
     <React.Fragment>
       <div className="bmc-card-full">
         <form onSubmit={handleSubmit(onSubmit)}>
           <MainFormHeader title={"DEONAR_PARKING"} />
           <div className="bmc-row-card-header">
-          <div className="bmc-card-row" style={{ overflowY: "auto", maxHeight: "511px" }}>
-          {isLoading ? (
+            <div className="bmc-card-row" style={{ overflowY: "auto", maxHeight: "511px" }}>
+              {isLoading ? (
                 <Loader />
               ) : (
                 <CustomTable
@@ -206,7 +203,7 @@ const ParkingFeePage = () => {
               )}
             </div>
           </div>
-          <CustomModal isOpen={isModalOpen} onClose={toggleModal} title={t("Add Parking Details")}>
+          <CustomModal isOpen={isModalOpen} onClose={toggleModal} title={t("Add Parking Details")} width="50%">
             <div className="bmc-card-row">
               <div className="bmc-col2-card">
                 <VehicleTypeDropdownField control={control} data={data} setData={setData} t={t} />

@@ -22,21 +22,22 @@ const CollectionFeeCard = ({
   const [isTableVisible, setIsTableVisible] = useState(false);
 
   const handleCellClick = (column, row) => {
-    if ((feeType === "stabling" || feeType === "removal") && column.Header === "Details") {
+    if ((feeType === "stabling" || feeType === "removal" || feeType === "slaughter") && column.Header === "Details") {
       setIsTableVisible(!isTableVisible);
     }
   };
 
-  const mappedTableData = tableData?.flatMap((data) =>
-    data.stableFeeDetails?.map((feeDetail) => ({
-      animalType: data.animalType,
-      token: feeDetail.token,
-      animalTypeId: feeDetail.animalTypeId,
-      daysWithStakeholder: feeDetail.daysWithStakeholder,
-      feeWithStakeholder: feeDetail.feeWithStakeholder,
-      count: feeDetail.token,
-      removalType: feeDetail?.removalType,
-    }))
+  const mappedTableData = tableData?.flatMap(
+    (data) =>
+      data.stableFeeDetails?.map((feeDetail) => ({
+        animalType: data.animalType,
+        token: feeDetail.token,
+        animalTypeId: feeDetail.animalTypeId,
+        daysWithStakeholder: feeDetail.daysWithStakeholder,
+        feeWithStakeholder: feeDetail.feeWithStakeholder,
+        count: feeDetail.token,
+        removalType: feeDetail?.removalType,
+      })) || []
   );
 
   const columnsMapping = {
@@ -80,6 +81,25 @@ const CollectionFeeCard = ({
       {
         Header: t("Removal Type"),
         accessor: "removalType",
+      },
+    ],
+    slaughter: [
+      { Header: t("Animal Type"), accessor: "animalType" },
+      {
+        Header: t("Animal Token"),
+        accessor: "count",
+        Cell: ({ row }) => {
+          const animalType = row.original.animalType;
+          return generateTokenNumber(animalType, row.original.count);
+        },
+      },
+      {
+        Header: t("Day's"),
+        accessor: "daysWithStakeholder",
+      },
+      {
+        Header: t("Amount"),
+        accessor: "feeWithStakeholder",
       },
     ],
   };

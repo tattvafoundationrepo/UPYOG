@@ -236,6 +236,8 @@ useEffect(() => {
       )}
       {<div className="result" style={{ marginLeft: !props?.isSearch ? "24px" : "", flex: 1 }}>
         <div className="bmc-row-card-header">
+        <div className="bmc-card-row" style={{ overflowY: "auto", maxHeight: "511px" }}>
+
 
 
           <CustomTable
@@ -254,6 +256,7 @@ useEffect(() => {
 
 
           />
+          </div>
         </div>
 
         <InteractiveCharts pieChartData={pieChartData} detailsData={detailsData}></InteractiveCharts>

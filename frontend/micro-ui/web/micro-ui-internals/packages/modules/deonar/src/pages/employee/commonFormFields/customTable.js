@@ -3,6 +3,7 @@ import { SearchField, Table, TextInput, Loader, Dropdown } from "@upyog/digit-ui
 import { useTranslation } from "react-i18next";
 import ImportPermissionDateField from "./importPermissionDate";
 import { useForm } from "react-hook-form";
+import SearchButtonField from "./searchBtn";
 
 const CustomTable = ({
   columns = [],
@@ -44,6 +45,9 @@ const CustomTable = ({
   showDateColumn = false, // New prop to control date column visibility
   onDateChange,
   enableMaxHeight = true,
+  isStakeholderContext,
+  handleDataSearch,
+  disabled,
   ...rest
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -334,27 +338,53 @@ const CustomTable = ({
 
   return (
     <div>
+      <div style={{ display: "flex" }}>
+        {showDropdown &&
+          Array.isArray(dropdownOptions) &&
+          dropdownOptions.map((dropdownConfig, index) => (
+            <Dropdown
+              key={index}
+              label={dropdownConfig.label || t("Dropdown")}
+              selected={dropdownConfig.selectedOption}
+              select={(value) => {
+                dropdownConfig.setSelectedOption(value);
+                if (dropdownConfig.onDropdownChange) {
+                  dropdownConfig.onDropdownChange(value);
+                }
+              }}
+              option={dropdownConfig.options}
+              optionKey={dropdownConfig.optionKey || "name"}
+              placeholder={dropdownConfig.placeholder || t("Select an Option")}
+              style={{ width: dropdownConfig.width || "15%", margin: "0", display: "flex", alignItems: "center" }}
+            />
+          ))}
+        {showDropdown && (
+          <SearchButtonField
+            onSearch={handleDataSearch}
+            // disabled={!searchTerm}
+            disabled={disabled}
+            customStyle={true}
+            style={{
+              height: "38px",
+              padding: "0 12px",
+              marginLeft: isStakeholderContext ? "0.5rem" : "0",
+              width: "0%",
+              paddingTop: "0",
+            }}
+          />
+        )}
+      </div>
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "1rem" }}>
-        <div style={{ display: "flex", gap: "1rem", alignItems: "center", flex: "1" }}>
-          {showDropdown &&
-            Array.isArray(dropdownOptions) &&
-            dropdownOptions.map((dropdownConfig, index) => (
-              <Dropdown
-                key={index}
-                label={dropdownConfig.label || t("Dropdown")}
-                selected={dropdownConfig.selectedOption}
-                select={(value) => {
-                  dropdownConfig.setSelectedOption(value);
-                  if (dropdownConfig.onDropdownChange) {
-                    dropdownConfig.onDropdownChange(value);
-                  }
-                }}
-                option={dropdownConfig.options}
-                optionKey={dropdownConfig.optionKey || "name"}
-                placeholder={dropdownConfig.placeholder || t("Select an Option")}
-                style={{ width: dropdownConfig.width || "17%", marginTop: "8px" }}
-              />
-            ))}
+        <div
+          style={{
+            display: "flex",
+            flexDirection: isStakeholderContext ? "column" : "row",
+            gap: isStakeholderContext ? "0" : "1rem",
+            marginBottom: "1rem",
+            alignItems: isStakeholderContext ? "flex-start" : "center",
+            flex: "1",
+          }}
+        >
           {showSearch && (
             <SearchField>
               <TextInput

@@ -25,7 +25,25 @@ const Stakeholder = () => {
   const { searchStakeholder } = useDeonarCommon();
   const { data: stakeData } = searchStakeholder();
   const [filteredStakeholderDetails, setFilteredStakeholderDetails] = useState([]);
-  const [showPlaceholderMessage, setShowPlaceholderMessage] = useState(true);
+  const [showPlaceholderMessage, setShowPlaceholderMessage] = useState(false);
+  const [disabled, setDisabled] = useState(true);
+  const { fetchDeonarCommon } = useDeonarCommon();
+  const useFetchOptions = (optionType) => {
+    const { data } = fetchDeonarCommon({
+      CommonSearchCriteria: {
+        Option: optionType,
+      },
+    });
+    return data
+      ? data.CommonDetails.map((item) => ({
+          name: item.name,
+          value: item.id,
+        }))
+      : [];
+  };
+
+  const stakeholderData = useFetchOptions("stakeholder");
+  const stakeholderAnimal = useFetchOptions("animal");
   const initialDefaultValues = useMemo(
     () => ({
       stakeholderName: "",
@@ -55,6 +73,7 @@ const Stakeholder = () => {
     mode: "onChange",
   });
   const formValues = watch();
+  const assignDate = watch("asigndate");
 
   const isFormValid = () => {
     const isCitizen = formValues.traderType?.name === "CITIZEN";
@@ -79,7 +98,6 @@ const Stakeholder = () => {
   };
   useEffect(() => {
     if (stakeData) {
-      console.log(stakeData, "stakeData");
       const StakeholderData = stakeData.StakeholderCheckDetails.map((detail) => ({
         name: detail.stakeholdername || "N/A",
         address: detail.address || "N/A",
@@ -94,20 +112,37 @@ const Stakeholder = () => {
         address2: detail.address2 || "N/A",
       }));
       setStakeholderDetails(StakeholderData);
-      setFilteredStakeholderDetails(StakeholderData);
+     // setFilteredStakeholderDetails(StakeholderData);
     }
   }, [stakeData]);
 
-  useEffect(() => {
+  // useEffect(() => {
+  //   if (selectedOption) {
+  //     setShowPlaceholderMessage(false);
+  //     const filteredData = getStakeholderDetails.filter((detail) => detail.stakeholderType.toLowerCase().includes(selectedOption.name.toLowerCase()));
+  //     setFilteredStakeholderDetails(filteredData);
+  //   } else {
+  //     setShowPlaceholderMessage(true);
+  //     setFilteredStakeholderDetails([]);
+  //   }
+  // }, [selectedOption, getStakeholderDetails]);
+  const handleDataSearch = () => {
     if (selectedOption) {
-      setShowPlaceholderMessage(false);
-      const filteredData = getStakeholderDetails.filter((detail) => detail.stakeholderType.toLowerCase().includes(selectedOption.name.toLowerCase()));
+     
+      const filteredData = getStakeholderDetails.filter((detail) => 
+        detail.stakeholderType.toLowerCase().includes(selectedOption.name.toLowerCase())
+      );
       setFilteredStakeholderDetails(filteredData);
-    } else {
       setShowPlaceholderMessage(true);
+    } 
+  };
+  const handleDropdownChange = (option) => {
+    setSelectedOption(option);
+    setDisabled(false);
+      setShowPlaceholderMessage(false);
       setFilteredStakeholderDetails([]);
-    }
-  }, [selectedOption, getStakeholderDetails]);
+    
+  };
 
   const handleRowClick = (rowData) => {
     setData(rowData);
@@ -137,7 +172,7 @@ const Stakeholder = () => {
       ),
     },
     {
-      Header: t("Stakeholder Name"),
+      Header: t("Stakeholder Type"),
       accessor: "stakeholderType",
       Cell: ({ row }) => t(row.original.stakeholderType) || "N/A",
     },
@@ -197,26 +232,6 @@ const Stakeholder = () => {
       },
     ],
   };
-
-  const { fetchDeonarCommon } = useDeonarCommon();
-  const useFetchOptions = (optionType) => {
-    const { data } = fetchDeonarCommon({
-      CommonSearchCriteria: {
-        Option: optionType,
-      },
-    });
-    return data
-      ? data.CommonDetails.map((item) => ({
-          name: item.name,
-          value: item.id,
-        }))
-      : [];
-  };
-
-  const stakeholderData = useFetchOptions("stakeholder");
-  const stakeholderAnimal = useFetchOptions("animal");
-
-  console.log(stakeholderData, "stakeholderData");
 
   const toggleModal = () => {
     setIsModalOpen(!isModalOpen);
@@ -291,15 +306,18 @@ const Stakeholder = () => {
                   {
                     label: t("Stakeholder Name"),
                     selectedOption: selectedOption,
-                    setSelectedOption: setSelectedOption,
+                    setSelectedOption: handleDropdownChange,
                     options: stakeholderData,
                     optionKey: "name",
                     placeholder: t("Select Stakeholder"),
                   },
                 ]}
                 showText={true}
+                isStakeholderContext={true}
+                disabled={disabled}
+                handleDataSearch={handleDataSearch}
               />
-              {showPlaceholderMessage && (
+              {!showPlaceholderMessage && (
                 <div
                   style={{
                     position: "absolute",
@@ -310,7 +328,7 @@ const Stakeholder = () => {
                     color: "#333",
                   }}
                 >
-                  <p>{t("Please select a stakeholder type from the dropdown above.")}</p>
+                  <p>{t("Please select stakeholder type from the above dropdown.")}</p>
                 </div>
               )}
             </div>
@@ -405,7 +423,7 @@ const Stakeholder = () => {
                 {data.traderType?.name !== "CITIZEN" && (
                   <div className="bmc-col3-card">
                     <LabelFieldPair>
-                      <CardLabel className="bmc-label">{t("DEONAR_ASSIGN_DATE")}</CardLabel>
+                      <CardLabel className="bmc-label">{t("Assigned From Date")}</CardLabel>
                       <Controller
                         control={control}
                         name="asigndate"
@@ -416,6 +434,10 @@ const Stakeholder = () => {
                               date={props.value}
                               onChange={(e) => {
                                 props.onChange(e);
+                                const validToDate = watch("validtodate");
+                                if (validToDate && new Date(validToDate) <= new Date(e)) {
+                                  control.setValue("validtodate", null);
+                                }
                               }}
                               onBlur={props.onBlur}
                               placeholder={t("DEONAR_ASSIGN_DATE")}
@@ -429,11 +451,14 @@ const Stakeholder = () => {
                 {data.traderType?.name !== "CITIZEN" && (
                   <div className="bmc-col3-card">
                     <LabelFieldPair>
-                      <CardLabel className="bmc-label">{t("DEONAR_VALID_DATE")}</CardLabel>
+                      <CardLabel className="bmc-label">{t("Assigned To Date")}</CardLabel>
                       <Controller
                         control={control}
                         name="validtodate"
-                        rules={{ required: t("CORE_COMMON_REQUIRED_ERRMSG") }}
+                        rules={{
+                          required: t("CORE_COMMON_REQUIRED_ERRMSG"),
+                          validate: (value) => !assignDate || new Date(value) > new Date(assignDate) || t("Valid-to date must be later than the assign date."),
+                        }}
                         render={(props) => (
                           <div>
                             <DatePicker
@@ -443,7 +468,14 @@ const Stakeholder = () => {
                               }}
                               onBlur={props.onBlur}
                               placeholder={t("DEONAR_VALID_DATE")}
+                              min={assignDate ? new Date(assignDate).toISOString().split("T")[0] : undefined}
+                              disable={!assignDate}
                             />
+                             {errors.validtodate && errors.validtodate.type === "validate" && (
+              <span className="error-message" style={{ color: "red", fontSize: "14px" }}>
+                {errors.validtodate.message}
+              </span>
+            )}
                           </div>
                         )}
                       />

@@ -57,27 +57,31 @@ const useCollectionPoint = ({ value }) => {
       queryClient.invalidateQueries("WashingDetails");
     },
   });
-  // const fetchSlaughterCollectionFee = (data, config = {}) => {
-  //   return useQuery(["SlaughterFee", data], () => DeonarService.getCollectionSlaughterFee(data), {
-  //     ...config,
-  //     onSuccess: (data) => {
-  //       console.log(data, "SlaughterFee collection data");
-  //     },
-  //     // enabled: value === "slaughter",
-  //   });
-  // };
 
   const fetchSlaughterCollectionFee = (data, config = {}) => {
-    return useMutation((data) => DeonarService.getCollectionSlaughterFee(data), config);
-  };
-
-  const fetchWashingCollectionFee = (data, config = {}) => {
-    return useQuery(["washingFee", data], () => DeonarService.getCollectionWashingFee(data), {
+    const { enabled = true, executeOnLoad = false, executeOnRadioSelect = false } = config;
+    return useQuery(["SlaughterFee", data], () => DeonarService.getCollectionSlaughterFee(data), {
+      enabled: enabled && (executeOnLoad || executeOnRadioSelect),
       ...config,
       onSuccess: (data) => {
-        console.log(data, "washingFee collection data");
+        console.log(data, "SlaughterFee collection data");
       },
-      // enabled: value === "washing",
+      // enabled: value === "slaughter",
+    });
+  };
+
+  // const fetchSlaughterCollectionFee = (data, config = {}) => {
+  //   return useMutation((data) => DeonarService.getCollectionSlaughterFee(data), config);
+  // };
+
+  const fetchWashingCollectionFee = (data, config = {}) => {
+    const { enabled = true, executeOnLoad = false, executeOnRadioSelect = false } = config;
+    return useQuery(["washingFee", data], () => DeonarService.getCollectionWashingFee(data), {
+      enabled: enabled && (executeOnLoad || executeOnRadioSelect),
+      ...config,
+      onSuccess: (data) => {
+        console.log(data, "RemovalList collection data");
+      },
     });
   };
 
@@ -227,9 +231,9 @@ const useCollectionPoint = ({ value }) => {
   };
 
   const fectchCollectionStablingList = (data, config = {}) => {
-    // const { enabled = true, executeOnLoad = false, executeOnRadioSelect = false } = config;
+    const { enabled = true, executeOnLoad = false, executeOnRadioSelect = false } = config;
     return useQuery(["StablingList", data], () => DeonarService.getCollectionStablingList(data), {
-      // enabled: enabled && (executeOnLoad || executeOnRadioSelect),
+      enabled: enabled && (executeOnLoad || executeOnRadioSelect),
       ...config,
       onSuccess: (data) => {
         console.log(data, "StablingList collection data");
@@ -249,12 +253,23 @@ const useCollectionPoint = ({ value }) => {
   };
 
   const fetchRemovalCollectionList = (data, config = {}) => {
-    // const { enabled = true, executeOnLoad = false, executeOnRadioSelect = false } = config;
+    const { enabled = true, executeOnLoad = false, executeOnRadioSelect = false } = config;
     return useQuery(["RemovalList", data], () => DeonarService.getRemovalCollectionList(data), {
-      // enabled: enabled && (executeOnLoad || executeOnRadioSelect),
+      enabled: enabled && (executeOnLoad || executeOnRadioSelect),
       ...config,
       onSuccess: (data) => {
         console.log(data, "RemovalList collection data");
+      },
+    });
+  };
+
+  const fetchCollectionSlaughterList = (data, config = {}) => {
+    const { enabled = true, executeOnLoad = false, executeOnRadioSelect = false } = config;
+    return useQuery(["SlaughterList", data], () => DeonarService.getSlaughterCollectionList(data), {
+      enabled: enabled && (executeOnLoad || executeOnRadioSelect),
+      ...config,
+      onSuccess: (data) => {
+        console.log(data, "SlaughterList collection data");
       },
     });
   };
@@ -283,7 +298,8 @@ const useCollectionPoint = ({ value }) => {
     fetchNormalSlaughterList,
     fectchCollectionStablingList,
     fetchCollectionEntryList,
-    fetchRemovalCollectionList
+    fetchRemovalCollectionList,
+    fetchCollectionSlaughterList,
   };
 };
 

@@ -384,13 +384,18 @@ const SecurityCheckPage = ({ optionalFields = false, maxAllowedCount = 100 }) =>
     );
   };
 
-  // useEffect(() => {
-  //   setFormModified(Object.keys(isAnimalAdded).length > 0);
-  // }, [isAnimalAdded]);
-
-  const resetModal = () => {
-    setDawanwalaOption([]);
-    setIsDirty(false);
+  const isFormValid = () => {
+    const requiredFields = ["importPermissionNumber", "vehicleNumber", "licenceNumber"];
+    return requiredFields.every((field) => {
+      const fieldValue = getValues(field);
+      if (Array.isArray(fieldValue)) {
+        return fieldValue.length > 0;
+      }
+      if (typeof fieldValue === "object" && fieldValue !== null) {
+        return fieldValue.value !== undefined;
+      }
+      return !!fieldValue;
+    });
   };
 
   return (
@@ -424,7 +429,7 @@ const SecurityCheckPage = ({ optionalFields = false, maxAllowedCount = 100 }) =>
                   }}
                 />
               </div>
-              <div className="bmc-card-row" style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "20px", padding:"0px" }}>
+              <div className="bmc-card-row" style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "20px", padding: "0px" }}>
                 <GenericFormInput
                   placeholder={t("LICENSE_NUMBER")}
                   control={control}
@@ -440,7 +445,7 @@ const SecurityCheckPage = ({ optionalFields = false, maxAllowedCount = 100 }) =>
               </div>
             </div>
             <div className="bmc-row-card-header" style={{ width: "50%" }}>
-            <div className="bmc-card-row" style={{ overflowY: "auto", maxHeight: "511px" }}>
+              <div className="bmc-card-row">
                 <CustomTable
                   t={t}
                   columns={Tablecolumns}
@@ -463,7 +468,7 @@ const SecurityCheckPage = ({ optionalFields = false, maxAllowedCount = 100 }) =>
                 />
               </div>
             </div>
-            <CustomModal isOpen={isModalOpen} onClose={toggleModal} title={t("GENERATE_TOKEN")}>
+            <CustomModal isOpen={isModalOpen} onClose={toggleModal} title={t("GENERATE_TOKEN")} width="50%" style={{ overflowY: "visible" }}>
               <DynamicRowGenerator
                 onRowsUpdate={handleAnimalUpdate}
                 label="Animal Type"
@@ -489,7 +494,7 @@ const SecurityCheckPage = ({ optionalFields = false, maxAllowedCount = 100 }) =>
               </div> */}
             </CustomModal>
           </div>
-          <SubmitButtonField control={control} disabled={!isAnimalAdded || !formModified} />
+          <SubmitButtonField control={control} disabled={!isAnimalAdded || !isFormValid()} />
         </form>
       </div>
       {toast && (

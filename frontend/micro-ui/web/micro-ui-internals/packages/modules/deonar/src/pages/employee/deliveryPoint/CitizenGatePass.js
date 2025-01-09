@@ -64,54 +64,54 @@ const CitizenGatePass = () => {
   const dawanwalaData = useFetchOptions("dawanwala");
   const shopkeeperData = useFetchOptions("citizen");
 
-  const { data: fetchedData, isLoading } = fetchTradingList({}, { executeOnLoad: true, executeOnRadioSelect: false });
+//   const { data: fetchedData, isLoading } = fetchTradingList({}, { executeOnLoad: true, executeOnRadioSelect: false });
 
-  useEffect(() => {
-    if (fetchedData) {
-      setAnimalCount(fetchedData.SecurityCheckDetails);
-      setTotalRecords();
-    }
-  }, [fetchedData]);
+//   useEffect(() => {
+//     if (fetchedData) {
+//       setAnimalCount(fetchedData.SecurityCheckDetails);
+//       setTotalRecords();
+//     }
+//   }, [fetchedData]);
 
-  useEffect(() => {
-    if (dawanwalaData.length) {
-      const combinedData = dawanwalaData.map((item) => {
-        const animalTypes = item.animalType.map((animal) => animal.name).join(", ");
-        return {
-          label: item.name || "Unknown",
-          licenceNumber: item.licenceNumber,
-          mobileNumber: item.mobileNumber,
-          registrationNumber: item.registrationNumber,
-          animalTypes: animalTypes || "No Animal Type",
-          traderType: item.traderType,
-          value: item.value,
-        };
-      });
-      if (JSON.stringify(combinedData) !== JSON.stringify(dawanwala)) {
-        setDawanwala(combinedData);
-      }
-    }
-  }, [dawanwalaData, dawanwala]);
+//   useEffect(() => {
+//     if (dawanwalaData.length) {
+//       const combinedData = dawanwalaData.map((item) => {
+//         const animalTypes = item.animalType.map((animal) => animal.name).join(", ");
+//         return {
+//           label: item.name || "Unknown",
+//           licenceNumber: item.licenceNumber,
+//           mobileNumber: item.mobileNumber,
+//           registrationNumber: item.registrationNumber,
+//           animalTypes: animalTypes || "No Animal Type",
+//           traderType: item.traderType,
+//           value: item.value,
+//         };
+//       });
+//       if (JSON.stringify(combinedData) !== JSON.stringify(dawanwala)) {
+//         setDawanwala(combinedData);
+//       }
+//     }
+//   }, [dawanwalaData, dawanwala]);
 
-  useEffect(() => {
-    if (shopkeeperData.length) {
-      const combinedData = shopkeeperData.map((item) => {
-        const animalTypes = item.animalType.map((animal) => animal.name).join(", ");
-        return {
-          label: item.name || "Unknown",
-          licenceNumber: item.licenceNumber,
-          mobileNumber: item.mobileNumber,
-          registrationNumber: item.registrationNumber,
-          animalTypes: animalTypes || "No Animal Type",
-          traderType: item.traderType,
-          value: item.value,
-        };
-      });
-      if (JSON.stringify(combinedData) !== JSON.stringify(shopKeeper)) {
-        setShopKeeper(combinedData);
-      }
-    }
-  }, [shopkeeperData, shopKeeper]);
+//   useEffect(() => {
+//     if (shopkeeperData.length) {
+//       const combinedData = shopkeeperData.map((item) => {
+//         const animalTypes = item.animalType.map((animal) => animal.name).join(", ");
+//         return {
+//           label: item.name || "Unknown",
+//           licenceNumber: item.licenceNumber,
+//           mobileNumber: item.mobileNumber,
+//           registrationNumber: item.registrationNumber,
+//           animalTypes: animalTypes || "No Animal Type",
+//           traderType: item.traderType,
+//           value: item.value,
+//         };
+//       });
+//       if (JSON.stringify(combinedData) !== JSON.stringify(shopKeeper)) {
+//         setShopKeeper(combinedData);
+//       }
+//     }
+//   }, [shopkeeperData, shopKeeper]);
 
   const handleUUIDClick = (entryUnitId) => {
     setSelectedUUID(entryUnitId);
@@ -155,42 +155,42 @@ const CitizenGatePass = () => {
     };
   }, []);
 
-  useEffect(() => {
-    if (fetchedData && fetchedData.SecurityCheckDetails) {
-      const securityCheckDetails = fetchedData.SecurityCheckDetails;
-      const mappedAnimalCount = securityCheckDetails.flatMap((detail) =>
-        detail.animalDetails.map((animal) => ({
-          arrivalId: detail.entryUnitId,
-          animalTypeId: animal.animalTypeId,
-          animalType: animal.animalType,
-          count: animal.token,
-          tradable: animal.tradable,
-          stable: animal.stable,
-        }))
-      );
-      setGawaltable(mappedAnimalCount);
-    }
-  }, [fetchedData]);
+//   useEffect(() => {
+//     if (fetchedData && fetchedData.SecurityCheckDetails) {
+//       const securityCheckDetails = fetchedData.SecurityCheckDetails;
+//       const mappedAnimalCount = securityCheckDetails.flatMap((detail) =>
+//         detail.animalDetails.map((animal) => ({
+//           arrivalId: detail.entryUnitId,
+//           animalTypeId: animal.animalTypeId,
+//           animalType: animal.animalType,
+//           count: animal.token,
+//           tradable: animal.tradable,
+//           stable: animal.stable,
+//         }))
+//       );
+//       setGawaltable(mappedAnimalCount);
+//     }
+//   }, [fetchedData]);
 
   const filteredGawaltable = gawaltable.filter((animal) => animal.arrivalId === selectedUUID);
 
-  const handleShopkeeperSelect = (rowIndex, selectedOptionsForDropdown) => {
-    setShopkeeperOption((prevSelectedOptions) => ({
-      ...prevSelectedOptions,
-      [rowIndex]: selectedOptionsForDropdown,
-    }));
-    setIsDirty(true);
-  };
+//   const handleShopkeeperSelect = (rowIndex, selectedOptionsForDropdown) => {
+//     setShopkeeperOption((prevSelectedOptions) => ({
+//       ...prevSelectedOptions,
+//       [rowIndex]: selectedOptionsForDropdown,
+//     }));
+//     setIsDirty(true);
+//   };
 
-  const handleRemovalSelect = (rowIndex, selectedOptionsForDropdown) => {
-    setRemovalType((prevSelectedOptions) => ({
-      ...prevSelectedOptions,
-      [rowIndex]: selectedOptionsForDropdown,
-    }));
-    setIsDirty(true);
-  };
+//   const handleRemovalSelect = (rowIndex, selectedOptionsForDropdown) => {
+//     setRemovalType((prevSelectedOptions) => ({
+//       ...prevSelectedOptions,
+//       [rowIndex]: selectedOptionsForDropdown,
+//     }));
+//     setIsDirty(true);
+//   };
 
-  const dropdownOptions = [{ label: t("RELIGIOUS_PERSONAL_PURPOSE"), value: "test2", id: 2 }];
+//   const dropdownOptions = [{ label: t("RELIGIOUS_PERSONAL_PURPOSE"), value: "test2", id: 2 }];
 
   const isAfterStablingVisibleColumns = [
     { Header: t("Animal Type"), accessor: "animalType" },
@@ -204,48 +204,51 @@ const CitizenGatePass = () => {
       },
     },
     {
-      accessor: "shopKeeperDetails",
-      Header: t("Assign Citizen"),
-      Cell: ({ row }) => (
-        <MultiColumnDropdown
-          options={shopKeeper}
-          selected={shopkeeperOption[row.index] || []}
-          onSelect={(e, selected) => handleShopkeeperSelect(row.index, selected)}
-          defaultLabel="Select Citizen"
-          displayKeys={["label", "mobileNumber"]}
-          optionsKey="value"
-          defaultUnit="Options"
-          autoCloseOnSelect={true}
-          showColumnHeaders={true}
-          headerMappings={{
-            label: t("Name"),
-            mobileNumber: t("Mobile Number"),
-          }}
-        />
-      ),
-    },
-    {
-      accessor: "deonarRemovalTypeDetails",
-      Header: t("Deonar Removal Type"),
-      Cell: ({ row }) => {
-        return (
-          <MultiColumnDropdown
-            options={dropdownOptions}
-            selected={removalType[row.index] || []}
-            onSelect={(e, selected) => handleRemovalSelect(row.index, selected)}
-            defaultLabel="Select Removal Type"
-            displayKeys={["label"]}
-            optionsKey="value"
-            defaultUnit="Options"
-            autoCloseOnSelect={true}
-            showColumnHeaders={true}
-            headerMappings={{
-              label: t("Type"),
-            }}
-          />
-        );
-      },
-    },
+        Header: t("Citizen's Name"), accessor: "citizenname"
+    }
+    // {
+    //   accessor: "shopKeeperDetails",
+    //   Header: t("Assign Citizen"),
+    //   Cell: ({ row }) => (
+    //     <MultiColumnDropdown
+    //       options={shopKeeper}
+    //       selected={shopkeeperOption[row.index] || []}
+    //       onSelect={(e, selected) => handleShopkeeperSelect(row.index, selected)}
+    //       defaultLabel="Select Citizen"
+    //       displayKeys={["label", "mobileNumber"]}
+    //       optionsKey="value"
+    //       defaultUnit="Options"
+    //       autoCloseOnSelect={true}
+    //       showColumnHeaders={true}
+    //       headerMappings={{
+    //         label: t("Name"),
+    //         mobileNumber: t("Mobile Number"),
+    //       }}
+    //     />
+    //   ),
+    // },
+    // {
+    //   accessor: "deonarRemovalTypeDetails",
+    //   Header: t("Deonar Removal Type"),
+    //   Cell: ({ row }) => {
+    //     return (
+    //       <MultiColumnDropdown
+    //         options={dropdownOptions}
+    //         selected={removalType[row.index] || []}
+    //         onSelect={(e, selected) => handleRemovalSelect(row.index, selected)}
+    //         defaultLabel="Select Removal Type"
+    //         displayKeys={["label"]}
+    //         optionsKey="value"
+    //         defaultUnit="Options"
+    //         autoCloseOnSelect={true}
+    //         showColumnHeaders={true}
+    //         headerMappings={{
+    //           label: t("Type"),
+    //         }}
+    //       />
+    //     );
+    //   },
+    // },
   ];
 
   const onSubmit = async (formData) => {
@@ -432,7 +435,7 @@ const CitizenGatePass = () => {
                   // tableClassName={"deonar-scrollable-table"}
                   totalRecords={totalRecords}
                   autoSort={false}
-                  isLoadingRows={isLoading}
+                //   isLoadingRows={isLoading}
                 />
               </div>
               {isModalOpen && (
@@ -440,7 +443,20 @@ const CitizenGatePass = () => {
                   <Fragment>
                     <div className="bmc-card-row" style={{ overflowY: "auto", maxHeight: "511px" }}>
                       <div style={{ display: "flex", gap: "20px", justifyContent: "space-between", marginBottom: "40px" }}>
-                      <div>
+                      
+                      </div>
+                      <CustomTable
+                        t={t}
+                        columns={isAfterStablingVisibleColumns}
+                        data={filteredGawaltable}
+                        totalRecords={totalRecords}
+                        autoSort={false}
+                        manualPagination={false}
+                      // tableClassName={"deonar-scrollable-table"}
+                      />
+                    </div>
+                  </Fragment>
+                  <div style={{float:'right'}}>
                         <button
                           type="button"
                           onClick={handlePDFDownload}
@@ -462,21 +478,6 @@ const CitizenGatePass = () => {
                           Print/Download PDF
                         </button>
                       </div>
-                      </div>
-                      <CustomTable
-                        t={t}
-                        columns={isAfterStablingVisibleColumns}
-                        data={filteredGawaltable}
-                        totalRecords={totalRecords}
-                        autoSort={false}
-                        manualPagination={false}
-                      // tableClassName={"deonar-scrollable-table"}
-                      />
-                    </div>
-
-                 
-                    <SubmitButtonField control={control} disabled={!isDirty} />
-                  </Fragment>
                  
                 </CustomModal>
               )}
@@ -504,3 +505,5 @@ const CitizenGatePass = () => {
 };
 
 export default CitizenGatePass;
+
+

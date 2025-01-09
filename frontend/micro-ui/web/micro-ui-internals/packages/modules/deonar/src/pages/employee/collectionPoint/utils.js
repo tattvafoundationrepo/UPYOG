@@ -141,55 +141,421 @@ export const columns = (handleUUIDClick, t) => [
   },
 ];
 
-export const createDynamicColumns = (handleUUIDClick, tableType) => {
-  const baseColumns = [
-    {
-      Header: "ID",
-      accessor: "id",
-      Cell: ({ row }) => row.index + 1,
-      isVisible: false,
-    },
-    {
-      Header: "DEONAR_ARRIVAL_UUID",
-      accessor: "entryUnitId",
-      Cell: ({ row }) => (
-        <span onClick={() => handleUUIDClick(row.original.entryUnitId)} style={{ cursor: "pointer", color: "blue" }}>
-          {row.original.entryUnitId}
-        </span>
-      ),
-    },
-    {
-      Header: "DEONAR_TRADER_NAME",
-      accessor: "traderName",
-    },
-    {
-      Header: "DEONAR_PERMISSION_NUMBER",
-      accessor: "importPermission",
-    },
-    {
-      Header: "DEONAR_LICENSE_NUMBER",
-      accessor: "licenceNumber",
-    },
-    {
-      Header: "ARRIVAL_DATE_FIELD",
-      accessor: "date",
-    },
-    {
-      Header: "ARRIVAL_TIME_FIELD",
-      accessor: "time",
-    },
-  ];
+// export const createDynamicColumns = (handleUUIDClick, tableType, t) => {
+//   const baseColumns = [
+//     {
+//       Header: t("ID"),
+//       accessor: "id",
+//       Cell: ({ row }) => row.index + 1,
+//       isVisible: false,
+//     },
+//     {
+//       Header: t("DEONAR_ARRIVAL_UUID"),
+//       accessor: "entryUnitId",
+//       Cell: ({ row }) => (
+//         <span onClick={() => handleUUIDClick(row.original.entryUnitId)} style={{ cursor: "pointer", color: "blue" }}>
+//           {row.original.entryUnitId}
+//         </span>
+//       ),
+//     },
+//     {
+//       Header: t("DEONAR_TRADER_NAME"),
+//       accessor: "traderName",
+//     },
+//     {
+//       Header: t("DEONAR_PERMISSION_NUMBER"),
+//       accessor: "importPermission",
+//     },
+//     {
+//       Header: t("DEONAR_LICENSE_NUMBER"),
+//       accessor: "licenceNumber",
+//     },
+//     {
+//       Header: t("ARRIVAL_DATE_FIELD"),
+//       accessor: "date",
+//     },
+//     {
+//       Header: "ARRIVAL_TIME_FIELD",
+//       accessor: "time",
+//     },
+//   ];
 
-  if (tableType === "stabling") {
-    return [
+//   if (tableType === "stabling") {
+//     return [
+//       {
+//         Header: "ID",
+//         accessor: "stakeholderId",
+//         Cell: ({ row }) => row.index + 1,
+//         isVisible: false,
+//       },
+//       {
+//         Header: "DEONAR_ARRIVAL_UUID",
+//         accessor: "entryUnitId",
+//         Cell: ({ row }) => (
+//           <span onClick={() => handleUUIDClick(row.original.entryUnitId)} style={{ cursor: "pointer", color: "blue" }}>
+//             {row.original.entryUnitId}
+//           </span>
+//         ),
+//       },
+//       {
+//         Header: "DEONAR_TRADER_NAME",
+//         accessor: "traderName",
+//       },
+//       {
+//         Header: t("DEONAR_LICENSE_NUMBER"),
+//         accessor: "licenceNumber",
+//       },
+//       {
+//         Header: "DEONAR_MOBILE_NUMBER",
+//         accessor: "mobileNumber",
+//       },
+//       {
+//         Header: "DEONAR_STAKEHOLDER_TYPE",
+//         accessor: "stakeholderTypeName",
+//       },
+//       {
+//         Header: "DEONAR_REGISTRATION_NUMBER",
+//         accessor: "registrationNumber",
+//       },
+//     ];
+//   }
+
+//   if (tableType === "arrival") {
+//     return [
+//       {
+//         Header: "ID",
+//         accessor: "stakeholderId",
+//         Cell: ({ row }) => row.index + 1,
+//         isVisible: false,
+//       },
+//       {
+//         Header: "DEONAR_ARRIVAL_UUID",
+//         accessor: "entryUnitId",
+//         Cell: ({ row }) => (
+//           <span onClick={() => handleUUIDClick(row.original.entryUnitId)} style={{ cursor: "pointer", color: "blue" }}>
+//             {row.original.entryUnitId}
+//           </span>
+//         ),
+//       },
+//       {
+//         Header: "DEONAR_TRADER_NAME",
+//         accessor: "traderName",
+//       },
+//       {
+//         Header: t("DEONAR_LICENSE_NUMBER"),
+//         accessor: "licenceNumber",
+//       },
+//       {
+//         Header: "DEONAR_MOBILE_NUMBER",
+//         accessor: "mobileNumber",
+//       },
+//       {
+//         Header: "DEONAR_STAKEHOLDER_TYPE",
+//         accessor: "stakeholderTypeName",
+//       },
+//       {
+//         Header: "DEONAR_REGISTRATION_NUMBER",
+//         accessor: "registrationNumber",
+//       },
+//     ];
+//   }
+
+//   if (tableType === "parking") {
+//     return [
+//       {
+//         Header: "ID",
+//         accessor: "id",
+//         Cell: ({ row }) => row.index + 1,
+//         getHeaderProps: (column) => ({
+//           style: {
+//             display: "flex",
+//             alignItems: "center",
+//             justifyContent: "center",
+//           },
+//         }),
+//         isVisible: false,
+//       },
+//       {
+//         Header: "Deonar_Vehicle_Number",
+//         accessor: "vehicleNumber",
+//         Cell: ({ row }) => (
+//           <span
+//             onClick={() => handleUUIDClick(row.original.vehicleNumber, row.original.vehicleId, tableType)}
+//             style={{ cursor: "pointer", color: "blue" }}
+//           >
+//             {row.original.vehicleNumber}
+//           </span>
+//         ),
+//       },
+//       {
+//         Header: "Deonar_Vehicle_Type",
+//         accessor: "vehicleType",
+//       },
+
+//       {
+//         Header: "Deonar_Parking_Time",
+//         accessor: "parkingTime",
+//       },
+//       {
+//         Header: "Deonar_Parking_Date",
+//         accessor: "parkingDate",
+//       },
+//     ];
+//   }
+
+//   if (tableType === "washing") {
+//     return [
+//       {
+//         Header: "ID",
+//         accessor: "id",
+//         Cell: ({ row }) => row.index + 1,
+//         getHeaderProps: (column) => ({
+//           style: {
+//             display: "flex",
+//             alignItems: "center",
+//             justifyContent: "center",
+//           },
+//         }),
+//         isVisible: false,
+//       },
+//       {
+//         Header: "Deonar_Vehicle_Number",
+//         accessor: "vehicleNumber",
+//         Cell: ({ row }) => (
+//           <span
+//             onClick={() => handleUUIDClick(row.original.vehicleNumber, row.original.vehicleId, tableType)}
+//             style={{ cursor: "pointer", color: "blue" }}
+//           >
+//             {row.original.vehicleNumber}
+//           </span>
+//         ),
+//       },
+//       {
+//         Header: "Deonar_Vehicle_Type",
+//         accessor: "vehicleType",
+//       },
+
+//       {
+//         Header: "Deonar_Washing_Time",
+//         accessor: "washingTime",
+//       },
+//       {
+//         Header: "Deonar_Washing_Date",
+//         accessor: "washingDate",
+//       },
+//     ];
+//   }
+
+//   if (tableType === "slaughter") {
+//     return [
+//       {
+//         Header: "ID",
+//         accessor: "id",
+//         Cell: ({ row }) => row.index + 1,
+//         getHeaderProps: (column) => ({
+//           style: {
+//             display: "flex",
+//             alignItems: "center",
+//             justifyContent: "center",
+//           },
+//         }),
+//         isVisible: false,
+//       },
+//       {
+//         Header: "Deonar_DD_Reference",
+//         accessor: "ddReference",
+//         Cell: ({ row }) => (
+//           <span onClick={() => handleUUIDClick(row.original.ddReference)} style={{ cursor: "pointer", color: "blue" }}>
+//             {row.original.ddReference}
+//           </span>
+//         ),
+//       },
+
+//       {
+//         Header: "DEONAR_SHOPKEEPER_NAME",
+//         accessor: "shopkeeperName",
+//       },
+//       {
+//         Header: t("DEONAR_LICENSE_NUMBER"),
+//         accessor: "licenceNumber",
+//       },
+//       {
+//         Header: "DEONAR_ARRIVAL_UUID",
+//         accessor: "arrivalId",
+//       },
+//     ];
+//   }
+
+//   if (tableType === "trading") {
+//     return [
+//       {
+//         Header: "ID",
+//         accessor: "id",
+//         Cell: ({ row }) => row.index + 1,
+//         isVisible: false,
+//       },
+//       {
+//         Header: "Deonar_DD_Reference",
+//         accessor: "ddreference",
+//         Cell: ({ row }) => (
+//           <span onClick={() => handleUUIDClick(row.original.ddreference)} style={{ cursor: "pointer", color: "blue" }}>
+//             {row.original.ddreference}
+//           </span>
+//         ),
+//       },
+//       {
+//         Header: "DEONAR_SHOPKEEPER_NAME",
+//         accessor: "traderName",
+//       },
+//       {
+//         Header: t("DEONAR_LICENSE_NUMBER"),
+//         accessor: "licenceNumber",
+//       },
+//       {
+//         Header: "DEONAR_PERMISSION_NUMBER",
+//         accessor: "importPermission",
+//       },
+//       {
+//         Header: "DEONAR_ARRIVAL_UUID",
+//         accessor: "entryUnitId",
+//       },
+//       {
+//         Header: t("ARRIVAL_DATE_FIELD"),
+//         accessor: "date",
+//       },
+//       {
+//         Header: "ARRIVAL_TIME_FIELD",
+//         accessor: "time",
+//       },
+//     ];
+//   }
+
+//   if (tableType === "removal") {
+//     return [
+//       {
+//         Header: "ID",
+//         accessor: "stakeholderId",
+//         Cell: ({ row }) => row.index + 1,
+//         isVisible: false,
+//       },
+//       {
+//         Header: "DEONAR_ARRIVAL_UUID",
+//         accessor: "entryUnitId",
+//         Cell: ({ row }) => (
+//           <span onClick={() => handleUUIDClick(row.original.entryUnitId)} style={{ cursor: "pointer", color: "blue" }}>
+//             {row.original.entryUnitId}
+//           </span>
+//         ),
+//       },
+//       {
+//         Header: "DEONAR_TRADER_NAME",
+//         accessor: "traderName",
+//       },
+//       {
+//         Header: t("DEONAR_LICENSE_NUMBER"),
+//         accessor: "licenceNumber",
+//       },
+//       {
+//         Header: "DEONAR_MOBILE_NUMBER",
+//         accessor: "mobileNumber",
+//       },
+//       {
+//         Header: "DEONAR_STAKEHOLDER_TYPE",
+//         accessor: "stakeholderTypeName",
+//       },
+//       // {
+//       //   Header: "DEONAR_REGISTRATION_NUMBER",
+//       //   accessor: "registrationNumber",
+//       // },
+//     ];
+//   }
+
+//   if (tableType === "penalty") {
+//     return [
+//       {
+//         Header: "ID",
+//         accessor: "id",
+//         Cell: ({ row }) => row.index + 1,
+//         isVisible: false,
+//       },
+//       {
+//         Header: "Deonar_Penalty_Reference",
+//         accessor: "penaltyReference",
+//         Cell: ({ row }) => (
+//           <span onClick={() => handleUUIDClick(row.original.penaltyReference)} style={{ cursor: "pointer", color: "blue" }}>
+//             {row.original.penaltyReference}
+//           </span>
+//         ),
+//       },
+//       {
+//         Header: "DEONAR_StakeHolder_NAME",
+//         accessor: "stakeholderName",
+//       },
+//       {
+//         Header: t("DEONAR_LICENSE_NUMBER"),
+//         accessor: "licenceNumber",
+//       },
+//     ];
+//   }
+//   if (tableType === "weighing") {
+//     return [
+//       {
+//         Header: "ID",
+//         accessor: "id",
+//         Cell: ({ row }) => row.index + 1,
+//         getHeaderProps: (column) => ({
+//           style: {
+//             display: "flex",
+//             alignItems: "center",
+//             justifyContent: "center",
+//           },
+//         }),
+//         isVisible: false,
+//       },
+//       {
+//         Header: "Deonar_DD_Reference",
+//         accessor: "ddReference",
+//         Cell: ({ row }) => (
+//           <span onClick={() => handleUUIDClick(row.original.ddReference)} style={{ cursor: "pointer", color: "blue" }}>
+//             {row.original.ddReference}
+//           </span>
+//         ),
+//       },
+
+//       {
+//         Header: "DEONAR_SHOPKEEPER_NAME",
+//         accessor: "shopkeeperName",
+//       },
+//       {
+//         Header: t("DEONAR_LICENSE_NUMBER"),
+//         accessor: "licenceNumber",
+//       },
+//       {
+//         Header: "DEONAR_ARRIVAL_UUID",
+//         accessor: "arrivalId",
+//       },
+//     ];
+//   }
+
+//   return baseColumns;
+// };
+
+export const createDynamicColumns = (handleUUIDClick, tableType, t = (text) => text) => {
+  if (typeof t !== "function") {
+    console.warn("Translation function not provided, using default");
+    t = (text) => text;
+  }
+
+  try {
+    const baseColumns = [
       {
-        Header: "ID",
-        accessor: "stakeholderId",
+        Header: t("ID"),
+        accessor: "id",
         Cell: ({ row }) => row.index + 1,
         isVisible: false,
       },
       {
-        Header: "DEONAR_ARRIVAL_UUID",
+        Header: t("DEONAR_ARRIVAL_UUID"),
         accessor: "entryUnitId",
         Cell: ({ row }) => (
           <span onClick={() => handleUUIDClick(row.original.entryUnitId)} style={{ cursor: "pointer", color: "blue" }}>
@@ -198,346 +564,383 @@ export const createDynamicColumns = (handleUUIDClick, tableType) => {
         ),
       },
       {
-        Header: "DEONAR_TRADER_NAME",
+        Header: t("DEONAR_TRADER_NAME"),
         accessor: "traderName",
       },
       {
-        Header: "DEONAR_LICENSE_NUMBER",
-        accessor: "licenceNumber",
-      },
-      {
-        Header: "DEONAR_MOBILE_NUMBER",
-        accessor: "mobileNumber",
-      },
-      {
-        Header: "DEONAR_STAKEHOLDER_TYPE",
-        accessor: "stakeholderTypeName",
-      },
-      {
-        Header: "DEONAR_REGISTRATION_NUMBER",
-        accessor: "registrationNumber",
-      },
-    ];
-  }
-
-  if (tableType === "arrival") {
-    return [
-      {
-        Header: "ID",
-        accessor: "stakeholderId",
-        Cell: ({ row }) => row.index + 1,
-        isVisible: false,
-      },
-      {
-        Header: "DEONAR_ARRIVAL_UUID",
-        accessor: "entryUnitId",
-        Cell: ({ row }) => (
-          <span onClick={() => handleUUIDClick(row.original.entryUnitId)} style={{ cursor: "pointer", color: "blue" }}>
-            {row.original.entryUnitId}
-          </span>
-        ),
-      },
-      {
-        Header: "DEONAR_TRADER_NAME",
-        accessor: "traderName",
-      },
-      {
-        Header: "DEONAR_LICENSE_NUMBER",
-        accessor: "licenceNumber",
-      },
-      {
-        Header: "DEONAR_MOBILE_NUMBER",
-        accessor: "mobileNumber",
-      },
-      {
-        Header: "DEONAR_STAKEHOLDER_TYPE",
-        accessor: "stakeholderTypeName",
-      },
-      {
-        Header: "DEONAR_REGISTRATION_NUMBER",
-        accessor: "registrationNumber",
-      },
-    ];
-  }
-
-  if (tableType === "parking") {
-    return [
-      {
-        Header: "ID",
-        accessor: "id",
-        Cell: ({ row }) => row.index + 1,
-        getHeaderProps: (column) => ({
-          style: {
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          },
-        }),
-        isVisible: false,
-      },
-      {
-        Header: "Deonar_Vehicle_Number",
-        accessor: "vehicleNumber",
-        Cell: ({ row }) => (
-          <span
-            onClick={() => handleUUIDClick(row.original.vehicleNumber, row.original.vehicleId, tableType)}
-            style={{ cursor: "pointer", color: "blue" }}
-          >
-            {row.original.vehicleNumber}
-          </span>
-        ),
-      },
-      {
-        Header: "Deonar_Vehicle_Type",
-        accessor: "vehicleType",
-      },
-
-      {
-        Header: "Deonar_Parking_Time",
-        accessor: "parkingTime",
-      },
-      {
-        Header: "Deonar_Parking_Date",
-        accessor: "parkingDate",
-      },
-    ];
-  }
-
-  if (tableType === "washing") {
-    return [
-      {
-        Header: "ID",
-        accessor: "id",
-        Cell: ({ row }) => row.index + 1,
-        getHeaderProps: (column) => ({
-          style: {
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          },
-        }),
-        isVisible: false,
-      },
-      {
-        Header: "Deonar_Vehicle_Number",
-        accessor: "vehicleNumber",
-        Cell: ({ row }) => (
-          <span
-            onClick={() => handleUUIDClick(row.original.vehicleNumber, row.original.vehicleId, tableType)}
-            style={{ cursor: "pointer", color: "blue" }}
-          >
-            {row.original.vehicleNumber}
-          </span>
-        ),
-      },
-      {
-        Header: "Deonar_Vehicle_Type",
-        accessor: "vehicleType",
-      },
-
-      {
-        Header: "Deonar_Washing_Time",
-        accessor: "washingTime",
-      },
-      {
-        Header: "Deonar_Washing_Date",
-        accessor: "washingDate",
-      },
-    ];
-  }
-
-  if (tableType === "slaughter") {
-    return [
-      {
-        Header: "ID",
-        accessor: "id",
-        Cell: ({ row }) => row.index + 1,
-        getHeaderProps: (column) => ({
-          style: {
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          },
-        }),
-        isVisible: false,
-      },
-      {
-        Header: "Deonar_DD_Reference",
-        accessor: "ddReference",
-        Cell: ({ row }) => (
-          <span onClick={() => handleUUIDClick(row.original.ddReference)} style={{ cursor: "pointer", color: "blue" }}>
-            {row.original.ddReference}
-          </span>
-        ),
-      },
-
-      {
-        Header: "DEONAR_SHOPKEEPER_NAME",
-        accessor: "shopkeeperName",
-      },
-      {
-        Header: "DEONAR_LICENSE_NUMBER",
-        accessor: "licenceNumber",
-      },
-      {
-        Header: "DEONAR_ARRIVAL_UUID",
-        accessor: "arrivalId",
-      },
-    ];
-  }
-
-  if (tableType === "trading") {
-    return [
-      {
-        Header: "ID",
-        accessor: "id",
-        Cell: ({ row }) => row.index + 1,
-        isVisible: false,
-      },
-      {
-        Header: "Deonar_DD_Reference",
-        accessor: "ddreference",
-        Cell: ({ row }) => (
-          <span onClick={() => handleUUIDClick(row.original.ddreference)} style={{ cursor: "pointer", color: "blue" }}>
-            {row.original.ddreference}
-          </span>
-        ),
-      },
-      {
-        Header: "DEONAR_SHOPKEEPER_NAME",
-        accessor: "traderName",
-      },
-      {
-        Header: "DEONAR_LICENSE_NUMBER",
-        accessor: "licenceNumber",
-      },
-      {
-        Header: "DEONAR_PERMISSION_NUMBER",
+        Header: t("DEONAR_PERMISSION_NUMBER"),
         accessor: "importPermission",
       },
       {
-        Header: "DEONAR_ARRIVAL_UUID",
-        accessor: "entryUnitId",
+        Header: t("DEONAR_LICENSE_NUMBER"),
+        accessor: "licenceNumber",
       },
       {
-        Header: "ARRIVAL_DATE_FIELD",
+        Header: t("ARRIVAL_DATE_FIELD"),
         accessor: "date",
       },
       {
-        Header: "ARRIVAL_TIME_FIELD",
+        Header: t("ARRIVAL_TIME_FIELD"),
         accessor: "time",
       },
     ];
-  }
 
-  if (tableType === "removal") {
-    return [
-      {
-        Header: "ID",
-        accessor: "stakeholderId",
-        Cell: ({ row }) => row.index + 1,
-        isVisible: false,
-      },
-      {
-        Header: "DEONAR_ARRIVAL_UUID",
-        accessor: "entryUnitId",
-        Cell: ({ row }) => (
-          <span onClick={() => handleUUIDClick(row.original.entryUnitId)} style={{ cursor: "pointer", color: "blue" }}>
-            {row.original.entryUnitId}
-          </span>
-        ),
-      },
-      {
-        Header: "DEONAR_TRADER_NAME",
-        accessor: "traderName",
-      },
-      {
-        Header: "DEONAR_LICENSE_NUMBER",
-        accessor: "licenceNumber",
-      },
-      {
-        Header: "DEONAR_MOBILE_NUMBER",
-        accessor: "mobileNumber",
-      },
-      {
-        Header: "DEONAR_STAKEHOLDER_TYPE",
-        accessor: "stakeholderTypeName",
-      },
-      // {
-      //   Header: "DEONAR_REGISTRATION_NUMBER",
-      //   accessor: "registrationNumber",
-      // },
-    ];
-  }
-
-  if (tableType === "penalty") {
-    return [
-      {
-        Header: "ID",
-        accessor: "id",
-        Cell: ({ row }) => row.index + 1,
-        isVisible: false,
-      },
-      {
-        Header: "Deonar_Penalty_Reference",
-        accessor: "penaltyReference",
-        Cell: ({ row }) => (
-          <span onClick={() => handleUUIDClick(row.original.penaltyReference)} style={{ cursor: "pointer", color: "blue" }}>
-            {row.original.penaltyReference}
-          </span>
-        ),
-      },
-      {
-        Header: "DEONAR_StakeHolder_NAME",
-        accessor: "stakeholderName",
-      },
-      {
-        Header: "DEONAR_LICENSE_NUMBER",
-        accessor: "licenceNumber",
-      },
-    ];
-  }
-  if (tableType === "weighing") {
-    return [
-      {
-        Header: "ID",
-        accessor: "id",
-        Cell: ({ row }) => row.index + 1,
-        getHeaderProps: (column) => ({
-          style: {
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
+    // Rest of your switch cases for different table types
+    switch (tableType) {
+      case "stabling":
+        return [
+          {
+            Header: t("ID"),
+            accessor: "stakeholderId",
+            Cell: ({ row }) => row.index + 1,
+            isVisible: false,
           },
-        }),
-        isVisible: false,
-      },
-      {
-        Header: "Deonar_DD_Reference",
-        accessor: "ddReference",
-        Cell: ({ row }) => (
-          <span onClick={() => handleUUIDClick(row.original.ddReference)} style={{ cursor: "pointer", color: "blue" }}>
-            {row.original.ddReference}
-          </span>
-        ),
-      },
+          {
+            Header: t("DEONAR_ARRIVAL_UUID"),
+            accessor: "entryUnitId",
+            Cell: ({ row }) => (
+              <span onClick={() => handleUUIDClick(row.original.entryUnitId)} style={{ cursor: "pointer", color: "blue" }}>
+                {row.original.entryUnitId}
+              </span>
+            ),
+          },
+          {
+            Header: t("DEONAR_TRADER_NAME"),
+            accessor: "traderName",
+          },
+          {
+            Header: t("DEONAR_LICENSE_NUMBER"),
+            accessor: "licenceNumber",
+          },
+          {
+            Header: t("DEONAR_MOBILE_NUMBER"),
+            accessor: "mobileNumber",
+          },
+          {
+            Header: t("DEONAR_STAKEHOLDER_TYPE"),
+            accessor: "stakeholderTypeName",
+          },
+          {
+            Header: t("DEONAR_REGISTRATION_NUMBER"),
+            accessor: "registrationNumber",
+          },
+        ];
+      case "arrival":
+        return [
+          {
+            Header: t("ID"),
+            accessor: "stakeholderId",
+            Cell: ({ row }) => row.index + 1,
+            isVisible: false,
+          },
+          {
+            Header: t("DEONAR_ARRIVAL_UUID"),
+            accessor: "entryUnitId",
+            Cell: ({ row }) => (
+              <span onClick={() => handleUUIDClick(row.original.entryUnitId)} style={{ cursor: "pointer", color: "blue" }}>
+                {row.original.entryUnitId}
+              </span>
+            ),
+          },
+          {
+            Header: t("DEONAR_TRADER_NAME"),
+            accessor: "traderName",
+          },
+          {
+            Header: t("DEONAR_LICENSE_NUMBER"),
+            accessor: "licenceNumber",
+          },
+          {
+            Header: t("DEONAR_MOBILE_NUMBER"),
+            accessor: "mobileNumber",
+          },
+          {
+            Header: t("DEONAR_STAKEHOLDER_TYPE"),
+            accessor: "stakeholderTypeName",
+          },
+          {
+            Header: t("DEONAR_REGISTRATION_NUMBER"),
+            accessor: "registrationNumber",
+          },
+        ];
+      case "parking":
+        return [
+          {
+            Header: t("ID"),
+            accessor: "id",
+            Cell: ({ row }) => row.index + 1,
+            getHeaderProps: (column) => ({
+              style: {
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              },
+            }),
+            isVisible: false,
+          },
+          {
+            Header: t("Deonar_Vehicle_Number"),
+            accessor: "vehicleNumber",
+            Cell: ({ row }) => (
+              <span
+                onClick={() => handleUUIDClick(row.original.vehicleNumber, row.original.vehicleId, tableType)}
+                style={{ cursor: "pointer", color: "blue" }}
+              >
+                {row.original.vehicleNumber}
+              </span>
+            ),
+          },
+          {
+            Header: t("Deonar_Vehicle_Type"),
+            accessor: "vehicleType",
+          },
 
-      {
-        Header: "DEONAR_SHOPKEEPER_NAME",
-        accessor: "shopkeeperName",
-      },
-      {
-        Header: "DEONAR_LICENSE_NUMBER",
-        accessor: "licenceNumber",
-      },
-      {
-        Header: "DEONAR_ARRIVAL_UUID",
-        accessor: "arrivalId",
-      },
-    ];
+          {
+            Header: t("Deonar_Parking_Time"),
+            accessor: "parkingTime",
+          },
+          {
+            Header: t("Deonar_Parking_Date"),
+            accessor: "parkingDate",
+          },
+        ];
+
+      case "washing": {
+        return [
+          {
+            Header: t("ID"),
+            accessor: "id",
+            Cell: ({ row }) => row.index + 1,
+            getHeaderProps: (column) => ({
+              style: {
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              },
+            }),
+            isVisible: false,
+          },
+          {
+            Header: t("Deonar_Vehicle_Number"),
+            accessor: "vehicleNumber",
+            Cell: ({ row }) => (
+              <span
+                onClick={() => handleUUIDClick(row.original.vehicleNumber, row.original.vehicleId, tableType)}
+                style={{ cursor: "pointer", color: "blue" }}
+              >
+                {row.original.vehicleNumber}
+              </span>
+            ),
+          },
+          {
+            Header: t("Deonar_Vehicle_Type"),
+            accessor: "vehicleType",
+          },
+
+          {
+            Header: t("Deonar_Washing_Time"),
+            accessor: "washingTime",
+          },
+          {
+            Header: t("Deonar_Washing_Date"),
+            accessor: "washingDate",
+          },
+        ];
+      }
+
+      case "slaughter": {
+        return [
+          {
+            Header: t("ID"),
+            accessor: "stakeholderId",
+            Cell: ({ row }) => row.index + 1,
+            isVisible: false,
+          },
+          {
+            Header: t("Deonar_DD_Reference"),
+            accessor: "ddreference",
+            Cell: ({ row }) => (
+              <span onClick={() => handleUUIDClick(row.original.ddreference)} style={{ cursor: "pointer", color: "blue" }}>
+                {row.original.ddreference}
+              </span>
+            ),
+          },
+          {
+            Header: t("DEONAR_TRADER_NAME"),
+            accessor: "traderName",
+          },
+          {
+            Header: t("DEONAR_MOBILE_NUMBER"),
+            accessor: "mobileNumber",
+          },
+          {
+            Header: t("DEONAR_ARRIVAL_UUID"),
+            accessor: "entryUnitId",
+          },
+          {
+            Header: t("DEONAR_STAKEHOLDER_TYPE"),
+            accessor: "stakeholderTypeName",
+          },
+        ];
+      }
+
+      case "trading": {
+        return [
+          {
+            Header: t("ID"),
+            accessor: "id",
+            Cell: ({ row }) => row.index + 1,
+            isVisible: false,
+          },
+          {
+            Header: t("Deonar_DD_Reference"),
+            accessor: "ddreference",
+            Cell: ({ row }) => (
+              <span onClick={() => handleUUIDClick(row.original.ddreference)} style={{ cursor: "pointer", color: "blue" }}>
+                {row.original.ddreference}
+              </span>
+            ),
+          },
+          {
+            Header: t("DEONAR_SHOPKEEPER_NAME"),
+            accessor: "traderName",
+          },
+          {
+            Header: t("DEONAR_LICENSE_NUMBER"),
+            accessor: "licenceNumber",
+          },
+          {
+            Header: t("DEONAR_PERMISSION_NUMBER"),
+            accessor: "importPermission",
+          },
+          {
+            Header: t("DEONAR_ARRIVAL_UUID"),
+            accessor: "entryUnitId",
+          },
+          {
+            Header: t("ARRIVAL_DATE_FIELD"),
+            accessor: "date",
+          },
+          {
+            Header: t("ARRIVAL_TIME_FIELD"),
+            accessor: "time",
+          },
+        ];
+      }
+
+      case "removal": {
+        return [
+          {
+            Header: t("ID"),
+            accessor: "stakeholderId",
+            Cell: ({ row }) => row.index + 1,
+            isVisible: false,
+          },
+          {
+            Header: t("DEONAR_ARRIVAL_UUID"),
+            accessor: "entryUnitId",
+            Cell: ({ row }) => (
+              <span onClick={() => handleUUIDClick(row.original.entryUnitId)} style={{ cursor: "pointer", color: "blue" }}>
+                {row.original.entryUnitId}
+              </span>
+            ),
+          },
+          {
+            Header: t("DEONAR_TRADER_NAME"),
+            accessor: "traderName",
+          },
+          {
+            Header: t("DEONAR_LICENSE_NUMBER"),
+            accessor: "licenceNumber",
+          },
+          {
+            Header: t("DEONAR_MOBILE_NUMBER"),
+            accessor: "mobileNumber",
+          },
+          {
+            Header: t("DEONAR_STAKEHOLDER_TYPE"),
+            accessor: "stakeholderTypeName",
+          },
+          // {
+          //   Header: "DEONAR_REGISTRATION_NUMBER",
+          //   accessor: "registrationNumber",
+          // },
+        ];
+      }
+
+      case "penalty": {
+        return [
+          {
+            Header: t("ID"),
+            accessor: "id",
+            Cell: ({ row }) => row.index + 1,
+            isVisible: false,
+          },
+          {
+            Header: t("Deonar_Penalty_Reference"),
+            accessor: "penaltyReference",
+            Cell: ({ row }) => (
+              <span onClick={() => handleUUIDClick(row.original.penaltyReference)} style={{ cursor: "pointer", color: "blue" }}>
+                {row.original.penaltyReference}
+              </span>
+            ),
+          },
+          {
+            Header: t("DEONAR_StakeHolder_NAME"),
+            accessor: "stakeholderName",
+          },
+          {
+            Header: t("DEONAR_LICENSE_NUMBER"),
+            accessor: "licenceNumber",
+          },
+        ];
+      }
+      case "weighing": {
+        return [
+          {
+            Header: t("ID"),
+            accessor: "id",
+            Cell: ({ row }) => row.index + 1,
+            getHeaderProps: (column) => ({
+              style: {
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              },
+            }),
+            isVisible: false,
+          },
+          {
+            Header: t("Deonar_DD_Reference"),
+            accessor: "ddReference",
+            Cell: ({ row }) => (
+              <span onClick={() => handleUUIDClick(row.original.ddReference)} style={{ cursor: "pointer", color: "blue" }}>
+                {row.original.ddReference}
+              </span>
+            ),
+          },
+
+          {
+            Header: t("DEONAR_SHOPKEEPER_NAME"),
+            accessor: "shopkeeperName",
+          },
+          {
+            Header: t("DEONAR_LICENSE_NUMBER"),
+            accessor: "licenceNumber",
+          },
+          {
+            Header: t("DEONAR_ARRIVAL_UUID"),
+            accessor: "arrivalId",
+          },
+        ];
+      }
+      default:
+        return baseColumns;
+    }
+  } catch (error) {
+    console.error("Error in createDynamicColumns:", error);
+    return []; // Return empty array in case of error
   }
-
-  return baseColumns;
 };
 
 export const helkariColumns = (handleUUIDClick, t) => [
@@ -854,10 +1257,10 @@ const paymentMethodOptions = [
   { label: "UPI", value: "UPI" },
 ];
 
-const slaughterTypeOptions = [
-  { label: "Normal", value: "Normal" },
-  { label: "Emergency", value: "Emergency" },
-];
+// const slaughterTypeOptions = [
+//   { label: "Normal", value: "Normal" },
+//   { label: "Emergency", value: "Emergency" },
+// ];
 
 export const feeConfigs = {
   arrival: {
@@ -898,18 +1301,18 @@ export const feeConfigs = {
   },
   slaughter: {
     fields: [
-      { type: "dropdown", label: "Slaughter Unit Type", name: "slaughterType", required: true },
-      { type: "dropdown", label: "Slaughter Unit", name: "slaughterUnit", required: true },
-      { type: "dropdown", label: "Unit Shift", name: "unitShift", required: true },
+      // { type: "dropdown", label: "Slaughter Unit Type", name: "slaughterType", required: true },
+      // { type: "dropdown", label: "Slaughter Unit", name: "slaughterUnit", required: true },
+      // { type: "dropdown", label: "Unit Shift", name: "unitShift", required: true },
       // { type: "input", label: "Slaughter Unit Charge", name: "slaughterUnitCharge", required: false },
       { type: "dropdown", label: "Payment Mode", name: "paymentMethod", required: true },
       { type: "input", label: "Reference Number", name: "transactionId", required: true },
     ],
     options: {
       paymentMethod: paymentMethodOptions,
-      slaughterType: slaughterTypeOptions,
-      slaughterUnit: [],
-      unitShift: [],
+      // slaughterType: slaughterTypeOptions,
+      // slaughterUnit: [],
+      // unitShift: [],
     },
   },
   washing: {
@@ -1068,6 +1471,10 @@ export const collectionDynamicColumns = {
     {
       Header: "Total Slaughter Fee",
       accessor: "totalFee",
+      disableSortBy: true,
+    },
+    {
+      Header: "Details",
       disableSortBy: true,
     },
   ],

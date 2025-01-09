@@ -507,6 +507,17 @@ const DeonarService = {
       userService: true,
     });
   },
+
+  getSlaughterCollectionList: (data) => {
+    return Request({
+      data: data,
+      url: Urls.deonar_security_check.getSlaughterCollectionList,
+      useCache: false,
+      method: "POST",
+      auth: true,
+      userService: true,
+    });
+  },
 };
 
 export default DeonarService;

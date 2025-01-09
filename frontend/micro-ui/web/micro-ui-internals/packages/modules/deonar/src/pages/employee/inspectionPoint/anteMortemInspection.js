@@ -505,15 +505,17 @@ const AnteMortemInspectionPage = () => {
             </div>
 
             <div className="bmc-row-card-header" style={{ width: "80%" }}>
-              <CustomTable
-                t={t}
-                columns={TableMainColumns}
-                data={ArrivalData}
-                disableSort={false}
-                autoSort={false}
-                manualPagination={false}
-                // tableClassName={"deonar-scrollable-table"}
-              />
+              <div className="bmc-card-row" style={{ overflowY: "auto", maxHeight: "511px" }}>
+                <CustomTable
+                  t={t}
+                  columns={TableMainColumns}
+                  data={ArrivalData}
+                  disableSort={false}
+                  autoSort={false}
+                  manualPagination={false}
+                  // tableClassName={"deonar-scrollable-table"}
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -587,7 +589,7 @@ const AnteMortemInspectionPage = () => {
           </div>
 
           <div className="bmc-card-row" style={{ overflowY: "auto", maxHeight: "511px" }}>
-          {isLoader && radioValueCheck ? (
+            {isLoader && radioValueCheck ? (
               <Loader />
             ) : (
               <React.Fragment>
