@@ -9,7 +9,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -22,6 +21,8 @@ import digit.web.models.GatePassRequest;
 import digit.web.models.citizen.CitizenGatePassDetails;
 import digit.web.models.citizen.CitizenGatePassRequest;
 import digit.web.models.citizen.CitizenGatePassResponse;
+import digit.web.models.citizen.CitizenGatePassSaveRequest;
+import digit.web.models.citizen.CitizenGatePassSaveResponse;
 import io.swagger.annotations.ApiParam;
 
 @Controller
@@ -82,5 +83,25 @@ public class GatePassController {
                     .build();
             return new ResponseEntity<>(response, HttpStatus.OK);
     }
-
+    
+    @PostMapping("/citizenGatePass/_save")
+    public ResponseEntity<CitizenGatePassSaveResponse> saveAssignedCitizen(@RequestBody CitizenGatePassSaveRequest request){
+        try {
+            CitizenGatePassDetails common = service.saveCitizenGatePassDetails(request);
+            ResponseInfo responseInfo = responseInfoFactory
+                    .createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
+            CitizenGatePassSaveResponse response = CitizenGatePassSaveResponse.builder()
+                    .responseInfo(responseInfo)
+                    .details(common)
+                    .build();
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseEntity<>( new CitizenGatePassSaveResponse(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }
+    
+    
+
+

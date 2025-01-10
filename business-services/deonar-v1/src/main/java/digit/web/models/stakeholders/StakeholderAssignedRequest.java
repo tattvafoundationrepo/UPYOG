@@ -1,4 +1,4 @@
-package digit.web.models.citizen;
+package digit.web.models.stakeholders;
 
 import org.egov.common.contract.request.RequestInfo;
 
@@ -10,17 +10,17 @@ import lombok.*;
 @Data
 @Getter
 @Setter
-@Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class CitizenGatePassRequest {
+@Builder
+public class StakeholderAssignedRequest {
 
     @JsonProperty("RequestInfo")
     @Valid
     private RequestInfo requestInfo;
 
-    @JsonProperty("CitizenGatePassCriteria")
-    @Builder.Default
-    private CitizenGatePassCriteria citizenGatePassCriteria = null;
+    @JsonProperty("StakeholderAssignedCriteria")
+    private StakeholderAssignedCriteria criteria;
+
 
 }

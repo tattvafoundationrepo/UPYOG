@@ -14,6 +14,8 @@ import org.springframework.util.CollectionUtils;
 
 import digit.kafka.Producer;
 import digit.repository.SaveStakeholderRepository;
+import digit.web.models.stakeholders.StakeholderAssignedDetails;
+import digit.web.models.stakeholders.StakeholderAssignedRequest;
 import digit.web.models.stakeholders.StakeholderCheckCriteria;
 import digit.web.models.stakeholders.StakeholderCheckDetails;
 import digit.web.models.stakeholders.StakeholderRequest;
@@ -84,6 +86,14 @@ public class StakeholderService {
         }
 
         return stakeholderDetails;
+    }
+
+    public List<StakeholderAssignedDetails> getAssignedstakeholder(StakeholderAssignedRequest request){
+        if(request.getCriteria() == null){
+            throw new CustomException("INVALID_DATA", "Assigned Stakeholder request data is null or incomplete.");
+        }
+        List<StakeholderAssignedDetails> details = saveStakeholderRepository.getAssignedStakeholderDetails(request);
+        return details;
     }
 
     private long getMillisFromDate(String dateString) {

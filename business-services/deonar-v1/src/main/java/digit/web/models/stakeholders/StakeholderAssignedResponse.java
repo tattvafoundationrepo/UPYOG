@@ -1,4 +1,5 @@
-package digit.web.models.citizen;
+package digit.web.models.stakeholders;
+
 import java.util.List;
 
 import org.egov.common.contract.response.ResponseInfo;
@@ -13,12 +14,11 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class CitizenGatePassResponse {
+public class StakeholderAssignedResponse {
 
     @JsonProperty("ResponseInfo")
     private ResponseInfo responseInfo;
 
-    @JsonProperty("CitizenGatePassDetails")
-    private List<CitizenGatePassDetails> details;
-
+    @JsonProperty("StakeholderAssignedDetails")
+    private List<StakeholderAssignedDetails> details;
 }

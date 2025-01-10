@@ -30,13 +30,16 @@ public class GatePassQueryBuilder {
                 SELECT eds.stakeholdername,
                 edlac.stakeholdertype,
                 edlac.arrivalid,
+                edlac.ddreference, 
                 edat."name" ,
                 token,
                 assigndate,
                 assigntime
                 from eg_deonar_list_assigned_citizen edlac 
                 left join eg_deonar_stakeholder eds on edlac.stakeholderid = eds.id
-                left join eg_deonar_animal_type edat on edlac.animaltypeid = edat.id 
+                left join eg_deonar_animal_type edat on edlac.animaltypeid = edat.id
+                left join eg_deonar_fee_paid_details edf on edlac.stakeholderid = edf.paidbystakeholderid 
+                where edf.paidbystakeholderid = edlac.stakeholderid and edf.arrivalid = edlac.arrivalid  
                 """;
         StringBuilder query = new StringBuilder(CITIZEN_GATE_PASS_QUERY);
         return query.toString();

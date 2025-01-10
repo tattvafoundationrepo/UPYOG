@@ -9,7 +9,10 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import digit.repository.querybuilder.SaveStakeholderQueryBuilder;
+import digit.repository.rowmapper.AssignedStakeholderRowMapper;
 import digit.repository.rowmapper.StakeholderRowMapper;
+import digit.web.models.stakeholders.StakeholderAssignedDetails;
+import digit.web.models.stakeholders.StakeholderAssignedRequest;
 import digit.web.models.stakeholders.StakeholderCheckCriteria;
 import digit.web.models.stakeholders.StakeholderCheckDetails;
 import digit.web.models.stakeholders.StakeholderRequest;
@@ -28,6 +31,9 @@ public class SaveStakeholderRepository {
 
     @Autowired
     private StakeholderRowMapper rowMapper;
+
+    @Autowired
+    private AssignedStakeholderRowMapper assignedRowMapper;
 
     public void saveStakeholderDetails(StakeholderRequest request) {
         List<Object> preparedStmtList = new ArrayList<>();
@@ -117,6 +123,12 @@ public class SaveStakeholderRepository {
         String query = queryBuilder.getStakeholderQuery(criteria, preparedStmtList);
         log.info("Final query: " + query);
         return jdbcTemplate.query(query, rowMapper);
+    }
+
+    public List<StakeholderAssignedDetails> getAssignedStakeholderDetails(StakeholderAssignedRequest request){
+        String query = queryBuilder.getAssignedStakeholderQuery(request.getCriteria());
+        log.info("Final query: "+query);
+        return jdbcTemplate.query(query, assignedRowMapper);
     }
 
 }

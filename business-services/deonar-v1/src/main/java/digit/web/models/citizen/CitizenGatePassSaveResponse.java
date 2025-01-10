@@ -1,4 +1,5 @@
 package digit.web.models.citizen;
+
 import java.util.List;
 
 import org.egov.common.contract.response.ResponseInfo;
@@ -10,15 +11,15 @@ import lombok.*;
 @Data
 @Getter
 @Setter
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 @Builder
-public class CitizenGatePassResponse {
+public class CitizenGatePassSaveResponse {
 
-    @JsonProperty("ResponseInfo")
+     @JsonProperty("ResponseInfo")
     private ResponseInfo responseInfo;
 
-    @JsonProperty("CitizenGatePassDetails")
-    private List<CitizenGatePassDetails> details;
+    @JsonProperty("CitizenGatePassSaveDetails")
+    private CitizenGatePassDetails details;
 
 }

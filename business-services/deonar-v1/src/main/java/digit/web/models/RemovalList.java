@@ -46,6 +46,8 @@ public class RemovalList {
 
     private String registrationNumber;
 
+    private String stakeholderTypeName;
+
 
 
 

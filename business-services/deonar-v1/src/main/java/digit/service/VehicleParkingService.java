@@ -1,17 +1,35 @@
 package digit.service;
 
-import digit.constants.DeonarConstant;
-import digit.kafka.Producer;
-import digit.repository.VehicleParkingRepository;
-import digit.web.models.security.vehicleparking.*;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneOffset;
+import java.util.List;
+
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.time.*;
-import java.util.List;
-
-import static digit.constants.DeonarConstant.*;
+import digit.constants.DeonarConstant;
+import static digit.constants.DeonarConstant.CHARGES_FOR_WASHING_PRIVATE_MEAT_VAN;
+import static digit.constants.DeonarConstant.DAY_NIGHT;
+import static digit.constants.DeonarConstant.DAY_ONLY;
+import static digit.constants.DeonarConstant.LORRY_TRUCK_TEMPO_CAR_THREE_WHEELER_MONTHLY_DAY_CHARGES;
+import static digit.constants.DeonarConstant.LORRY_TRUCK_TEMPO_CAR_THREE_WHEELER_MONTHLY_DAY_NIGHT_CHARGES;
+import static digit.constants.DeonarConstant.THREE_WHEELER;
+import static digit.constants.DeonarConstant.TWO_WHEELER;
+import static digit.constants.DeonarConstant.TWO_WHEELER_MONTHLY_DAY_CHARGES;
+import static digit.constants.DeonarConstant.TWO_WHEELER_MONTHLY_DAY_NIGHT_CHARGES;
+import digit.kafka.Producer;
+import digit.repository.VehicleParkingRepository;
+import digit.web.models.security.vehicleparking.VehicleParkedCheckCriteria;
+import digit.web.models.security.vehicleparking.VehicleParkedCheckDetails;
+import digit.web.models.security.vehicleparking.VehicleParkingDetails;
+import digit.web.models.security.vehicleparking.VehicleParkingFeeRequest;
+import digit.web.models.security.vehicleparking.VehicleParkingFeeResponseDetails;
+import digit.web.models.security.vehicleparking.VehicleParkingRequest;
+import digit.web.models.security.vehicleparking.VehicleWashingFeesResponse;
 
 @Service
 public class VehicleParkingService {
@@ -146,7 +164,12 @@ public class VehicleParkingService {
         double parkingFee = VehicleParkingRepository.calculateParkingFee(parkedInTime, parkedOutTime, parkedIndDate,
                 parkedOutDate, vehicleType);
         response = VehicleParkingFeeResponseDetails.builder().parkingFee(parkingFee)
-                .vehicleNumber(criteria.getVehicleNumber()).vehicleType(vehicleType).build();
+                .vehicleNumber(criteria.getVehicleNumber()).vehicleType(vehicleType)
+                .startDate(parkedIndDate)
+                .endDate(parkedOutDate)
+                .parkInTime(parkedInTime)
+                .parkOutTime(parkedOutTime)
+                .build();
         // } else {
         // response.setParkingFee(0);
         // }

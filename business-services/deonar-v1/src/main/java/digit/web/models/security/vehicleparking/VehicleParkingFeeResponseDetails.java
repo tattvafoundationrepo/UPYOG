@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 
 @Data
 @Getter
@@ -26,4 +27,10 @@ public class VehicleParkingFeeResponseDetails {
 
     @JsonProperty("endDate")
     private LocalDate endDate;
+
+    @JsonProperty("parkInTime")
+    private LocalTime parkInTime;
+
+    @JsonProperty("parkOutTime")
+    private LocalTime parkOutTime;
 }

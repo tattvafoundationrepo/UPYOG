@@ -2,32 +2,35 @@ package digit.repository.rowmapper;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.stereotype.Component;
 
-import digit.web.models.GatePassMapper;
 import digit.web.models.citizen.CitizenAnimalDetails;
-import digit.web.models.citizen.CitizenGatePassDetails;
+import digit.web.models.stakeholders.StakeholderAssignedDetails;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Component
-public class CitizenGatePassRowMapper implements ResultSetExtractor<List<CitizenGatePassDetails>>{
+public class AssignedStakeholderRowMapper implements ResultSetExtractor<List<StakeholderAssignedDetails>>{
 
-    @Override
-    public List<CitizenGatePassDetails> extractData(ResultSet rs) throws SQLException, DataAccessException {
-        Map<Long, CitizenGatePassDetails> detailsMap = new HashMap<>();
+     @Override
+    public List<StakeholderAssignedDetails> extractData(ResultSet rs) throws SQLException, DataAccessException {
+        Map<Long, StakeholderAssignedDetails> detailsMap = new HashMap<>();
         while (rs.next()) {
             
             long arrivalId = rs.getLong("arrivalid");
 
-            // Create or get existing CitizenGatePassDetails
-            CitizenGatePassDetails details = detailsMap.getOrDefault(arrivalId, 
-                CitizenGatePassDetails.builder()
+            // Create or get existing StakeholderAssignedDetails
+            StakeholderAssignedDetails details = detailsMap.getOrDefault(arrivalId,
+            StakeholderAssignedDetails.builder()
                     .arrivalid(arrivalId)
+                    .licenceNumber(rs.getString("licencenumber"))
                     .ddReference(rs.getString("ddreference"))
                     .stakeholderName(rs.getString("stakeholdername"))
                     .stakeholdertype(rs.getString("stakeholdertype"))
@@ -52,4 +55,5 @@ public class CitizenGatePassRowMapper implements ResultSetExtractor<List<Citizen
         // Return the list of grouped CitizenGatePassDetails
         return new ArrayList<>(detailsMap.values());
     }
+
 }

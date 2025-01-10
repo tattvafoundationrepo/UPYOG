@@ -24,7 +24,9 @@ import digit.web.models.collection.SlaughterFee;
 import digit.web.models.collection.StableFee;
 import digit.web.models.collection.WashFee;
 import digit.web.models.collection.WeighingFee;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 public class CollectionService {
     @Autowired
@@ -150,7 +152,7 @@ public class CollectionService {
                     });
                 }
             } catch (JsonProcessingException ex) {
-                System.out.print("Exception");
+                log.info(" Exception :- " + ex);
             }
         }
         if (common.getFeevalue() > 0 && common.getFeetype() == 7) {

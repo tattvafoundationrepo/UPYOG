@@ -13,6 +13,6 @@ import lombok.*;
 public class CitizenGatePassCriteria {
 
     @JsonProperty("StakeholderId")
-    long stakeholderId;
+    private long stakeholderId;
 
 }

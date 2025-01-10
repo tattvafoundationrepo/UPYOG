@@ -1,5 +1,7 @@
 package digit.web.models.citizen;
 
+import java.util.List;
+
 import org.egov.common.contract.request.RequestInfo;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -13,14 +15,13 @@ import lombok.*;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class CitizenGatePassRequest {
+public class CitizenGatePassSaveRequest {
 
     @JsonProperty("RequestInfo")
     @Valid
     private RequestInfo requestInfo;
 
-    @JsonProperty("CitizenGatePassCriteria")
-    @Builder.Default
-    private CitizenGatePassCriteria citizenGatePassCriteria = null;
+    @JsonProperty("CitizenGatePassSaveDetails")
+    private CitizenGatePassDetails citizenGatePassDetails;
 
 }

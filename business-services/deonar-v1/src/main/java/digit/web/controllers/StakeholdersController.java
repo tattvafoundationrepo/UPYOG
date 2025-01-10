@@ -14,6 +14,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import digit.service.StakeholderService;
 import digit.util.ResponseInfoFactory;
+import digit.web.models.stakeholders.StakeholderAssignedDetails;
+import digit.web.models.stakeholders.StakeholderAssignedRequest;
+import digit.web.models.stakeholders.StakeholderAssignedResponse;
 import digit.web.models.stakeholders.StakeholderCheckCriteria;
 import digit.web.models.stakeholders.StakeholderCheckDetails;
 import digit.web.models.stakeholders.StakeholderCheckRequest;
@@ -91,5 +94,18 @@ public class StakeholdersController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
+    @PostMapping("/_assigned")
+    public ResponseEntity<StakeholderAssignedResponse> getAssignedStakeholder(@RequestBody StakeholderAssignedRequest request){
+        List<StakeholderAssignedDetails> details = stakeholderService.getAssignedstakeholder(request);
+            ResponseInfo responseInfo = responseInfoFactory
+                    .createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
+            StakeholderAssignedResponse response = StakeholderAssignedResponse.builder()
+                    .responseInfo(responseInfo)
+                    .details(details)
+                    .build();
+            return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    
+
 }
-// /stakeholders/_get

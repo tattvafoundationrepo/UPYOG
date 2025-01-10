@@ -13,12 +13,12 @@ import lombok.*;
 public class CitizenAnimalDetails {
 
     @JsonProperty("AnimalType")
-    String animaltype;
+    private String animaltype;
 
     @JsonProperty("Token")
-    long token;
+    private long token;
 
     @JsonProperty("CitizenName")
-    String stakeholderName;
+    private String stakeholderName;
 
 }

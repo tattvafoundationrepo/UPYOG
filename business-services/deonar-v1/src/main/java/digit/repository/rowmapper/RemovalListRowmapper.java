@@ -42,6 +42,7 @@ public class RemovalListRowmapper implements ResultSetExtractor<List<RemovalList
                         .mobilenumber(rs.getString("mobilenumber"))
                         .removaldate(rs.getString("removaldate"))  
                         .removaltime(rs.getString("removaltime"))  
+                        .stakeholderTypeName(rs.getString("stakeholdertypename"))
                         .animalDetails(new ArrayList<>()) 
                         .build();
 

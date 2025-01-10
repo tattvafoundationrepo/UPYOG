@@ -1,28 +1,27 @@
-package digit.web.models.citizen;
+package digit.web.models.stakeholders;
 
 import java.util.List;
 
-import org.egov.common.contract.models.AuditDetails;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import digit.web.models.citizen.CitizenAnimalDetails;
 import lombok.*;
 
 @Data
 @Getter
 @Setter
-@Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class CitizenGatePassDetails {
+@Builder
+public class StakeholderAssignedDetails {
 
-    @JsonProperty("ArrivalId")
+     @JsonProperty("ArrivalId")
     private long arrivalid;
 
     @JsonProperty("DDReference")
     private String ddReference;
 
-    @JsonProperty("CitizenName")
+    @JsonProperty("StakeholderName")
     private String stakeholderName;
 
     @JsonProperty("StakeholderType")
@@ -34,11 +33,10 @@ public class CitizenGatePassDetails {
     @JsonProperty("Time")
     private String assigntime;
 
+    @JsonProperty("LicenceNumber")
+    private String licenceNumber;
+
     @JsonProperty("AnimalDetails")
     private List<CitizenAnimalDetails> citizenAnimalDetails;
-
-    private AuditDetails auditDetails; 
-    private String jsonAnimalDetails;
-    private String gatePassReference;
 
 }
