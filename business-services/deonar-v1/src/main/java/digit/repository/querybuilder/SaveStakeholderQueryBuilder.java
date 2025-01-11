@@ -121,7 +121,7 @@ public class SaveStakeholderQueryBuilder {
             left join eg_deonar_stakeholder eds on edlac.stakeholderid = eds.id
             left join eg_deonar_animal_type edat on edlac.animaltypeid = edat.id
             left join eg_deonar_stakeholder_licence_mapping edslm on edlac.stakeholderid = edslm.stakeholderid 
-            left join eg_deonar_licence edl on edslm.id = edl.id 
+            left join eg_deonar_licence edl on edslm.licenceid = edl.id 
             """;
     private static final String UNION_ALL = """
             UNION ALL \
