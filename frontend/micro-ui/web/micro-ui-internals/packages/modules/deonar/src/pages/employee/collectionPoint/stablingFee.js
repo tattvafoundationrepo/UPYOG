@@ -34,7 +34,7 @@ const StablingFeePage = () => {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768);
+  const [isMobileView, setIsMobileView] = useState(window.innerWidth < 1019);
   const [globalGawal, setGlobalGawal] = useState(null);
 
   const [isGlobalGawalEnabled, setIsGlobalGawalEnabled] = useState(false);
@@ -190,7 +190,7 @@ const StablingFeePage = () => {
 
   useEffect(() => {
     const handleResize = () => {
-      setIsMobileView(window.innerWidth < 768);
+      setIsMobileView(window.innerWidth < 1019);
     };
     window.addEventListener("resize", handleResize);
     handleResize();
@@ -509,7 +509,16 @@ const StablingFeePage = () => {
           <div className="bmc-card-row">
             {/* <StablingTypeOptionsField setStablingFormType={setStablingFormType} control={control} data={data} setData={setData} /> */}
             <div className="bmc-row-card-header">
-              {isMobileView && animalCount.map((data, index) => <TableCard data={data} key={index} fields={fields} onUUIDClick={handleUUIDClick} />)}
+              {isMobileView ? ( animalCount.map((data, index) => (
+                <TableCard 
+                data={data} 
+                key={index} 
+                fields={fields} 
+                onUUIDClick={handleUUIDClick} 
+                />
+              ))
+            ) : (
+
               <div className="bmc-card-row" style={{ overflowY: "auto", maxHeight: "511px" }}>
                 <CustomTable
                   t={t}
@@ -524,6 +533,7 @@ const StablingFeePage = () => {
                   //  fileName="YourCustomFileName"
                 />
               </div>
+            )}
               {isModalOpen && (
                 <CustomModal isOpen={isModalOpen} onClose={toggleModal} selectedUUID={selectedUUID} style={{ width: "100%" }}>
                   {/* <div className="bmc-row-card-header" style={{ marginBottom: "40px" }}> */}

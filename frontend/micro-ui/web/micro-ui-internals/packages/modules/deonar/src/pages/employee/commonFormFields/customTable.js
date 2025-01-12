@@ -338,7 +338,7 @@ const CustomTable = ({
 
   return (
     <div>
-      <div style={{ display: "flex" }}>
+      <div style={{ display: "flex" ,alignItems: "center"}}>
         {showDropdown &&
           Array.isArray(dropdownOptions) &&
           dropdownOptions.map((dropdownConfig, index) => (
@@ -355,7 +355,7 @@ const CustomTable = ({
               option={dropdownConfig.options}
               optionKey={dropdownConfig.optionKey || "name"}
               placeholder={dropdownConfig.placeholder || t("Select an Option")}
-              style={{ width: dropdownConfig.width || "15%", margin: "0"}}
+              style={{ width: dropdownConfig.width || "14.92%", margin: "0"}}
             />
           ))}
         {showDropdown && (

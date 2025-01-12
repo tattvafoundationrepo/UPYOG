@@ -22,7 +22,7 @@ const useDeonarCommon = () => {
         dispatch(fetchDeonarDetailsSuccess(data));
       },
     });
-  }; 
+  };
 
   const searchDeonarCommon = (data, config = {}) => {
     return useQuery(["StakeholderDetails", data], () => DeonarService.getStakeholders(data), {
@@ -192,9 +192,55 @@ const useDeonarCommon = () => {
   //   } => DeonarService.getSlaughterUnit(data, config));
   // };
 
+  // const saveInspectionDetailsData = (data, config = {}) => {
+  //   return useMutation((data) => DeonarService.saveInspectionData(data), config);
+  // };
+
   const saveInspectionDetailsData = (data, config = {}) => {
-    return useMutation((data) => DeonarService.saveInspectionData(data), config);
+    return useMutation((data) => DeonarService.saveInspectionData(data), {
+      ...config,
+      onSuccess: (data, variables, context) => {
+        // Invalidate the query after mutation success
+        queryClient.invalidateQueries(["fetchEntryFeeDetails", variables.securityCheckCriteria]);
+
+        // Optional: Call the original onSuccess callback if provided
+        if (config.onSuccess) {
+          config.onSuccess(data, variables, context);
+        }
+      },
+    });
   };
+
+  const useGetInspectionPointData = (data, config = {}) => {
+    return useMutation((data) => DeonarService.getInspectionPoint(data), {
+      ...config,
+      onSuccess: (data, variables, context) => {
+        // Invalidate the query after mutation success
+        queryClient.invalidateQueries(["fetchEntryFeeDetails", variables.securityCheckCriteria]);
+
+        // Optional: Call the original onSuccess callback if provided
+        if (config.onSuccess) {
+          config.onSuccess(data, variables, context);
+        }
+      },
+    });
+  };
+
+  const useInspectionPointSave = (data, config = {}) => {
+    return useMutation((data) => DeonarService.saveInspectionPoint(data), {
+      ...config,
+      onSuccess: (data, variables, context) => {
+        // Invalidate the query to refetch entry fee details based on updated securityCheckCriteria
+        queryClient.invalidateQueries(["fetchEntryFeeDetails", variables.securityCheckCriteria]);
+
+        // Call the original onSuccess callback if provided
+        if (config.onSuccess) {
+          config.onSuccess(data, variables, context);
+        }
+      },
+    });
+  };
+
   const fetchEmergencySlaughterList = (data, config = {}) => {
     return useMutation((data) => DeonarService.getEmergencySlaughter(data), config);
   };
@@ -202,6 +248,22 @@ const useDeonarCommon = () => {
   const saveStakeholderDetails = useMutation((data) => DeonarService.saveStakeholderDetails(data), {
     onSuccess: () => {
       queryClient.invalidateQueries("StakeholderDetails");
+    },
+  });
+
+  
+  const { mutate: saveCitizensGatePasses } = useMutation((data) => DeonarService.saveCitizensGatePass(data), {
+    onSuccess: async () => {
+      await queryClient.invalidateQueries("DeonarSlaughteringDetails");
+      await queryClient.refetchQueries("DeonarSlaughteringDetails", {
+        active: true,
+        exact: true,
+      });
+    },
+
+    onError: (error) => {
+      console.error("Error saving slaughtering details:", error);
+      throw error;
     },
   });
 
@@ -241,6 +303,9 @@ const useDeonarCommon = () => {
     saveStakeholderDetails,
     fetchEmergencySlaughterList,
     saveSlaughterList,
+    useGetInspectionPointData,
+    useInspectionPointSave,
+    saveCitizensGatePasses
   };
 };
 

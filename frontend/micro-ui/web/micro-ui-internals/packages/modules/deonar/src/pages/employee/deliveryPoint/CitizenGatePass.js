@@ -44,12 +44,12 @@ const CitizenGatePass = () => {
         formState: { errors, isValid },
     } = useForm({ defaultValues: defaults, mode: "onChange" });
 
-    const { searchDeonarCommon, saveStablingDetails } = useDeonarCommon();
+    const { searchDeonarCommon, saveCitizensGatePasses } = useDeonarCommon();
     const { fetchCitizensList } = useCollectionPoint({});
-    const payload = {
+    const fetchPayload = {
         "CitizenGatePassCriteria": {}
     }
-    const { data: fetchedData, error } = fetchCitizensList(payload);
+    const { data: fetchedData, error } = fetchCitizensList(fetchPayload);
 
 
     useEffect(() => {
@@ -147,44 +147,34 @@ const CitizenGatePass = () => {
         }
     ];
 
+
     const onSubmit = async (formData) => {
         if (!isValid) {
             setToast({ key: "error", action: t("Please fill in all required fields.") });
             return;
         }
+
         try {
-            const filteredAnimalAssignments = gawaltable
-                .filter((animal) => animal.arrivalId === selectedUUID)
-                .map((animal, index) => {
-                    const selectedShopkeeperArray = shopkeeperOption[index] || [];
-                    const selectedShopkeeper = selectedShopkeeperArray[0];
-                    const selectedRemovalTypeArray = removalType[index] || [];
-                    const selectedRemovalType = selectedRemovalTypeArray[0];
-                    const assignments = {};
+            // Find the selected entry from animalCount
+            const selectedEntry = animalCount.find(entry => entry.ArrivalId === selectedUUID);
+            
+            if (!selectedEntry) {
+                throw new Error("Selected entry not found");
+            }
 
-                    if (selectedShopkeeper) {
-                        assignments.assignedStakeholder = selectedShopkeeper.value;
-                    }
-                    if (selectedRemovalType) {
-                        assignments.deonarRemovalType = selectedRemovalType.id; // <-- Change to use `id`
-                    }
-
-                    if (selectedShopkeeper || selectedRemovalType) {
-                        assignments.animalTypeId = animal.animalTypeId;
-                        assignments.token = animal.count;
-                    }
-
-                    return Object.keys(assignments).length > 0 ? assignments : null;
-                })
-                .filter((entry) => entry !== null);
-
-            const payload = {
-                ...formData,
-                animalAssignments: filteredAnimalAssignments,
-                arrivalId: selectedUUID,
+            // Construct the payload to match the fetchCitizensList response structure
+            const submitPayload = {
+                CitizenGatePassSaveDetails: {
+                    ArrivalId: selectedEntry.ArrivalId,
+                    CitizenName: selectedEntry.CitizenName,
+                    DDReference: selectedEntry.DDReference,
+                    Date: selectedEntry.Date,
+                    Time: selectedEntry.Time,
+                    AnimalDetails: selectedEntry.AnimalDetails
+                }
             };
 
-            saveStablingDetails(payload, {
+            saveCitizensGatePasses(submitPayload, {
                 onSuccess: () => {
                     setToast({ key: "success" });
                     resetModal();
@@ -200,6 +190,7 @@ const CitizenGatePass = () => {
             setToast({ key: "error", action: error.message });
         }
     };
+
 
     const resetModal = () => {
         setSelectedUUID(undefined);
@@ -334,6 +325,12 @@ const CitizenGatePass = () => {
             Header: t("DEONAR_CITIZEN_NAME"),
             accessor: "CitizenName",
             isVisible: true,
+        },
+        {
+            Header: t("DEONAR_DD_REFERENCE"),
+            accessor: "DDReference",
+            isVisible: true,
+
         },
         {
             Header: t("ARRIVAL_DATE_FIELD"),

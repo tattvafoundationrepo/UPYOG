@@ -226,7 +226,10 @@ const WashingFeePage = () => {
             </div>
           </div>
           {isModalOpen && (
-            <CustomModal isOpen={isModalOpen} onClose={toggleModal} style={{ width: "100%" }} title={t("Washing Details")}>
+            <CustomModal isOpen={isModalOpen} onClose={toggleModal} style={{ width: "100%" }}>
+              <div style={{ padding: "0.5rem 1rem", display: "flex", justifyContent: "center", alignItems: "center" }}>
+                <h2 style={{ margin: 0, fontSize: "28px", fontWeight: 700, color: "#0b0c0c" }}>Parked Vehicles</h2>
+              </div>
               <div className="bmc-card-row" style={{ overflowY: "auto", maxHeight: "511px" }}>
                 <CustomTable
                   t={t}
@@ -235,7 +238,7 @@ const WashingFeePage = () => {
                   data={parkingDetails}
                   searchPlaceholder={t("Search")}
                   // totalRecords={totalRecords}
-                  // tableClassName={"deonar-scrollable-table"}
+                  tableClassName={"deonar-scrollable-table"}
                   autoSort={false}
                   isLoadingRows={""}
                   getCellProps={() => ({

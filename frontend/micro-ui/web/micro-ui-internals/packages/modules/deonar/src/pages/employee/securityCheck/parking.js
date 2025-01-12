@@ -10,6 +10,7 @@ import VehicleNumberField from "../commonFormFields/vehicleNumber";
 import VehicleTypeDropdownField from "../commonFormFields/vehicleTypeDropdown";
 import { useQueryClient } from "react-query";
 import SubmitButtonField from "../commonFormFields/submitBtn";
+import TableCard from "../commonFormFields/tableCard";
 
 const ParkingFeePage = () => {
   const { t } = useTranslation();
@@ -21,11 +22,23 @@ const ParkingFeePage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [disabledRows, setDisabledRows] = useState([]);
   const [responseData, setResponseData] = useState();
+  const [isMobileView, setIsMobileView] = useState(window.innerWidth < 1019);
   const queryClient = useQueryClient(); // Initialize queryClient
 
   const { fetchParkingCollectionDetails, saveParkingDetails } = useCollectionPoint({});
 
   const { data: parkingDetailsData } = fetchParkingCollectionDetails();
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobileView(window.innerWidth < 1019);
+    };
+    window.addEventListener("resize", handleResize);
+    handleResize();
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
 
   useEffect(() => {
     if (parkingDetailsData?.VehicleParkedCheckDetails) {
@@ -134,6 +147,13 @@ const ParkingFeePage = () => {
     });
   };
 
+  const fields = [
+    { key: "vehicleNumber", label: t("Vehicle Number") },
+    { key: "vehicleType", label: t("Vehicle Type") },
+    { key: "parkingTime", label: t("Parking Time") },
+    { key: "parkingDate", label: t("Parking Date") },
+  ];
+
   const Tablecolumns = [
     {
       Header: t("Vehicle Number"),
@@ -177,10 +197,12 @@ const ParkingFeePage = () => {
         <form onSubmit={handleSubmit(onSubmit)}>
           <MainFormHeader title={"DEONAR_PARKING"} />
           <div className="bmc-row-card-header">
-            <div className="bmc-card-row" style={{ overflowY: "auto", maxHeight: "511px" }}>
-              {isLoading ? (
-                <Loader />
-              ) : (
+            {isLoading ? (
+              <Loader />
+            ) : isMobileView ? (
+              tableData.map((data, index) => <TableCard data={data} key={index} fields={fields} onCardClick={openModal} />)
+            ) : (
+              <div className="bmc-card-row" style={{ overflowY: "auto", maxHeight: "511px" }}>
                 <CustomTable
                   t={t}
                   searchPlaceholder={t("Search")}
@@ -201,8 +223,8 @@ const ParkingFeePage = () => {
                     };
                   }}
                 />
-              )}
-            </div>
+              </div>
+            )}
           </div>
           <CustomModal isOpen={isModalOpen} onClose={toggleModal} title={t("Add Parking Details")} width="50%">
             <div className="bmc-card-row">

@@ -36,8 +36,8 @@ const RemovalReport = () => {
     },
     {
       Header: t("Stakeholder's Type"),
-      accessor: "type",
-      Cell: ({ row }) => t(row.original.type) || "N/A",
+      accessor: "stakeholderTypeName",
+      Cell: ({ row }) => t(row.original.stakeholderTypeName) || "N/A",
     },
     {
       Header: t("Arrival UUID"),
@@ -156,6 +156,7 @@ const RemovalReport = () => {
                 manualPagination={false}
                 data={getApplicationData?.detailedData.filter((item) => item.UUID === selectedUUID) || []}
                 totalRecords={totalRecords}
+                searchPlaceholder={t("Search")}
                 // tableClassName={"deonar-scrollable-table"}
                 autoSort={false}
                 isLoadingRows={false}

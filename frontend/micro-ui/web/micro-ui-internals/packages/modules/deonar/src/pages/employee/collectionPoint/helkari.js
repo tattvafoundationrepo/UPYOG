@@ -28,7 +28,7 @@ const Helkari = () => {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768);
+  const [isMobileView, setIsMobileView] = useState(window.innerWidth < 1019);
 
   const [isGlobalHelkariEnabled, setIsGlobalHelkariEnabled] = useState(false);
   const [globalHelkari, setGlobalHelkari] = useState(null);
@@ -151,7 +151,7 @@ const Helkari = () => {
 
   useEffect(() => {
     const handleResize = () => {
-      setIsMobileView(window.innerWidth < 768);
+      setIsMobileView(window.innerWidth < 1019);
     };
     window.addEventListener("resize", handleResize);
     handleResize();
@@ -324,18 +324,21 @@ const Helkari = () => {
           <MainFormHeader title={t("DEONAR_HELKARI")} />
           <div className="bmc-card-row">
             <div className="bmc-row-card-header">
-              {isMobileView && animalCount.map((data, index) => <TableCard data={data} key={index} fields={fields} onUUIDClick={handleUUIDClick} />)}
-              <CustomTable
-                t={t}
-                searchPlaceholder={t("Search")}
-                columns={helkariColumns(handleUUIDClick, t)}
-                data={animalCount}
-                manualPagination={false}
-                // tableClassName={"deonar-scrollable-table"}
-                totalRecords={totalRecords}
-                autoSort={false}
-                isLoadingRows={isLoading}
-              />
+              {isMobileView ? (
+                animalCount.map((data, index) => <TableCard data={data} key={index} fields={fields} onUUIDClick={handleUUIDClick} />)
+              ) : (
+                <CustomTable
+                  t={t}
+                  searchPlaceholder={t("Search")}
+                  columns={helkariColumns(handleUUIDClick, t)}
+                  data={animalCount}
+                  manualPagination={false}
+                  // tableClassName={"deonar-scrollable-table"}
+                  totalRecords={totalRecords}
+                  autoSort={false}
+                  isLoadingRows={isLoading}
+                />
+              )}
               {isModalOpen && (
                 <CustomModal isOpen={isModalOpen} onClose={toggleModal} selectedUUID={selectedUUID} style={{ width: "100%" }}>
                   <Fragment>
@@ -371,7 +374,7 @@ const Helkari = () => {
                       </div>
                     </div>
                     <div className="bmc-card-row" style={{ overflowY: "auto", maxHeight: "511px" }}>
-                    <CustomTable
+                      <CustomTable
                         t={t}
                         searchPlaceholder={t("Search")}
                         columns={isAfterStablingVisibleColumns}

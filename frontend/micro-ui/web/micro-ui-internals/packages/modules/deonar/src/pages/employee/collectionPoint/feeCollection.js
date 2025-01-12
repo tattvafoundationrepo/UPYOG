@@ -1,15 +1,11 @@
-import React, { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import React, { Fragment, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Controller, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import MainFormHeader from "../commonFormFields/formMainHeading";
-import useSubmitForm from "../../../hooks/useSubmitForm";
-import { COLLECTION_POINT_ENDPOINT } from "../../../constants/apiEndpoints";
 import {
   collectionDynamicColumns,
-  columns,
   feeConfigs,
   createDynamicColumns,
-  toastMessages,
   formatFeeDataCollection,
   createDataCache,
   scrollToElementFee,
@@ -18,15 +14,11 @@ import {
 
 import CustomTable from "../commonFormFields/customTable";
 import TableCard from "../commonFormFields/tableCard";
-import { Loader, RadioButtons, TextInput, Toast } from "@upyog/digit-ui-react-components";
+import { RadioButtons, Toast } from "@upyog/digit-ui-react-components";
 import CollectionFeeCard from "../commonFormFields/collectionFeeCard";
 import SubmitButtonField from "../commonFormFields/submitBtn";
-import FeeConfirmationPage from "../commonFormFields/feeConfirmationPage";
 import useDeonarCommon from "@upyog/digit-ui-libraries/src/hooks/deonar/useCommonDeonar";
 import useCollectionPoint from "@upyog/digit-ui-libraries/src/hooks/deonar/useCollectionPoint";
-// import { jsPDF } from "jspdf";
-// import html2canvas from "html2canvas";
-import SearchButtonField from "../commonFormFields/searchBtn";
 import EntryFeeReceipt from "../reciept/feeReceipt";
 
 const radioOptions = [
@@ -43,7 +35,6 @@ const radioOptions = [
 
 const FeeCollection = () => {
   const { t } = useTranslation();
-
   const [formData, setFormData] = useState({});
   const [toast, setToast] = useState(null);
   const [defaults, setDefaults] = useState({});
@@ -70,7 +61,6 @@ const FeeCollection = () => {
   const [feeCollectionResponse, setFeeCollectionResponse] = useState(null);
   const [isSubmitButtonDisabled, setIsSubmitButtonDisabled] = useState(true);
   const [isSubmissionComplete, setIsSubmissionComplete] = useState(false);
-
   const [isEntrySelected, setIsEntrySelected] = useState(false);
   const [isStablingSelected, setIsStablingSelected] = useState(false);
   const [isTradingSelected, setIsTradingSelected] = useState(false);
@@ -143,7 +133,7 @@ const FeeCollection = () => {
 
   const collectionFeeCardRef = useRef(null);
 
-  const { fetchTradingList, fetchDeonarCommon, fetchSlaughterUnit } = useDeonarCommon();
+  const { fetchTradingList } = useDeonarCommon();
   const {
     fetchEntryCollectionFee,
     fetchStablingCollectionFee,
@@ -205,7 +195,9 @@ const FeeCollection = () => {
     { executeOnLoad: false, executeOnRadioSelect: isSlaughterSelected, enabled: isSlaughterSelected }
   );
 
-  console.log(slaughterFeeData, "SlaughterListData");
+  const isEmptyVehicle = (vehicleType, vehicleNumber) => {
+    return vehicleType === null && vehicleNumber === "";
+  };
 
   const { data: ParkingData } = fetchParkingCollectionFee(
     {
@@ -217,9 +209,10 @@ const FeeCollection = () => {
     {
       executeOnLoad: false,
       executeOnRadioSelect: isParkingSelected,
-      enabled: isParkingSelected,
+      enabled: isParkingSelected && !isEmptyVehicle(selectedVehicleId, selectedUUID),
     }
   );
+
   const { data: vehicleData } = fetchWashingCollectionFee(
     {
       vehicleWashing: {
@@ -230,7 +223,7 @@ const FeeCollection = () => {
     {
       executeOnLoad: false,
       executeOnRadioSelect: isWashingSelected,
-      enabled: isWashingSelected,
+      enabled: isWashingSelected && !isEmptyVehicle(selectedVehicleId, selectedUUID),
     }
   );
 
@@ -384,11 +377,10 @@ const FeeCollection = () => {
     setSelectedUUID(entryUnitId);
     setIsModalOpen(!isModalOpen);
 
-    // Add validation before setting table data
-    const updatedData = getTableData();
-    if (updatedData && updatedData.length > 0) {
-      setTableData(updatedData);
-    }
+    // const updatedData = getTableData();
+    // if (updatedData && updatedData.length > 0) {
+    //   setTableData(updatedData);
+    // }
   };
 
   useEffect(() => {
@@ -586,10 +578,12 @@ const FeeCollection = () => {
 
   useEffect(() => {
     if (!selectedUUID) return;
-
-    const formatDataBasedOnType = () => {
-      const formattedData = formatFeeDataCollection(
-        {
+  
+    let isSubscribed = true; // For cleanup
+  
+    const formatDataBasedOnType = async () => {
+      try {
+        const currentData = {
           arrival: entryData,
           stabling: stablingData,
           washing: vehicleData,
@@ -599,17 +593,25 @@ const FeeCollection = () => {
           trading: tradingFeeData,
           penalty: PenaltiesData,
           weighing: weighingFeeData,
-        }[selectedRadioValue],
-        selectedRadioValue
-      );
-
-      if (formattedData && formattedData.length > 0) {
-        setTableData(formattedData);
-        // Cache the formatted data
-        dataCache.setData(`${selectedRadioValue}-${selectedUUID}`, formattedData);
+        }[selectedRadioValue];
+  
+        // Only proceed if we have data
+        if (!currentData) return;
+  
+        const formattedData = formatFeeDataCollection(currentData, selectedRadioValue);
+  
+        if (formattedData && formattedData.length > 0 && isSubscribed) {
+          setTableData(formattedData);
+          dataCache.setData(`${selectedRadioValue}-${selectedUUID}`, formattedData);
+        }
+      } catch (error) {
+        console.error('Error formatting data:', error);
       }
     };
-
+  
+    // Clear existing table data before fetching new data
+    setTableData([]);
+  
     // Check cache first
     const cachedData = dataCache.getData(`${selectedRadioValue}-${selectedUUID}`);
     if (cachedData) {
@@ -617,6 +619,11 @@ const FeeCollection = () => {
     } else {
       formatDataBasedOnType();
     }
+  
+    // Cleanup function
+    return () => {
+      isSubscribed = false;
+    };
   }, [
     selectedUUID,
     selectedRadioValue,
@@ -660,7 +667,6 @@ const FeeCollection = () => {
                     id="collection-fee-section"
                     className="bmc-row-card-header"
                     ref={collectionFeeCardRef}
-                    // Add scroll-margin-top to account for fixed headers
                     style={{
                       scrollMarginTop: "100px",
                       position: "relative", // Ensure proper positioning
@@ -689,7 +695,6 @@ const FeeCollection = () => {
                   columns={customTableColumns}
                   data={getTableData()}
                   searchPlaceholder={t("Search")}
-                  // tableClassName={"deonar-custom-scroll"}
                   manualPagination={false}
                   totalRecords={totalRecords}
                   sortBy={["entryUnitId:asc"]}
@@ -747,13 +752,10 @@ const FeeCollection = () => {
                       <>
                         <CollectionFeeCard
                           t={t}
-                          // key={refreshCollectionFeeCard ? Date.now() : "static-key"}
                           label={`${radioOptions.find((option) => option.value === selectedRadioValue)?.label}`}
                           fields={feeConfigs[selectedRadioValue].fields}
-                          // options={feeConfigs[selectedRadioValue].options}
                           options={{
                             ...feeConfigs[selectedRadioValue].options,
-                            // ...dynamicOptions,
                           }}
                           control={control}
                           allowEdit={true}
@@ -781,9 +783,6 @@ const FeeCollection = () => {
                             <div>₹</div>
                             <div>{tableData.length > 0 ? tableData[0].total : 0}</div>
                           </span>
-                          {/* {selectedUUID && selectedRadioValue === "slaughter" && shouldDisplaySearchButton(selectedUUID, context) && (
-                            <SearchButtonField onSearch={handleSearch} />
-                          )} */}
                           {selectedUUID && (
                             <SubmitButtonField
                               control={control}

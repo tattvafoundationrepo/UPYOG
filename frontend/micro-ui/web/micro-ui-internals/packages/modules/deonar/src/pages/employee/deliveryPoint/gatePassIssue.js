@@ -332,6 +332,7 @@ import MainFormHeader from "../commonFormFields/formMainHeading";
 import { Toast, Dropdown, LabelFieldPair, CardLabel, Label } from "@upyog/digit-ui-react-components";
 import ReceiverField from "../commonFormFields/receiverName";
 import { Link } from "react-router-dom";
+import PrintablePDFReceipt from "./PrintTablePDF";
 
 const tableData = [
   {
@@ -363,7 +364,6 @@ const tableData = [
 const GatePassIssue = () => {
   const { t } = useTranslation();
   const [data, setData] = useState({});
-
   const [defaults, setDefaults] = useState({});
   const [shopKeeper, setShopKeeper] = useState([]);
   const [globalShopkeeper, setGlobalShopkeeper] = useState(null);
@@ -374,6 +374,8 @@ const GatePassIssue = () => {
   const [parkingDetails, setParkingDetails] = useState([]);
   const [selectedVehicleNumber, setSelectedVehicleNumber] = useState(null);
   const [referenceNumberMessages, setReferenceNumberMessages] = useState(null);
+  const [submittedFormData, setSubmittedFormData] = useState(null);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const {
     control,
@@ -524,6 +526,113 @@ const GatePassIssue = () => {
         console.error("Failed to fetch data", error);
       },
     });
+
+    setSubmittedFormData({
+      receiverName: formData.receiverName,
+      vehicleNumber: formData.vehicleNumber,
+      referenceNumber: referenceNumberMessages,
+      animalDetails,
+    });
+  };
+
+  console.log(referenceNumberMessages, "referenceNumberMessages");
+
+  const generatePDF = (data) => {
+    const printWindow = window.open("", "", "height=600,width=800");
+
+    const receiptData = Array.isArray(data) ? data[0] : data;
+
+    const htmlContent = `
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>Receipt</title>
+      <style>
+        /* Your existing styles */
+        .receipt-container {
+          max-width: 800px;
+          margin: 0 auto;
+          padding: 20px;
+          font-family: Arial, sans-serif;
+        }
+        .receipt-header {
+          text-align: center;
+          margin-bottom: 30px;
+        }
+        .detail-row {
+          display: flex;
+          justify-content: space-between;
+          margin-bottom: 10px;
+          padding-bottom: 5px;
+          border-bottom: 1px dotted #ddd;
+        }
+        .label {
+          font-weight: bold;
+          color: #555;
+        }
+        .value {
+          text-align: right;
+        }
+        .animal-details {
+          margin: 15px 0;
+          padding: 10px;
+          background-color: #f9f9f9;
+        }
+        .authorized-signature {
+          margin-top: 50px;
+          border-top: 1px solid #000;
+          width: 200px;
+          float: right;
+          text-align: center;
+          padding-top: 10px;
+        }
+        @media print {
+          .no-print { display: none; }
+        }
+      </style>
+    </head>
+    <body>
+      <div id="receipt-root"></div>
+      <div class="no-print">
+        <button onclick="window.print();window.close()" 
+          style="display: block; width: 200px; margin: 20px auto; padding: 10px; 
+          background-color: #4a90e2; color: white; border: none; border-radius: 4px; cursor: pointer;">
+          Download Receipt
+        </button>
+      </div>
+    </body>
+  </html>
+`;
+
+    printWindow.document.write(htmlContent);
+
+    // Render the React component to string
+    const ReactDOMServer = require("react-dom/server");
+    const receiptHtml = ReactDOMServer.renderToString(
+      <PrintablePDFReceipt
+        name={submittedFormData.receiverName}
+        vehicleNumber={submittedFormData.vehicleNumber}
+        tableData={submittedFormData.animalDetails}
+        referenceNumber={referenceNumberMessages}
+      />
+    );
+
+    printWindow.document.getElementById("receipt-root").innerHTML = receiptHtml;
+    printWindow.document.close();
+  };
+
+  const handlePDFDownload = (e) => {
+    e.stopPropagation();
+    if (isDownloading) return;
+    try {
+      setIsDownloading(true);
+      const downloadData = "";
+      generatePDF(downloadData);
+    } catch (error) {
+      console.error("Error downloading PDF:", error);
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   useEffect(() => {
@@ -534,6 +643,12 @@ const GatePassIssue = () => {
       return () => clearTimeout(timer);
     }
   }, [toast]);
+
+  useEffect(() => {
+    if (parkingDetailsData) {
+      setParkingDetails(parkingDetailsData.VehicleParkedCheckDetails || []);
+    }
+  }, [parkingDetailsData]);
 
   const tableColumns = [
     {
@@ -761,7 +876,7 @@ const GatePassIssue = () => {
               </div>
             </div>
           </div>
-          <SubmitPrintButtonFields isValid={isValid} />
+          <SubmitPrintButtonFields isValid={isValid} handlePrint={handlePDFDownload} handleSave={handleSubmit(onSubmit)} />
         </form>
       </div>
       {toast && (

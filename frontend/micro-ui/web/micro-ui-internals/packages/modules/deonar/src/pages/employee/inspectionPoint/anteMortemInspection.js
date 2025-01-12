@@ -181,7 +181,13 @@ const AnteMortemInspectionPage = () => {
 
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
-  const { fetchEntryFeeDetailsbyUUID, fetchDeonarCommon, saveInspectionDetailsData } = useDeonarCommon();
+  const {
+    fetchEntryFeeDetailsbyUUID,
+    fetchDeonarCommon,
+    saveInspectionDetailsData,
+    useGetInspectionPointData,
+    useInspectionPointSave,
+  } = useDeonarCommon();
   const { data: fetchedData } = fetchEntryFeeDetailsbyUUID({ inspectionid: inspectionId });
   const InspectionDetailsData = saveInspectionDetailsData();
 
@@ -226,7 +232,7 @@ const AnteMortemInspectionPage = () => {
     setSelectedAnimal(rowData);
   };
 
-  const getTableData = Digit.Hooks.deonar.useGetInspectionPointData();
+  const getTableData = useGetInspectionPointData();
 
   const Tablecolumns = InspectionTableHeader({ inspectionType, openModal });
 
@@ -364,7 +370,7 @@ const AnteMortemInspectionPage = () => {
     }
   };
 
-  const saveAnteMortemInspection = Digit.Hooks.deonar.useInspectionPointSave();
+  const saveAnteMortemInspection = useInspectionPointSave();
 
   const handleInspectionDetail = () => {
     const identifier = selectedUUID;
@@ -520,62 +526,6 @@ const AnteMortemInspectionPage = () => {
             </div>
           </div>
         </div>
-
-        {/* <div className="bmc-row-card-header">
-          <div className="bmc-card-row">
-            {selectedUUID && !isSubmitted ? (
-              <div style={{ paddingBottom: "20px", display: "flex", gap: "12px", alignItems: "center" }}>
-                <h3 style={{ fontWeight: "600", fontSize: "20px" }}>{t("Active Arrival UUID")}:</h3>
-                <span style={{ fontWeight: "bold", backgroundColor: "rgb(204, 204, 204)", borderRadius: "10px", padding: "8px", fontSize: "22px" }}>
-                  {selectedUUID}
-                </span>
-              </div>
-            ) : (
-              <Header style={{ color: "red" }}>{`${t("Arrival UUID - Please Select Arrival UUID from Above Table.")}`}</Header>
-            )}
-          </div>
-          <div className="bmc-card-row">
-            {isLoader && radioValueCheck ? (
-              <Loader />
-            ) : inspectionTableData && radioValueCheck && inspectionTableData.length === 0 && !isSubmitted ? (
-              <div className="">
-                <strong>{t("Data is not Available.")}</strong>
-              </div>
-            ) : (
-              <React.Fragment>
-                {inspectionTableData && radioValueCheck && inspectionTableData.length > 0 && (
-                  <CustomTable
-                    t={t}
-                    columns={[
-                      {
-                        Header: t("Edit"),
-                        accessor: "edit",
-                        Cell: ({ row }) => {
-                          const editable = row.original.editable;
-                          return editable ? (
-                            <span onClick={() => openModal(row.original)}>
-                              <EditIcon style={{ cursor: "pointer" }} />
-                            </span>
-                          ) : null;
-                        },
-                      },
-                      ...Tablecolumns,
-                    ]}
-                    tableClassName={"deonar-custom-scroll"}
-                    data={inspectionTableData?.length ? inspectionTableData : null}
-                    disableSort={false}
-                    autoSort={false}
-                    manualPagination={false}
-                    onAddClickFunction={() => openModal(inspectionTypes[0].label)}
-                    showAddButton={true}
-                    buttonText={t("Submit")}
-                    onAddClick={handleInspectionDetail}
-                  />
-                )}
-              </React.Fragment>
-            )}
-          </div>
-        </div> */}
 
         <div className="bmc-row-card-header">
           <div className="bmc-card-row">

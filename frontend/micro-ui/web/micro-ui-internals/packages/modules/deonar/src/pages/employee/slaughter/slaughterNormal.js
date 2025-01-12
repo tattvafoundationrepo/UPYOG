@@ -18,7 +18,7 @@ const SlaughteringNormal = () => {
   const [selectedUUID, setSelectedUUID] = useState(null);
   const [toast, setToast] = useState(null);
   const [totalRecords, setTotalRecords] = useState(0);
-  const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768);
+  const [isMobileView, setIsMobileView] = useState(window.innerWidth < 1019);
   const [selectedRows, setSelectedRows] = useState([]);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -150,6 +150,16 @@ const SlaughteringNormal = () => {
     }
   }, [toast]);
 
+  useEffect(() => {
+      const handleResize = () => {
+        setIsMobileView(window.innerWidth < 1019);
+      };
+      window.addEventListener("resize", handleResize);
+      handleResize();
+      return () => {
+        window.removeEventListener("resize", handleResize);
+      };
+    }, []);
   const Tablecolumns = [
     {
       Header: t("ID"),
@@ -222,7 +232,7 @@ const SlaughteringNormal = () => {
           <MainFormHeader title={t("DEONAR_SLAUGHTERING_NORMAL")} />
           <div className="bmc-card-row" style={{ overflowY: "auto", maxHeight: "511px" }}>
             <div className="bmc-row-card-header">
-              {isMobileView &&
+              {isMobileView ? (
                 slaughterList.map((data, index) => (
                   <TableCard
                     data={data}
@@ -235,7 +245,8 @@ const SlaughteringNormal = () => {
                     ]}
                     onUUIDClick={handleUUIDClick}
                   />
-                ))}
+                ))
+              ):(
               <CustomTable
                 t={t}
                 columns={Tablecolumns}
@@ -246,6 +257,7 @@ const SlaughteringNormal = () => {
                 totalRecords={totalRecords}
                 autoSort={false}
               />
+              )}
             </div>
           </div>
 

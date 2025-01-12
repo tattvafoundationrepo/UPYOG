@@ -18,7 +18,7 @@ const SlaughteringExport = () => {
   const [selectedUUID, setSelectedUUID] = useState(null);
   const [toast, setToast] = useState(null);
   const [totalRecords, setTotalRecords] = useState(0);
-  const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768);
+  const [isMobileView, setIsMobileView] = useState(window.innerWidth < 1019);
   const [selectedRows, setSelectedRows] = useState([]);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -150,6 +150,17 @@ const SlaughteringExport = () => {
     }
   }, [toast]);
 
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobileView(window.innerWidth < 1019);
+    };
+    window.addEventListener("resize", handleResize);
+    handleResize();
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
   const Tablecolumns = [
     {
       Header: t("ID"),
@@ -223,7 +234,7 @@ const SlaughteringExport = () => {
           <MainFormHeader title={t("DEONAR_SLAUGHTERING_EXPORT")} />
           <div className="bmc-card-row" style={{ overflowY: "auto", maxHeight: "511px" }}>
             <div className="bmc-row-card-header">
-              {isMobileView &&
+              {isMobileView ? (
                 slaughterList.map((data, index) => (
                   <TableCard
                     data={data}
@@ -236,7 +247,8 @@ const SlaughteringExport = () => {
                     ]}
                     onUUIDClick={handleUUIDClick}
                   />
-                ))}
+                ))
+              ):(
               <CustomTable
                 t={t}
                 searchPlaceholder={t("Search")}
@@ -247,6 +259,7 @@ const SlaughteringExport = () => {
                 totalRecords={totalRecords}
                 autoSort={false}
               />
+              )}
             </div>
           </div>
 

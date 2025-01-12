@@ -18,7 +18,7 @@ const SlaughteringEmergency = () => {
   const [selectedUUID, setSelectedUUID] = useState(null);
   const [toast, setToast] = useState(null);
   const [totalRecords, setTotalRecords] = useState(0);
-  const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768);
+  const [isMobileView, setIsMobileView] = useState(window.innerWidth < 1019);
   const [selectedRows, setSelectedRows] = useState([]);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -149,6 +149,17 @@ const SlaughteringEmergency = () => {
     }
   }, [toast]);
 
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobileView(window.innerWidth < 1019);
+    };
+    window.addEventListener("resize", handleResize);
+    handleResize();
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
   const Tablecolumns = [
     {
       Header: t("ID"),
@@ -222,7 +233,7 @@ const SlaughteringEmergency = () => {
           <MainFormHeader title={t("DEONAR_SLAUGHTERING_EMERGENCY")} />
           <div className="bmc-card-row" style={{ overflowY: "auto", maxHeight: "511px" }}>
             <div className="bmc-row-card-header">
-              {isMobileView &&
+              {isMobileView ? (
                 slaughterList.map((data, index) => (
                   <TableCard
                     data={data}
@@ -235,23 +246,25 @@ const SlaughteringEmergency = () => {
                     ]}
                     onUUIDClick={handleUUIDClick}
                   />
-                ))}
-              <CustomTable
-                t={t}
-                columns={Tablecolumns}
-                data={slaughterList}
-                manualPagination={false}
-                // tableClassName={"deonar-scrollable-table"}
-                totalRecords={totalRecords}
-                autoSort={false}
-              />
+                ))
+              ) : (
+                <CustomTable
+                  t={t}
+                  columns={Tablecolumns}
+                  data={slaughterList}
+                  manualPagination={false}
+                  // tableClassName={"deonar-scrollable-table"}
+                  totalRecords={totalRecords}
+                  autoSort={false}
+                />
+              )}
             </div>
           </div>
 
           {isModalOpen && (
             <CustomModal isOpen={isModalOpen} onClose={toggleModal} selectedUUID={selectedUUID} style={{ width: "100%" }}>
-            <div className="bmc-card-row" style={{ overflowY: "auto", maxHeight: "511px" }}>
-            <CustomTable
+              <div className="bmc-card-row" style={{ overflowY: "auto", maxHeight: "511px" }}>
+                <CustomTable
                   t={t}
                   columns={isVisibleColumns2}
                   manualPagination={false}

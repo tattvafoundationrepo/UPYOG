@@ -19,7 +19,7 @@ const Slaughtering = () => {
   const [selectedUUID, setSelectedUUID] = useState(null);
   const [toast, setToast] = useState(null);
   const [totalRecords, setTotalRecords] = useState(0);
-  const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768);
+  const [isMobileView, setIsMobileView] = useState(window.innerWidth < 1019);
   const [selectedRows, setSelectedRows] = useState([]);
   const [slaughteringUnit, setSlaughteringUnit] = useState([]);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -140,6 +140,16 @@ const Slaughtering = () => {
     }
   }, [slaughterByBmc]);
 
+  useEffect(() => {
+      const handleResize = () => {
+        setIsMobileView(window.innerWidth < 1019);
+      };
+      window.addEventListener("resize", handleResize);
+      handleResize();
+      return () => {
+        window.removeEventListener("resize", handleResize);
+      };
+    }, []);
   const handleSelectAll = (e) => {
     const isChecked = e.target.checked;
     setSelectAll(isChecked);
@@ -450,7 +460,7 @@ const Slaughtering = () => {
       accessor: "slaughterByBmcEmployee",
       Header: () => (
         // <div className="flex items-center justify-center">
-          <CheckBox label={t("Slaughter by BMC Employee")} onChange={handleSelectAll} checked={selectAll} style={{ margin: "0 auto", top: "3px" }} />
+        <CheckBox label={t("Slaughter by BMC Employee")} onChange={handleSelectAll} checked={selectAll} style={{ margin: "0 auto", top: "3px" }} />
         // </div>
       ),
       Cell: ({ row }) => {
@@ -476,7 +486,7 @@ const Slaughtering = () => {
           <MainFormHeader title={t("DEONAR_SLAUGHTERING")} />
           <div className="bmc-card-row" style={{ overflowY: "auto", maxHeight: "511px" }}>
             <div className="bmc-row-card-header">
-              {isMobileView &&
+              {isMobileView ? (
                 slaughterList.map((data, index) => (
                   <TableCard
                     data={data}
@@ -489,17 +499,19 @@ const Slaughtering = () => {
                     ]}
                     onUUIDClick={handleUUIDClick}
                   />
-                ))}
-              <CustomTable
-                t={t}
-                columns={Tablecolumns}
-                data={slaughterList}
-                manualPagination={false}
-                searchPlaceholder={t("Search")}
-                // tableClassName={"deonar-scrollable-table"}
-                totalRecords={totalRecords}
-                autoSort={false}
-              />
+                ))
+              ) : (
+                <CustomTable
+                  t={t}
+                  columns={Tablecolumns}
+                  data={slaughterList}
+                  manualPagination={false}
+                  searchPlaceholder={t("Search")}
+                  // tableClassName={"deonar-scrollable-table"}
+                  totalRecords={totalRecords}
+                  autoSort={false}
+                />
+              )}
             </div>
           </div>
 
@@ -508,8 +520,8 @@ const Slaughtering = () => {
               {/* <div className="bmc-row-card-header" style={{ marginBottom: "40px" }}> */}
 
               {/* </div> */}
-              <div className="bmc-card-row" style={{  maxHeight: "511px" }}>
-              {/* <div className="bmc-row-card-header" style={{ overflowY: "auto", maxHeight: "300px" }}> */}
+              <div className="bmc-card-row" style={{ maxHeight: "511px" }}>
+                {/* <div className="bmc-row-card-header" style={{ overflowY: "auto", maxHeight: "300px" }}> */}
                 {/* {isMobileView && data.map((data, index) => <TableCard data={data} key={index} fields={fields} onUUIDClick={handleUUIDClick} />)} */}
                 <CustomTable
                   t={t}

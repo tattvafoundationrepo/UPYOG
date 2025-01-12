@@ -296,7 +296,7 @@ const Stakeholder = () => {
                 handleRowClick={handleRowClick}
                 config={myConfig}
                 // sortParams={{}}
-                // tableClassName={"ebe-custom-scroll"}
+                 tableClassName={"ebe-custom-scroll"}
                 showSearch={true}
                 showDropdown={true}
                 dropdownOptions={[
@@ -322,7 +322,8 @@ const Stakeholder = () => {
                     transform: "translate(-50%, -50%)",
                     textAlign: "center",
                     fontSize: "16px",
-                    color: "#333",
+                    color: "#000", 
+                    fontWeight: "bold",
                   }}
                 >
                   <p>{t("Please select stakeholder type from the above dropdown.")}</p>

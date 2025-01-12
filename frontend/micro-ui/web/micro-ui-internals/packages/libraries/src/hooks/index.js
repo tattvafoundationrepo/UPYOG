@@ -290,10 +290,10 @@ import useGetEnquiry from "./ebe/useGetEnquiry";
 import useEBEProcessEnquiry from "./ebe/useEBEProcessEnquiry";
 import useENQCount from "./ebe/useENQCount";
 
-import useInspectionPointSave from "./deonar/useInspectionPointDeonar";
-import useGetInspectionPointData from "./deonar/useGetInspectionPoint";
-import useSavePrakingDetail from "./deonar/savePrakingDetail";
-import useGetPrakingDetail from "./deonar/getPrakingDetail";
+// import useInspectionPointSave from "./deonar/useInspectionPointDeonar";
+// import useGetInspectionPointData from "./deonar/useGetInspectionPoint";
+// import useSavePrakingDetail from "./deonar/savePrakingDetail";
+// import useGetPrakingDetail from "./deonar/getPrakingDetail";
 import useCollectionPoint from "./deonar/useCollectionPoint";
 import useGetPenalty from "./deonar/getPenalty";
 import useSavePenalty from "./deonar/savePenalty";
@@ -579,10 +579,10 @@ const bmc = {
 
 const deonar = {
   useDeonarCommon,
-  useInspectionPointSave,
-  useGetInspectionPointData,
-  useSavePrakingDetail,
-  useGetPrakingDetail,
+  // useInspectionPointSave,
+  // useGetInspectionPointData,
+  // useSavePrakingDetail,
+  // useGetPrakingDetail,
   useCollectionPoint,
   useGetPenalty,
   useSavePenalty
