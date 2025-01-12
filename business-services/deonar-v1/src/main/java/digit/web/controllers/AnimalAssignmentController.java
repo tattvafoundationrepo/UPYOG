@@ -124,7 +124,7 @@ public class AnimalAssignmentController {
     public ResponseEntity<SecurityCheckResponse> getStablingListsForCollection(
             @ApiParam(value = "Lists for animal stabling", required = true)
             @Valid @RequestBody GetListRequest request) {
-        request.setForEntryCollection(true);
+        request.setForStablingCollection(true);
         List<CollectionStablingListDetails> securityDetails = service.getListForStablingForColllection(request);
         ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(),
         true);
