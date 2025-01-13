@@ -598,11 +598,18 @@ export const createDynamicColumns = (handleUUIDClick, tableType, t = (text) => t
           {
             Header: t("DEONAR_ARRIVAL_UUID"),
             accessor: "entryUnitId",
-            Cell: ({ row }) => (
-              <span onClick={() => handleUUIDClick(row.original.entryUnitId)} style={{ cursor: "pointer", color: "blue" }}>
-                {row.original.entryUnitId}
-              </span>
-            ),
+            Cell: ({ row, value }) => {
+              return (
+                <span
+                  onClick={() => {
+                    handleUUIDClick(row.original.entryUnitId, null, "stabling", row.index, row.original.licenceNumber);
+                  }}
+                  style={{ cursor: "pointer", color: "blue" }}
+                >
+                  {row.original.entryUnitId}
+                </span>
+              );
+            },
           },
           {
             Header: t("DEONAR_TRADER_NAME"),
@@ -1354,8 +1361,8 @@ export const feeConfigs = {
   },
 };
 
-// export const collectionDynamicColumns ={ 
-  
+// export const collectionDynamicColumns ={
+
 //   arrival: [
 //     {
 //       Header: "Animal Type",
@@ -1568,8 +1575,8 @@ export const feeConfigs = {
 //     },
 //   ],
 // }
-  
- export const collectionDynamicColumns = (handleUUIDClick, tableType, t = (text) => text) => {
+
+export const collectionDynamicColumns = (handleUUIDClick, tableType, t = (text) => text) => {
   if (typeof t !== "function") {
     console.warn("Translation function not provided, using default");
     t = (text) => text;
@@ -1803,8 +1810,8 @@ export const feeConfigs = {
   } catch (error) {
     console.error("Error in collectionDynamicColumns:", error);
     return [];
+  }
 };
- }
 
 export const toastMessages = {
   arrival: {
@@ -1866,7 +1873,6 @@ export const handlePrint = (elementId) => {
 // Function to handle downloading an element as an HTML file
 export const handleDownload = (elementId, fileName = "download.html") => {
   const element = document.getElementById(elementId);
-  console.log("Element:", element); // Check if the element is found
   if (!element) {
     console.error("Element not found");
     return;
@@ -1882,15 +1888,14 @@ export const handleDownload = (elementId, fileName = "download.html") => {
   document.body.removeChild(downloadLink);
 };
 
-
-//generic functions for fee collection 
+//generic functions for fee collection
 
 // utils/feeCollectionUtils.js
 
 // Scroll handling utility
 export const scrollToElementFee = (elementId, offset = -10) => {
   const scrollAttempts = [100, 300, 500];
-  
+
   scrollAttempts.forEach((delay) => {
     setTimeout(() => {
       const element = document.getElementById(elementId);
@@ -1910,7 +1915,7 @@ export const scrollToElementFee = (elementId, offset = -10) => {
 export const generatePDF = (data, downloadFileName, ReactDOMServer, ReceiptComponent, t) => {
   const printWindow = window.open("", "", "height=600,width=800");
   const receiptData = Array.isArray(data) ? data[0] : data;
-  
+
   const htmlContent = `
     <!DOCTYPE html>
     <html>
@@ -1941,9 +1946,7 @@ export const generatePDF = (data, downloadFileName, ReactDOMServer, ReceiptCompo
   `;
 
   printWindow.document.write(htmlContent);
-  const receiptHtml = ReactDOMServer.renderToString(
-    <ReceiptComponent receiptData={receiptData} t={t} />
-  );
+  const receiptHtml = ReactDOMServer.renderToString(<ReceiptComponent receiptData={receiptData} t={t} />);
   printWindow.document.getElementById("receipt-root").innerHTML = receiptHtml;
   printWindow.document.close();
 };
@@ -1951,45 +1954,52 @@ export const generatePDF = (data, downloadFileName, ReactDOMServer, ReceiptCompo
 // Data formatting utility
 export const formatFeeDataCollection = (data, type) => {
   const formatters = {
-    arrival: (details) => details?.Details?.flatMap(item =>
-      item.details.map(detail => ({
-        animalType: detail.animal,
-        animalCount: detail.count,
-        animalFee: detail?.stableFeeDetails[0]?.fee_with_stakeholder,
-        totalFee: detail.totalFee,
-        total: item.total,
-      }))
-    ),
+    arrival: (details) =>
+      details?.Details?.flatMap((item) =>
+        item.details.map((detail) => ({
+          animalType: detail.animal,
+          animalCount: detail.count,
+          animalFee: detail?.stableFeeDetails[0]?.fee_with_stakeholder,
+          totalFee: detail.totalFee,
+          total: item.total,
+        }))
+      ),
 
-    stabling: (data) => data?.Details?.flatMap(item =>
-      item.details.map(detail => ({
-        animalType: detail.animal,
-        animalCount: detail.count,
-        totalFee: detail.totalFee,
-        total: item.total,
-        stableFeeDetails: detail.stableFeeDetails?.map(feeDetail => ({
-          token: feeDetail.token,
-          animalTypeId: feeDetail.animaltypeid,
-          daysWithStakeholder: feeDetail.days_with_stakeholder,
-          feeWithStakeholder: feeDetail.fee_with_stakeholder,
-        })) || [],
-      }))
-    ),
+    stabling: (data) =>
+      data?.Details?.flatMap((item) =>
+        item.details.map((detail) => ({
+          animalType: detail.animal,
+          animalCount: detail.count,
+          totalFee: detail.totalFee,
+          total: item.total,
+          stableFeeDetails:
+            detail.stableFeeDetails?.map((feeDetail) => ({
+              token: feeDetail.token,
+              animalTypeId: feeDetail.animaltypeid,
+              daysWithStakeholder: feeDetail.days_with_stakeholder,
+              feeWithStakeholder: feeDetail.fee_with_stakeholder,
+            })) || [],
+        }))
+      ),
 
     washing: (data) => {
       const washingData = data?.VehicleVehicleWashingFeesResponse;
-      return washingData ? [{
-        vehiclenumber: washingData.vehicleNumber,
-        vehicletype: washingData.vehicleType,
-        washingTime: washingData.washingTime || "N/A",
-        washingDate: washingData.washingDate,
-        total: washingData.washingFee,
-      }] : [];
+      return washingData
+        ? [
+            {
+              vehiclenumber: washingData.vehicleNumber,
+              vehicletype: washingData.vehicleType,
+              washingTime: washingData.washingTime || "N/A",
+              washingDate: washingData.washingDate,
+              total: washingData.washingFee,
+            },
+          ]
+        : [];
     },
 
     parking: (data, parkingDetails) => {
+
       if (!data?.vehicleParkingFeeResponseDetails) return [];
-      
       const now = new Date();
       const currentDate = now.toISOString().split("T")[0];
       const currentTime = now.toTimeString().split(" ")[0];
@@ -2003,93 +2013,92 @@ export const formatFeeDataCollection = (data, type) => {
         return hours > 0 ? hours : 0;
       };
 
-      return data.vehicleParkingFeeResponseDetails.map(data => {
-        const matchingParkingDetail = parkingDetails?.find(detail => 
-          detail.vehicleNumber === data.vehicleNumber
-        );
-        const totalHours = calculateHours(
-          matchingParkingDetail?.parkingDate,
-          matchingParkingDetail?.parkingTime,
-          currentDate,
-          currentTime
-        );
+      return data.vehicleParkingFeeResponseDetails.map((data) => {
+        const matchingParkingDetail = parkingDetails?.find((detail) => detail.vehicleNumber === data.vehicleNumber);
+        const totalHours = calculateHours(matchingParkingDetail?.startDate, matchingParkingDetail?.parkInTime);
 
         return {
           vehiclenumber: data.vehicleNumber,
           vehicletype: data.vehicleType,
-          parkingdate: matchingParkingDetail?.parkingDate || data.parkingdate,
-          parkingtime: matchingParkingDetail?.parkingTime || data.parkingtime,
-          departuredate: currentDate,
-          departuretime: currentTime,
+          startdate: matchingParkingDetail?.startDate || data.parkingdate,
+          parkingtime: matchingParkingDetail?.parkInTime || data.parkingtime,
+          enddate: matchingParkingDetail?.endDate || data.parkingtime,
+          parkouttime: matchingParkingDetail?.parkOutTime || data.parkingtime,
           totalhours: totalHours || data.totalhours,
           total: data.parkingFee,
+          // parkOutTime: data?.parkOutTime,
+          // parkInTime: data?.parkInTime
         };
       });
     },
 
-    slaughter: (data) => data?.Details?.flatMap(item =>
-      item?.details?.map(detail => ({
-        animalType: detail?.animal,
-        animalCount: detail?.count,
-        animalFee: detail?.stableFeeDetails[0]?.fee_with_stakeholder,
-        totalFee: detail?.totalFee,
-        total: item?.total,
-        stableFeeDetails: detail.stableFeeDetails?.map(feeDetail => ({
-          token: feeDetail.token,
-          animalTypeId: feeDetail.animaltypeid,
-          daysWithStakeholder: feeDetail.days_with_stakeholder,
-          feeWithStakeholder: feeDetail.fee_with_stakeholder,
-        })) || [],
-      }))
-    ),
+    slaughter: (data) =>
+      data?.Details?.flatMap((item) =>
+        item?.details?.map((detail) => ({
+          animalType: detail?.animal,
+          animalCount: detail?.count,
+          animalFee: detail?.stableFeeDetails[0]?.fee_with_stakeholder,
+          totalFee: detail?.totalFee,
+          total: item?.total,
+          stableFeeDetails:
+            detail.stableFeeDetails?.map((feeDetail) => ({
+              token: feeDetail.token,
+              animalTypeId: feeDetail.animaltypeid,
+              daysWithStakeholder: feeDetail.days_with_stakeholder,
+              feeWithStakeholder: feeDetail.fee_with_stakeholder,
+            })) || [],
+        }))
+      ),
 
-    removal: (data) => data?.removalDetails?.flatMap(item =>
-      item?.details?.map(detail => ({
-        animalType: detail.animal,
-        animalCount: detail.count,
-        totalFee: detail.totalFee,
-        total: item.total,
-        stableFeeDetails: detail.stableFeeDetails?.map(feeDetail => ({
-          token: feeDetail.token,
-          animalTypeId: feeDetail.animaltypeid,
-          daysWithStakeholder: feeDetail.days_with_stakeholder,
-          feeWithStakeholder: feeDetail.fee_with_stakeholder,
-          removalType: feeDetail?.removal_type,
-        })) || [],
-      }))
-    ),
+    removal: (data) =>
+      data?.removalDetails?.flatMap((item) =>
+        item?.details?.map((detail) => ({
+          animalType: detail.animal,
+          animalCount: detail.count,
+          totalFee: detail.totalFee,
+          total: item.total,
+          stableFeeDetails:
+            detail.stableFeeDetails?.map((feeDetail) => ({
+              token: feeDetail.token,
+              animalTypeId: feeDetail.animaltypeid,
+              daysWithStakeholder: feeDetail.days_with_stakeholder,
+              feeWithStakeholder: feeDetail.fee_with_stakeholder,
+              removalType: feeDetail?.removal_type,
+            })) || [],
+        }))
+      ),
 
-    trading: (data) => data?.Details?.flatMap(item =>
-      item?.details?.map(detail => ({
-        animalType: detail?.animal,
-        animalCount: detail?.count,
-        animalFee: detail?.fee,
-        totalFee: detail?.totalFee,
-        total: item?.total,
-      }))
-    ),
+    trading: (data) =>
+      data?.Details?.flatMap((item) =>
+        item?.details?.map((detail) => ({
+          animalType: detail?.animal,
+          animalCount: detail?.count,
+          animalFee: detail?.fee,
+          totalFee: detail?.totalFee,
+          total: item?.total,
+        }))
+      ),
 
     penalty: (data, selectedUUID) => {
       if (!data?.PenaltyLists) return [];
-      return data.PenaltyLists
-        .filter(item => item.penaltyReference === selectedUUID)
-        .map(value => ({
-          total: value.total,
-          unit: value.unit === null ? 1 : value.unit,
-        }));
+      return data.PenaltyLists.filter((item) => item.penaltyReference === selectedUUID).map((value) => ({
+        total: value.total,
+        unit: value.unit === null ? 1 : value.unit,
+      }));
     },
 
-    weighing: (data) => data?.Details?.flatMap(item =>
-      item?.details?.map(detail => ({
-        animal: detail?.animal,
-        unit: detail?.unit,
-        fee: detail?.fee,
-        subtotal: detail?.subtotal,
-        skinunit: detail?.skinunit,
-        skinfee: detail?.skinfee,
-        total: item?.total,
-      }))
-    ),
+    weighing: (data) =>
+      data?.Details?.flatMap((item) =>
+        item?.details?.map((detail) => ({
+          animal: detail?.animal,
+          unit: detail?.unit,
+          fee: detail?.fee,
+          subtotal: detail?.subtotal,
+          skinunit: detail?.skinunit,
+          skinfee: detail?.skinfee,
+          total: item?.total,
+        }))
+      ),
   };
 
   return formatters[type] ? formatters[type](data) : [];
@@ -2099,39 +2108,43 @@ export const formatFeeDataCollection = (data, type) => {
 export const generateFeePayload = (type, data, additionalData = {}) => {
   const payloadGenerators = {
     arrival: (formattedData) => {
-      const details = formattedData.map(item => ({
+      const details = formattedData.map((item) => ({
         animal: item.animalType,
         count: item.animalCount,
         fee: item.animalFee,
-        totalFee: item.totalFee
+        totalFee: item.totalFee,
       }));
 
       return {
-        Details: [{
-          details,
-          total: formattedData[0]?.total || 0
-        }]
+        Details: [
+          {
+            details,
+            total: formattedData[0]?.total || 0,
+          },
+        ],
       };
     },
 
     stabling: (formattedData) => {
-      const details = formattedData.map(item => ({
+      const details = formattedData.map((item) => ({
         animal: item.animalType,
         count: item.animalCount,
         totalFee: item.totalFee,
-        stableFeeDetails: item.stableFeeDetails.map(detail => ({
+        stableFeeDetails: item.stableFeeDetails.map((detail) => ({
           token: detail.token,
           animaltypeid: detail.animalTypeId,
           days_with_stakeholder: detail.daysWithStakeholder,
-          fee_with_stakeholder: detail.feeWithStakeholder
-        }))
+          fee_with_stakeholder: detail.feeWithStakeholder,
+        })),
       }));
 
       return {
-        Details: [{
-          details,
-          total: formattedData[0]?.total || 0
-        }]
+        Details: [
+          {
+            details,
+            total: formattedData[0]?.total || 0,
+          },
+        ],
       };
     },
 
@@ -2141,12 +2154,12 @@ export const generateFeePayload = (type, data, additionalData = {}) => {
         vehicleType: formattedData[0]?.vehicletype,
         washingTime: formattedData[0]?.washingTime,
         washingDate: formattedData[0]?.washingDate,
-        washingFee: formattedData[0]?.total
-      }
+        washingFee: formattedData[0]?.total,
+      },
     }),
 
     parking: (formattedData) => ({
-      vehicleParkingFeeResponseDetails: formattedData.map(item => ({
+      vehicleParkingFeeResponseDetails: formattedData.map((item) => ({
         vehicleNumber: item.vehiclenumber,
         vehicleType: item.vehicletype,
         parkingdate: item.parkingdate,
@@ -2154,94 +2167,102 @@ export const generateFeePayload = (type, data, additionalData = {}) => {
         departuredate: item.departuredate,
         departuretime: item.departuretime,
         totalhours: item.totalhours,
-        parkingFee: item.total
-      }))
+        parkingFee: item.total,
+      })),
     }),
 
     slaughter: (formattedData) => {
-      const details = formattedData.map(item => ({
+      const details = formattedData.map((item) => ({
         animal: item.animalType,
         count: item.animalCount,
         totalFee: item.totalFee,
-        stableFeeDetails: item.stableFeeDetails.map(detail => ({
-          token: detail.token,
-          animaltypeid: detail.animalTypeId,
-          days_with_stakeholder: detail.daysWithStakeholder,
-          fee_with_stakeholder: detail.feeWithStakeholder
-        }))
-      }));
-
-      return {
-        Details: [{
-          details,
-          total: formattedData[0]?.total || 0
-        }]
-      };
-    },
-
-    removal: (formattedData) => {
-      const details = formattedData.map(item => ({
-        animal: item.animalType,
-        count: item.animalCount,
-        totalFee: item.totalFee,
-        stableFeeDetails: item.stableFeeDetails.map(detail => ({
+        stableFeeDetails: item.stableFeeDetails.map((detail) => ({
           token: detail.token,
           animaltypeid: detail.animalTypeId,
           days_with_stakeholder: detail.daysWithStakeholder,
           fee_with_stakeholder: detail.feeWithStakeholder,
-          removal_type: detail.removalType
-        }))
+        })),
       }));
 
       return {
-        removalDetails: [{
-          details,
-          total: formattedData[0]?.total || 0
-        }]
+        Details: [
+          {
+            details,
+            total: formattedData[0]?.total || 0,
+          },
+        ],
+      };
+    },
+
+    removal: (formattedData) => {
+      const details = formattedData.map((item) => ({
+        animal: item.animalType,
+        count: item.animalCount,
+        totalFee: item.totalFee,
+        stableFeeDetails: item.stableFeeDetails.map((detail) => ({
+          token: detail.token,
+          animaltypeid: detail.animalTypeId,
+          days_with_stakeholder: detail.daysWithStakeholder,
+          fee_with_stakeholder: detail.feeWithStakeholder,
+          removal_type: detail.removalType,
+        })),
+      }));
+
+      return {
+        removalDetails: [
+          {
+            details,
+            total: formattedData[0]?.total || 0,
+          },
+        ],
       };
     },
 
     trading: (formattedData) => {
-      const details = formattedData.map(item => ({
+      const details = formattedData.map((item) => ({
         animal: item.animalType,
         count: item.animalCount,
         fee: item.animalFee,
-        totalFee: item.totalFee
+        totalFee: item.totalFee,
       }));
 
       return {
-        Details: [{
-          details,
-          total: formattedData[0]?.total || 0
-        }]
+        Details: [
+          {
+            details,
+            total: formattedData[0]?.total || 0,
+          },
+        ],
       };
     },
 
     penalty: (formattedData, { penaltyReference }) => ({
-      PenaltyLists: formattedData.map(item => ({
+      PenaltyLists: formattedData.map((item) => ({
         penaltyReference,
         total: item.total,
-        unit: item.unit
-      }))
+        unit: item.unit,
+      })),
     }),
 
     weighing: (formattedData) => {
-      const details = formattedData.map(item => ({
+      const details = formattedData.map((item) => ({
         animal: item.animal,
         unit: item.unit,
         fee: item.fee,
         subtotal: item.subtotal,
         skinunit: item.skinunit,
-        skinfee: item.skinfee
+        skinfee: item.skinfee,
       }));
 
       return {
-        Details: [{
-          details,
-          total: formattedData[0]?.total || 0
-        }]
+        Details: [
+          {
+            details,
+            total: formattedData[0]?.total || 0,
+          },
+        ],
       };
-    }
+    },
   };
 
   const generator = payloadGenerators[type];
@@ -2253,7 +2274,7 @@ export const generateFeePayload = (type, data, additionalData = {}) => {
 // Cache utility for handling data persistence
 export const createDataCache = () => {
   const cache = new Map();
-  
+
   return {
     getData: (key) => cache.get(key),
     setData: (key, data) => cache.set(key, data),
@@ -2261,4 +2282,51 @@ export const createDataCache = () => {
     clearData: (key) => cache.delete(key),
     clearAll: () => cache.clear(),
   };
+};
+
+//for stabling
+
+// Data mapping utilities for stabling list
+export const createStablingMapper = () => {
+  const selectedRowMap = new Map();
+
+  const setSelectedRow = (entryUnitId, rowIndex, rowData) => {
+    const key = `${entryUnitId}-${rowIndex}`;
+    selectedRowMap.set(key, rowData);
+  };
+
+  const getSelectedRow = (entryUnitId, rowIndex) => {
+    const key = `${entryUnitId}-${rowIndex}`;
+    return selectedRowMap.get(key);
+  };
+
+  const clearSelectedRow = (entryUnitId, rowIndex) => {
+    const key = `${entryUnitId}-${rowIndex}`;
+    selectedRowMap.delete(key);
+  };
+
+  const clearAll = () => {
+    selectedRowMap.clear();
+  };
+
+  return {
+    setSelectedRow,
+    getSelectedRow,
+    clearSelectedRow,
+    clearAll,
+  };
+};
+
+// Helper function to get unique identifier for a row
+export const getUniqueRowIdentifier = (row, index) => {
+  return {
+    uniqueId: `${row.entryUnitId}-${index}`,
+    rowIndex: index,
+    rowData: row,
+  };
+};
+
+// Function to find exact row data
+export const findExactStablingRow = (stablingListData, selectedUUID, selectedIndex) => {
+  return stablingListData.find((item, index) => item.entryUnitId === selectedUUID && index === selectedIndex);
 };

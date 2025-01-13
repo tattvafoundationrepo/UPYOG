@@ -9,7 +9,7 @@ import { columns, generateTokenNumber } from "./utils";
 import useDeonarCommon from "../../../../../../libraries/src/hooks/deonar/useCommonDeonar";
 import CustomModal from "../commonFormFields/customModal";
 import CustomTable from "../commonFormFields/customTable";
-import TableCard from "../commonFormFields/tableCard";
+import TableCard, { GlobalSearchBar } from "../commonFormFields/tableCard";
 import MultiColumnDropdown from "../commonFormFields/multiColumnDropdown";
 import SubmitButtonField from "../commonFormFields/submitBtn";
 import { Toast } from "@upyog/digit-ui-react-components";
@@ -45,6 +45,7 @@ const StablingFeePage = () => {
   const [toast, setToast] = useState(null);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const [selectedOption, setSelectedOption] = useState({});
   console.log(gawalDropdown, "gawalDropdown");
@@ -263,7 +264,6 @@ const StablingFeePage = () => {
     }
   };
 
-  // Debugging function to log gawaltable structure
   useEffect(() => {
     console.log(
       "Gawal Table Structure:",
@@ -504,36 +504,31 @@ const StablingFeePage = () => {
       <div className="bmc-card-full">
         <form onSubmit={handleSubmit(onSubmit)}>
           <MainFormHeader title={"DEONAR_STABLING"} />
-          {/* <div className="bmc-row-card-header"> */}
 
           <div className="bmc-card-row">
             {/* <StablingTypeOptionsField setStablingFormType={setStablingFormType} control={control} data={data} setData={setData} /> */}
             <div className="bmc-row-card-header">
-              {isMobileView ? ( animalCount.map((data, index) => (
-                <TableCard 
-                data={data} 
-                key={index} 
-                fields={fields} 
-                onUUIDClick={handleUUIDClick} 
-                />
-              ))
-            ) : (
-
-              <div className="bmc-card-row" style={{ overflowY: "auto", maxHeight: "511px" }}>
-                <CustomTable
-                  t={t}
-                  searchPlaceholder={t("Search")}
-                  columns={columns(handleUUIDClick, t)}
-                  data={animalCount}
-                  manualPagination={false}
-                  // tableClassName={"deonar-scrollable-table"}
-                  totalRecords={totalRecords}
-                  isLoadingRows={isLoading}
-                  // onSort={handleSort}
-                  //  fileName="YourCustomFileName"
-                />
+              <div>
+                {isMobileView && <GlobalSearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />}
+                {isMobileView &&
+                  animalCount.map((data, index) => (
+                    <TableCard data={data} key={index} fields={fields} onUUIDClick={handleUUIDClick} searchQuery={searchQuery} />
+                  ))}
+                {!isMobileView && (
+                  <div className="bmc-card-row" style={{ overflowY: "auto", maxHeight: "511px" }}>
+                    <CustomTable
+                      t={t}
+                      searchPlaceholder={t("Search")}
+                      columns={columns(handleUUIDClick, t)}
+                      data={animalCount}
+                      manualPagination={false}
+                      totalRecords={totalRecords}
+                      isLoadingRows={isLoading}
+                    />
+                  </div>
+                )}
               </div>
-            )}
+            
               {isModalOpen && (
                 <CustomModal isOpen={isModalOpen} onClose={toggleModal} selectedUUID={selectedUUID} style={{ width: "100%" }}>
                   {/* <div className="bmc-row-card-header" style={{ marginBottom: "40px" }}> */}

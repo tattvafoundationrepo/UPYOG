@@ -1,4 +1,4 @@
-import React, { Fragment, useEffect, useRef, useState } from "react";
+import React, { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useForm } from "react-hook-form";
 import MainFormHeader from "../commonFormFields/formMainHeading";
@@ -10,6 +10,8 @@ import {
   createDataCache,
   scrollToElementFee,
   generatePDF,
+  findExactStablingRow,
+  createStablingMapper,
 } from "./utils.js";
 
 import CustomTable from "../commonFormFields/customTable";
@@ -73,11 +75,16 @@ const FeeCollection = () => {
   const [isDownloading, setIsDownloading] = useState(false);
   const [isLoader, setIsLoader] = useState(false);
 
+  const [selectedRowData, setSelectedRowData] = useState(null);
+
+  const [selectedRowIndex, setSelectedRowIndex] = useState(null);
+  const stablingMapper = useMemo(() => createStablingMapper(), []);
+
   const dataCache = createDataCache();
 
   const getDynamicDefaultValues = (selectedRadioValue) => {
     const baseDefaultValues = {
-      paymentMethod: null, // Changed to null to work with dropdown
+      paymentMethod: null,
       transactionId: "",
     };
     const additionalFields = feeConfigs[selectedRadioValue]?.fields || [];
@@ -166,12 +173,20 @@ const FeeCollection = () => {
     { forCollection: true },
     { executeOnRadioSelect: isStablingSelected, executeOnLoad: false, enabled: isStablingSelected }
   );
+  // Update your data selection logic
+  const selectedStablingRow = useMemo(() => {
+    if (selectedUUID && selectedRowIndex !== null) {
+      return stablingMapper.getSelectedRow(selectedUUID, selectedRowIndex);
+    }
+    return null;
+  }, [selectedUUID, selectedRowIndex]);
 
-  const selectedItem = stablingListData.find((item) => item.entryUnitId === selectedUUID)?.licenceNumber;
-  const selectedStableStakeholder = stablingListData.find((item) => item.entryUnitId === selectedUUID)?.stakeholderId;
+  // Replace your existing selections with
+  const selectedItem = selectedStablingRow?.licenceNumber;
+  const selectedStableStakeholder = selectedStablingRow?.stakeholderId;
 
   const { data: stablingData } = fetchStablingCollectionFee(
-    { Search: { Search: selectedUUID, liceneceNumber: selectedItem } },
+    { Search: { Search: selectedUUID, liceneceNumber: selectedRowData } },
     { executeOnRadioSelect: isStablingSelected, executeOnLoad: false, enabled: isStablingSelected }
   );
 
@@ -368,7 +383,16 @@ const FeeCollection = () => {
     }
   };
 
-  const handleUUIDClick = (entryUnitId, vehicleId, tableType) => {
+  const handleUUIDClick = (entryUnitId, vehicleId, tableType, rowIndex, licenseNumber) => {
+    if (tableType === "stabling") {
+      setSelectedRowData(licenseNumber);
+    } else {
+      console.log("Could not find exact row:", {
+        stablingListDataLength: stablingListData?.length,
+        rowIndex,
+      });
+    }
+
     if (tableType === "parking" || tableType === "washing") {
       setSelectedVehicleId(vehicleId);
     } else {
@@ -377,10 +401,11 @@ const FeeCollection = () => {
     setSelectedUUID(entryUnitId);
     setIsModalOpen(!isModalOpen);
 
-    // const updatedData = getTableData();
-    // if (updatedData && updatedData.length > 0) {
-    //   setTableData(updatedData);
-    // }
+    // Add validation before setting table data
+    const updatedData = getTableData();
+    if (updatedData && updatedData.length > 0) {
+      setTableData(updatedData);
+    }
   };
 
   useEffect(() => {
@@ -438,13 +463,28 @@ const FeeCollection = () => {
     // Add type-specific fields based on the selected radio value
     switch (selectedRadioValue) {
       case "trading":
-      case "slaughter":
+        // case "slaughter":
         const matchingItems = animalCount.filter((item) => item.entryUnitId === selectedUUID);
         return {
           ...basePayload,
           FeeDetail: {
             ...basePayload.FeeDetail,
             paidby: matchingItems.length > 0 ? matchingItems[0].selectedUUID : null,
+            details: tableData.map((item) => ({
+              animal: item.animalType,
+              count: item.animalCount,
+              fee: item.animalFee,
+              totalFee: item.totalFee,
+            })),
+          },
+        };
+
+      case "slaughter":
+        return {
+          ...basePayload,
+          FeeDetail: {
+            ...basePayload.FeeDetail,
+            paidby: slaughterList.map((stakeholder) => stakeholder.entryUnitId).join(", "),
             details: tableData.map((item) => ({
               animal: item.animalType,
               count: item.animalCount,
@@ -579,11 +619,9 @@ const FeeCollection = () => {
   useEffect(() => {
     if (!selectedUUID) return;
 
-    let isSubscribed = true; // For cleanup
-
-    const formatDataBasedOnType = async () => {
-      try {
-        const currentData = {
+    const formatDataBasedOnType = () => {
+      const formattedData = formatFeeDataCollection(
+        {
           arrival: entryData,
           stabling: stablingData,
           washing: vehicleData,
@@ -593,24 +631,15 @@ const FeeCollection = () => {
           trading: tradingFeeData,
           penalty: PenaltiesData,
           weighing: weighingFeeData,
-        }[selectedRadioValue];
-
-        // Only proceed if we have data
-        if (!currentData) return;
-
-        const formattedData = formatFeeDataCollection(currentData, selectedRadioValue);
-
-        if (formattedData && formattedData.length > 0 && isSubscribed) {
-          setTableData(formattedData);
-          dataCache.setData(`${selectedRadioValue}-${selectedUUID}`, formattedData);
-        }
-      } catch (error) {
-        console.error("Error formatting data:", error);
+        }[selectedRadioValue],
+        selectedRadioValue
+      );
+      if (formattedData && formattedData.length > 0) {
+        setTableData(formattedData);
+        // Cache the formatted data
+        dataCache.setData(`${selectedRadioValue}-${selectedUUID}`, formattedData);
       }
     };
-
-    // Clear existing table data before fetching new data
-    setTableData([]);
 
     // Check cache first
     const cachedData = dataCache.getData(`${selectedRadioValue}-${selectedUUID}`);
@@ -619,11 +648,6 @@ const FeeCollection = () => {
     } else {
       formatDataBasedOnType();
     }
-
-    // Cleanup function
-    return () => {
-      isSubscribed = false;
-    };
   }, [
     selectedUUID,
     selectedRadioValue,

@@ -12,7 +12,7 @@ const SearchButtonField = ({ onSearch, disabled,customStyle }) => {
         <button
           type="button"
           className="bmc-card-button"
-          style={{ borderBottom: "3px solid black", backgroundColor: disabled ? "gray" : "#f47738", cursor: disabled ? "not-allowed" : "pointer" ,height:customStyle ? "33px":"auto"}}
+          style={{ borderBottom: "3px solid black", backgroundColor: disabled ? "gray" : "#f47738", cursor: disabled ? "not-allowed" : "pointer" ,height:customStyle ? "33px":"46px"}}
           onClick={onSearch}
         >
           {t("Deonar_Search")}
