@@ -578,9 +578,9 @@ const FeeCollection = () => {
 
   useEffect(() => {
     if (!selectedUUID) return;
-  
+
     let isSubscribed = true; // For cleanup
-  
+
     const formatDataBasedOnType = async () => {
       try {
         const currentData = {
@@ -594,24 +594,24 @@ const FeeCollection = () => {
           penalty: PenaltiesData,
           weighing: weighingFeeData,
         }[selectedRadioValue];
-  
+
         // Only proceed if we have data
         if (!currentData) return;
-  
+
         const formattedData = formatFeeDataCollection(currentData, selectedRadioValue);
-  
+
         if (formattedData && formattedData.length > 0 && isSubscribed) {
           setTableData(formattedData);
           dataCache.setData(`${selectedRadioValue}-${selectedUUID}`, formattedData);
         }
       } catch (error) {
-        console.error('Error formatting data:', error);
+        console.error("Error formatting data:", error);
       }
     };
-  
+
     // Clear existing table data before fetching new data
     setTableData([]);
-  
+
     // Check cache first
     const cachedData = dataCache.getData(`${selectedRadioValue}-${selectedUUID}`);
     if (cachedData) {
@@ -619,7 +619,7 @@ const FeeCollection = () => {
     } else {
       formatDataBasedOnType();
     }
-  
+
     // Cleanup function
     return () => {
       isSubscribed = false;

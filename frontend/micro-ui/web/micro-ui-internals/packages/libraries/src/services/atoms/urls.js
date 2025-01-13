@@ -305,6 +305,7 @@ const Urls = {
     getCitizensList: "/deonar-v1/citizenGatePass/_get",
     getSlaughterCollectionList: "/deonar-v1/get/slaughter/list/_collection",
     saveCitizenGatePass: "/deonar-v1/citizenGatePass/_save",
+    getAssignedStakeholder: "/deonar-v1/stakeholders/_assigned"
   },
   access_control: "/access/v1/actions/mdms/_get",
   billgenie: "/egov-searcher",

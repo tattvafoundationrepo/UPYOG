@@ -282,6 +282,24 @@ const useDeonarCommon = () => {
     },
   });
 
+  // const fetchAssignedStakeholder = (data, config = {}) => {
+  //   return useMutation(["assignedStakeholder", data], () => DeonarService.getAssignedStakeholder(data), {
+  //     ...config,
+  //     onSuccess: (data) => {
+  //       console.log(data, "Citizen collection data");
+  //     },
+  //   });
+  // };
+  const fetchAssignedStakeholder = (data, config = {}) => {
+    return useMutation((data) => DeonarService.getAssignedStakeholder(data), {
+      ...config,
+      onSuccess: (data, variables, context) => {
+        // Invalidate the query after mutation success
+        console.log(data, "Citizen collection data");
+      }
+    });
+  };
+
   return {
     fetchDeonarCommon,
     saveDeonarDetails,
@@ -305,7 +323,8 @@ const useDeonarCommon = () => {
     saveSlaughterList,
     useGetInspectionPointData,
     useInspectionPointSave,
-    saveCitizensGatePasses
+    saveCitizensGatePasses,
+    fetchAssignedStakeholder
   };
 };
 

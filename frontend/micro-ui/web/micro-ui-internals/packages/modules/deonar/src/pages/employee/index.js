@@ -32,6 +32,7 @@ const App = ({ path, stateCode, userType, tenants }) => {
 
   const Helkari = Digit.ComponentRegistryService?.getComponent("Helkari");
   const Stakeholder = Digit.ComponentRegistryService?.getComponent("Stakeholder");
+  const StakeholderDetails = Digit.ComponentRegistryService?.getComponent("StakeholderDetails");
   const CitizenAssignment = Digit.ComponentRegistryService?.getComponent("CitizenAssignment");
   const CitizenGatePass = Digit.ComponentRegistryService?.getComponent("CitizenGatePass");
   const Inbox = Digit?.ComponentRegistryService?.getComponent('DEONARInbox');
@@ -87,6 +88,7 @@ const App = ({ path, stateCode, userType, tenants }) => {
         <PrivateRoute path={`${path}/penaltyCharge`} component={PenaltyCharge} />
         <PrivateRoute path={`${path}/gatePass`} component={GatePass} />
         <PrivateRoute path={`${path}/stakeholder`} component={Stakeholder} />
+        <PrivateRoute path={`${path}/stakeholderDetails`} component={StakeholderDetails} />
         <PrivateRoute path={`${path}/citizenAssignment`} component={CitizenAssignment} />
         <PrivateRoute path={`${path}/CitizenGatePass`} component={CitizenGatePass} />
         <PrivateRoute path={`${path}/removalReport`} component={Removal} />

@@ -95,12 +95,14 @@ const RemovalReport = () => {
         reference: item.ddreference || "N/A",
         licenseNumber: item.licenceNumber || "N/A",
         mobileNumber: item.mobilenumber || "N/A",
+        stakeholderTypeName: item.stakeholderTypeName,
       }));
 
       const detailedData = RemovalList.SecurityCheckDetails.flatMap((item) =>
         item.animalDetails.map((animalDetail) => ({
           ownerName: item.shopkeepername || "N/A",
           UUID: item.entryUnitId || "N/A",
+          stakeholderTypeName: item.stakeholderTypeName,
           removalType: animalDetail.removaltype || "N/A",
           animalType: animalDetail.animalType || "N/A",
           reference: item.ddreference || "N/A",

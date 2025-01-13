@@ -120,6 +120,11 @@ const DEONARCard = () => {
       roles: ["SUPERUSER"]
     },
     {
+      label: t("StakeHolder Details"),
+      link: `/digit-ui/employee/deonar/stakeholderDetails`,
+      roles: ["SUPERUSER"]
+    },
+    {
       label: t("INBOX"),
       link: `/digit-ui/employee/deonar/Inbox`,
       roles: ["SUPERUSER"]

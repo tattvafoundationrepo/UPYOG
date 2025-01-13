@@ -34,6 +34,7 @@ import WashingFeePage from "./pages/employee/securityCheck/washingFeePage";
 import GatePassIssue from "./pages/employee/deliveryPoint/gatePassIssue";
 import CitizenAssignment from "./pages/employee/deliveryPoint/citizenAssigment";
 import CitizenGatePass from './pages/employee/deliveryPoint/CitizenGatePass';
+import StakeholderDetails from "./pages/employee/collectionPoint/stakeholderDetails";
 
 export const DEONARModule = ({ stateCode, userType, tenants }) => {
   const { t } = useTranslation();
@@ -93,6 +94,7 @@ const componentsToRegister = {
   SlaughteringEmergency,
   WashingFeePage,
   GatePassIssue,
+  StakeholderDetails,
 };
 
 export const initDEONARComponents = () => {
