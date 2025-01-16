@@ -138,6 +138,12 @@ public class CollectionService {
             common.setAnimalDetail(animalDetails);
             producer.push("topic_deonar_savefeedetails", common);
         }
+        if(common.getFeetype() == 4){
+           
+            commonRepository.updateSlaughterPaymentFlag(common.getUuid());
+
+        }
+
         if(common.getFeetype() == 1){
             ObjectMapper objectMapper = new ObjectMapper();
             try {
