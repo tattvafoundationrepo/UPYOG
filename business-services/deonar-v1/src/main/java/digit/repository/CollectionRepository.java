@@ -129,5 +129,11 @@ public class CollectionRepository {
       
     }
 
+    public void updateSlaughterPaymentFlag(String uuid) {
+       String sql = " UPDATE eg_deonar_booked_for_slaughter SET flag=true WHERE ddreference = ? ";
+       log.info("Final query: " + sql);
+       jdbcTemplate.update(sql, uuid);
+    }
+
     
 }
