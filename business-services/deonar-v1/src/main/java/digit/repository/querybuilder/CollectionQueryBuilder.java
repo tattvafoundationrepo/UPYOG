@@ -284,7 +284,12 @@ public class CollectionQueryBuilder {
         }     
         if (criteria.getSearch() != null) {
             addClauseIfRequired(query, preparedStmtList);
-            query.append(" arrivalid = ? ");
+            if(criteria.getCollectionType() == 4){
+                query.append(" ddreference = ? ");
+            }else{
+                query.append(" arrivalid = ? ");
+            }
+            
             preparedStmtList.add(criteria.getSearch());
         }
         if (criteria.getLiceneceNumber() != null) {
