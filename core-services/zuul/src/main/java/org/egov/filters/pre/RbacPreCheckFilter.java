@@ -51,7 +51,7 @@ public class RbacPreCheckFilter extends ZuulFilter {
     @Override
     public Object run() {
 
-         if (new HashSet<>(Arrays.asList(tattvaMixedModeEndpointsWhitelist)).contains(getRequestURI())) {
+         if (tattvaMixedModeEndpointsWhitelist != null && new HashSet<>(Arrays.asList(tattvaMixedModeEndpointsWhitelist)).contains(getRequestURI())) {
             setShouldDoRbac(true);  
             return null;
         }
