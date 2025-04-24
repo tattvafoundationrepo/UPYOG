@@ -45,6 +45,11 @@ public class RbacPreCheckFilter extends ZuulFilter {
 
     @Override
     public Object run() {
+
+         if(getRequestURI().equalsIgnoreCase("/deonar-v1/common/_get")){
+            setShouldDoRbac(true);  
+            return null;
+        }
         if ((openEndpointsWhitelist.contains(getRequestURI())
             || anonymousEndpointsWhitelist.contains(getRequestURI()))) {
             setShouldDoRbac(false);
