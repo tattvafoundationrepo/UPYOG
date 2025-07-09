@@ -14,6 +14,7 @@ import java.util.List;
 
 
 @Service
+@Slf4j    
 public class StatusUpdateService {
 
     private Producer producer;
@@ -47,6 +48,7 @@ public class StatusUpdateService {
             processInstances.add(processStateAndAction.getProcessInstanceFromRequest());
         });
         ProcessInstanceRequest processInstanceRequest = new ProcessInstanceRequest(requestInfo,processInstances);
+        log.info(" Pushing Topic for  businessId -----------------------"+processInstances.get(0).getBusinessId());
         producer.push(config.getSaveTransitionTopic(),processInstanceRequest);
     }
 
