@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -20,6 +21,7 @@ import static org.egov.wf.util.WorkflowConstants.*;
 
 
 @Component
+@Slf4j
 public class WorkflowValidator {
 
 
@@ -130,6 +132,9 @@ public class WorkflowValidator {
                 throw new CustomException("INVALID_ACTION", "Rating can be given only upon taking RATE action.");
             }
 
+            log.info("user rooooleeeeeeesssssss", roles);
+            log.info("action roooooooleeeesssssssss",  action.getRoles());
+            log.info("action ", action.getAction());
             Boolean isRoleAvailable = util.isRoleAvailable(roles,action.getRoles());
             Boolean isStateChanging = (action.getCurrentState().equalsIgnoreCase( action.getNextState())) ? false : true;
             List<String> transitionRoles = getRolesFromState(processStateAndAction.getCurrentState());
