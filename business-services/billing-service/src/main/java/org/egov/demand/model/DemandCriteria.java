@@ -89,4 +89,8 @@ public class DemandCriteria {
 	
 	@Default
 	private Boolean receiptRequired=false;
+
+	  
+	@Default
+	private Boolean withoutMobNumber=false;
 }
