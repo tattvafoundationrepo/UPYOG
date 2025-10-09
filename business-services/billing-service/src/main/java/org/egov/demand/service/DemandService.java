@@ -352,7 +352,7 @@ public class DemandService {
 			}
 		}
 		
-		if (!CollectionUtils.isEmpty(demands) && !CollectionUtils.isEmpty(payers))
+		if(!CollectionUtils.isEmpty(demands) && !CollectionUtils.isEmpty(payers) && !demandCriteria.getWithoutMobNumber())
 			demands = demandEnrichmentUtil.enrichPayer(demands, payers);
 
 		return demands;
