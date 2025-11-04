@@ -575,7 +575,8 @@ public class DemandValidatorV1 {
 
 		if (demandCriteria.getDemandId() == null && demandCriteria.getConsumerCode() == null
 				&& demandCriteria.getEmail() == null && demandCriteria.getMobileNumber() == null
-				&& demandCriteria.getBusinessService() == null && demandCriteria.getDemandFrom() == null
+				&& demandCriteria.getBusinessService() == null && CollectionUtils.isEmpty(demandCriteria.getBusinessServices())
+				&& demandCriteria.getDemandFrom() == null
 				&& demandCriteria.getDemandTo() == null && demandCriteria.getType() == null)
 			errorMap.put("businessService", " Any one of the fields additional to tenantId is mandatory");
 

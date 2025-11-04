@@ -186,7 +186,13 @@ public class DemandQueryBuilder {
 			demandQuery.append("dmd.payer IN (" + getIdQueryForStrings(demandCriteria.getPayer()) + ")");
 			addToPreparedStatement(preparedStatementValues, demandCriteria.getPayer());
 		}
-		if (demandCriteria.getBusinessService() != null) {
+		// Support multiple business services with backward compatibility
+		if (!CollectionUtils.isEmpty(demandCriteria.getBusinessServices())) {
+			addAndClause(demandQuery);
+			demandQuery.append("dmd.businessservice IN (" + getIdQueryForStrings(demandCriteria.getBusinessServices()) + ")");
+			addToPreparedStatement(preparedStatementValues, demandCriteria.getBusinessServices());
+		} else if (demandCriteria.getBusinessService() != null) {
+			// Backward compatibility: single businessService
 			addAndClause(demandQuery);
 			demandQuery.append("dmd.businessservice=?");
 			preparedStatementValues.add(demandCriteria.getBusinessService());

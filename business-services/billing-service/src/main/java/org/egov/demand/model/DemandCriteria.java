@@ -68,7 +68,9 @@ public class DemandCriteria {
 	private Set<String> consumerCode;
 	
 	private String businessService;
-	
+
+	private Set<String> businessServices;
+
 	private BigDecimal demandFrom;
 	
 	private BigDecimal demandTo;
