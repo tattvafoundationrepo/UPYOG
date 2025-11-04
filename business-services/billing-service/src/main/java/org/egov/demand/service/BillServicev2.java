@@ -231,15 +231,24 @@ public class BillServicev2 {
 		BillResponseV2 res = searchBill(billCriteria.toBillSearchCriteria(), requestInfo);
 		List<BillV2> bills = res.getBill();
 
-		/* 
-		 * If no existing bills found then Generate new bill 
+		/*
+		 * If no existing bills found then Generate new bill
 		 */
 		if (CollectionUtils.isEmpty(bills))
 		{
 			log.info( "If bills are empty" +bills.size());
 			//if(!billCriteria.getBusinessService().equalsIgnoreCase("WS") && !billCriteria.getBusinessService().equalsIgnoreCase("SW"))
 			//if(!billCriteria.getBusinessService().equalsIgnoreCase("SW"))
-			updateDemandsForexpiredBillDetails(billCriteria.getBusinessService(), billCriteria.getConsumerCode(), billCriteria.getTenantId(), requestInfoWrapper);
+			// Support both single and multiple business services
+			if (!CollectionUtils.isEmpty(billCriteria.getBusinessServices())) {
+				// Update demands for each business service
+				for (String businessService : billCriteria.getBusinessServices()) {
+					updateDemandsForexpiredBillDetails(businessService, billCriteria.getConsumerCode(), billCriteria.getTenantId(), requestInfoWrapper);
+				}
+			} else if (billCriteria.getBusinessService() != null) {
+				// Backward compatibility: single business service
+				updateDemandsForexpiredBillDetails(billCriteria.getBusinessService(), billCriteria.getConsumerCode(), billCriteria.getTenantId(), requestInfoWrapper);
+			}
 			return generateBill(billCriteria, requestInfo);
 		}
 		
@@ -294,19 +303,36 @@ public class BillServicev2 {
 		if(CollectionUtils.isEmpty(cosnumerCodesToBeExpired) && CollectionUtils.isEmpty(cosnumerCodesNotFoundInBill))
 			return res;
 		else {
-			
+
 			billCriteria.getConsumerCode().retainAll(cosnumerCodesToBeExpired);
 			billCriteria.getConsumerCode().addAll(cosnumerCodesNotFoundInBill);
-			updateDemandsForexpiredBillDetails(billCriteria.getBusinessService(), billCriteria.getConsumerCode(), billCriteria.getTenantId(), requestInfoWrapper);
-			
-			billRepository.updateBillStatus(
-					UpdateBillCriteria.builder()
-					.statusToBeUpdated(BillStatus.EXPIRED)
-					.businessService(billCriteria.getBusinessService())
-					.consumerCodes(cosnumerCodesToBeExpired)
-					.tenantId(billCriteria.getTenantId())
-					.build()
-					);
+
+			if (!CollectionUtils.isEmpty(billCriteria.getBusinessServices())) {
+				for (String businessService : billCriteria.getBusinessServices()) {
+					updateDemandsForexpiredBillDetails(businessService, billCriteria.getConsumerCode(), billCriteria.getTenantId(), requestInfoWrapper);
+
+					billRepository.updateBillStatus(
+							UpdateBillCriteria.builder()
+							.statusToBeUpdated(BillStatus.EXPIRED)
+							.businessService(businessService)
+							.consumerCodes(cosnumerCodesToBeExpired)
+							.tenantId(billCriteria.getTenantId())
+							.build()
+							);
+				}
+			} else if (billCriteria.getBusinessService() != null) {
+				updateDemandsForexpiredBillDetails(billCriteria.getBusinessService(), billCriteria.getConsumerCode(), billCriteria.getTenantId(), requestInfoWrapper);
+
+				billRepository.updateBillStatus(
+						UpdateBillCriteria.builder()
+						.statusToBeUpdated(BillStatus.EXPIRED)
+						.businessService(billCriteria.getBusinessService())
+						.consumerCodes(cosnumerCodesToBeExpired)
+						.tenantId(billCriteria.getTenantId())
+						.build()
+						);
+			}
+
 			BillResponseV2 finalResponse = generateBill(billCriteria, requestInfo);
 			// gen bill returns immutable empty list incase of zero bills
 			billsToBeReturned.addAll(finalResponse.getBill());
@@ -378,11 +404,23 @@ public class BillServicev2 {
 		if (billCriteria.getConsumerCode() != null)
 			consumerCodes.addAll(billCriteria.getConsumerCode());
 
-		DemandCriteria demandCriteria=new DemandCriteria();
-		if(billCriteria.getBusinessService().equalsIgnoreCase("WS") || billCriteria.getBusinessService().equalsIgnoreCase("SW"))
+
+		Set<String> businessServiceSet = null;
+		if (!CollectionUtils.isEmpty(billCriteria.getBusinessServices())) {
+			businessServiceSet = billCriteria.getBusinessServices();
+		} else if (billCriteria.getBusinessService() != null) {
+			businessServiceSet = Collections.singleton(billCriteria.getBusinessService());
+		}
+
+		boolean hasWaterSewerageServices = businessServiceSet != null &&
+				businessServiceSet.stream().anyMatch(bs -> bs.equalsIgnoreCase("WS") || bs.equalsIgnoreCase("SW"));
+
+		DemandCriteria demandCriteria = new DemandCriteria();
+		if (hasWaterSewerageServices)
 			demandCriteria = DemandCriteria.builder()
 				.status(org.egov.demand.model.Demand.StatusEnum.ACTIVE.toString())
 				.businessService(billCriteria.getBusinessService())
+				.businessServices(businessServiceSet)
 				.mobileNumber(billCriteria.getMobileNumber())
 				.tenantId(billCriteria.getTenantId())
 				.email(billCriteria.getEmail())
@@ -395,6 +433,7 @@ public class BillServicev2 {
 			demandCriteria = DemandCriteria.builder()
 			.status(org.egov.demand.model.Demand.StatusEnum.ACTIVE.toString())
 			.businessService(billCriteria.getBusinessService())
+			.businessServices(businessServiceSet)
 			.mobileNumber(billCriteria.getMobileNumber())
 			.tenantId(billCriteria.getTenantId())
 			.email(billCriteria.getEmail())

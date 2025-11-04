@@ -39,6 +39,7 @@
  */
 package org.egov.demand.model;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -49,6 +50,7 @@ import javax.validation.constraints.Size;
 
 import org.egov.demand.model.BillV2.BillStatus;
 import org.hibernate.validator.constraints.SafeHtml;
+import org.springframework.util.CollectionUtils;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -77,9 +79,10 @@ public class GenerateBillCriteria {
 	private Set<String> consumerCode;
 
 	@SafeHtml
-	@NotNull
 	@Size(max = 256)
 	private String businessService;
+
+	private Set<String> businessServices;
 
 	@Email
 	private String email;
@@ -88,15 +91,23 @@ public class GenerateBillCriteria {
 	private String mobileNumber;
 	
 	public DemandCriteria toDemandCriteria() {
-		
+
 		Set<String> consumerCodeSet = new HashSet<>();
 		consumerCodeSet.addAll(consumerCode);
-		
+
 		Set<String> demandIdSet = new HashSet<>();
 		demandIdSet.add(demandId);
-		
+
+		Set<String> businessServiceSet = null;
+		if (!CollectionUtils.isEmpty(businessServices)) {
+			businessServiceSet = businessServices;
+		} else if (businessService != null) {
+			businessServiceSet = Collections.singleton(businessService);
+		}
+
 		return DemandCriteria.builder()
 				.businessService(businessService)
+				.businessServices(businessServiceSet)
 				.consumerCode(consumerCodeSet)
 				.mobileNumber(mobileNumber)
 				.isPaymentCompleted(false)

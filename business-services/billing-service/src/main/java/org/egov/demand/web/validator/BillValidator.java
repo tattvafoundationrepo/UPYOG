@@ -37,11 +37,14 @@ public class BillValidator {
 		util.validateTenantIdForUserType(generateBillCriteria.getTenantId(), requestInfo);
 
 		boolean demandIdNotProvided = null == generateBillCriteria.getDemandId();
-			
+
 		boolean payerDataNotProvided = (generateBillCriteria.getMobileNumber() == null
 				&& generateBillCriteria.getEmail() == null);
-		
-		boolean isCombinationOfBusinessOrCosnumerCodeMissing = generateBillCriteria.getBusinessService() == null
+
+		boolean isBusinessServiceMissing = generateBillCriteria.getBusinessService() == null
+				&& CollectionUtils.isEmpty(generateBillCriteria.getBusinessServices());
+
+		boolean isCombinationOfBusinessOrCosnumerCodeMissing = isBusinessServiceMissing
 				|| CollectionUtils.isEmpty(generateBillCriteria.getConsumerCode());
 
 		if (demandIdNotProvided && payerDataNotProvided && isCombinationOfBusinessOrCosnumerCodeMissing)
