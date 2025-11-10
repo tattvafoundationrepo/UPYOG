@@ -5,9 +5,9 @@ import java.sql.SQLException;
 
 import org.egov.demand.model.AuditDetail;
 import org.egov.demand.model.CollectedReceipt;
-import org.egov.demand.model.enums.Status;
 import org.springframework.jdbc.core.RowMapper;
-
+import org.springframework.stereotype.Component;
+@Component
 public class CollectedReceiptsRowMapper implements RowMapper<CollectedReceipt> {
 
 	@Override
@@ -20,15 +20,17 @@ public class CollectedReceiptsRowMapper implements RowMapper<CollectedReceipt> {
 		receipt.setReceiptAmount(rs.getDouble("receiptamount"));
 		receipt.setReceiptDate(rs.getLong("receiptdate"));
 		receipt.setReceiptNumber(rs.getString("receiptnumber"));
-		receipt.setStatus(Status.fromValue(rs.getString("status")));
+		receipt.setStatus(rs.getString("status"));
 		receipt.setTenantId(rs.getString("tenantid"));
+		receipt.setTransactionNumber(rs.getString("transactionnumber"));
+		receipt.setTotalAmountPaid(rs.getDouble("totalamountpaid"));
 		
 		AuditDetail auditDetail=new AuditDetail();
 		
 		auditDetail.setCreatedBy(rs.getString("createdby"));
-		auditDetail.setCreatedTime(rs.getLong("createddate"));
+		auditDetail.setCreatedTime(rs.getLong("createdtime"));
 		auditDetail.setLastModifiedBy(rs.getString("lastmodifiedby"));
-		auditDetail.setLastModifiedTime(rs.getLong("lastmodifieddate"));
+		auditDetail.setLastModifiedTime(rs.getLong("lastmodifiedtime"));
 		
 		receipt.setAuditDetail(auditDetail);
 		

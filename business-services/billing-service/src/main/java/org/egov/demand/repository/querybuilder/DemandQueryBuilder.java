@@ -121,6 +121,25 @@ public class DemandQueryBuilder {
 			+ " WHERE tenantid=? AND id IN (";
 	
 
+	public static final String COLLECTED_RECEIPT_QUERY = "SELECT DISTINCT " +
+			"pd.businessservice, " +
+			"bd.consumercode, " +
+			"pd.receiptnumber, " +
+			"pd.amountpaid as receiptamount, " +
+			"pd.receiptdate, " +
+			"p.paymentstatus as status, " +
+			"p.tenantid, " +
+			"p.createdby, " +
+			"p.createdtime, " +
+			"p.lastmodifiedby, " +
+			"p.lastmodifiedtime, " +
+			"p.transactionnumber, " +
+			"p.totalamountpaid " +
+			"FROM egcl_payment p " +
+			"INNER JOIN egcl_paymentdetail pd ON p.id = pd.paymentid AND p.tenantid = pd.tenantid " +
+			"INNER JOIN egcl_bill bd ON pd.billid = bd.id AND pd.tenantid = bd.tenantid " +
+			"WHERE p.tenantid = ? ";
+
 	public String getDemandQueryForConsumerCodes(Map<String,Set<String>> businessConsumercodeMap,List<Object> preparedStmtList, String tenantId){
 		
 		StringBuilder query = new StringBuilder(BASE_DEMAND_QUERY);
@@ -151,7 +170,51 @@ public class DemandQueryBuilder {
 		}
 		
 		return query.toString();
-				}
+	}
+
+	public String getCollectedReceiptsQuery(DemandCriteria demandCriteria, List<Object> preparedStatementValues) {
+    
+		StringBuilder query = new StringBuilder(COLLECTED_RECEIPT_QUERY);
+		
+		preparedStatementValues.add(demandCriteria.getTenantId());
+		
+		// Filter by business service
+		if (!CollectionUtils.isEmpty(demandCriteria.getBusinessServices())) {
+			query.append(" AND pd.businessservice IN (")
+				.append(getIdQueryForStrings(demandCriteria.getBusinessServices()))
+				.append(")");
+			addToPreparedStatement(preparedStatementValues, demandCriteria.getBusinessServices());
+		} else if (demandCriteria.getBusinessService() != null) {
+			query.append(" AND pd.businessservice = ?");
+			preparedStatementValues.add(demandCriteria.getBusinessService());
+		}
+		
+		// Filter by consumer codes
+		if (!CollectionUtils.isEmpty(demandCriteria.getConsumerCode())) {
+			query.append(" AND bd.consumercode IN (")
+				.append(getIdQueryForStrings(demandCriteria.getConsumerCode()))
+				.append(")");
+			addToPreparedStatement(preparedStatementValues, demandCriteria.getConsumerCode());
+		}
+		
+		// Filter by payment status (only successful payments)
+		query.append(" AND p.paymentstatus IN ('NEW', 'DEPOSITED')");
+		
+		// Filter by receipt date range if needed
+		if (demandCriteria.getPeriodFrom() != null) {
+			query.append(" AND pd.receiptdate >= ?");
+			preparedStatementValues.add(demandCriteria.getPeriodFrom());
+		}
+		
+		if (demandCriteria.getPeriodTo() != null) {
+			query.append(" AND pd.receiptdate <= ?");
+			preparedStatementValues.add(demandCriteria.getPeriodTo());
+		}
+		
+		query.append(" ORDER BY pd.receiptdate DESC");
+		
+		return query.toString();
+	}
 
 	public String getDemandQuery(DemandCriteria demandCriteria, List<Object> preparedStatementValues) {
 

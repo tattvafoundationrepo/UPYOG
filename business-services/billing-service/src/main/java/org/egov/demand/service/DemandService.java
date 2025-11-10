@@ -62,6 +62,7 @@ import org.egov.demand.config.ApplicationProperties;
 import org.egov.demand.model.ApportionDemandResponse;
 import org.egov.demand.model.AuditDetails;
 import org.egov.demand.model.BillV2.BillStatus;
+import org.egov.demand.model.CollectedReceipt;
 import org.egov.demand.model.Demand;
 import org.egov.demand.model.DemandApportionRequest;
 import org.egov.demand.model.DemandCriteria;
@@ -356,6 +357,22 @@ public class DemandService {
 			demands = demandEnrichmentUtil.enrichPayer(demands, payers);
 
 		return demands;
+	}
+
+	/**
+	 * Search method to fetch collected receipts from DB
+	 * 
+	 * @param demandCriteria
+	 * @param requestInfo
+	 * @return
+	 */
+	public List<CollectedReceipt> getCollectedReceipts(DemandCriteria demandCriteria, RequestInfo requestInfo) {
+
+		demandValidatorV1.validateDemandCriteria(demandCriteria, requestInfo);
+
+		List<CollectedReceipt> collectedReceipts = demandRepository.getCollectedReceipts(demandCriteria);
+
+		return collectedReceipts;
 	}
 
 	public void save(DemandRequest demandRequest) {

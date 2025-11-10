@@ -45,6 +45,7 @@ import java.util.Map;
 import javax.validation.Valid;
 
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.demand.model.CollectedReceipt;
 import org.egov.demand.model.Demand;
 import org.egov.demand.model.DemandCriteria;
 import org.egov.demand.service.DemandService;
@@ -113,8 +114,14 @@ public class DemandController {
 		RequestInfo requestInfo = requestInfoWrapper.getRequestInfo();
 
 		List<Demand> demands = demandService.getDemands(demandCriteria, requestInfo);
-		DemandResponse response = DemandResponse.builder().demands(demands)
-				.responseInfo(responseFactory.getResponseInfo(requestInfo, HttpStatus.OK)).build();
+		List<CollectedReceipt> collectedReceipts = demandService.getCollectedReceipts(demandCriteria, requestInfo);
+		
+		DemandResponse response = DemandResponse.builder()
+				.demands(demands)
+				.collectedReceipts(collectedReceipts)
+				.responseInfo(responseFactory.getResponseInfo(requestInfo, HttpStatus.OK))
+				.build();
+		
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 	

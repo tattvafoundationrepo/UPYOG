@@ -50,11 +50,13 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.egov.demand.model.AuditDetails;
+import org.egov.demand.model.CollectedReceipt;
 import org.egov.demand.model.Demand;
 import org.egov.demand.model.DemandCriteria;
 import org.egov.demand.model.DemandDetail;
 import org.egov.demand.model.PaymentBackUpdateAudit;
 import org.egov.demand.repository.querybuilder.DemandQueryBuilder;
+import org.egov.demand.repository.rowmapper.CollectedReceiptsRowMapper;
 import org.egov.demand.repository.rowmapper.DemandRowMapper;
 import org.egov.demand.util.Util;
 import org.egov.demand.web.contract.DemandRequest;
@@ -80,6 +82,9 @@ public class DemandRepository {
 	
 	@Autowired
 	private DemandRowMapper demandRowMapper;
+
+	@Autowired
+	private CollectedReceiptsRowMapper collectedReceiptRowMapper;
 	
 	@Autowired
 	private Util util;
@@ -89,6 +94,17 @@ public class DemandRepository {
 		List<Object> preparedStatementValues = new ArrayList<>();
 		String searchDemandQuery = demandQueryBuilder.getDemandQuery(demandCriteria, preparedStatementValues);
 		return jdbcTemplate.query(searchDemandQuery, preparedStatementValues.toArray(), demandRowMapper);
+	}
+
+	public List<CollectedReceipt> getCollectedReceipts(DemandCriteria demandCriteria) {
+    
+		List<Object> preparedStatementValues = new ArrayList<>();
+		String query = demandQueryBuilder.getCollectedReceiptsQuery(demandCriteria, preparedStatementValues);
+		
+		log.debug("Collected receipts query: " + query);
+		log.debug("Prepared statement values: " + preparedStatementValues);
+		
+		return jdbcTemplate.query(query, preparedStatementValues.toArray(), collectedReceiptRowMapper);
 	}
 	
 	/**

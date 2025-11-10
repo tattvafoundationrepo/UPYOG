@@ -21,9 +21,13 @@ public class CollectedReceipt {
 
 	private Long receiptDate;
 
-	private Status status;
+	private String status;
 
 	private AuditDetail auditDetail;
 
 	private String tenantId;
+
+	private String transactionNumber;
+
+	private Double totalAmountPaid;
 }
