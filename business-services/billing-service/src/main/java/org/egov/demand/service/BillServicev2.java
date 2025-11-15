@@ -59,6 +59,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
@@ -78,6 +79,7 @@ import org.egov.demand.model.Demand;
 import org.egov.demand.model.DemandCriteria;
 import org.egov.demand.model.DemandDetail;
 import org.egov.demand.model.GenerateBillCriteria;
+import org.egov.demand.model.GlCodeMaster;
 import org.egov.demand.model.TaxHeadMaster;
 import org.egov.demand.model.TaxHeadMasterCriteria;
 import org.egov.demand.model.UpdateBillCriteria;
@@ -621,11 +623,14 @@ public class BillServicev2 {
 		Map<String, BillAccountDetailV2> taxCodeAccountdetailMap = new HashMap<>();
 		
 		for(DemandDetail demandDetail : demand.getDemandDetails()) {
-			
+
 			TaxHeadMaster taxHead = taxHeadMap.get(demandDetail.getTaxHeadMasterCode());
 			BigDecimal amountForAccDeatil = demandDetail.getTaxAmount().subtract(demandDetail.getCollectionAmount());
 
-			addOrUpdateBillAccDetailInTaxCodeAccDetailMap(taxCodeAccountdetailMap, demandDetail, taxHead, billDetailId);
+			// Extract GLCode from MDMS TaxHeadMaster (backward compatible - can be null)
+			String glCode = extractGlCodeFromTaxHead(taxHead);
+
+			addOrUpdateBillAccDetailInTaxCodeAccDetailMap(taxCodeAccountdetailMap, demandDetail, taxHead, billDetailId, glCode);
 
 			/* Total tax and collection for the whole demand/bill-detail */
 			totalAmountForDemand = totalAmountForDemand.add(amountForAccDeatil);
@@ -670,17 +675,18 @@ public class BillServicev2 {
 	/**
 	 * creates/ updates bill-account details based on the tax-head code in
 	 * taxCodeAccDetailMap
-	 * 
+	 *
 	 * @param startPeriod
 	 * @param endPeriod
 	 * @param tenantId
 	 * @param taxCodeAccDetailMap
 	 * @param demandDetail
 	 * @param taxHead
-	 * @param amountForAccDeatil
+	 * @param billDetailId
+	 * @param glCode GL Code from MDMS (can be null for backward compatibility)
 	 */
 	private void addOrUpdateBillAccDetailInTaxCodeAccDetailMap(Map<String, BillAccountDetailV2> taxCodeAccDetailMap,
-			DemandDetail demandDetail, TaxHeadMaster taxHead, String billDetailId) {
+			DemandDetail demandDetail, TaxHeadMaster taxHead, String billDetailId, String glCode) {
 
 		BigDecimal newAmountForAccDeatil = demandDetail.getTaxAmount().subtract(demandDetail.getCollectionAmount());
 		/*
@@ -708,11 +714,12 @@ public class BillServicev2 {
 					.id(UUID.randomUUID().toString())
 					.adjustedAmount(BigDecimal.ZERO)
 					.taxHeadCode(taxHead.getCode())
+					.glCode(glCode)
 					.amount(newAmountForAccDeatil)
 					.order(taxHead.getOrder())
 					.billDetailId(billDetailId)
 					.build();
-		
+
 			taxCodeAccDetailMap.put(taxHead.getCode(), accountDetail);
 		}
 	}
@@ -737,7 +744,46 @@ public class BillServicev2 {
 		return taxHeads.stream().collect(Collectors.toMap(TaxHeadMaster::getCode, Function.identity()));
 	}
 
-	
+	/**
+	 * Extracts GLCode from TaxHeadMaster if available
+	 * Returns null if no GLCode configured (backward compatible)
+	 *
+	 * @param taxHead TaxHeadMaster object containing glCodes
+	 * @return GLCode string or null if not found
+	 */
+	private String extractGlCodeFromTaxHead(TaxHeadMaster taxHead) {
+
+		// NULL CHECK: TaxHead might not have glCodes (backward compatible)
+		if (taxHead == null || taxHead.getGlCodes() == null || taxHead.getGlCodes().isEmpty()) {
+			log.debug("No GLCodes found for taxHead: {}",
+				taxHead != null ? taxHead.getCode() : "null");
+			return null;
+		}
+
+		Long currentTime = System.currentTimeMillis();
+
+		// Filter by date validity
+		Optional<GlCodeMaster> validGlCode = taxHead.getGlCodes().stream()
+			.filter(gl -> gl != null && gl.getFromDate() != null && gl.getToDate() != null)
+			.filter(gl -> gl.getFromDate() <= currentTime && gl.getToDate() >= currentTime)
+			.findFirst();
+
+		if (validGlCode.isPresent()) {
+			String glCode = validGlCode.get().getGlCode();
+			log.info("GLCode extracted for taxHead {}: {}", taxHead.getCode(), glCode);
+			return glCode;
+		}
+
+		// Fallback: Use first GLCode if no date match
+		GlCodeMaster firstGlCode = taxHead.getGlCodes().get(0);
+		if (firstGlCode != null && firstGlCode.getGlCode() != null) {
+			log.warn("No date-valid GLCode found for taxHead: {}, using first available", taxHead.getCode());
+			return firstGlCode.getGlCode();
+		}
+
+		return null;
+	}
+
 	/**
 	 * To Fetch the businessServiceDetail master based on the business codes
 	 * 
