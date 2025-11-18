@@ -92,7 +92,7 @@ public class DemandRowMapper implements ResultSetExtractor<List<Demand>> {
 				demand.setStatus(StatusEnum.fromValue(rs.getString("status")));
 				demand.setIsPaymentCompleted(rs.getBoolean("ispaymentcompleted"));
 				demand.setMinimumAmountPayable(rs.getBigDecimal("dminimumAmountPayable"));
-				
+				demand.setDemandSeqNo(rs.getLong("demandseqno"));
 				PGobject adDetail = (PGobject) rs.getObject("demandadditionaldetails");	
 				JsonNode json = util.getJsonValue(adDetail);
 				demand.setAdditionalDetails(json);
