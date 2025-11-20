@@ -268,22 +268,28 @@ public class DemandService {
 		generateAndSetIdsForNewDemands(newDemands, auditDetail);
 
 		update(demandRequest, paymentBackUpdateAudit);
-		String businessService = demands.get(0).getBusinessService();
 		String tenantId = demands.get(0).getTenantId();
-		
-		UpdateBillCriteria updateBillCriteria = UpdateBillCriteria.builder()
-				.consumerCodes(demands.stream().map(Demand::getConsumerCode).collect(Collectors.toSet()))
-				.businessService(businessService)
-				.tenantId(tenantId)
-				.build();
-		
-		if (ObjectUtils.isEmpty(paymentBackUpdateAudit)) {
-			
-			updateBillCriteria.setStatusToBeUpdated(BillStatus.EXPIRED);
-			billRepoV2.updateBillStatus(updateBillCriteria);
-		} else {
-			
-			updateBillCriteria.setStatusToBeUpdated(BillStatus.PAID);
+		BillStatus statusToBeUpdated = ObjectUtils.isEmpty(paymentBackUpdateAudit) ? BillStatus.EXPIRED : BillStatus.PAID;
+
+		// Group demands by business service to update bills correctly for each service
+		Map<String, Set<String>> businessServiceToConsumerCodesMap = demands.stream()
+				.collect(Collectors.groupingBy(
+						Demand::getBusinessService,
+						Collectors.mapping(Demand::getConsumerCode, Collectors.toSet())
+				));
+
+		// Update bill status for each business service separately
+		for (Map.Entry<String, Set<String>> entry : businessServiceToConsumerCodesMap.entrySet()) {
+			String businessService = entry.getKey();
+			Set<String> consumerCodes = entry.getValue();
+
+			UpdateBillCriteria updateBillCriteria = UpdateBillCriteria.builder()
+					.consumerCodes(consumerCodes)
+					.businessService(businessService)
+					.tenantId(tenantId)
+					.statusToBeUpdated(statusToBeUpdated)
+					.build();
+
 			billRepoV2.updateBillStatus(updateBillCriteria);
 		}
 		// producer.push(applicationProperties.getDemandIndexTopic(), demandRequest);

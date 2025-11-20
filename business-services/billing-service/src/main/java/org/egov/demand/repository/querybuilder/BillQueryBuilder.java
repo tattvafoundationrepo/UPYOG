@@ -113,14 +113,13 @@ public class BillQueryBuilder {
 			preparedStatementValues.add(searchBill.getMobileNumber());
 		}
 
-		if (searchBill.getService() != null) {
-			selectQuery.append(" AND bd.businessservice = ?");
-			preparedStatementValues.add(searchBill.getService());
-		}
-
+		// Prioritize 'services' set over single 'service' for multiple business services support
 		if (!CollectionUtils.isEmpty(searchBill.getServices())) {
 			selectQuery.append(" AND bd.businessservice IN (");
 			appendListToQuery(searchBill.getServices(), preparedStatementValues, selectQuery);
+		} else if (searchBill.getService() != null) {
+			selectQuery.append(" AND bd.businessservice = ?");
+			preparedStatementValues.add(searchBill.getService());
 		}
 		
 		if (searchBill.getFromPeriod() != null) {
