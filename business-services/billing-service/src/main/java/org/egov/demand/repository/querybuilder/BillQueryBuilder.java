@@ -117,6 +117,11 @@ public class BillQueryBuilder {
 			selectQuery.append(" AND bd.businessservice = ?");
 			preparedStatementValues.add(searchBill.getService());
 		}
+
+		if (!CollectionUtils.isEmpty(searchBill.getServices())) {
+			selectQuery.append(" AND bd.businessservice IN (");
+			appendListToQuery(searchBill.getServices(), preparedStatementValues, selectQuery);
+		}
 		
 		if (searchBill.getFromPeriod() != null) {
 			selectQuery.append(" AND bd.fromperiod = ?");

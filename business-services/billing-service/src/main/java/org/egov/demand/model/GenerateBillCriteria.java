@@ -119,16 +119,24 @@ public class GenerateBillCriteria {
 	
 	/**
 	 * Converts Gen Bill criteria to search bill criteria to fetch only active bills
-	 * 
+	 *
 	 * @return BillSearchCriteria
 	 */
 	public BillSearchCriteria toBillSearchCriteria() {
+
+		Set<String> businessServiceSet = null;
+		if (!CollectionUtils.isEmpty(businessServices)) {
+			businessServiceSet = businessServices;
+		} else if (businessService != null) {
+			businessServiceSet = Collections.singleton(businessService);
+		}
 
 		return BillSearchCriteria.builder()
 				.consumerCode(consumerCode)
 				.mobileNumber(mobileNumber)
 				.status(BillStatus.ACTIVE)
 				.service(businessService)
+				.services(businessServiceSet)
 				.tenantId(tenantId)
 				.isOrderBy(true)
 				.email(email)

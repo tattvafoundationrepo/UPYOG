@@ -277,9 +277,10 @@ public class BillServicev2 {
 		 */
  		List<String> cosnumerCodesNotFoundInBill = new ArrayList<>(billCriteria.getConsumerCode());
 		Set<String> cosnumerCodesToBeExpired = new HashSet<>();
+		Map<String, Set<String>> businessServiceToConsumerCodesMap = new HashMap<>();
 		List<BillV2> billsToBeReturned = new ArrayList<>();
 		Boolean isBillExpired = false;
-		
+
 		for (Entry<String, BillV2> entry : consumerCodeAndBillMap.entrySet()) {
 			BillV2 bill = entry.getValue();
 
@@ -289,14 +290,19 @@ public class BillServicev2 {
 					break;
 				}
 			}
-			if (!isBillExpired)
+			if (!isBillExpired) {
 				billsToBeReturned.add(bill);
-			else
+			} else {
 				cosnumerCodesToBeExpired.add(bill.getConsumerCode());
+				// Group consumer codes by business service
+				businessServiceToConsumerCodesMap
+					.computeIfAbsent(bill.getBusinessService(), k -> new HashSet<>())
+					.add(bill.getConsumerCode());
+			}
 			cosnumerCodesNotFoundInBill.remove(entry.getKey());
 			isBillExpired = false;
 		}
-			
+
 		log.info("Consumer Code to be expired " + cosnumerCodesToBeExpired);
 		log.info("Consumer code not found in bill " + cosnumerCodesNotFoundInBill);
 		/*
@@ -311,16 +317,21 @@ public class BillServicev2 {
 
 			if (!CollectionUtils.isEmpty(billCriteria.getBusinessServices())) {
 				for (String businessService : billCriteria.getBusinessServices()) {
-					updateDemandsForexpiredBillDetails(businessService, billCriteria.getConsumerCode(), billCriteria.getTenantId(), requestInfoWrapper);
+					// Get consumer codes specific to this business service
+					Set<String> consumerCodesForService = businessServiceToConsumerCodesMap.getOrDefault(businessService, new HashSet<>());
 
-					billRepository.updateBillStatus(
-							UpdateBillCriteria.builder()
-							.statusToBeUpdated(BillStatus.EXPIRED)
-							.businessService(businessService)
-							.consumerCodes(cosnumerCodesToBeExpired)
-							.tenantId(billCriteria.getTenantId())
-							.build()
-							);
+					if (!consumerCodesForService.isEmpty()) {
+						updateDemandsForexpiredBillDetails(businessService, consumerCodesForService, billCriteria.getTenantId(), requestInfoWrapper);
+
+						billRepository.updateBillStatus(
+								UpdateBillCriteria.builder()
+								.statusToBeUpdated(BillStatus.EXPIRED)
+								.businessService(businessService)
+								.consumerCodes(consumerCodesForService)
+								.tenantId(billCriteria.getTenantId())
+								.build()
+								);
+					}
 				}
 			} else if (billCriteria.getBusinessService() != null) {
 				updateDemandsForexpiredBillDetails(billCriteria.getBusinessService(), billCriteria.getConsumerCode(), billCriteria.getTenantId(), requestInfoWrapper);
@@ -427,7 +438,7 @@ public class BillServicev2 {
 				.tenantId(billCriteria.getTenantId())
 				.email(billCriteria.getEmail())
 				.consumerCode(consumerCodes)
-				//.isPaymentCompleted(false)
+				.isPaymentCompleted(false)
 				.receiptRequired(false)
 				.demandId(demandIds)
 				.build();

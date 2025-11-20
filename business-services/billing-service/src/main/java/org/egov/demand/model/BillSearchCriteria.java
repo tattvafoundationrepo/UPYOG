@@ -46,6 +46,8 @@ public class BillSearchCriteria {
 	@Size(max = 256)
 	private String service;
 
+	private Set<String> services;
+
 	@Default
 	private boolean isOrderBy = false;
 
