@@ -91,6 +91,18 @@ public class Constants {
 	public static final String CONSUMER_CODE_DUPLICATE_MSG = "Demand already exists in the same period with the same businessService for the given consumercodes : {consumercodes}";
 	public static final String CONSUMER_CODE_DUPLICATE_CONSUMERCODE_TEXT = "{consumercodes}";
 
+	// Advance Payment Constants
+	public static final String ADVANCE_NOT_ALLOWED_KEY = "EG_BS_ADVANCE_NOT_ALLOWED";
+	public static final String ADVANCE_NOT_ALLOWED_MSG = "Advance payment is not allowed for businessService: {businessService}";
+	public static final String ADVANCE_BUSINESSSERVICE_REPLACE_TEXT = "{businessService}";
+
+	public static final String ADVANCE_LIMIT_EXCEEDED_KEY = "EG_BS_ADVANCE_LIMIT_EXCEEDED";
+	public static final String ADVANCE_LIMIT_EXCEEDED_MSG = "Advance index {advanceIndex} exceeds maximum allowed limit of {maxLimit} for businessService: {businessService}";
+	public static final String ADVANCE_INDEX_REPLACE_TEXT = "{advanceIndex}";
+	public static final String MAX_ADVANCE_LIMIT_REPLACE_TEXT = "{maxLimit}";
+
+	public static final int MAX_ADVANCE_MONTHS = 12;
+
 	public static final String BILL_GEN_MANDATORY_FIELDS_MISSING_KEY = "BILL_GEN_MANDATORY_FIELDS_MISSING";
 	public static final String BILL_GEN_MANDATORY_FIELDS_MISSING_MSG = "Valid search criteria fields missing, please give some valid criteria like mobileNumber/email OR 'businessService & consumerCode' OR demandId";
 	

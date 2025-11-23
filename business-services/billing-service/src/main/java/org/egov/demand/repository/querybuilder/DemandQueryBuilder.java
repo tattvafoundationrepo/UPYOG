@@ -69,6 +69,7 @@ public class DemandQueryBuilder {
 			+ "dmd.lastmodifiedby AS dlastmodifiedby,dmd.createdtime AS dcreatedtime,"
 			+ "dmd.lastmodifiedtime AS dlastmodifiedtime,dmd.tenantid AS dtenantid,dmd.status,"
 			+ "dmd.additionaldetails as demandadditionaldetails,dmd.ispaymentcompleted as ispaymentcompleted,dmd.demandseqno,"
+			+ "dmd.isadvance as isadvance,dmd.advanceindex as advanceindex,"
 
 			+ "dmdl.id AS dlid,dmdl.demandid AS dldemandid,dmdl.taxheadcode AS dltaxheadcode,"
 			+ "dmdl.taxamount AS dltaxamount,dmdl.collectionamount AS dlcollectionamount,"
@@ -92,8 +93,8 @@ public class DemandQueryBuilder {
 
 	public static final String DEMAND_INSERT_QUERY = "INSERT INTO egbs_demand_v1 "
 			+ "(id,consumerCode,consumerType,businessService,payer,taxPeriodFrom,taxPeriodTo,"
-			+ "minimumAmountPayable,createdby,lastModifiedby,createdtime,lastModifiedtime,tenantid, status, additionaldetails, billexpirytime, fixedBillExpiryDate) "
-			+ "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);";
+			+ "minimumAmountPayable,createdby,lastModifiedby,createdtime,lastModifiedtime,tenantid, status, additionaldetails, billexpirytime, fixedBillExpiryDate, isadvance, advanceindex) "
+			+ "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);";
 
 	public static final String DEMAND_DETAIL_INSERT_QUERY = "INSERT INTO egbs_demanddetail_v1 "
 			+ "(id,demandid,taxHeadCode,taxamount,collectionamount,"
@@ -102,15 +103,15 @@ public class DemandQueryBuilder {
 
 	public static final String DEMAND_UPDATE_QUERY = "UPDATE egbs_demand_v1 SET " + "payer=?,taxPeriodFrom=?,"
 			+ "taxPeriodTo=?,minimumAmountPayable=?,lastModifiedby=?," + "lastModifiedtime=?,tenantid=?,"
-			+ " status=?,additionaldetails=?,billexpirytime=?,ispaymentcompleted=?, fixedBillExpiryDate=? WHERE id=? AND tenantid=?;";
+			+ " status=?,additionaldetails=?,billexpirytime=?,ispaymentcompleted=?, fixedBillExpiryDate=?, isadvance=?, advanceindex=? WHERE id=? AND tenantid=?;";
 	
 	public static final String DEMAND_DETAIL_UPDATE_QUERY = "UPDATE egbs_demanddetail_v1 SET taxamount=?,collectionamount=?,"
 			+ "lastModifiedby=?,lastModifiedtime=?, additionaldetails=? WHERE id=? AND demandid=? AND tenantid=?;";
 
 	public static final String DEMAND_AUDIT_INSERT_QUERY = "INSERT INTO egbs_demand_v1_audit "
 			+ "(demandid,consumerCode,consumerType,businessService,payer,taxPeriodFrom,taxPeriodTo,"
-			+ "minimumAmountPayable,createdby,createdtime,tenantid, status, additionaldetails,id,billexpirytime, ispaymentcompleted) "
-			+ "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);";
+			+ "minimumAmountPayable,createdby,createdtime,tenantid, status, additionaldetails,id,billexpirytime, ispaymentcompleted, isadvance, advanceindex) "
+			+ "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);";
 
 	public static final String DEMAND_DETAIL_AUDIT_INSERT_QUERY = "INSERT INTO egbs_demanddetail_v1_audit "
 			+ "(demanddetailid,demandid,taxHeadCode,taxamount,collectionamount,"

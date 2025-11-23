@@ -214,6 +214,8 @@ public class DemandRepository {
 				ps.setObject(15, util.getPGObject(demand.getAdditionalDetails()));
 				ps.setObject(16, demand.getBillExpiryTime());
 				ps.setObject(17, null);
+				ps.setBoolean(18, demand.getIsAdvance() != null ? demand.getIsAdvance() : false);
+				ps.setInt(19, demand.getAdvanceIndex() != null ? demand.getAdvanceIndex() : 0);
 			}
 
 			@Override
@@ -272,9 +274,11 @@ public class DemandRepository {
 				ps.setObject(10, demand.getBillExpiryTime());
 				ps.setBoolean(11, demand.getIsPaymentCompleted());
 				ps.setObject(12, null);
-				ps.setString(13, demand.getId());
-				ps.setString(14, demand.getTenantId());
-				
+				ps.setBoolean(13, demand.getIsAdvance() != null ? demand.getIsAdvance() : false);
+				ps.setInt(14, demand.getAdvanceIndex() != null ? demand.getAdvanceIndex() : 0);
+				ps.setString(15, demand.getId());
+				ps.setString(16, demand.getTenantId());
+
 			}
 
 			@Override
@@ -339,7 +343,9 @@ public class DemandRepository {
 				ps.setObject(13, util.getPGObject(demand.getAdditionalDetails()));
 				ps.setString(14, UUID.randomUUID().toString());
 				ps.setObject(15, demand.getBillExpiryTime());
-				ps.setBoolean(16,demand.getIsPaymentCompleted());
+				ps.setBoolean(16, demand.getIsPaymentCompleted());
+				ps.setBoolean(17, demand.getIsAdvance() != null ? demand.getIsAdvance() : false);
+				ps.setInt(18, demand.getAdvanceIndex() != null ? demand.getAdvanceIndex() : 0);
 			}
 
 			@Override

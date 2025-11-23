@@ -91,6 +91,15 @@ public class Demand {
 
     @Default
     private Boolean isPaymentCompleted = false;
+
+    @Default
+    @JsonProperty("isAdvance")
+    private Boolean isAdvance = false;
+
+    @Default
+    @JsonProperty("advanceIndex")
+    private Integer advanceIndex = 0;
+
     @JsonProperty("status")
     private StatusEnum status;
 

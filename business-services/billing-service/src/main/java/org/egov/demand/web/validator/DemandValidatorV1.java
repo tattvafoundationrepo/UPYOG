@@ -39,6 +39,15 @@ import static org.egov.demand.util.Constants.TAXPERIOD_PATH_CODE;
 import static org.egov.demand.util.Constants.USER_UUID_NOT_FOUND_KEY;
 import static org.egov.demand.util.Constants.USER_UUID_NOT_FOUND_MSG;
 import static org.egov.demand.util.Constants.USER_UUID_NOT_FOUND_REPLACETEXT;
+import static org.egov.demand.util.Constants.ADVANCE_NOT_ALLOWED_KEY;
+import static org.egov.demand.util.Constants.ADVANCE_NOT_ALLOWED_MSG;
+import static org.egov.demand.util.Constants.ADVANCE_BUSINESSSERVICE_REPLACE_TEXT;
+import static org.egov.demand.util.Constants.ADVANCE_LIMIT_EXCEEDED_KEY;
+import static org.egov.demand.util.Constants.ADVANCE_LIMIT_EXCEEDED_MSG;
+import static org.egov.demand.util.Constants.ADVANCE_INDEX_REPLACE_TEXT;
+import static org.egov.demand.util.Constants.MAX_ADVANCE_LIMIT_REPLACE_TEXT;
+import static org.egov.demand.util.Constants.MAX_ADVANCE_MONTHS;
+import static org.egov.demand.util.Constants.ADVANCE_BUSINESSSERVICE_JSONPATH_CODE;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -190,7 +199,7 @@ public class DemandValidatorV1 {
 		
 		if (isCreate) {
 			/* validating consumer codes for create demands*/
-			validateConsumerCodes(demands, businessConsumerValidatorMap, errorMap);
+			validateConsumerCodes(demands, businessConsumerValidatorMap, errorMap, mdmsData);
 		}
 			
 		/* passing collected values to throw errors
@@ -292,41 +301,115 @@ public class DemandValidatorV1 {
 	
 	/**
 	 * Method to validate the Consumer codes in demand request for period and business Code
-	 * 
+	 * Also validates advance demands - allows duplicate periods if isAdvance=true and isAdvanceAllowed=true for the business service
+	 *
 	 * @param demands list of demand to be validated
+	 * @param businessConsumerValidatorMap map of business service to consumer codes
 	 * @param errorMap map with error key and msg
+	 * @param mdmsData MDMS data for fetching business service configuration
 	 */
 	private void validateConsumerCodes(List<Demand> demands, Map<String, Set<String>> businessConsumerValidatorMap,
-			Map<String, String> errorMap) {
+			Map<String, String> errorMap, DocumentContext mdmsData) {
 
 		String tenantId = demands.get(0).getTenantId();
-		List<String> errors = new ArrayList<>();
+		List<String> duplicateErrors = new ArrayList<>();
+		List<String> advanceNotAllowedErrors = new ArrayList<>();
+		List<String> advanceLimitErrors = new ArrayList<>();
+
+		// Cache for isAdvanceAllowed per business service
+		Map<String, Boolean> advanceAllowedCache = new HashMap<>();
 
 		/*
-		 * Collecting the demands from DB for the consumer codes in to a map 
+		 * Collecting the demands from DB for the consumer codes in to a map
 		 */
 		List<Demand> dbDemands = demandRepository.getDemandsForConsumerCodes(businessConsumerValidatorMap, tenantId);
 		Map<String, List<Demand>> dbDemandMap = dbDemands.stream()
 				.collect(Collectors.groupingBy(Demand::getConsumerCode, Collectors.toList()));
 
-		if (!dbDemandMap.isEmpty()) {
-			for (Demand demand : demands) {
+		for (Demand demand : demands) {
 
-				List<Demand> demandsWithSamekey = dbDemandMap.get(demand.getConsumerCode());
-				if (CollectionUtils.isEmpty(demandsWithSamekey))
+			String businessService = demand.getBusinessService();
+			Boolean isAdvanceDemand = Boolean.TRUE.equals(demand.getIsAdvance());
+
+			// Get isAdvanceAllowed from cache or MDMS
+			Boolean isAdvanceAllowed = advanceAllowedCache.computeIfAbsent(businessService, bs -> {
+				try {
+					return getIsAdvanceAllowed(bs, mdmsData);
+				} catch (Exception e) {
+					log.warn("Could not fetch isAdvanceAllowed for businessService: " + bs + ", defaulting to false", e);
+					return false;
+				}
+			});
+
+			// Validate advance demand constraints
+			if (isAdvanceDemand) {
+				if (!isAdvanceAllowed) {
+					advanceNotAllowedErrors.add(demand.getConsumerCode() + " (" + businessService + ")");
 					continue;
+				}
 
-				for (Demand demandFromMap : demandsWithSamekey) {
-					if (demand.getTaxPeriodFrom().equals(demandFromMap.getTaxPeriodFrom())
-							&& demand.getTaxPeriodTo().equals(demandFromMap.getTaxPeriodTo()))
-						errors.add(demand.getConsumerCode());
+				// Validate advance index limit
+				Integer advanceIndex = demand.getAdvanceIndex() != null ? demand.getAdvanceIndex() : 0;
+				if (advanceIndex > MAX_ADVANCE_MONTHS) {
+					advanceLimitErrors.add(demand.getConsumerCode() + " (index: " + advanceIndex + ")");
+					continue;
+				}
+
+				// Skip duplicate check for advance demands - the unique constraint with advanceIndex handles this
+				continue;
+			}
+
+			// Regular demand - check for duplicates
+			List<Demand> demandsWithSamekey = dbDemandMap.get(demand.getConsumerCode());
+			if (CollectionUtils.isEmpty(demandsWithSamekey))
+				continue;
+
+			for (Demand demandFromMap : demandsWithSamekey) {
+				// Only check against non-advance demands with advanceIndex=0
+				if (Boolean.TRUE.equals(demandFromMap.getIsAdvance()) ||
+					(demandFromMap.getAdvanceIndex() != null && demandFromMap.getAdvanceIndex() > 0)) {
+					continue;
+				}
+
+				if (demand.getTaxPeriodFrom().equals(demandFromMap.getTaxPeriodFrom())
+						&& demand.getTaxPeriodTo().equals(demandFromMap.getTaxPeriodTo())) {
+					duplicateErrors.add(demand.getConsumerCode());
 				}
 			}
 		}
-		
-		if(!CollectionUtils.isEmpty(errors))
+
+		if (!CollectionUtils.isEmpty(duplicateErrors))
 			errorMap.put(CONSUMER_CODE_DUPLICATE_KEY,
-					CONSUMER_CODE_DUPLICATE_MSG.replace(CONSUMER_CODE_DUPLICATE_CONSUMERCODE_TEXT, errors.toString()));
+					CONSUMER_CODE_DUPLICATE_MSG.replace(CONSUMER_CODE_DUPLICATE_CONSUMERCODE_TEXT, duplicateErrors.toString()));
+
+		if (!CollectionUtils.isEmpty(advanceNotAllowedErrors))
+			errorMap.put(ADVANCE_NOT_ALLOWED_KEY,
+					ADVANCE_NOT_ALLOWED_MSG.replace(ADVANCE_BUSINESSSERVICE_REPLACE_TEXT, advanceNotAllowedErrors.toString()));
+
+		if (!CollectionUtils.isEmpty(advanceLimitErrors))
+			errorMap.put(ADVANCE_LIMIT_EXCEEDED_KEY,
+					ADVANCE_LIMIT_EXCEEDED_MSG
+						.replace(ADVANCE_INDEX_REPLACE_TEXT, advanceLimitErrors.toString())
+						.replace(MAX_ADVANCE_LIMIT_REPLACE_TEXT, String.valueOf(MAX_ADVANCE_MONTHS))
+						.replace(ADVANCE_BUSINESSSERVICE_REPLACE_TEXT, ""));
+	}
+
+	/**
+	 * Get isAdvanceAllowed flag from MDMS for a business service
+	 *
+	 * @param businessService the business service code
+	 * @param mdmsData MDMS document context
+	 * @return true if advance is allowed, false otherwise
+	 */
+	private Boolean getIsAdvanceAllowed(String businessService, DocumentContext mdmsData) {
+		String jsonpath = ADVANCE_BUSINESSSERVICE_JSONPATH_CODE.replace("{}", businessService);
+		List<Boolean> isAdvanceAllowed = mdmsData.read(jsonpath);
+
+		if (CollectionUtils.isEmpty(isAdvanceAllowed)) {
+			return false; // Default to false if not configured
+		}
+
+		return isAdvanceAllowed.get(0);
 	}
 	
     /**
