@@ -352,9 +352,13 @@ public class DemandService {
 				if (!CollectionUtils.isEmpty(payerUuids)) {
 
 					userSearchRequest = UserSearchRequest.builder().requestInfo(requestInfo).uuid(payerUuids).build();
-
-					payers = mapper.convertValue(serviceRequestRepository.fetchResult(userUri, userSearchRequest),
+                    try{
+						payers = mapper.convertValue(serviceRequestRepository.fetchResult(userUri, userSearchRequest),
 							UserResponse.class).getUser();
+					}
+					 catch(Exception e){
+						e.printStackTrace();
+					 }
 				}
 			}
 		}
@@ -427,7 +431,8 @@ public class DemandService {
 
 			// The current demand is added to get apportioned
 			demandsToBeApportioned.add(demand);
-
+            
+		
 			DemandApportionRequest apportionRequest = DemandApportionRequest.builder().requestInfo(requestInfo).demands(demandsToBeApportioned).tenantId(tenantId).build();
 
 			Object response = serviceRequestRepository.fetchResult(util.getApportionURL(), apportionRequest);
@@ -435,9 +440,24 @@ public class DemandService {
 
 			// Only the current demand is to be created rest all are to be updated
 			apportionDemandResponse.getDemands().forEach(demandFromResponse -> {
-				if(demandFromResponse.getId().equalsIgnoreCase(demand.getId()))
-					demandToBeCreated.add(demandFromResponse);
-				else demandToBeUpdated.add(demandFromResponse);
+				if(demandFromResponse.getId().equalsIgnoreCase(demand.getId())){
+                  demandsToBeApportioned.forEach(d -> {
+                    if(demandFromResponse.getId().equalsIgnoreCase(d.getId())){
+                        demandFromResponse.setIsAdvance(d.getIsAdvance());
+						demandFromResponse.setAdvanceIndex(d.getAdvanceIndex());
+					 }
+				}); 
+				  demandToBeCreated.add(demandFromResponse);
+				}
+				else {
+					demandsToBeApportioned.forEach(d -> {
+                    if(demandFromResponse.getId().equalsIgnoreCase(d.getId())){
+                        demandFromResponse.setIsAdvance(d.getIsAdvance());
+						demandFromResponse.setAdvanceIndex(d.getAdvanceIndex());
+					 }
+					}); 
+					demandToBeUpdated.add(demandFromResponse);
+				}
 			});
 		}
 
