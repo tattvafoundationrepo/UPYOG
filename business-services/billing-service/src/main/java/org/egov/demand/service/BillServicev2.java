@@ -51,7 +51,6 @@ import static org.egov.demand.util.Constants.URL_PARAM_SEPERATOR;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashMap;
@@ -160,12 +159,9 @@ public class BillServicev2 {
 
 	@Value("${kafka.topics.billgen.topic.name}")
 	private String notifTopicName;
-	
+
 	private static List<String> ownerPlainRequestFieldsList;
-	
-	
-	private List<String> ADVANCE_ALLOWED_BUSINESS_SERVICES=Arrays.asList("WS","SW");
-	
+
 	/**
 	 * Cancell bill operation can be carried by this method, based on consumerCodes
 	 * and businessService.
@@ -425,41 +421,80 @@ public class BillServicev2 {
 			businessServiceSet = Collections.singleton(billCriteria.getBusinessService());
 		}
 
-		boolean hasWaterSewerageServices = businessServiceSet != null &&
-				businessServiceSet.stream().anyMatch(bs -> bs.equalsIgnoreCase("WS") || bs.equalsIgnoreCase("SW"));
+		// Fetch business service details to check if advance is allowed
+		// Replaces hardcoded WS/SW check to support all advance-enabled business services (e.g., TX.Emarket_Rental_Fees)
+		Map<String, BusinessServiceDetail> businessServiceMap = null;
+		boolean hasAdvanceAllowedServices = false;
 
-		DemandCriteria demandCriteria = new DemandCriteria();
-		if (hasWaterSewerageServices)
+		if (businessServiceSet != null && !businessServiceSet.isEmpty()) {
+			// Fetch business service details from MDMS
+			businessServiceMap = getBusinessService(businessServiceSet,
+													billCriteria.getTenantId(),
+													requestInfo);
+
+			// Check if any business service has isAdvanceAllowed = true
+			hasAdvanceAllowedServices = businessServiceMap.values().stream()
+					.anyMatch(bs -> Boolean.TRUE.equals(bs.getIsAdvanceAllowed()));
+		}
+
+		// Build demand criteria based on advance-allowed status
+		DemandCriteria demandCriteria;
+		if (hasAdvanceAllowedServices) {
+			// For advance-allowed services, don't filter by isPaymentCompleted
+			// This allows zero-amount demands to be fetched
 			demandCriteria = DemandCriteria.builder()
-				.status(org.egov.demand.model.Demand.StatusEnum.ACTIVE.toString())
-				.businessService(billCriteria.getBusinessService())
-				.businessServices(businessServiceSet)
-				.mobileNumber(billCriteria.getMobileNumber())
-				.tenantId(billCriteria.getTenantId())
-				.email(billCriteria.getEmail())
-				.consumerCode(consumerCodes)
-				// .isPaymentCompleted(false)
-				.receiptRequired(false)
-				.demandId(demandIds)
-				.build();
-		else
+					.status(org.egov.demand.model.Demand.StatusEnum.ACTIVE.toString())
+					.businessService(billCriteria.getBusinessService())
+					.businessServices(businessServiceSet)
+					.mobileNumber(billCriteria.getMobileNumber())
+					.tenantId(billCriteria.getTenantId())
+					.email(billCriteria.getEmail())
+					.consumerCode(consumerCodes)
+					// .isPaymentCompleted(false)  // Commented out for advance-allowed services
+					.receiptRequired(false)
+					.demandId(demandIds)
+					.build();
+		} else {
+			// For non-advance services, filter by isPaymentCompleted
 			demandCriteria = DemandCriteria.builder()
-			.status(org.egov.demand.model.Demand.StatusEnum.ACTIVE.toString())
-			.businessService(billCriteria.getBusinessService())
-			.businessServices(businessServiceSet)
-			.mobileNumber(billCriteria.getMobileNumber())
-			.tenantId(billCriteria.getTenantId())
-			.email(billCriteria.getEmail())
-			.consumerCode(consumerCodes)
-			.isPaymentCompleted(false)
-			.receiptRequired(false)
-			.demandId(demandIds)
-			.build();
+					.status(org.egov.demand.model.Demand.StatusEnum.ACTIVE.toString())
+					.businessService(billCriteria.getBusinessService())
+					.businessServices(businessServiceSet)
+					.mobileNumber(billCriteria.getMobileNumber())
+					.tenantId(billCriteria.getTenantId())
+					.email(billCriteria.getEmail())
+					.consumerCode(consumerCodes)
+					.isPaymentCompleted(false)
+					.receiptRequired(false)
+					.demandId(demandIds)
+					.build();
+		}
 		
 
 		/* Fetching demands for the given bill search criteria */
 		List<Demand> demands = demandService.getDemands(demandCriteria, requestInfo);
-		
+
+		// For advance-allowed services, filter out old zero-amount demands
+		// Keep only: (1) non-zero demands, (2) recent zero-amount advance demands
+		if (hasAdvanceAllowedServices && !CollectionUtils.isEmpty(demands)) {
+			int originalSize = demands.size();
+			demands = demands.stream()
+					.filter(demand -> {
+						// Always include non-zero demands
+						if (!isZeroAmountDemand(demand)) {
+							return true;
+						}
+						// For zero-amount demands, only include if they are recent advances
+						return isRecentZeroAmountAdvanceDemand(demand);
+					})
+					.collect(Collectors.toList());
+
+			if (originalSize != demands.size()) {
+				log.info("Filtered out {} old zero-amount demands. Remaining demands: {}",
+						originalSize - demands.size(), demands.size());
+			}
+		}
+
 		List<BillV2> bills;
 
 		if (!demands.isEmpty())
@@ -569,7 +604,10 @@ public class BillServicev2 {
 					billAmount = billAmount.add(billDetail.getAmount());
 				}
 				
-				if ((billAmount.compareTo(BigDecimal.ZERO) >= 0) || (billAmount.compareTo(BigDecimal.ZERO) < 0 && ADVANCE_ALLOWED_BUSINESS_SERVICES.contains(demands.get(0).getBusinessService()))) {
+				// Create bill if: (1) non-negative amount OR (2) negative amount for advance-allowed services
+				// Replaced hardcoded ADVANCE_ALLOWED_BUSINESS_SERVICES with dynamic isAdvanceAllowed check
+				if ((billAmount.compareTo(BigDecimal.ZERO) >= 0) ||
+						(billAmount.compareTo(BigDecimal.ZERO) < 0 && Boolean.TRUE.equals(business.getIsAdvanceAllowed()))) {
 
 					BillV2 bill = BillV2.builder()
 						.auditDetails(util.getAuditDetail(requestInfo))
@@ -672,7 +710,7 @@ public class BillServicev2 {
 		Long billExpiryPeriod = demand.getBillExpiryTime();
 		Long fixedBillExpiryDate = demand.getFixedBillExpiryDate();
 		Calendar cal = Calendar.getInstance();
-		
+
 		if (!ObjectUtils.isEmpty(fixedBillExpiryDate) && fixedBillExpiryDate > cal.getTimeInMillis()) {
 			cal.setTimeInMillis(fixedBillExpiryDate);
 		} else if (!ObjectUtils.isEmpty(billExpiryPeriod) && 0 < billExpiryPeriod) {
@@ -681,6 +719,64 @@ public class BillServicev2 {
 
 		cal.set(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DATE), 23, 59, 59);
 		return cal.getTimeInMillis();
+	}
+
+	/**
+	 * Checks if a demand has zero net amount (taxAmount - collectionAmount = 0)
+	 *
+	 * @param demand the demand to check
+	 * @return true if demand has zero net amount, false otherwise
+	 */
+	private boolean isZeroAmountDemand(Demand demand) {
+		BigDecimal totalTax = BigDecimal.ZERO;
+		BigDecimal totalCollection = BigDecimal.ZERO;
+
+		for (DemandDetail detail : demand.getDemandDetails()) {
+			totalTax = totalTax.add(detail.getTaxAmount());
+			totalCollection = totalCollection.add(detail.getCollectionAmount());
+		}
+
+		return totalTax.subtract(totalCollection).compareTo(BigDecimal.ZERO) == 0;
+	}
+
+	/**
+	 * Checks if an advance demand with zero amount was created recently
+	 * and should be allowed to generate a bill.
+	 *
+	 * This enables customers to make multiple advance payments within the same tax period
+	 * by allowing bill generation for zero-amount advance demands created within a
+	 * configurable time window (default: 24 hours).
+	 *
+	 * @param demand the demand to check
+	 * @return true if demand is a recent zero-amount advance, false otherwise
+	 */
+	private boolean isRecentZeroAmountAdvanceDemand(Demand demand) {
+		// Check 1: Must be an advance demand
+		if (!Boolean.TRUE.equals(demand.getIsAdvance())) {
+			return false;
+		}
+
+		// Check 2: Must have zero amount
+		if (!isZeroAmountDemand(demand)) {
+			return false;
+		}
+
+		// Check 3: Must be created within configured time window (default 24 hours)
+		Long createdTime = demand.getAuditDetails().getCreatedTime();
+		Long currentTime = System.currentTimeMillis();
+		Long allowedWindowMillis = appProps.getAdvanceZeroAmountAllowHours() * 60 * 60 * 1000L;
+		Long thresholdTime = currentTime - allowedWindowMillis;
+
+		boolean isRecent = createdTime >= thresholdTime;
+
+		if (isRecent) {
+			log.info("Allowing bill generation for recent zero-amount advance demand: " +
+					 "demandId={}, consumerCode={}, advanceIndex={}, createdTime={}, hoursAgo={}",
+					 demand.getId(), demand.getConsumerCode(), demand.getAdvanceIndex(),
+					 createdTime, (currentTime - createdTime) / (60 * 60 * 1000));
+		}
+
+		return isRecent;
 	}
 
 	/**

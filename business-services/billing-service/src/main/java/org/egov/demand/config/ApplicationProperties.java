@@ -195,4 +195,8 @@ public class ApplicationProperties {
 
 	@Value("${statelevel.rolecode.excluded.list}")
 	private List<String> statelevelRolecodeExclusionList;
+
+	// Advance Payment Configurations
+	@Value("${billing.advance.zero.amount.allow.hours:24}")
+	private Long advanceZeroAmountAllowHours;
 }
