@@ -199,7 +199,7 @@ public class DemandQueryBuilder {
 		}
 		
 		// Filter by payment status (only successful payments)
-		query.append(" AND p.paymentstatus IN ('NEW', 'DEPOSITED')");
+		// query.append(" AND p.paymentstatus IN ('NEW', 'DEPOSITED')");
 		
 		// Filter by receipt date range if needed
 		if (demandCriteria.getPeriodFrom() != null) {
