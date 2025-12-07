@@ -75,7 +75,8 @@ public class DemandQueryBuilder {
 			+ "dmdl.taxamount AS dltaxamount,dmdl.collectionamount AS dlcollectionamount,"
 			+ "dmdl.createdby AS dlcreatedby,dmdl.lastModifiedby AS dllastModifiedby,"
 			+ "dmdl.createdtime AS dlcreatedtime,dmdl.lastModifiedtime AS dllastModifiedtime,"
-			+ "dmdl.tenantid AS dltenantid,dmdl.additionaldetails as detailadditionaldetails " + "FROM egbs_demand_v1 dmd "
+			+ "dmdl.tenantid AS dltenantid,dmdl.additionaldetails as detailadditionaldetails,"
+			+ "dmdl.glcode AS dlglcode,dmdl.saccode AS dlsaccode " + "FROM egbs_demand_v1 dmd "
 			+ "INNER JOIN egbs_demanddetail_v1 dmdl ON dmd.id=dmdl.demandid " + "AND dmd.tenantid=dmdl.tenantid WHERE ";
 
 	public static final String BASE_DEMAND_DETAIL_QUERY = "SELECT "

@@ -125,6 +125,30 @@ public class DemandRowMapper implements ResultSetExtractor<List<Demand>> {
 			demandDetail.setTaxAmount(rs.getBigDecimal("dltaxamount"));
 			demandDetail.setCollectionAmount(rs.getBigDecimal("dlcollectionamount"));
 
+			// Read additionalDetails and merge glcode/saccode into it
+			PGobject detailAdditionalDetails = (PGobject) rs.getObject("detailadditionaldetails");
+			JsonNode detailJson = util.getJsonValue(detailAdditionalDetails);
+
+			// Get glcode and saccode from separate columns
+			String glCode = rs.getString("dlglcode");
+			String sacCode = rs.getString("dlsaccode");
+
+			// Merge glcode and saccode into additionalDetails if they exist
+			if (glCode != null || sacCode != null) {
+				if (detailJson == null || detailJson.isNull()) {
+					detailJson = util.setValuesAndGetAdditionalDetails(null, "glcode", glCode);
+					detailJson = util.setValuesAndGetAdditionalDetails(detailJson, "saccode", sacCode);
+				} else {
+					if (glCode != null) {
+						detailJson = util.setValuesAndGetAdditionalDetails(detailJson, "glcode", glCode);
+					}
+					if (sacCode != null) {
+						detailJson = util.setValuesAndGetAdditionalDetails(detailJson, "saccode", sacCode);
+					}
+				}
+			}
+			demandDetail.setAdditionalDetails(detailJson);
+
 			AuditDetails dlauditDetail = new AuditDetails();
 			dlauditDetail.setCreatedBy(rs.getString("dlcreatedby"));
 			dlauditDetail.setCreatedTime(rs.getLong("dlcreatedtime"));
