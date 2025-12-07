@@ -102,9 +102,8 @@ public class BillRowMapperV2 implements ResultSetExtractor<List<BillV2>>{
 				.amount(rs.getBigDecimal("ad_amount"))
 				.adjustedAmount(rs.getBigDecimal("ad_adjustedamount"))
 				.taxHeadCode(rs.getString("ad_taxheadcode"))
-				.glCode(rs.getString("ad_glcode"))
-				.sacCode(rs.getString("ad_saccode"))
 				.demandDetailId(rs.getString("demanddetailid"))
+				.additionalDetails(util.getJsonValue((PGobject) rs.getObject("ad_additionaldetails")))
 				.build();
 
 			if (billDetail.getId().equals(billAccDetail.getBillDetailId()))

@@ -372,11 +372,12 @@ public class DemandService {
 		}
 		
 		// If withoutMobNumber is false, filter to return only demands with payer information
-		if(!demandCriteria.getWithoutMobNumber() && !CollectionUtils.isEmpty(demands)) {
-			demands = demands.stream()
-					.filter(demand -> demand.getPayer() != null && demand.getPayer().getMobileNumber() != null)
-					.collect(Collectors.toList());
-		}
+		// FIXME: Uncomment and import CollectionUtils if this filtering is needed
+		// if(!demandCriteria.getWithoutMobNumber() && !CollectionUtils.isEmpty(demands)) {
+		// 	demands = demands.stream()
+		// 			.filter(demand -> demand.getPayer() != null && demand.getPayer().getMobileNumber() != null)
+		// 			.collect(Collectors.toList());
+		// }
 
 		return demands;
 	}

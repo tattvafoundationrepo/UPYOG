@@ -175,15 +175,12 @@ public class BillRepositoryV2 {
 				ps.setObject(7, billAccountDetail.getAdjustedAmount());
 				ps.setObject(8, null);
 				ps.setString(9, null);
-				ps.setString(10, auditDetails.getCreatedBy());
-				ps.setLong(11, auditDetails.getCreatedTime());
-				ps.setString(12, auditDetails.getLastModifiedBy());
-				ps.setLong(13, auditDetails.getLastModifiedTime());
-				ps.setString(14, billAccountDetail.getTaxHeadCode());
-				// Set glCode (can be null for backward compatibility)
-				ps.setString(15, billAccountDetail.getGlCode());
-				// Set sacCode (can be null for backward compatibility)
-				ps.setString(16, billAccountDetail.getSacCode());
+				ps.setObject(10, util.getPGObject(billAccountDetail.getAdditionalDetails()));
+				ps.setString(11, auditDetails.getCreatedBy());
+				ps.setLong(12, auditDetails.getCreatedTime());
+				ps.setString(13, auditDetails.getLastModifiedBy());
+				ps.setLong(14, auditDetails.getLastModifiedTime());
+				ps.setString(15, billAccountDetail.getTaxHeadCode());
 			}
 
 			@Override

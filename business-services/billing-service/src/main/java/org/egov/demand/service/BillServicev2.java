@@ -670,16 +670,11 @@ public class BillServicev2 {
 		Map<String, BillAccountDetailV2> taxCodeAccountdetailMap = new HashMap<>();
 		
 		for(DemandDetail demandDetail : demand.getDemandDetails()) {
-
+			
 			TaxHeadMaster taxHead = taxHeadMap.get(demandDetail.getTaxHeadMasterCode());
 			BigDecimal amountForAccDeatil = demandDetail.getTaxAmount().subtract(demandDetail.getCollectionAmount());
 
-			// Extract GLCode and SACCode from DemandDetail additionalDetails
-			Map<String, String> codes = extractCodesFromAdditionalDetails(demandDetail.getAdditionalDetails());
-			String glCode = codes.get("glcode");
-			String sacCode = codes.get("saccode");
-
-			addOrUpdateBillAccDetailInTaxCodeAccDetailMap(taxCodeAccountdetailMap, demandDetail, taxHead, billDetailId, glCode, sacCode);
+			addOrUpdateBillAccDetailInTaxCodeAccDetailMap(taxCodeAccountdetailMap, demandDetail, taxHead, billDetailId);
 
 			/* Total tax and collection for the whole demand/bill-detail */
 			totalAmountForDemand = totalAmountForDemand.add(amountForAccDeatil);
@@ -782,18 +777,17 @@ public class BillServicev2 {
 	/**
 	 * creates/ updates bill-account details based on the tax-head code in
 	 * taxCodeAccDetailMap
-	 *
+	 * 
 	 * @param startPeriod
 	 * @param endPeriod
 	 * @param tenantId
 	 * @param taxCodeAccDetailMap
 	 * @param demandDetail
 	 * @param taxHead
-	 * @param billDetailId
-	 * @param glCode GL Code from MDMS (can be null for backward compatibility)
+	 * @param amountForAccDeatil
 	 */
 	private void addOrUpdateBillAccDetailInTaxCodeAccDetailMap(Map<String, BillAccountDetailV2> taxCodeAccDetailMap,
-			DemandDetail demandDetail, TaxHeadMaster taxHead, String billDetailId, String glCode, String sacCode) {
+			DemandDetail demandDetail, TaxHeadMaster taxHead, String billDetailId) {
 
 		BigDecimal newAmountForAccDeatil = demandDetail.getTaxAmount().subtract(demandDetail.getCollectionAmount());
 		/*
@@ -820,14 +814,13 @@ public class BillServicev2 {
 					.tenantId(demandDetail.getTenantId())
 					.id(UUID.randomUUID().toString())
 					.adjustedAmount(BigDecimal.ZERO)
+					.additionalDetails(demandDetail.getAdditionalDetails())
 					.taxHeadCode(taxHead.getCode())
-					.glCode(glCode)
-					.sacCode(sacCode)
 					.amount(newAmountForAccDeatil)
 					.order(taxHead.getOrder())
 					.billDetailId(billDetailId)
 					.build();
-
+		
 			taxCodeAccDetailMap.put(taxHead.getCode(), accountDetail);
 		}
 	}
@@ -852,58 +845,7 @@ public class BillServicev2 {
 		return taxHeads.stream().collect(Collectors.toMap(TaxHeadMaster::getCode, Function.identity()));
 	}
 
-	/**
-	 * Extracts glcode and saccode from the additionalDetails JSON object
-	 * Example additionalDetails: {"glcode": "140809912", "saccode": "997212"}
-	 *
-	 * @param additionalDetails Object containing the JSON data
-	 * @return Map with keys "glcode" and "saccode" (values can be null if not found)
-	 */
-	@SuppressWarnings("unchecked")
-	private Map<String, String> extractCodesFromAdditionalDetails(Object additionalDetails) {
-		Map<String, String> codes = new HashMap<>();
-		codes.put("glcode", null);
-		codes.put("saccode", null);
-
-		if (additionalDetails == null) {
-			return codes;
-		}
-
-		try {
-			// Convert Object to Map
-			Map<String, Object> additionalDetailsMap;
-			if (additionalDetails instanceof Map) {
-				additionalDetailsMap = (Map<String, Object>) additionalDetails;
-			} else {
-				// Convert to Map using ObjectMapper
-				additionalDetailsMap = mapper.convertValue(additionalDetails, Map.class);
-			}
-
-			// Extract glcode
-			if (additionalDetailsMap.containsKey("glcode")) {
-				Object glcodeObj = additionalDetailsMap.get("glcode");
-				if (glcodeObj != null) {
-					codes.put("glcode", glcodeObj.toString());
-				}
-			}
-
-			// Extract saccode
-			if (additionalDetailsMap.containsKey("saccode")) {
-				Object saccodeObj = additionalDetailsMap.get("saccode");
-				if (saccodeObj != null) {
-					codes.put("saccode", saccodeObj.toString());
-				}
-			}
-
-			log.debug("Extracted codes from additionalDetails - glcode: {}, saccode: {}", codes.get("glcode"), codes.get("saccode"));
-
-		} catch (Exception e) {
-			log.error("Error extracting codes from additionalDetails", e);
-		}
-
-		return codes;
-	}
-
+	
 	/**
 	 * To Fetch the businessServiceDetail master based on the business codes
 	 * 

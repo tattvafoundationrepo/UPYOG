@@ -98,6 +98,7 @@ public class BillRowMapper implements ResultSetExtractor<List<Bill>>{
 			billAccDetail.setAdjustedAmount(rs.getBigDecimal("ad_adjustedamount"));
 			billAccDetail.setTaxHeadCode(rs.getString("ad_taxheadcode"));
 			billAccDetail.setDemandDetailId(rs.getString("demanddetailid"));
+			billAccDetail.setAdditionalDetails(rs.getString("ad_additionaldetails"));
 
 			if (billDetail.getId().equals(billAccDetail.getBillDetail()))
 				billDetail.addBillAccountDetailsItem(billAccDetail);
