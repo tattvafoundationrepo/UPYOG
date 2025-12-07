@@ -40,7 +40,9 @@
 package org.egov.demand.repository;
 
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -49,22 +51,31 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import javax.el.ArrayELResolver;
+
+
 import org.egov.demand.model.AuditDetails;
 import org.egov.demand.model.CollectedReceipt;
 import org.egov.demand.model.Demand;
 import org.egov.demand.model.DemandCriteria;
 import org.egov.demand.model.DemandDetail;
+import org.egov.demand.model.FiReport;
+import org.egov.demand.model.FiReportRequest;
 import org.egov.demand.model.PaymentBackUpdateAudit;
+import org.egov.demand.model.PaymentMarketInfo;
+import org.egov.demand.producer.Producer;
 import org.egov.demand.repository.querybuilder.DemandQueryBuilder;
 import org.egov.demand.repository.rowmapper.CollectedReceiptsRowMapper;
 import org.egov.demand.repository.rowmapper.DemandRowMapper;
 import org.egov.demand.util.Util;
 import org.egov.demand.web.contract.DemandRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.actuate.web.mappings.servlet.FilterRegistrationMappingDescription;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -88,6 +99,9 @@ public class DemandRepository {
 	
 	@Autowired
 	private Util util;
+    
+	@Autowired
+	private Producer producer;
 	
 	public List<Demand> getDemands(DemandCriteria demandCriteria) {
 
@@ -128,15 +142,121 @@ public class DemandRepository {
 		log.debug("DemandRepository save, the request object : " + demandRequest);
 		List<Demand> demands = demandRequest.getDemands();
 		List<DemandDetail> demandDetails = new ArrayList<>();
+		List<FiReport> reportList  = new ArrayList<>();
 		
 		for (Demand demand : demands) {
 			demandDetails.addAll(demand.getDemandDetails());
+			reportList.addAll(buildFiReportsFromDemand(demand , "50", false));
 		}
 		
 		insertBatch(demands, demandDetails);
 		log.debug("Demands saved >>>> ");
 		insertBatchForAudit(demands, demandDetails);
+
+		if(!reportList.isEmpty()){
+            batchInsertFiReports(reportList);
+		}
+
 	}
+
+
+
+	public List<FiReport> buildFiReportsFromDemand(Demand demand, String key  ,Boolean isCollection) {
+
+    final Long periodFrom = demand.getTaxPeriodFrom();
+    final String consumerCode = demand.getConsumerCode();
+
+    final long now = System.currentTimeMillis();
+
+	final String fund = demand.getFund();
+	final String fundCenter = demand.getFundCenter();
+    final String businessArea = demand.getBusinessArea();
+    // Prepare demand-level additionalDetails Map (if needed later)
+    final Map<String, Object> demandAddDetails = 
+            (demand.getAdditionalDetails() instanceof Map)
+                    ? (Map<String, Object>) demand.getAdditionalDetails()
+                    : null;
+
+       return demand.getDemandDetails()
+            .stream()
+            .map(detail -> {
+
+                // Extract GL code efficiently (no casting inside loop)
+                String glCode = null;
+                Object addDetailsObj = detail.getAdditionalDetails();
+                if (addDetailsObj instanceof Map) {
+                    Object gl = ((Map<?, ?>) addDetailsObj).get("glcode");
+                    if (gl != null) glCode = gl.toString();
+                }
+
+                return FiReport.builder()
+                        .transactionNumber(detail.getDemandId())               
+                        .docDate(periodFrom)
+                        .postingDate(periodFrom)
+                        .referenceNo(consumerCode)
+                        .documentHeaderText(detail.getTaxHeadMasterCode())
+                        .postingKey(key)
+                        .glCode(glCode)
+                        .collectionAmount(isCollection ? detail.getCollectionAmount() :detail.getTaxAmount())
+						.fund(fund)
+						.fundCentre(fundCenter)
+						.businessArea(businessArea)
+						.functionalArea(businessArea)
+                        .isNew(Boolean.TRUE)
+						.paymentModeDetails(demand.getPaymentMode())
+                        .createdAt(now)
+                        .updatedAt(now)
+                        .build();
+            })
+            .collect(Collectors.toList());
+    }
+
+	public void batchInsertFiReports(List<FiReport> reports) {
+
+    if (reports == null || reports.isEmpty()) return;
+
+        String sql =
+        "INSERT INTO public.eg_emarket_fi_report ("
+        + " transaction_number, doc_date, posting_date,"
+        + " reference_no, document_header_text,"
+        + " posting_key, gl_code, collection_amount,"
+        + " fund, fund_centre,"
+        + " functional_area, business_area,"
+        + " remarks, payment_mode_details, is_new,"
+        + " created_at, updated_at"
+        + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+
+    jdbcTemplate.batchUpdate(sql, reports, 100, (ps, r) -> {
+
+        ps.setString(1, r.getTransactionNumber() == null ? null : String.valueOf(r.getTransactionNumber()));
+        ps.setObject(2, r.getDocDate());
+        ps.setObject(3, r.getPostingDate());
+
+        ps.setString(4, r.getReferenceNo());
+        ps.setString(5, r.getDocumentHeaderText());
+
+        ps.setString(6, r.getPostingKey());
+        ps.setString(7, r.getGlCode());
+        ps.setBigDecimal(8, r.getCollectionAmount());
+
+        ps.setString(9, r.getFund());
+        ps.setString(10, r.getFundCentre());
+        ps.setString(11, r.getFunctionalArea());
+        ps.setString(12, r.getBusinessArea());
+
+        ps.setString(13, r.getRemarks());
+        ps.setString(14, r.getPaymentModeDetails());
+        ps.setObject(15, r.getIsNew());
+
+        ps.setTimestamp(16, r.getCreatedAt() == null ? null : new Timestamp(r.getCreatedAt()));
+        ps.setTimestamp(17, r.getUpdatedAt() == null ? null : new Timestamp(r.getUpdatedAt()));
+    });
+
+    log.info("Batch inserted {} FI Report records", reports.size());
+}
+
+
 	
 	@Transactional
 	public void update(DemandRequest demandRequest, PaymentBackUpdateAudit paymentBackUpdateAudit) {
@@ -419,5 +539,40 @@ public class DemandRepository {
 		}
 
 		return paymentId;
+	}
+
+	public List<PaymentMarketInfo> getMarketEssentialInfo(String demandId) {
+		String sql =
+        "SELECT ep2.paymentmode, " +
+        "       eem.fund_center, " +
+        "       eem.fund, " +
+        "       eem.business_area " +
+        "FROM egcl_billdetial eb " +
+        "JOIN egcl_bill eb2 ON eb.billid = eb2.id " +
+        "JOIN egcl_paymentdetail ep ON ep.billid = eb2.id " +
+        "JOIN egcl_payment ep2 ON ep2.id = ep.paymentid " +
+        "JOIN eg_emarket_allotment eea " +
+        "     ON regexp_replace(eb2.consumercode, '[^0-9]', '', 'g') = eea.license_number " +
+        "JOIN eg_emarket_assets eea2 ON eea.asset_id = eea2.id " +
+        "JOIN eg_emarket_markets eem ON eea2.market_id = eem.market_id " +
+        "WHERE eb.demandid = ?";
+
+        List<PaymentMarketInfo> result = jdbcTemplate.query(
+        sql,
+        new Object[]{ demandId },
+        new RowMapper<PaymentMarketInfo>() {
+            @Override
+            public PaymentMarketInfo mapRow(ResultSet rs, int rowNum) throws SQLException {
+                PaymentMarketInfo info = new PaymentMarketInfo();
+                info.setPaymentMode(rs.getString("paymentmode"));
+                info.setFundCenter(rs.getString("fund_center"));
+                info.setFund(rs.getString("fund"));
+                info.setBusinessArea(rs.getString("business_area"));
+                return info;
+            }
+        }
+       ); 
+	   return result;
+
 	}
 }

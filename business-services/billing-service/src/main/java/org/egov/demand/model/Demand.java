@@ -103,11 +103,17 @@ public class Demand {
     @JsonProperty("status")
     private StatusEnum status;
 
+    private String paymentMode;
+
     public Demand addDemandDetailsItem(DemandDetail demandDetailsItem) {
         this.demandDetails.add(demandDetailsItem);
         return this;
     }
+    
 
+    private String fund;
+      private String fundCenter; 
+      private String businessArea;
 
     /**
      * Gets or Sets status

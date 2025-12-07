@@ -24,6 +24,8 @@ import org.egov.demand.model.Demand;
 import org.egov.demand.model.DemandCriteria;
 import org.egov.demand.model.DemandDetail;
 import org.egov.demand.model.PaymentBackUpdateAudit;
+import org.egov.demand.model.PaymentMarketInfo;
+import org.egov.demand.repository.DemandRepository;
 import org.egov.demand.util.Constants;
 import org.egov.demand.util.Util;
 import org.egov.demand.web.contract.BillRequestV2;
@@ -50,7 +52,9 @@ public class ReceiptServiceV2 {
 	
 	@Autowired
 	private Util util;
-
+    
+    @Autowired
+	private DemandRepository demandRepository;
 
 	public void updateDemandFromReceipt(BillRequestV2 billReq, Boolean isReceiptCancellation) {
 
@@ -114,6 +118,18 @@ public class ReceiptServiceV2 {
 				.build();
 		
 		demandService.updateAsync(demandRequest, paymentBackUpdateAudit);
+
+		demandRequest.getDemands().forEach(d -> {
+
+		   List<PaymentMarketInfo> infoList =	demandRepository.getMarketEssentialInfo(d.getId());
+		   if(!infoList.isEmpty()){
+			d.setFund(infoList.get(0).getFund());
+			d.setFundCenter(infoList.get(0).getFundCenter());
+			d.setBusinessArea(infoList.get(0).getBusinessArea());
+			d.setPaymentMode(infoList.get(0).getPaymentMode());
+		   }
+	       demandRepository.buildFiReportsFromDemand(d, "50",true);
+		});
 
 	}
 
