@@ -58,6 +58,8 @@ public class ReceiptServiceV2 {
 
 	public void updateDemandFromReceipt(BillRequestV2 billReq, Boolean isReceiptCancellation) {
 
+		log.info("nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn");
+
 		if (billReq == null || billReq != null && CollectionUtils.isEmpty(billReq.getBills())) {
 
 			log.info(" no data found in payment for update : {} " + billReq);
@@ -85,6 +87,8 @@ public class ReceiptServiceV2 {
 	 * @return
 	 */
 	public void updateDemandFromBill(BillRequestV2 billRequest,Set<String> demandIds, Boolean isReceiptCancellation) {
+
+		log.info("uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu");
 
 		List<BillV2> bills = billRequest.getBills();
 		String tenantId = bills.get(0).getTenantId();
@@ -292,6 +296,8 @@ public class ReceiptServiceV2 {
 	 * @param amountPaid       Adjusted amount from bill Acc detail
 	 */
 	private void updateDetailsForPayment(List<DemandDetail> demandDetails, BigDecimal amountPaid) {
+
+		 log.info("yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy");
 
 		for (DemandDetail detail : demandDetails) {
 

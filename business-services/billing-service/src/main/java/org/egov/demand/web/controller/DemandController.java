@@ -94,6 +94,8 @@ public class DemandController {
 	@ResponseBody
 	public ResponseEntity<?> create(@RequestHeader HttpHeaders headers, @RequestBody @Valid DemandRequest demandRequest) {
 
+		
+
 		log.info("the demand request object : " + demandRequest);
 
 		DemandResponse demandResponse = demandService.create(demandRequest);
@@ -103,6 +105,7 @@ public class DemandController {
 
 	@PostMapping("_update")
 	public ResponseEntity<?> update(@RequestHeader HttpHeaders headers, @RequestBody @Valid DemandRequest demandRequest) {
+		log.info("11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111");
 
 		return new ResponseEntity<>(demandService.updateAsync(demandRequest, null), HttpStatus.CREATED);
 	}

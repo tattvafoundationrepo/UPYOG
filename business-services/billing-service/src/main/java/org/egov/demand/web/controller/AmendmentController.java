@@ -63,7 +63,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import lombok.extern.slf4j.Slf4j;
+
 @RestController
+@Slf4j
 @RequestMapping("/amendment")
 public class AmendmentController {
 
@@ -110,7 +113,7 @@ public class AmendmentController {
 
 	@PostMapping("_update")
 	public ResponseEntity<?> update(@RequestBody @Valid AmendmentUpdateRequest amendmentUpdateRequest) {
-
+         log.info("222222222222222222222222222222222222222222222222222222222222222222222222222222222222222");
 		Amendment amendment = amendmentService.updateAmendment(amendmentUpdateRequest);
 		
 		ResponseInfo responseInfo = responseFactory.getResponseInfo(amendmentUpdateRequest.getRequestInfo(), HttpStatus.OK);
