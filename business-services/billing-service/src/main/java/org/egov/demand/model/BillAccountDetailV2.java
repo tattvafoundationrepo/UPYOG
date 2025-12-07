@@ -46,6 +46,9 @@ public class BillAccountDetailV2   {
   @JsonProperty("glCode")
   private String glCode;
 
+  @JsonProperty("sacCode")
+  private String sacCode;
+
   @JsonProperty("additionalDetails")
   private Object additionalDetails;
 

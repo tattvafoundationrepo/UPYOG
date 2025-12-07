@@ -34,8 +34,8 @@ public class BillQueryBuilder {
 	
 	public static final String INSERT_BILLACCOUNTDETAILS_QUERY = "INSERT into egbs_billaccountdetail_v1 "
 			+"(id, tenantid, billdetail, demanddetailid, orderno, amount, adjustedamount, isactualdemand, purpose, "
-			+ "createdby, createddate, lastmodifiedby, lastmodifieddate, taxheadcode, glcode)"
-			+"values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+			+ "createdby, createddate, lastmodifiedby, lastmodifieddate, taxheadcode, glcode, saccode)"
+			+"values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 	
 	
 	
@@ -57,7 +57,7 @@ public class BillQueryBuilder {
 			+ " bd.billdescription AS bd_billdescription, bd.displaymessage AS bd_displaymessage, bd.minimumamount AS bd_minimumamount,"
 			+ " bd.totalamount AS bd_totalamount, bd.callbackforapportioning AS bd_callbackforapportioning,bd.expirydate AS bd_expirydate,"
 			+ " bd.partpaymentallowed AS bd_partpaymentallowed, bd.isadvanceallowed as bd_isadvanceallowed,bd.collectionmodesnotallowed AS bd_collectionmodesnotallowed,"
-			+ " ad.id AS ad_id, ad.tenantid AS ad_tenantid, ad.billdetail AS ad_billdetail, ad.glcode AS ad_glcode,"
+			+ " ad.id AS ad_id, ad.tenantid AS ad_tenantid, ad.billdetail AS ad_billdetail, ad.glcode AS ad_glcode, ad.saccode AS ad_saccode,"
 			+ " ad.orderno AS ad_orderno, ad.accountdescription AS ad_accountdescription,"
 			+ " ad.amount AS ad_amount, ad.adjustedamount AS ad_adjustedamount, ad.taxheadcode AS ad_taxheadcode, ad.demanddetailid,"
 			+ " ad.isactualdemand AS ad_isactualdemand, ad.purpose AS ad_purpose,"

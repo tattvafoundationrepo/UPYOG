@@ -182,6 +182,8 @@ public class BillRepositoryV2 {
 				ps.setString(14, billAccountDetail.getTaxHeadCode());
 				// Set glCode (can be null for backward compatibility)
 				ps.setString(15, billAccountDetail.getGlCode());
+				// Set sacCode (can be null for backward compatibility)
+				ps.setString(16, billAccountDetail.getSacCode());
 			}
 
 			@Override
