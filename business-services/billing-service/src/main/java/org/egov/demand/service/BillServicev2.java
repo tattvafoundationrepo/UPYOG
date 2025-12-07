@@ -814,6 +814,7 @@ public class BillServicev2 {
 					.tenantId(demandDetail.getTenantId())
 					.id(UUID.randomUUID().toString())
 					.adjustedAmount(BigDecimal.ZERO)
+					.additionalDetails(demandDetail.getAdditionalDetails())
 					.taxHeadCode(taxHead.getCode())
 					.amount(newAmountForAccDeatil)
 					.order(taxHead.getOrder())
