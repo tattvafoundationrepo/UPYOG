@@ -124,6 +124,9 @@ public class DemandRowMapper implements ResultSetExtractor<List<Demand>> {
 			demandDetail.setTenantId(rs.getString("dltenantid"));
 			demandDetail.setTaxAmount(rs.getBigDecimal("dltaxamount"));
 			demandDetail.setCollectionAmount(rs.getBigDecimal("dlcollectionamount"));
+			demandDetail.setAdditionalDetails(rs.getObject("detailadditionaldetails") != null
+					? util.getJsonValue((PGobject) rs.getObject("detailadditionaldetails"))
+					: null);
 
 			AuditDetails dlauditDetail = new AuditDetails();
 			dlauditDetail.setCreatedBy(rs.getString("dlcreatedby"));
