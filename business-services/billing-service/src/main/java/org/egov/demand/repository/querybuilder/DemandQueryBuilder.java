@@ -98,15 +98,15 @@ public class DemandQueryBuilder {
 
 	public static final String DEMAND_DETAIL_INSERT_QUERY = "INSERT INTO egbs_demanddetail_v1 "
 			+ "(id,demandid,taxHeadCode,taxamount,collectionamount,"
-			+ "createdby,lastModifiedby,createdtime,lastModifiedtime,tenantid,additionaldetails)" 
-			+ " VALUES (?,?,?,?,?,?,?,?,?,?,?);";
+			+ "createdby,lastModifiedby,createdtime,lastModifiedtime,tenantid,additionaldetails,glcode,saccode)"
+			+ " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?);";
 
 	public static final String DEMAND_UPDATE_QUERY = "UPDATE egbs_demand_v1 SET " + "payer=?,taxPeriodFrom=?,"
 			+ "taxPeriodTo=?,minimumAmountPayable=?,lastModifiedby=?," + "lastModifiedtime=?,tenantid=?,"
 			+ " status=?,additionaldetails=?,billexpirytime=?,ispaymentcompleted=?, fixedBillExpiryDate=?, isadvance=?, advanceindex=? WHERE id=? AND tenantid=?;";
 	
 	public static final String DEMAND_DETAIL_UPDATE_QUERY = "UPDATE egbs_demanddetail_v1 SET taxamount=?,collectionamount=?,"
-			+ "lastModifiedby=?,lastModifiedtime=?, additionaldetails=? WHERE id=? AND demandid=? AND tenantid=?;";
+			+ "lastModifiedby=?,lastModifiedtime=?,additionaldetails=?,glcode=?,saccode=? WHERE id=? AND demandid=? AND tenantid=?;";
 
 	public static final String DEMAND_AUDIT_INSERT_QUERY = "INSERT INTO egbs_demand_v1_audit "
 			+ "(demandid,consumerCode,consumerType,businessService,payer,taxPeriodFrom,taxPeriodTo,"
@@ -115,8 +115,8 @@ public class DemandQueryBuilder {
 
 	public static final String DEMAND_DETAIL_AUDIT_INSERT_QUERY = "INSERT INTO egbs_demanddetail_v1_audit "
 			+ "(demanddetailid,demandid,taxHeadCode,taxamount,collectionamount,"
-			+ "createdby,createdtime,tenantid,additionaldetails,id)" 
-			+ " VALUES (?,?,?,?,?,?,?,?,?,?);";
+			+ "createdby,createdtime,tenantid,additionaldetails,id,glcode,saccode)"
+			+ " VALUES (?,?,?,?,?,?,?,?,?,?,?,?);";
 	
 	public static final String DEMAND_UPDATE_CONSUMERCODE_QUERY="UPDATE egbs_demand_v1 SET consumercode=?, lastmodifiedby=?, lastmodifiedtime=? "
 			+ " WHERE tenantid=? AND id IN (";

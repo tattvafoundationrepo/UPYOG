@@ -227,9 +227,14 @@ public class DemandRepository {
 		jdbcTemplate.batchUpdate(DemandQueryBuilder.DEMAND_DETAIL_INSERT_QUERY, new BatchPreparedStatementSetter() {
 			@Override
 			public void setValues(PreparedStatement ps, int rowNum) throws SQLException {
-				
+
 				DemandDetail demandDetail = newDemandDetails.get(rowNum);
 				AuditDetails auditDetail = demandDetail.getAuditDetails();
+
+				// Extract glcode and saccode from additionalDetails if available
+				String glCode = util.getValueFromAdditionalDetailsForKey(demandDetail.getAdditionalDetails(), "glcode");
+				String sacCode = util.getValueFromAdditionalDetailsForKey(demandDetail.getAdditionalDetails(), "saccode");
+
 				ps.setString(1, demandDetail.getId());
 				ps.setString(2, demandDetail.getDemandId());
 				ps.setString(3, demandDetail.getTaxHeadMasterCode());
@@ -241,6 +246,8 @@ public class DemandRepository {
 				ps.setLong(9, auditDetail.getLastModifiedTime());
 				ps.setString(10, demandDetail.getTenantId());
 				ps.setObject(11, util.getPGObject(demandDetail.getAdditionalDetails()));
+				ps.setString(12, glCode);
+				ps.setString(13, sacCode);
 			}
 
 			@Override
@@ -294,14 +301,20 @@ public class DemandRepository {
 				DemandDetail demandDetail = oldDemandDetails.get(rowNum);
 				AuditDetails auditDetail = demandDetail.getAuditDetails();
 
+				// Extract glcode and saccode from additionalDetails if available
+				String glCode = util.getValueFromAdditionalDetailsForKey(demandDetail.getAdditionalDetails(), "glcode");
+				String sacCode = util.getValueFromAdditionalDetailsForKey(demandDetail.getAdditionalDetails(), "saccode");
+
 				ps.setBigDecimal(1, demandDetail.getTaxAmount());
 				ps.setBigDecimal(2, demandDetail.getCollectionAmount());
 				ps.setString(3, auditDetail.getLastModifiedBy());
 				ps.setLong(4, auditDetail.getLastModifiedTime());
 				ps.setObject(5, util.getPGObject(demandDetail.getAdditionalDetails()));
-				ps.setString(6, demandDetail.getId());
-				ps.setString(7, demandDetail.getDemandId());
-				ps.setString(8, demandDetail.getTenantId());
+				ps.setString(6, glCode);
+				ps.setString(7, sacCode);
+				ps.setString(8, demandDetail.getId());
+				ps.setString(9, demandDetail.getDemandId());
+				ps.setString(10, demandDetail.getTenantId());
 			}
 
 			@Override
@@ -361,6 +374,11 @@ public class DemandRepository {
 
 						DemandDetail demandDetail = demandDetails.get(rowNum);
 						AuditDetails auditDetail = demandDetail.getAuditDetails();
+
+						// Extract glcode and saccode from additionalDetails if available
+						String glCode = util.getValueFromAdditionalDetailsForKey(demandDetail.getAdditionalDetails(), "glcode");
+						String sacCode = util.getValueFromAdditionalDetailsForKey(demandDetail.getAdditionalDetails(), "saccode");
+
 						ps.setString(1, demandDetail.getId());
 						ps.setString(2, demandDetail.getDemandId());
 						ps.setString(3, demandDetail.getTaxHeadMasterCode());
@@ -371,6 +389,8 @@ public class DemandRepository {
 						ps.setString(8, demandDetail.getTenantId());
 						ps.setObject(9, util.getPGObject(demandDetail.getAdditionalDetails()));
 						ps.setString(10, UUID.randomUUID().toString());
+						ps.setString(11, glCode);
+						ps.setString(12, sacCode);
 					}
 
 					@Override
