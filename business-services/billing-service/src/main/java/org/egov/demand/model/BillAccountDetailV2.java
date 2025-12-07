@@ -43,9 +43,6 @@ public class BillAccountDetailV2   {
   @JsonProperty("taxHeadCode")
   private String taxHeadCode;
 
-  @JsonProperty("glCode")
-  private String glCode;
-
   @JsonProperty("additionalDetails")
   private Object additionalDetails;
 

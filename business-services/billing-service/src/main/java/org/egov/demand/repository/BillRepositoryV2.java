@@ -180,8 +180,6 @@ public class BillRepositoryV2 {
 				ps.setString(12, auditDetails.getLastModifiedBy());
 				ps.setLong(13, auditDetails.getLastModifiedTime());
 				ps.setString(14, billAccountDetail.getTaxHeadCode());
-				// Set glCode (can be null for backward compatibility)
-				ps.setString(15, billAccountDetail.getGlCode());
 			}
 
 			@Override
