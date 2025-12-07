@@ -6,6 +6,7 @@ import static org.egov.demand.util.Constants.MODULE_NAME;
 import static org.egov.demand.util.Constants.TAXHEAD_MASTERNAME;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -23,6 +24,7 @@ import org.egov.demand.model.BillV2;
 import org.egov.demand.model.Demand;
 import org.egov.demand.model.DemandCriteria;
 import org.egov.demand.model.DemandDetail;
+import org.egov.demand.model.FiReport;
 import org.egov.demand.model.PaymentBackUpdateAudit;
 import org.egov.demand.model.PaymentMarketInfo;
 import org.egov.demand.repository.DemandRepository;
@@ -123,6 +125,8 @@ public class ReceiptServiceV2 {
 		
 		demandService.updateAsync(demandRequest, paymentBackUpdateAudit);
 
+		 List<FiReport> collectionReportList = new ArrayList<>();
+
 		demandRequest.getDemands().forEach(d -> {
 
 		   List<PaymentMarketInfo> infoList =	demandRepository.getMarketEssentialInfo(d.getId());
@@ -132,8 +136,12 @@ public class ReceiptServiceV2 {
 			d.setBusinessArea(infoList.get(0).getBusinessArea());
 			d.setPaymentMode(infoList.get(0).getPaymentMode());
 		   }
-	       demandRepository.buildFiReportsFromDemand(d, "50",true);
+	       List<FiReport> report = demandRepository.buildFiReportsFromDemand(d, "50",true);
+
+		   collectionReportList.addAll(report);
 		});
+
+		demandRepository.batchInsertFiReports(collectionReportList);
 
 	}
 

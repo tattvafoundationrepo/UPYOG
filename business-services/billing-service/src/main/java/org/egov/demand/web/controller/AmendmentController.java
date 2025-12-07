@@ -113,7 +113,7 @@ public class AmendmentController {
 
 	@PostMapping("_update")
 	public ResponseEntity<?> update(@RequestBody @Valid AmendmentUpdateRequest amendmentUpdateRequest) {
-         log.info("222222222222222222222222222222222222222222222222222222222222222222222222222222222222222");
+  
 		Amendment amendment = amendmentService.updateAmendment(amendmentUpdateRequest);
 		
 		ResponseInfo responseInfo = responseFactory.getResponseInfo(amendmentUpdateRequest.getRequestInfo(), HttpStatus.OK);
