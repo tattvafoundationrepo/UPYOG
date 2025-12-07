@@ -363,8 +363,16 @@ public class DemandService {
 			}
 		}
 		
-		if(!CollectionUtils.isEmpty(demands) && !CollectionUtils.isEmpty(payers) && !demandCriteria.getWithoutMobNumber())
+		if(!CollectionUtils.isEmpty(demands) && !CollectionUtils.isEmpty(payers)) {
 			demands = demandEnrichmentUtil.enrichPayer(demands, payers);
+		}
+		
+		// If withoutMobNumber is false, filter to return only demands with payer information
+		if(!demandCriteria.getWithoutMobNumber() && !CollectionUtils.isEmpty(demands)) {
+			demands = demands.stream()
+					.filter(demand -> demand.getPayer() != null && demand.getPayer().getMobileNumber() != null)
+					.collect(Collectors.toList());
+		}
 
 		return demands;
 	}
