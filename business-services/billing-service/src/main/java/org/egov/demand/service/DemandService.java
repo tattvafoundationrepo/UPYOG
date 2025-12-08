@@ -268,9 +268,9 @@ public class DemandService {
 		generateAndSetIdsForNewDemands(newDemands, auditDetail);
 
 		update(demandRequest, paymentBackUpdateAudit);
-		demandRequest.getDemands().forEach(d -> {
-	       demandRepository.buildFiReportsFromDemand(d, "40" ,true);
-		});
+		// demandRequest.getDemands().forEach(d -> {
+	    //    demandRepository.buildFiReportsFromDemand(d, "40" ,true);
+		// });
 		
 		String tenantId = demands.get(0).getTenantId();
 		BillStatus statusToBeUpdated = ObjectUtils.isEmpty(paymentBackUpdateAudit) ? BillStatus.EXPIRED : BillStatus.PAID;
