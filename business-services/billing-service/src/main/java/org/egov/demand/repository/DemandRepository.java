@@ -39,6 +39,7 @@
  */
 package org.egov.demand.repository;
 
+import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -191,6 +192,11 @@ public class DemandRepository {
                     if (gl != null) glCode = gl.toString();
                 }
 
+				if(detail.getTaxHeadMasterCode().contains("ADVANCE")){
+					detail.setCollectionAmount(BigDecimal.valueOf(Math.abs(detail.getCollectionAmount().doubleValue())));
+					detail.setTaxAmount(BigDecimal.valueOf(Math.abs(detail.getTaxAmount().doubleValue())));
+				}
+
                 return FiReport.builder()
                         .transactionNumber(detail.getDemandId())               
                         .docDate(periodFrom)
@@ -208,6 +214,7 @@ public class DemandRepository {
 						.paymentModeDetails(demand.getPaymentMode())
                         .createdAt(now)
                         .updatedAt(now)
+						.remarks(isCollection ? " Collection " : " Demand")
                         .build();
             })
             .collect(Collectors.toList());
