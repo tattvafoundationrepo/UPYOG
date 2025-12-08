@@ -136,7 +136,8 @@ public class ReceiptServiceV2 {
 			d.setBusinessArea(infoList.get(0).getBusinessArea());
 			d.setPaymentMode(infoList.get(0).getPaymentMode());
 		   }
-	       List<FiReport> report = demandRepository.buildFiReportsFromDemand(d, "50",true);
+		   log.info("40....40....40....40....40");
+	       List<FiReport> report = demandRepository.buildFiReportsFromDemand(d, "40",true);
 
 		   collectionReportList.addAll(report);
 		});
