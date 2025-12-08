@@ -419,25 +419,15 @@ public class BillServicev2 {
 			businessServiceSet = Collections.singleton(billCriteria.getBusinessService());
 		}
 
-		// Fetch business service details to check if advance is allowed
-		// Replaces hardcoded WS/SW check to support all advance-enabled business services (e.g., TX.Emarket_Rental_Fees)
-		Map<String, BusinessServiceDetail> businessServiceMap = null;
-		boolean hasAdvanceAllowedServices = false;
-
-		if (businessServiceSet != null && !businessServiceSet.isEmpty()) {
-			// Fetch business service details from MDMS
-			businessServiceMap = getBusinessService(businessServiceSet,
-													billCriteria.getTenantId(),
-													requestInfo);
-
-			// Check if any business service has isAdvanceAllowed = true
-			hasAdvanceAllowedServices = businessServiceMap.values().stream()
-					.anyMatch(bs -> Boolean.TRUE.equals(bs.getIsAdvanceAllowed()));
-		}
+		boolean allowedMultipleAdvance = businessServiceSet != null &&
+				businessServiceSet.stream()
+						.anyMatch(bs -> bs.equalsIgnoreCase("WS") || bs.equalsIgnoreCase("SW")
+								|| bs.equalsIgnoreCase("TX.Emarket_Rental_Fees")
+								|| bs.equalsIgnoreCase("Taxes.Emarket Rental Fees"));
 
 		// Build demand criteria based on advance-allowed status
 		DemandCriteria demandCriteria;
-		if (hasAdvanceAllowedServices) {
+		if (allowedMultipleAdvance) {
 			// For advance-allowed services, don't filter by isPaymentCompleted
 			// This allows zero-amount demands to be fetched
 			demandCriteria = DemandCriteria.builder()
@@ -474,7 +464,7 @@ public class BillServicev2 {
 
 		// For advance-allowed services, filter out old zero-amount demands
 		// Keep only: (1) non-zero demands, (2) recent zero-amount advance demands
-		if (hasAdvanceAllowedServices && !CollectionUtils.isEmpty(demands)) {
+		if (allowedMultipleAdvance && !CollectionUtils.isEmpty(demands)) {
 			int originalSize = demands.size();
 			demands = demands.stream()
 					.filter(demand -> {
