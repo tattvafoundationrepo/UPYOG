@@ -209,7 +209,7 @@ public class DemandRepository {
                         .documentHeaderText(detail.getTaxHeadMasterCode())
                         .postingKey(detail.getTaxHeadMasterCode().contains("ADVANCE") ? "39" : key)
                         .glCode(isCollection ? "450100100" : glCode)
-                        .collectionAmount(isCollection ? detail.getCollectionAmount() :detail.getTaxAmount())
+                        .collectionAmount(isCollection ? detail.getTaxHeadMasterCode().contains("ADVANCE") ? detail.getTaxAmount() :detail.getCollectionAmount() :detail.getTaxAmount())
 						.fund(fund)
 						.fundCentre(fundCenter)
 						.businessArea(businessArea)
