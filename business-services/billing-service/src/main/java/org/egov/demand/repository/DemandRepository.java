@@ -208,7 +208,7 @@ public class DemandRepository {
                         .referenceNo(consumerCode)
                         .documentHeaderText(detail.getTaxHeadMasterCode())
                         .postingKey(detail.getTaxHeadMasterCode().contains("ADVANCE") ? "39" : key)
-                        .glCode(glCode)
+                        .glCode(isCollection ? "450100100" : glCode)
                         .collectionAmount(isCollection ? detail.getCollectionAmount() :detail.getTaxAmount())
 						.fund(fund)
 						.fundCentre(fundCenter)
