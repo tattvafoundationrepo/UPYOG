@@ -164,7 +164,7 @@ public class DemandRepository {
 
 	public List<FiReport> buildFiReportsFromDemand(Demand demand, String key  ,Boolean isCollection) {
 
-    log.info("====================================================================================================="+isCollection);		
+    log.info("======================================="+demand.getAdditionalDetails().toString());		
 
     final Long periodFrom = demand.getTaxPeriodFrom();
     final String consumerCode = demand.getConsumerCode();
@@ -212,10 +212,10 @@ public class DemandRepository {
                         .postingKey(detail.getTaxHeadMasterCode().contains("ADVANCE") ? "39" : key)
                         .glCode(isCollection ? "450100100" : glCode)
                         .collectionAmount(isCollection ? detail.getTaxHeadMasterCode().contains("ADVANCE") ? detail.getTaxAmount() :detail.getCollectionAmount() :detail.getTaxAmount())
-						.fund(fund)
-						.fundCentre(fundCenter)
-						.businessArea(businessArea)
-						.functionalArea(businessArea)
+						.fund(isCollection ? demand.getFund() :fund)
+						.fundCentre(isCollection ? demand.getFundCenter() :fundCenter)
+						.businessArea(isCollection ? demand.getBusinessArea() :businessArea)
+						.functionalArea(isCollection ? demand.getBusinessArea() :businessArea)
                         .isNew(Boolean.TRUE)
 						.paymentModeDetails(demand.getPaymentMode())
                         .createdAt(now)
@@ -560,17 +560,17 @@ public class DemandRepository {
 	public List<PaymentMarketInfo> getMarketEssentialInfo(String demandId) {
 		String sql =
         "SELECT ep2.paymentmode, " +
-        "       eem.fund_center, " +
-        "       eem.fund, " +
-        "       eem.business_area " +
+         "       eem.fund_center, " +
+         "       eem.fund, " +
+         "       eem.business_area " +
         "FROM egcl_billdetial eb " +
         "JOIN egcl_bill eb2 ON eb.billid = eb2.id " +
         "JOIN egcl_paymentdetail ep ON ep.billid = eb2.id " +
         "JOIN egcl_payment ep2 ON ep2.id = ep.paymentid " +
-        "JOIN eg_emarket_allotment eea " +
-        "     ON regexp_replace(eb2.consumercode, '[^0-9]', '', 'g') = eea.license_number " +
-        "JOIN eg_emarket_assets eea2 ON eea.asset_id = eea2.id " +
-        "JOIN eg_emarket_markets eem ON eea2.market_id = eem.market_id " +
+         "JOIN eg_emarket_allotment eea " +
+         "     ON regexp_replace(eb2.consumercode, '[^0-9]', '', 'g') = eea.license_number " +
+         "JOIN eg_emarket_assets eea2 ON eea.asset_id = eea2.id " +
+         "JOIN eg_emarket_markets eem ON eea2.market_id = eem.market_id " +
         "WHERE eb.demandid = ?";
 
         List<PaymentMarketInfo> result = jdbcTemplate.query(
@@ -581,7 +581,7 @@ public class DemandRepository {
             public PaymentMarketInfo mapRow(ResultSet rs, int rowNum) throws SQLException {
                 PaymentMarketInfo info = new PaymentMarketInfo();
                 info.setPaymentMode(rs.getString("paymentmode"));
-                info.setFundCenter(rs.getString("fund_center"));
+				info.setFundCenter(rs.getString("fund_center"));
                 info.setFund(rs.getString("fund"));
                 info.setBusinessArea(rs.getString("business_area"));
                 return info;
