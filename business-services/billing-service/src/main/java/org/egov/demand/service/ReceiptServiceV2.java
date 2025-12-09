@@ -129,13 +129,13 @@ public class ReceiptServiceV2 {
 
 		demandRequest.getDemands().forEach(d -> {
 
-		   List<PaymentMarketInfo> infoList =	demandRepository.getMarketEssentialInfo(d.getId());
-		   if(!infoList.isEmpty()){
-			d.setFund(infoList.get(0).getFund());
-			d.setFundCenter(infoList.get(0).getFundCenter());
-			d.setBusinessArea(infoList.get(0).getBusinessArea());
-			d.setPaymentMode(infoList.get(0).getPaymentMode());
-		   }
+		//    List<PaymentMarketInfo> infoList =	demandRepository.getMarketEssentialInfo(d.getId());
+		//    if(!infoList.isEmpty()){
+		// 	d.setFund(infoList.get(0).getFund());
+		// 	d.setFundCenter(infoList.get(0).getFundCenter());
+		// 	d.setBusinessArea(infoList.get(0).getBusinessArea());
+		// 	d.setPaymentMode(infoList.get(0).getPaymentMode());
+		//    }
 		   log.info("40....40....40....40....40");
 	       List<FiReport> report = demandRepository.buildFiReportsFromDemand(d, "40",true);
 

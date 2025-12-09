@@ -170,12 +170,16 @@ public class DemandRepository {
     final String consumerCode = demand.getConsumerCode();
 
     final long now = System.currentTimeMillis();
-
-	final String fund = demand.getFund();
-	final String fundCenter = demand.getFundCenter();
-    final String businessArea = demand.getBusinessArea();
-    // Prepare demand-level additionalDetails Map (if needed later)
-    final Map<String, Object> demandAddDetails = 
+    Map<String,String> additionalMarketDetails = new HashMap<>();
+	Object additiaonalsObj = demand.getAdditionalDetails();
+    if (additiaonalsObj instanceof Map) {
+        additionalMarketDetails = (Map) additiaonalsObj;
+    } 
+	 String fund = additionalMarketDetails.get("fund");
+	 String fundCenter = additionalMarketDetails.get("fundCenter");
+     String businessArea = additionalMarketDetails.get("businessArea");
+     // Prepare demand-level additionalDetails Map (if needed later)
+     final Map<String, Object> demandAddDetails = 
             (demand.getAdditionalDetails() instanceof Map)
                     ? (Map<String, Object>) demand.getAdditionalDetails()
                     : null;
@@ -203,7 +207,7 @@ public class DemandRepository {
                         .postingDate(periodFrom)
                         .referenceNo(consumerCode)
                         .documentHeaderText(detail.getTaxHeadMasterCode())
-                        .postingKey(key)
+                        .postingKey(detail.getTaxHeadMasterCode().contains("ADVANCE") ? "39" : key)
                         .glCode(glCode)
                         .collectionAmount(isCollection ? detail.getCollectionAmount() :detail.getTaxAmount())
 						.fund(fund)
