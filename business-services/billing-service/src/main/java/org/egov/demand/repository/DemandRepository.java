@@ -178,6 +178,8 @@ public class DemandRepository {
 	 String fund = additionalMarketDetails.get("fund");
 	 String fundCenter = additionalMarketDetails.get("fundCenter");
      String businessArea = additionalMarketDetails.get("businessArea");
+
+	 log.info("coooooooooooooooooo"+fund+"8888888888"+fundCenter+"toooooooooooooo"+businessArea);
      // Prepare demand-level additionalDetails Map (if needed later)
      final Map<String, Object> demandAddDetails = 
             (demand.getAdditionalDetails() instanceof Map)
@@ -220,7 +222,8 @@ public class DemandRepository {
                         .updatedAt(now)
 						.remarks(isCollection ? " Collection " : " Demand")
                         .build();
-            })
+		        				
+            }) 
             .collect(Collectors.toList());
     }
 
