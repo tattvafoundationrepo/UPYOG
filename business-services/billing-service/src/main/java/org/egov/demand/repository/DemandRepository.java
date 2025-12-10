@@ -188,6 +188,13 @@ public class DemandRepository {
 
        return demand.getDemandDetails()
             .stream()
+			.filter(detail -> {
+                if (detail.getTaxHeadMasterCode().contains("GST")
+                        && detail.getTaxAmount().compareTo(detail.getCollectionAmount()) == 0) {
+                    return false; 
+                }
+                return true; 
+            })
             .map(detail -> {
 
                 // Extract GL code efficiently (no casting inside loop)
@@ -202,6 +209,8 @@ public class DemandRepository {
 					detail.setCollectionAmount(BigDecimal.valueOf(Math.abs(detail.getCollectionAmount().doubleValue())));
 					detail.setTaxAmount(BigDecimal.valueOf(Math.abs(detail.getTaxAmount().doubleValue())));
 				}
+
+				
 
                 return FiReport.builder()
                         .transactionNumber(detail.getDemandId())               
