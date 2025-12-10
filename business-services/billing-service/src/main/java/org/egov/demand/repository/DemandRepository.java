@@ -164,7 +164,7 @@ public class DemandRepository {
 
 	public List<FiReport> buildFiReportsFromDemand(Demand demand, String key  ,Boolean isCollection) {
 
-    log.info("======================================="+demand.getAdditionalDetails().toString());		
+  // log.info("======================================="+demand.getAdditionalDetails().toString());		
 
     final Long periodFrom = demand.getTaxPeriodFrom();
     final String consumerCode = demand.getConsumerCode();

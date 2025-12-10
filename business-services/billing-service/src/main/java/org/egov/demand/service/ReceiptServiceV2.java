@@ -137,7 +137,7 @@ public class ReceiptServiceV2 {
 			d.setPaymentMode(infoList.get(0).getPaymentMode());
 		   }
 
-		   log.info("adddditionalDeeeetailssssssssssss"+ d.getAdditionalDetails().toString());
+		   //log.info("adddditionalDeeeetailssssssssssss"+ d.getAdditionalDetails().toString());
 		   log.info("40....40....40....40....40");
 	       List<FiReport> report = demandRepository.buildFiReportsFromDemand(d , "40",true);
 
