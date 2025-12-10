@@ -12,5 +12,6 @@ public class PaymentMarketInfo {
     private String fundCenter;
     private String fund;
     private String businessArea;
+    private String additionalDetails;
 }
 

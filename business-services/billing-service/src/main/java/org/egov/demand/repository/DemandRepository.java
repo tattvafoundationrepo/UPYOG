@@ -62,6 +62,7 @@ import org.egov.demand.model.DemandCriteria;
 import org.egov.demand.model.DemandDetail;
 import org.egov.demand.model.FiReport;
 import org.egov.demand.model.FiReportRequest;
+import org.egov.demand.model.GstAdvanceMap;
 import org.egov.demand.model.PaymentBackUpdateAudit;
 import org.egov.demand.model.PaymentMarketInfo;
 import org.egov.demand.producer.Producer;
@@ -79,6 +80,8 @@ import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.google.gson.Gson;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -147,7 +150,7 @@ public class DemandRepository {
 		
 		for (Demand demand : demands) {
 			demandDetails.addAll(demand.getDemandDetails());
-			reportList.addAll(buildFiReportsFromDemand(demand , "50", false));
+			reportList.addAll(buildFiReportsFromDemand(demand , "50", false , null));
 		}
 		
 		insertBatch(demands, demandDetails);
@@ -162,7 +165,7 @@ public class DemandRepository {
 
 
 
-	public List<FiReport> buildFiReportsFromDemand(Demand demand, String key  ,Boolean isCollection) {
+	public List<FiReport> buildFiReportsFromDemand(Demand demand, String key  ,Boolean isCollection , GstAdvanceMap advanceMap) {
 
   // log.info("======================================="+demand.getAdditionalDetails().toString());		
 
@@ -185,6 +188,38 @@ public class DemandRepository {
             (demand.getAdditionalDetails() instanceof Map)
                     ? (Map<String, Object>) demand.getAdditionalDetails()
                     : null;
+     Gson gson = new Gson();
+	 if(advanceMap != null){
+      DemandDetail cgstDemand = DemandDetail.builder()
+	    .collectionAmount(advanceMap.getCgstAmount())
+		.taxHeadMasterCode("CGST Payable")
+		.additionalDetails(gson.toJson("\"glcode\" : \"350200421\""))
+	    .build();
+
+	  DemandDetail sgstDemand = DemandDetail.builder()
+	    .collectionAmount(advanceMap.getSgstAmount())
+		.taxHeadMasterCode("SGST Payable")
+		.additionalDetails(gson.toJson("\"glcode\" : \"350200422\""))
+	    .build();	
+	 
+	   DemandDetail cgstpayment= DemandDetail.builder()
+	    .collectionAmount(advanceMap.getCgstAmount())
+		.taxHeadMasterCode("ADV_CGST")
+		.additionalDetails(gson.toJson("\"glcode\" : \"439300200\""))
+	    .build();
+
+	  DemandDetail sgstpayment = DemandDetail.builder()
+	    .collectionAmount(advanceMap.getSgstAmount())
+		.taxHeadMasterCode("ADV_SGST")
+		.additionalDetails(gson.toJson("\"glcode\" : \"439300200\""))
+	    .build();	
+		demand.getDemandDetails().add(cgstDemand);demand.getDemandDetails().add(sgstDemand);
+		demand.getDemandDetails().add(cgstpayment);demand.getDemandDetails().add(sgstpayment);
+	  }	
+	  
+	  List<String>  advanceTaxHeadLists = new ArrayList<>();
+	    advanceTaxHeadLists.add("ADV_SGST");advanceTaxHeadLists.add("ADV_CGST");advanceTaxHeadLists.add("CGST Payable");advanceTaxHeadLists.add("SGST Payable");
+     
 
        return demand.getDemandDetails()
             .stream()
@@ -208,6 +243,9 @@ public class DemandRepository {
 				if(detail.getTaxHeadMasterCode().contains("ADVANCE")){
 					detail.setCollectionAmount(BigDecimal.valueOf(Math.abs(detail.getCollectionAmount().doubleValue())));
 					detail.setTaxAmount(BigDecimal.valueOf(Math.abs(detail.getTaxAmount().doubleValue())));
+					if(advanceMap != null){
+					  detail.setTaxAmount(advanceMap.getCollectionAmount());
+					}
 				}
 
 				
@@ -218,8 +256,8 @@ public class DemandRepository {
                         .postingDate(periodFrom)
                         .referenceNo(consumerCode)
                         .documentHeaderText(detail.getTaxHeadMasterCode())
-                        .postingKey(detail.getTaxHeadMasterCode().contains("ADVANCE") ? "39" : key)
-                        .glCode(isCollection ? "450100100" : glCode)
+                        .postingKey(detail.getTaxHeadMasterCode().contains("ADVANCE") ? "39" : advanceTaxHeadLists.contains(detail.getTaxHeadMasterCode())?  "99": key)
+                        .glCode(isCollection ? advanceTaxHeadLists.contains(detail.getTaxHeadMasterCode()) ? glCode :"450100100" : glCode)
                         .collectionAmount(isCollection ? detail.getTaxHeadMasterCode().contains("ADVANCE") ? detail.getTaxAmount() :detail.getCollectionAmount() :detail.getTaxAmount())
 						.fund(isCollection ? demand.getFund() :fund)
 						.fundCentre(isCollection ? demand.getFundCenter() :fundCenter)
@@ -571,7 +609,8 @@ public class DemandRepository {
         "SELECT ep2.paymentmode, " +
          "       eem.fund_center, " +
          "       eem.fund, " +
-         "       eem.business_area " +
+         "       eem.business_area, " +
+		 "       ep2.additionaldetails " +
         "FROM egcl_billdetial eb " +
         "JOIN egcl_bill eb2 ON eb.billid = eb2.id " +
         "JOIN egcl_paymentdetail ep ON ep.billid = eb2.id " +
@@ -593,6 +632,7 @@ public class DemandRepository {
 				info.setFundCenter(rs.getString("fund_center"));
                 info.setFund(rs.getString("fund"));
                 info.setBusinessArea(rs.getString("business_area"));
+				info.setAdditionalDetails(rs.getString("additionaldetails"));
                 return info;
             }
         }
