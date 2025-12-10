@@ -140,8 +140,11 @@ public class ReceiptServiceV2 {
 					d.setFundCenter(infoList.get(0).getFundCenter());
 					d.setBusinessArea(infoList.get(0).getBusinessArea());
 					d.setPaymentMode(infoList.get(0).getPaymentMode());
+					log.info("additioanl from dbbbbbbbbbbbbbbbbbbbbbbbbb"+ infoList.get(0));
 				}
+				
                GstAdvanceMap gstAdvanceMap =  extractGstAdvanceFromAdditionalDetails(infoList.get(0));
+               log.info("advancemapppppppppppppppppppppppppppp"+ gstAdvanceMap);
 				// log.info("adddditionalDeeeetailssssssssssss"+
 				// d.getAdditionalDetails().toString());
 				log.info("40....40....40....40....40");
@@ -159,76 +162,64 @@ public class ReceiptServiceV2 {
 
 	public GstAdvanceMap extractGstAdvanceFromAdditionalDetails(PaymentMarketInfo info) {
 
-		String json = info.getAdditionalDetails(); // JSON string
-		BigDecimal collectionAmount = null;
-		String collectionGlCode = null;
-		BigDecimal cgstAmount = null;
-		String cgstGlCode = null;
-		BigDecimal sgstAmount = null;
-		String sgstGlCode = null;
 
-		try {
-			ObjectMapper mapper = new ObjectMapper();
-			JsonNode root = mapper.readTree(json);
 
-			JsonNode paymentInfo = root.path("paymentInfo");
+    Object raw = info.getAdditionalDetails();
 
-			// ------ Extract CGST if present ------
-			JsonNode advCgst = paymentInfo.path("advance_CGST");
-			if (!advCgst.isMissingNode()) {
-				if (advCgst.hasNonNull("amount")) {
-					cgstAmount = advCgst.get("amount").decimalValue();
-				}
-				if (advCgst.hasNonNull("glcode")) {
-					cgstGlCode = advCgst.get("glcode").asText();
-				}
-			}
+    JsonNode root;
 
-			// ------ Extract SGST if present ------
-			JsonNode advSgst = paymentInfo.path("advance_SGST");
-			if (!advSgst.isMissingNode()) {
-				if (advSgst.hasNonNull("amount")) {
-					sgstAmount = advSgst.get("amount").decimalValue();
-				}
-				if (advSgst.hasNonNull("glcode")) {
-					sgstGlCode = advSgst.get("glcode").asText();
-				}
-			}
+    try {
+        ObjectMapper mapper = new ObjectMapper();
 
-			// ------ Extract COLLECTION only if BOTH CGST & SGST exist ------
-			boolean hasBothGST = (cgstAmount != null && sgstAmount != null);
+        if (raw instanceof String) {
+            // Case 1: Proper JSON string
+            root = mapper.readTree((String) raw);
 
-			if (hasBothGST) {
-				JsonNode collection = paymentInfo.path("collection");
+        } else if (raw instanceof Map) {
+            // Case 2: Already deserialized (LinkedHashMap etc.)
+            root = mapper.valueToTree(raw);
 
-				if (!collection.isMissingNode()) {
-					if (collection.hasNonNull("amount")) {
-						collectionAmount = collection.get("amount").decimalValue();
-					}
-					if (collection.hasNonNull("glcode")) {
-						collectionGlCode = collection.get("glcode").asText();
-					}
-				}
-			}
+        } else {
+            return null; // Unsupported type
+        }
 
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-      if(sgstAmount != null){
-       return GstAdvanceMap.builder()
-		.cgstAmount(cgstAmount)
-		.cgstGlCode(cgstGlCode)
-		.collectionAmount(collectionAmount)
-		.collectionGlCode(collectionGlCode)
-		.sgstAmount(sgstAmount)
-		.sgstGlCode(sgstGlCode)
-		.build();
-	  }else{
-         return null;
-	  }
-	  
+        JsonNode paymentInfo = root.path("paymentInfo");
 
-		
+        BigDecimal cgstAmount = null, sgstAmount = null, collectionAmount = null;
+        String cgstGl = null, sgstGl = null, collectionGl = null;
+
+        // ---- CGST ----
+        JsonNode acgst = paymentInfo.path("advance_CGST");
+        if (acgst.has("amount")) cgstAmount = acgst.get("amount").decimalValue();
+        if (acgst.has("glcode")) cgstGl = acgst.get("glcode").asText();
+
+        // ---- SGST ----
+        JsonNode asgst = paymentInfo.path("advance_SGST");
+        if (asgst.has("amount")) sgstAmount = asgst.get("amount").decimalValue();
+        if (asgst.has("glcode")) sgstGl = asgst.get("glcode").asText();
+
+        // ---- COLLECTION only if both GST exist ----
+        if (cgstAmount != null && sgstAmount != null) {
+            JsonNode coll = paymentInfo.path("collection");
+            if (coll.has("amount")) collectionAmount = coll.get("amount").decimalValue();
+            if (coll.has("glcode")) collectionGl = coll.get("glcode").asText();
+        }
+
+        if (sgstAmount == null) return null;
+
+        return GstAdvanceMap.builder()
+                .cgstAmount(cgstAmount)
+                .cgstGlCode(cgstGl)
+                .sgstAmount(sgstAmount)
+                .sgstGlCode(sgstGl)
+                .collectionAmount(collectionAmount)
+                .collectionGlCode(collectionGl)
+                .build();
+
+    } catch (Exception e) {
+        e.printStackTrace();
+        return null;
+    }	
 	}
 
 	/**
