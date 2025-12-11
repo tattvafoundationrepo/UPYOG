@@ -21,4 +21,8 @@ public class GstAdvanceMap {
 	private	BigDecimal sgstAmount ;
 	private	String sgstGlCode ;
 
+	private BigDecimal totalAmountPaid ;
+    private BigDecimal rentalAdvancePaid ;
+    private BigDecimal licenseAdvancePaid ;
+
 }

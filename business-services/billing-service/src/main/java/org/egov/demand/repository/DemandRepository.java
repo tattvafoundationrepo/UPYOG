@@ -198,9 +198,12 @@ public class DemandRepository {
 	Boolean hasAdvanceTaxhead = false;
 
 	for(DemandDetail d: demand.getDemandDetails()){
-       if(d.getTaxHeadMasterCode().contains("ADVANCE"))
-		 hasAdvanceTaxhead = true;
+       if(d.getTaxHeadMasterCode().contains("ADVANCE")){
+          hasAdvanceTaxhead = true;
+	   }
+		 
 	}
+
 
     // If advanceMap provided, append demandDetails for CGST/SGST and ADV_CGST/ADV_SGST
     if (advanceMap != null && demand.getBusinessService().equalsIgnoreCase("TX.Emarket_Rental_Fees") && hasAdvanceTaxhead) {
@@ -254,10 +257,6 @@ public class DemandRepository {
             advanceTaxHeadLists.add("SGST Payable");				
     }
 
-    // Advance-related heads we treat specially
-   
-
-
     // Stream, filter and map to FiReport
     return demand.getDemandDetails()
             .stream()
@@ -289,12 +288,9 @@ public class DemandRepository {
                     BigDecimal coll = detail.getCollectionAmount() == null ? BigDecimal.ZERO : detail.getCollectionAmount();
                     BigDecimal tax = detail.getTaxAmount() == null ? BigDecimal.ZERO : detail.getTaxAmount();
 
-                    detail.setCollectionAmount(coll.abs());
+					detail.setCollectionAmount(coll.abs());
                     detail.setTaxAmount(tax.abs());
-
-                    if (advanceMap != null && advanceMap.getCollectionAmount() != null) {
-                        detail.setTaxAmount(advanceMap.getCollectionAmount());
-                    }
+                      
                 }
                 String remark = null;
                 // Choose postingKey
@@ -313,28 +309,28 @@ public class DemandRepository {
                 }
 
                 // Determine GL code for collections: if it's an advance/GST head use detail's gl else default collection gl
-                String resolvedGlCode;
-                if (isCollection) {
-                    if (advanceTaxHeadLists.contains(detail.getTaxHeadMasterCode())) {
-                        resolvedGlCode = glCode; // use provided gl from demandDetail.additionalDetails
-                    } else {
-                        resolvedGlCode = "450100100"; // default collection GL
-                    }
-                } else {
-                    resolvedGlCode = glCode;
-                }
+                // String resolvedGlCode;
+                // if (isCollection) {
+                //     if (advanceTaxHeadLists.contains(detail.getTaxHeadMasterCode())) {
+                //         resolvedGlCode = glCode; // use provided gl from demandDetail.additionalDetails
+                //     } else {
+                //         resolvedGlCode = "450100100"; // default collection GL
+                //     }
+                // } else {
+                //     resolvedGlCode = glCode;
+                // }
 
                 // Determine amount to set
-                BigDecimal resolvedAmount;
-                if (isCollection) {
-                    if (detail.getTaxHeadMasterCode() != null && detail.getTaxHeadMasterCode().contains("ADVANCE")) {
-                        resolvedAmount = detail.getTaxAmount() == null ? BigDecimal.ZERO : detail.getTaxAmount();
-                    } else {
-                        resolvedAmount = detail.getCollectionAmount() == null ? BigDecimal.ZERO : detail.getCollectionAmount();
-                    }
-                } else {
-                    resolvedAmount = detail.getTaxAmount() == null ? BigDecimal.ZERO : detail.getTaxAmount();
-                }
+                // BigDecimal resolvedAmount;
+                // if (isCollection) {
+                //     if (detail.getTaxHeadMasterCode() != null && detail.getTaxHeadMasterCode().contains("ADVANCE")) {
+                //         resolvedAmount = detail.getTaxAmount() == null ? BigDecimal.ZERO : detail.getTaxAmount();
+                //     } else {
+                //         resolvedAmount = detail.getCollectionAmount() == null ? BigDecimal.ZERO : detail.getCollectionAmount();
+                //     }
+                // } else {
+                //     resolvedAmount = detail.getTaxAmount() == null ? BigDecimal.ZERO : detail.getTaxAmount();
+                // }
 
                 // Build FiReport using demand getters for fund/fundCenter/businessArea
                 return FiReport.builder()
@@ -344,8 +340,8 @@ public class DemandRepository {
                         .referenceNo(consumerCode)
                         .documentHeaderText(detail.getTaxHeadMasterCode())
                         .postingKey(postingKey)
-                        .glCode(resolvedGlCode)
-                        .collectionAmount(resolvedAmount)
+                        .glCode(glCode)
+                        .collectionAmount(detail.getTaxAmount())
                         .fund(fund)
                         .fundCentre(fundCenter)
                         .businessArea(businessArea)

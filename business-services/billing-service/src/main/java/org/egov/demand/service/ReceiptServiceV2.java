@@ -131,6 +131,8 @@ public class ReceiptServiceV2 {
 
 		List<FiReport> collectionReportList = new ArrayList<>();
 
+		
+
 		if (!isReceiptCancellation) {
 			demandRequest.getDemands().forEach(d -> {
 
@@ -140,15 +142,32 @@ public class ReceiptServiceV2 {
 					d.setFundCenter(infoList.get(0).getFundCenter());
 					d.setBusinessArea(infoList.get(0).getBusinessArea());
 					d.setPaymentMode(infoList.get(0).getPaymentMode());
-					log.info("additioanl from dbbbbbbbbbbbbbbbbbbbbbbbbb"+ infoList.get(0));
+					log.info("additioanl from dbbbbbbbbbbbbbbbbbbbbbbbbb" + infoList.get(0));
 				}
-				
-               GstAdvanceMap gstAdvanceMap =  extractGstAdvanceFromAdditionalDetails(infoList.get(0));
-               log.info("advancemapppppppppppppppppppppppppppp"+ gstAdvanceMap);
+				GstAdvanceMap gstAdvanceMap = extractGstAdvanceFromAdditionalDetails(infoList.get(0));
+				d.getDemandDetails().stream().filter(dd -> {
+					return dd.getTaxHeadMasterCode().contains("ADVANCE");
+				}).collect(Collectors.toList());
+
+				gstAdvanceMap.setCollectionAmount(gstAdvanceMap.getTotalAmountPaid());
+
+				Map<String, Object> advCollectionMap = new HashMap<>();
+                advCollectionMap.put("glcode", gstAdvanceMap.getCollectionGlCode() != null ? gstAdvanceMap.getCollectionGlCode() : "450100100");
+
+				d.getDemandDetails().add(DemandDetail.builder()
+		        .demandId(d.getId())
+                .taxAmount(gstAdvanceMap.getCollectionAmount())
+                .taxHeadMasterCode("INTRIM-RECEIPT-CA")
+				.additionalDetails(advCollectionMap)
+                .build());
+
+				log.info("demand detailsss while collectionnnnnnnn" + d.getDemandDetails());
+
+				log.info("advancemapppppppppppppppppppppppppppp" + gstAdvanceMap);
 				// log.info("adddditionalDeeeetailssssssssssss"+
 				// d.getAdditionalDetails().toString());
 				log.info("40....40....40....40....40");
-				List<FiReport> report = demandRepository.buildFiReportsFromDemand(d, "40", true , gstAdvanceMap);
+				List<FiReport> report = demandRepository.buildFiReportsFromDemand(d, "40", true, gstAdvanceMap);
 
 				collectionReportList.addAll(report);
 			});
@@ -162,64 +181,90 @@ public class ReceiptServiceV2 {
 
 	public GstAdvanceMap extractGstAdvanceFromAdditionalDetails(PaymentMarketInfo info) {
 
+		Object raw = info.getAdditionalDetails();
 
+		JsonNode root;
 
-    Object raw = info.getAdditionalDetails();
+		try {
+			ObjectMapper mapper = new ObjectMapper();
 
-    JsonNode root;
+			if (raw instanceof String) {
+				// Case 1: Proper JSON string
+				root = mapper.readTree((String) raw);
 
-    try {
-        ObjectMapper mapper = new ObjectMapper();
+			} else if (raw instanceof Map) {
+				// Case 2: Already deserialized (LinkedHashMap etc.)
+				root = mapper.valueToTree(raw);
 
-        if (raw instanceof String) {
-            // Case 1: Proper JSON string
-            root = mapper.readTree((String) raw);
+			} else {
+				return null; // Unsupported type
+			}
 
-        } else if (raw instanceof Map) {
-            // Case 2: Already deserialized (LinkedHashMap etc.)
-            root = mapper.valueToTree(raw);
+			JsonNode paymentInfo = root.path("paymentInfo");
 
-        } else {
-            return null; // Unsupported type
-        }
+			BigDecimal cgstAmount = null, sgstAmount = null, collectionAmount = null;
+			String cgstGl = null, sgstGl = null, collectionGl = null;
+			BigDecimal totalAmountPaid = null;
+			BigDecimal rentalAdvancePaid = null;
+			BigDecimal licenseAdvancePaid = null;
 
-        JsonNode paymentInfo = root.path("paymentInfo");
+			// ---- CGST ----
+			JsonNode acgst = paymentInfo.path("advance_CGST");
+			if (acgst.has("amount"))
+				cgstAmount = acgst.get("amount").decimalValue();
+			if (acgst.has("glcode"))
+				cgstGl = acgst.get("glcode").asText();
 
-        BigDecimal cgstAmount = null, sgstAmount = null, collectionAmount = null;
-        String cgstGl = null, sgstGl = null, collectionGl = null;
+			// ---- SGST ----
+			JsonNode asgst = paymentInfo.path("advance_SGST");
+			if (asgst.has("amount"))
+				sgstAmount = asgst.get("amount").decimalValue();
+			if (asgst.has("glcode"))
+				sgstGl = asgst.get("glcode").asText();
 
-        // ---- CGST ----
-        JsonNode acgst = paymentInfo.path("advance_CGST");
-        if (acgst.has("amount")) cgstAmount = acgst.get("amount").decimalValue();
-        if (acgst.has("glcode")) cgstGl = acgst.get("glcode").asText();
+			// ---- COLLECTION only if both GST exist ----
 
-        // ---- SGST ----
-        JsonNode asgst = paymentInfo.path("advance_SGST");
-        if (asgst.has("amount")) sgstAmount = asgst.get("amount").decimalValue();
-        if (asgst.has("glcode")) sgstGl = asgst.get("glcode").asText();
+			JsonNode coll = paymentInfo.path("collection");
+			if (coll.has("amount"))
+				collectionAmount = coll.get("amount").decimalValue();
+			if (coll.has("glcode"))
+				collectionGl = coll.get("glcode").asText();
 
-        // ---- COLLECTION only if both GST exist ----
-        if (cgstAmount != null && sgstAmount != null) {
-            JsonNode coll = paymentInfo.path("collection");
-            if (coll.has("amount")) collectionAmount = coll.get("amount").decimalValue();
-            if (coll.has("glcode")) collectionGl = coll.get("glcode").asText();
-        }
+			// totalAmountPaid (present at root level)
+			if (root.has("totalAmountPaid") && !root.get("totalAmountPaid").isNull()) {
+				totalAmountPaid = root.get("totalAmountPaid").decimalValue();
+			}
 
-        if (sgstAmount == null) return null;
+			// rentalAdvancePaid (inside additionalDetails)
+			JsonNode additional = root.path("additionalDetails");
 
-        return GstAdvanceMap.builder()
-                .cgstAmount(cgstAmount)
-                .cgstGlCode(cgstGl)
-                .sgstAmount(sgstAmount)
-                .sgstGlCode(sgstGl)
-                .collectionAmount(collectionAmount)
-                .collectionGlCode(collectionGl)
-                .build();
+			if (additional.has("rentalAdvancePaid") && !additional.get("rentalAdvancePaid").isNull()) {
+				rentalAdvancePaid = additional.get("rentalAdvancePaid").decimalValue();
+			}
 
-    } catch (Exception e) {
-        e.printStackTrace();
-        return null;
-    }	
+			if (additional.has("licenseAdvancePaid") && !additional.get("licenseAdvancePaid").isNull()) {
+				licenseAdvancePaid = additional.get("licenseAdvancePaid").decimalValue();
+			}
+            if(rentalAdvancePaid != null)
+				totalAmountPaid = totalAmountPaid.subtract(rentalAdvancePaid);
+			if(licenseAdvancePaid != null)
+				totalAmountPaid = totalAmountPaid.subtract(licenseAdvancePaid);
+			return GstAdvanceMap.builder()
+					.cgstAmount(cgstAmount)
+					.cgstGlCode(cgstGl)
+					.sgstAmount(sgstAmount)
+					.sgstGlCode(sgstGl)
+					.collectionAmount(collectionAmount)
+					.collectionGlCode(collectionGl)
+					.totalAmountPaid(totalAmountPaid)
+					.rentalAdvancePaid(rentalAdvancePaid)
+					.licenseAdvancePaid(licenseAdvancePaid)
+					.build();
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
 	}
 
 	/**
