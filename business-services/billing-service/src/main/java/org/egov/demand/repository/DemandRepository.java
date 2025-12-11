@@ -206,8 +206,10 @@ public class DemandRepository {
 
 
     // If advanceMap provided, append demandDetails for CGST/SGST and ADV_CGST/ADV_SGST
-    if (advanceMap != null && demand.getBusinessService().equalsIgnoreCase("TX.Emarket_Rental_Fees") && hasAdvanceTaxhead) {
+    if (advanceMap != null  && hasAdvanceTaxhead ) {
+        if(advanceMap.getCgstAmount() != null){
 
+		
         Map<String, Object> cgstMap = new HashMap<>();
         cgstMap.put("glcode", advanceMap.getCgstGlCode() != null ? advanceMap.getCgstGlCode() : "350200421");
 
@@ -256,6 +258,7 @@ public class DemandRepository {
             advanceTaxHeadLists.add("CGST Payable");
             advanceTaxHeadLists.add("SGST Payable");				
     }
+}
 
     // Stream, filter and map to FiReport
     return demand.getDemandDetails()

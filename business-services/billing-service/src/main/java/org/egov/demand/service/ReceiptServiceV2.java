@@ -134,10 +134,16 @@ public class ReceiptServiceV2 {
 		
 
 		if (!isReceiptCancellation) {
-
-
+           Demand rentDemand = demandRequest.getDemands().stream()
+              .filter(d -> "TX.Emarket_Rental_Fees".equalsIgnoreCase(d.getBusinessService()))
+              .findFirst()
+              .orElse(null);
 //			demandRequest.getDemands().forEach(d -> {
             Demand d  =  new Demand();
+			     d.setBusinessService(rentDemand.getBusinessService());
+				 d.setId(rentDemand.getId());
+				 d.setTaxPeriodFrom(rentDemand.getTaxPeriodFrom());
+                 d.setTaxPeriodTo(rentDemand.getTaxPeriodTo());
 				List<PaymentMarketInfo> infoList = demandRepository.getMarketEssentialInfo(demandRequest.getDemands().get(0).getId());
 				if (!infoList.isEmpty()) {
 					d.setFund(infoList.get(0).getFund());
