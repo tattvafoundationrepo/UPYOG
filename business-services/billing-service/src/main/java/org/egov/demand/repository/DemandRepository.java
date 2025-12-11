@@ -170,8 +170,8 @@ public class DemandRepository {
                                               Boolean isCollection,
                                               GstAdvanceMap advanceMap) {
 
-    
-	 List<String> advanceTaxHeadLists = new ArrayList<>();											final Long periodFrom = demand.getTaxPeriodFrom();
+    final Long periodFrom = demand.getTaxPeriodFrom();
+	List<String> advanceTaxHeadLists = new ArrayList<>();											
     final String consumerCode = demand.getConsumerCode();
     final long now = System.currentTimeMillis();
 	String fund;
@@ -219,6 +219,7 @@ public class DemandRepository {
 
         // Add CGST Payable
         demand.getDemandDetails().add(DemandDetail.builder()
+		        .demandId(demand.getId())
                 .collectionAmount(advanceMap.getCgstAmount())
                 .taxHeadMasterCode("CGST Payable")
                 .additionalDetails(cgstMap)
@@ -226,6 +227,7 @@ public class DemandRepository {
 
         // Add SGST Payable
         demand.getDemandDetails().add(DemandDetail.builder()
+		        .demandId(demand.getId())
                 .collectionAmount(advanceMap.getSgstAmount())
                 .taxHeadMasterCode("SGST Payable")
                 .additionalDetails(sgstMap)
@@ -233,6 +235,7 @@ public class DemandRepository {
 
         // Add ADV_CGST (payment side)
         demand.getDemandDetails().add(DemandDetail.builder()
+		        .demandId(demand.getId())
                 .collectionAmount(advanceMap.getCgstAmount())
                 .taxHeadMasterCode("ADV_CGST")
                 .additionalDetails(advCgstMap)
@@ -240,6 +243,7 @@ public class DemandRepository {
 
         // Add ADV_SGST (payment side)
         demand.getDemandDetails().add(DemandDetail.builder()
+		        .demandId(demand.getId())
                 .collectionAmount(advanceMap.getSgstAmount())
                 .taxHeadMasterCode("ADV_SGST")
                 .additionalDetails(advSgstMap)
@@ -264,7 +268,7 @@ public class DemandRepository {
 
                 if (detail.getTaxHeadMasterCode() != null &&
                         detail.getTaxHeadMasterCode().contains("GST") &&
-                        taxAmt.compareTo(collAmt) == 0) {
+                        taxAmt.compareTo(collAmt) == 0 && !isCollection) {
                     return false;
                 }
                 return true;
@@ -292,15 +296,20 @@ public class DemandRepository {
                         detail.setTaxAmount(advanceMap.getCollectionAmount());
                     }
                 }
-
+                String remark = null;
                 // Choose postingKey
                 String postingKey;
                 if (detail.getTaxHeadMasterCode() != null && detail.getTaxHeadMasterCode().contains("ADVANCE")) {
                     postingKey = "39";
                 } else if (advanceTaxHeadLists.contains(detail.getTaxHeadMasterCode())) {
-                    postingKey = "99";
+					if(detail.getTaxHeadMasterCode().contains("Payable")){
+                       postingKey = "50";
+					   remark = "Demand";
+					} 
+					else
+					   postingKey = "40";
                 } else {
-                    postingKey = key;
+                       postingKey = key;
                 }
 
                 // Determine GL code for collections: if it's an advance/GST head use detail's gl else default collection gl
@@ -345,7 +354,7 @@ public class DemandRepository {
                         .paymentModeDetails(demand.getPaymentMode())
                         .createdAt(now)
                         .updatedAt(now)
-                        .remarks(isCollection ? " Collection " : " Demand")
+                        .remarks(isCollection ? remark != null ? remark :" Collection " : " Demand")
                         .build();
             })
             .collect(Collectors.toList());
