@@ -134,9 +134,11 @@ public class ReceiptServiceV2 {
 		
 
 		if (!isReceiptCancellation) {
-			demandRequest.getDemands().forEach(d -> {
 
-				List<PaymentMarketInfo> infoList = demandRepository.getMarketEssentialInfo(d.getId());
+
+//			demandRequest.getDemands().forEach(d -> {
+            Demand d  =  new Demand();
+				List<PaymentMarketInfo> infoList = demandRepository.getMarketEssentialInfo(demandRequest.getDemands().get(0).getId());
 				if (!infoList.isEmpty()) {
 					d.setFund(infoList.get(0).getFund());
 					d.setFundCenter(infoList.get(0).getFundCenter());
@@ -145,16 +147,22 @@ public class ReceiptServiceV2 {
 					log.info("additioanl from dbbbbbbbbbbbbbbbbbbbbbbbbb" + infoList.get(0));
 				}
 				GstAdvanceMap gstAdvanceMap = extractGstAdvanceFromAdditionalDetails(infoList.get(0));
-				List<DemandDetail> filtererDetails = d.getDemandDetails().stream().filter(dd -> {
-					return dd.getTaxHeadMasterCode().contains("ADVANCE");
-				}).map(dd2 -> {
-					if(gstAdvanceMap.getCgstAmount() != null && gstAdvanceMap.getCgstAmount().compareTo(BigDecimal.ZERO) == 0){
-                       dd2.setTaxAmount( dd2.getTaxAmount().subtract(gstAdvanceMap.getCgstAmount()).subtract(gstAdvanceMap.getCgstAmount()));
-					}	
-					return dd2;
-				}).collect(Collectors.toList());
-				log.info("filtereddddddddddd detailsssss"+filtererDetails);
-                d.setDemandDetails(filtererDetails);
+				List<DemandDetail> filteredDetails =
+                  demandRequest.getDemands().stream()
+                  .flatMap(dd -> dd.getDemandDetails().stream())        // flatten all demandDetails
+                  .filter(dd -> dd.getTaxHeadMasterCode().contains("ADVANCE"))
+                  .peek(dd -> {
+                    if (gstAdvanceMap.getCgstAmount() != null &&
+                    gstAdvanceMap.getCgstAmount().compareTo(BigDecimal.ZERO) > 0) {
+
+                    dd.setTaxAmount(
+                        dd.getTaxAmount().subtract(gstAdvanceMap.getCgstAmount())
+                    );
+                }
+               }).collect(Collectors.toList());
+
+				log.info("filtereddddddddddd detailsssss"+filteredDetails);
+                d.setDemandDetails(filteredDetails);
 				gstAdvanceMap.setCollectionAmount(gstAdvanceMap.getTotalAmountPaid());
 
 				Map<String, Object> advCollectionMap = new HashMap<>();
@@ -176,9 +184,9 @@ public class ReceiptServiceV2 {
 				List<FiReport> report = demandRepository.buildFiReportsFromDemand(d, "40", true, gstAdvanceMap);
 
 				collectionReportList.addAll(report);
-			});
-
-			demandRepository.batchInsertFiReports(collectionReportList);
+//			});
+            
+     			demandRepository.batchInsertFiReports(collectionReportList);
 		} else {
 
 		}
