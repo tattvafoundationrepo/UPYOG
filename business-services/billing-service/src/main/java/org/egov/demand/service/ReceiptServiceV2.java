@@ -249,6 +249,9 @@ public class ReceiptServiceV2 {
 				totalAmountPaid = totalAmountPaid.subtract(rentalAdvancePaid);
 			if(licenseAdvancePaid != null)
 				totalAmountPaid = totalAmountPaid.subtract(licenseAdvancePaid);
+
+			log.info("totaaaalAmountttttttttttt"+totalAmountPaid);
+			log.info("rentalAdvancePaiddddddddddd"+rentalAdvancePaid);
 			return GstAdvanceMap.builder()
 					.cgstAmount(cgstAmount)
 					.cgstGlCode(cgstGl)
