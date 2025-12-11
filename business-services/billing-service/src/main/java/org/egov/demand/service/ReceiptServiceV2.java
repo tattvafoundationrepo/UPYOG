@@ -145,7 +145,7 @@ public class ReceiptServiceV2 {
 					log.info("additioanl from dbbbbbbbbbbbbbbbbbbbbbbbbb" + infoList.get(0));
 				}
 				GstAdvanceMap gstAdvanceMap = extractGstAdvanceFromAdditionalDetails(infoList.get(0));
-				d.getDemandDetails().stream().filter(dd -> {
+				List<DemandDetail> filtererDetails = d.getDemandDetails().stream().filter(dd -> {
 					return dd.getTaxHeadMasterCode().contains("ADVANCE");
 				}).map(dd2 -> {
 					if(gstAdvanceMap.getCgstAmount() != null && gstAdvanceMap.getCgstAmount().compareTo(BigDecimal.ZERO) == 0){
@@ -153,7 +153,8 @@ public class ReceiptServiceV2 {
 					}	
 					return dd2;
 				}).collect(Collectors.toList());
-
+				log.info("filtereddddddddddd detailsssss"+filtererDetails);
+                d.setDemandDetails(filtererDetails);
 				gstAdvanceMap.setCollectionAmount(gstAdvanceMap.getTotalAmountPaid());
 
 				Map<String, Object> advCollectionMap = new HashMap<>();
@@ -235,16 +236,15 @@ public class ReceiptServiceV2 {
 				collectionGl = coll.get("glcode").asText();
 
 
-			// rentalAdvancePaid (inside additionalDetails)
-			JsonNode additional = root.path("additionalDetails");
+			// ---- rentalAdvancePaid (ROOT LEVEL) ----
+            if (root.has("rentalAdvancePaid") && !root.get("rentalAdvancePaid").isNull()) {
+                rentalAdvancePaid = root.get("rentalAdvancePaid").decimalValue();
+            }
 
-			if (additional.has("rentalAdvancePaid") && !additional.get("rentalAdvancePaid").isNull()) {
-				rentalAdvancePaid = additional.get("rentalAdvancePaid").decimalValue();
-			}
-
-			if (additional.has("licenseAdvancePaid") && !additional.get("licenseAdvancePaid").isNull()) {
-				licenseAdvancePaid = additional.get("licenseAdvancePaid").decimalValue();
-			}
+        // ---- licenseAdvancePaid (ROOT LEVEL) ----
+            if (root.has("licenseAdvancePaid") && !root.get("licenseAdvancePaid").isNull()) {
+               licenseAdvancePaid = root.get("licenseAdvancePaid").decimalValue();
+            }
 			log.info("rentalAdvancePaiddddddddddd"+rentalAdvancePaid);
 			return GstAdvanceMap.builder()
 					.cgstAmount(cgstAmount)
