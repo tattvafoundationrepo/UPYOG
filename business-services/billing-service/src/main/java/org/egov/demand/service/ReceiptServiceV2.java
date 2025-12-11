@@ -147,6 +147,11 @@ public class ReceiptServiceV2 {
 				GstAdvanceMap gstAdvanceMap = extractGstAdvanceFromAdditionalDetails(infoList.get(0));
 				d.getDemandDetails().stream().filter(dd -> {
 					return dd.getTaxHeadMasterCode().contains("ADVANCE");
+				}).map(dd2 -> {
+					if(gstAdvanceMap.getCgstAmount() != null && gstAdvanceMap.getCgstAmount().compareTo(BigDecimal.ZERO) == 0){
+                       dd2.setTaxAmount( dd2.getTaxAmount().subtract(gstAdvanceMap.getCgstAmount()).subtract(gstAdvanceMap.getCgstAmount()));
+					}	
+					return dd2;
 				}).collect(Collectors.toList());
 
 				gstAdvanceMap.setCollectionAmount(gstAdvanceMap.getTotalAmountPaid());
@@ -161,7 +166,7 @@ public class ReceiptServiceV2 {
 				.additionalDetails(advCollectionMap)
                 .build());
 
-				log.info("demand detailsss while collectionnnnnnnn" + d.getDemandDetails());
+				log.info("demand detailsss while collectionnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn" + d.getDemandDetails());
 
 				log.info("advancemapppppppppppppppppppppppppppp" + gstAdvanceMap);
 				// log.info("adddditionalDeeeetailssssssssssss"+
@@ -204,7 +209,6 @@ public class ReceiptServiceV2 {
 
 			BigDecimal cgstAmount = null, sgstAmount = null, collectionAmount = null;
 			String cgstGl = null, sgstGl = null, collectionGl = null;
-			BigDecimal totalAmountPaid = null;
 			BigDecimal rentalAdvancePaid = null;
 			BigDecimal licenseAdvancePaid = null;
 
@@ -230,10 +234,6 @@ public class ReceiptServiceV2 {
 			if (coll.has("glcode"))
 				collectionGl = coll.get("glcode").asText();
 
-			// totalAmountPaid (present at root level)
-			if (root.has("totalAmountPaid") && !root.get("totalAmountPaid").isNull()) {
-				totalAmountPaid = root.get("totalAmountPaid").decimalValue();
-			}
 
 			// rentalAdvancePaid (inside additionalDetails)
 			JsonNode additional = root.path("additionalDetails");
@@ -245,21 +245,15 @@ public class ReceiptServiceV2 {
 			if (additional.has("licenseAdvancePaid") && !additional.get("licenseAdvancePaid").isNull()) {
 				licenseAdvancePaid = additional.get("licenseAdvancePaid").decimalValue();
 			}
-            if(rentalAdvancePaid != null)
-				totalAmountPaid = totalAmountPaid.subtract(rentalAdvancePaid);
-			if(licenseAdvancePaid != null)
-				totalAmountPaid = totalAmountPaid.subtract(licenseAdvancePaid);
-
-			log.info("totaaaalAmountttttttttttt"+totalAmountPaid);
 			log.info("rentalAdvancePaiddddddddddd"+rentalAdvancePaid);
 			return GstAdvanceMap.builder()
 					.cgstAmount(cgstAmount)
 					.cgstGlCode(cgstGl)
 					.sgstAmount(sgstAmount)
 					.sgstGlCode(sgstGl)
-					.collectionAmount(collectionAmount)
+					.collectionAmount(info.getTotalDue())
 					.collectionGlCode(collectionGl)
-					.totalAmountPaid(totalAmountPaid)
+					.totalAmountPaid(info.getTotalDue())
 					.rentalAdvancePaid(rentalAdvancePaid)
 					.licenseAdvancePaid(licenseAdvancePaid)
 					.build();
