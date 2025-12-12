@@ -127,74 +127,88 @@ public class ReceiptServiceV2 {
 				.demands(demandsToBeUpdated)
 				.build();
 
+	    if(isReceiptCancellation) {
+		demandRequest.getDemands().forEach(d -> {
+			if (d.getDemandDetails() == null)
+				return;
+			d.getDemandDetails().forEach(dd -> {
+				String code = dd.getTaxHeadMasterCode();
+				if (code != null && code.contains("ADVANCE")) {
+					dd.setTaxAmount(BigDecimal.ZERO);
+					dd.setCollectionAmount(BigDecimal.ZERO);
+				}
+			});
+		});
+	  }
+
 		demandService.updateAsync(demandRequest, paymentBackUpdateAudit);
 
 		List<FiReport> collectionReportList = new ArrayList<>();
 
-		
-
 		if (!isReceiptCancellation) {
-           Demand rentDemand = demandRequest.getDemands().stream()
-              .filter(d -> "TX.Emarket_Rental_Fees".equalsIgnoreCase(d.getBusinessService()))
-              .findFirst()
-              .orElse(null);
-//			demandRequest.getDemands().forEach(d -> {
-            Demand d  =  new Demand();
-			     d.setConsumerCode(rentDemand.getConsumerCode());
-			     d.setBusinessService(rentDemand.getBusinessService());
-				 d.setId(rentDemand.getId());
-				 d.setTaxPeriodFrom(rentDemand.getTaxPeriodFrom());
-                 d.setTaxPeriodTo(rentDemand.getTaxPeriodTo());
-				List<PaymentMarketInfo> infoList = demandRepository.getMarketEssentialInfo(demandRequest.getDemands().get(0).getId());
-				if (!infoList.isEmpty()) {
-					d.setFund(infoList.get(0).getFund());
-					d.setFundCenter(infoList.get(0).getFundCenter());
-					d.setBusinessArea(infoList.get(0).getBusinessArea());
-					d.setPaymentMode(infoList.get(0).getPaymentMode());
-					log.info("additioanl from dbbbbbbbbbbbbbbbbbbbbbbbbb" + infoList.get(0));
-				}
-				GstAdvanceMap gstAdvanceMap = extractGstAdvanceFromAdditionalDetails(infoList.get(0));
-				List<DemandDetail> filteredDetails =
-                  demandRequest.getDemands().stream()
-                  .flatMap(dd -> dd.getDemandDetails().stream())        // flatten all demandDetails
-                  .filter(dd -> dd.getTaxHeadMasterCode().contains("ADVANCE"))
-                  .peek(dd -> {
-                    if (gstAdvanceMap.getCgstAmount() != null &&
-                    gstAdvanceMap.getCgstAmount().compareTo(BigDecimal.ZERO) > 0) {
+			Demand rentDemand = demandRequest.getDemands().stream()
+					.filter(d -> "TX.Emarket_Rental_Fees".equalsIgnoreCase(d.getBusinessService()))
+					.findFirst()
+					.orElse(null);
+			// demandRequest.getDemands().forEach(d -> {
+			Demand d = new Demand();
+			d.setConsumerCode(rentDemand.getConsumerCode());
+			d.setBusinessService(rentDemand.getBusinessService());
+			d.setId(rentDemand.getId());
+			d.setTaxPeriodFrom(rentDemand.getTaxPeriodFrom());
+			d.setTaxPeriodTo(rentDemand.getTaxPeriodTo());
+			List<PaymentMarketInfo> infoList = demandRepository
+					.getMarketEssentialInfo(demandRequest.getDemands().get(0).getId());
+			if (!infoList.isEmpty()) {
+				d.setFund(infoList.get(0).getFund());
+				d.setFundCenter(infoList.get(0).getFundCenter());
+				d.setBusinessArea(infoList.get(0).getBusinessArea());
+				d.setPaymentMode(infoList.get(0).getPaymentMode());
+				log.info("additioanl from dbbbbbbbbbbbbbbbbbbbbbbbbb" + infoList.get(0));
+			}
+			GstAdvanceMap gstAdvanceMap = extractGstAdvanceFromAdditionalDetails(infoList.get(0));
+			List<DemandDetail> filteredDetails = demandRequest.getDemands().stream()
+					.flatMap(dd -> dd.getDemandDetails().stream()) // flatten all demandDetails
+					.filter(dd -> dd.getTaxHeadMasterCode().contains("ADVANCE"))
+					.peek(dd -> {
+						if (gstAdvanceMap.getCgstAmount() != null &&
+								gstAdvanceMap.getCgstAmount().compareTo(BigDecimal.ZERO) > 0) {
 
-                    dd.setTaxAmount(
-                        dd.getTaxAmount().subtract(gstAdvanceMap.getCgstAmount())
-                    );
-                }
-               }).collect(Collectors.toList());
+							dd.setTaxAmount(
+									dd.getTaxAmount().subtract(gstAdvanceMap.getCgstAmount()));
+						}
+					}).collect(Collectors.toList());
 
-				log.info("filtereddddddddddd detailsssss"+filteredDetails);
-                d.setDemandDetails(filteredDetails);
-				gstAdvanceMap.setCollectionAmount(gstAdvanceMap.getTotalAmountPaid());
+			log.info("filtereddddddddddd detailsssss" + filteredDetails);
+			d.setDemandDetails(filteredDetails);
+			gstAdvanceMap.setCollectionAmount(gstAdvanceMap.getTotalAmountPaid());
 
-				Map<String, Object> advCollectionMap = new HashMap<>();
-                advCollectionMap.put("glcode", gstAdvanceMap.getCollectionGlCode() != null ? gstAdvanceMap.getCollectionGlCode() : "450100100");
+			Map<String, Object> advCollectionMap = new HashMap<>();
+			advCollectionMap.put("glcode",
+					gstAdvanceMap.getCollectionGlCode() != null ? gstAdvanceMap.getCollectionGlCode() : "450100100");
 
-				d.getDemandDetails().add(DemandDetail.builder()
-		        .demandId(d.getId())
-                .taxAmount(gstAdvanceMap.getCollectionAmount())
-                .taxHeadMasterCode("INTRIM-RECEIPT-CA")
-				.additionalDetails(advCollectionMap)
-                .build());
+			d.getDemandDetails().add(DemandDetail.builder()
+					.demandId(d.getId())
+					.taxAmount(gstAdvanceMap.getCollectionAmount())
+					.taxHeadMasterCode("INTRIM-RECEIPT-CA")
+					.additionalDetails(advCollectionMap)
+					.build());
 
-				log.info("demand detailsss while collectionnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn" + d.getDemandDetails());
+			log.info("demand detailsss while collectionnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn"
+					+ d.getDemandDetails());
 
-				log.info("advancemapppppppppppppppppppppppppppp" + gstAdvanceMap);
-				// log.info("adddditionalDeeeetailssssssssssss"+
-				// d.getAdditionalDetails().toString());
-				log.info("40....40....40....40....40");
-				List<FiReport> report = demandRepository.buildFiReportsFromDemand(d, "40", true, gstAdvanceMap);
+			log.info("advancemapppppppppppppppppppppppppppp" + gstAdvanceMap);
+			// log.info("adddditionalDeeeetailssssssssssss"+
+			// d.getAdditionalDetails().toString());
+			log.info("40....40....40....40....40");
+			List<FiReport> report = demandRepository.buildFiReportsFromDemand(d, "40", true, gstAdvanceMap);
 
-				collectionReportList.addAll(report);
-//			});
-            
-     			demandRepository.batchInsertFiReports(collectionReportList);
+			collectionReportList.addAll(report);
+			// });
+
+			demandRepository.batchInsertFiReports(collectionReportList);
 		} else {
+			log.info("Receipt is cancelled , so not generating collection FI report");
 
 		}
 
@@ -250,17 +264,16 @@ public class ReceiptServiceV2 {
 			if (coll.has("glcode"))
 				collectionGl = coll.get("glcode").asText();
 
-
 			// ---- rentalAdvancePaid (ROOT LEVEL) ----
-            if (root.has("rentalAdvancePaid") && !root.get("rentalAdvancePaid").isNull()) {
-                rentalAdvancePaid = root.get("rentalAdvancePaid").decimalValue();
-            }
+			if (root.has("rentalAdvancePaid") && !root.get("rentalAdvancePaid").isNull()) {
+				rentalAdvancePaid = root.get("rentalAdvancePaid").decimalValue();
+			}
 
-        // ---- licenseAdvancePaid (ROOT LEVEL) ----
-            if (root.has("licenseAdvancePaid") && !root.get("licenseAdvancePaid").isNull()) {
-               licenseAdvancePaid = root.get("licenseAdvancePaid").decimalValue();
-            }
-			log.info("rentalAdvancePaiddddddddddd"+rentalAdvancePaid);
+			// ---- licenseAdvancePaid (ROOT LEVEL) ----
+			if (root.has("licenseAdvancePaid") && !root.get("licenseAdvancePaid").isNull()) {
+				licenseAdvancePaid = root.get("licenseAdvancePaid").decimalValue();
+			}
+			log.info("rentalAdvancePaiddddddddddd" + rentalAdvancePaid);
 			return GstAdvanceMap.builder()
 					.cgstAmount(cgstAmount)
 					.cgstGlCode(cgstGl)
