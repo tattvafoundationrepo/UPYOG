@@ -225,7 +225,7 @@ public class DemandRepository {
         // Add CGST Payable
         demand.getDemandDetails().add(DemandDetail.builder()
 		        .demandId(demand.getId())
-                .collectionAmount(advanceMap.getCgstAmount())
+                .taxAmount(advanceMap.getCgstAmount())
                 .taxHeadMasterCode("CGST Payable")
                 .additionalDetails(cgstMap)
                 .build());
@@ -233,7 +233,7 @@ public class DemandRepository {
         // Add SGST Payable
         demand.getDemandDetails().add(DemandDetail.builder()
 		        .demandId(demand.getId())
-                .collectionAmount(advanceMap.getSgstAmount())
+                .taxAmount(advanceMap.getSgstAmount())
                 .taxHeadMasterCode("SGST Payable")
                 .additionalDetails(sgstMap)
                 .build());
