@@ -17,5 +17,6 @@ public class PaymentMarketInfo {
     private String additionalDetails;
     private BigDecimal totalDue;
     private BigDecimal totalAmountPaid;
+    private String functionalArea;
 }
 

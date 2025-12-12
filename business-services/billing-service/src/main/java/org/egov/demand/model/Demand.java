@@ -114,6 +114,7 @@ public class Demand {
      private String fund;
        private String fundCenter; 
        private String businessArea;
+       private String functionalArea;
 
     /**
      * Gets or Sets status

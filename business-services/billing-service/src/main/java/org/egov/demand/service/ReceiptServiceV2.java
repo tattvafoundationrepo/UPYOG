@@ -164,6 +164,7 @@ public class ReceiptServiceV2 {
 				d.setFundCenter(infoList.get(0).getFundCenter());
 				d.setBusinessArea(infoList.get(0).getBusinessArea());
 				d.setPaymentMode(infoList.get(0).getPaymentMode());
+				d.setFunctionalArea(infoList.get(0).getFunctionalArea());
 				log.info("additioanl from dbbbbbbbbbbbbbbbbbbbbbbbbb" + infoList.get(0));
 			}
 			GstAdvanceMap gstAdvanceMap = extractGstAdvanceFromAdditionalDetails(infoList.get(0));

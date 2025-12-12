@@ -54,7 +54,7 @@ import java.util.stream.Collectors;
 
 import javax.el.ArrayELResolver;
 
-
+import org.apache.kafka.common.protocol.types.Field.Str;
 import org.egov.demand.model.AuditDetails;
 import org.egov.demand.model.CollectedReceipt;
 import org.egov.demand.model.Demand;
@@ -177,6 +177,7 @@ public class DemandRepository {
 	String fund;
 	String fundCenter;
 	String businessArea;
+	String functionalArea;
     if(!isCollection) {
        Map<String,String> additionalMarketDetails = new HashMap<>();
 	   Object additiaonalsObj = demand.getAdditionalDetails();
@@ -186,11 +187,13 @@ public class DemandRepository {
 	    fund = additionalMarketDetails.get("fund");
 	    fundCenter = additionalMarketDetails.get("fundCenter");
         businessArea = additionalMarketDetails.get("businessArea");
+		functionalArea = additionalMarketDetails.get("functionalArea");
 	}else{
 
 		fund = demand.getFund();
         fundCenter = demand.getFundCenter();
         businessArea = demand.getBusinessArea();
+		functionalArea = demand.getFunctionalArea();
 
 	}
     log.info("FUNDS >>> fund=" + fund + " | fc=" + fundCenter + " | ba=" + businessArea);
@@ -348,7 +351,7 @@ public class DemandRepository {
                         .fund(fund)
                         .fundCentre(fundCenter)
                         .businessArea(businessArea)
-                        .functionalArea(businessArea)
+                        .functionalArea(functionalArea)
                         .isNew(Boolean.TRUE)
                         .paymentModeDetails(demand.getPaymentMode())
                         .createdAt(now)
@@ -696,6 +699,7 @@ public class DemandRepository {
          "       eem.fund_center, " +
          "       eem.fund, " +
          "       eem.business_area, " +
+		 "       eem.functional_area, " +
 		 "       ep2.additionaldetails , ep2.totaldue , ep2.totalamountpaid " +
         "FROM egcl_billdetial eb " +
         "JOIN egcl_bill eb2 ON eb.billid = eb2.id " +
@@ -721,6 +725,7 @@ public class DemandRepository {
 				info.setAdditionalDetails(rs.getString("additionaldetails"));
 				info.setTotalAmountPaid(rs.getBigDecimal("totalamountpaid"));
 				info.setTotalDue(rs.getBigDecimal("totaldue"));
+				info.setFunctionalArea(rs.getString("functional_area"));
                 return info;
             }
         }
