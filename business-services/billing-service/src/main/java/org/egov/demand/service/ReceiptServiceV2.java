@@ -140,6 +140,7 @@ public class ReceiptServiceV2 {
               .orElse(null);
 //			demandRequest.getDemands().forEach(d -> {
             Demand d  =  new Demand();
+			     d.setConsumerCode(rentDemand.getConsumerCode());
 			     d.setBusinessService(rentDemand.getBusinessService());
 				 d.setId(rentDemand.getId());
 				 d.setTaxPeriodFrom(rentDemand.getTaxPeriodFrom());

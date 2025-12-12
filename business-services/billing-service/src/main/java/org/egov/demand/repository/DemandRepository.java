@@ -207,7 +207,7 @@ public class DemandRepository {
 
     // If advanceMap provided, append demandDetails for CGST/SGST and ADV_CGST/ADV_SGST
     if (advanceMap != null  && hasAdvanceTaxhead ) {
-        if(advanceMap.getCgstAmount() != null){
+        if(advanceMap.getCgstAmount() != null && advanceMap.getSgstAmount() != null){
 
 		
         Map<String, Object> cgstMap = new HashMap<>();
@@ -241,7 +241,7 @@ public class DemandRepository {
         // Add ADV_CGST (payment side)
         demand.getDemandDetails().add(DemandDetail.builder()
 		        .demandId(demand.getId())
-                .collectionAmount(advanceMap.getCgstAmount())
+                .taxAmount(advanceMap.getCgstAmount())
                 .taxHeadMasterCode("ADV_CGST")
                 .additionalDetails(advCgstMap)
                 .build());
@@ -249,7 +249,7 @@ public class DemandRepository {
         // Add ADV_SGST (payment side)
         demand.getDemandDetails().add(DemandDetail.builder()
 		        .demandId(demand.getId())
-                .collectionAmount(advanceMap.getSgstAmount())
+                .taxAmount(advanceMap.getSgstAmount())
                 .taxHeadMasterCode("ADV_SGST")
                 .additionalDetails(advSgstMap)
                 .build());
@@ -290,10 +290,10 @@ public class DemandRepository {
 
                     BigDecimal coll = detail.getCollectionAmount() == null ? BigDecimal.ZERO : detail.getCollectionAmount();
                     BigDecimal tax = detail.getTaxAmount() == null ? BigDecimal.ZERO : detail.getTaxAmount();
-
+                    
 					detail.setCollectionAmount(coll.abs());
                     detail.setTaxAmount(tax.abs());
-                      
+                    glCode = "450100100";  
                 }
                 String remark = null;
                 // Choose postingKey
