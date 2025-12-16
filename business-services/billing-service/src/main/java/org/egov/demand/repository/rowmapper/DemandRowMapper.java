@@ -95,6 +95,8 @@ public class DemandRowMapper implements ResultSetExtractor<List<Demand>> {
 				demand.setDemandSeqNo(rs.getLong("demandseqno"));
 				demand.setIsAdvance(rs.getBoolean("isadvance"));
 				demand.setAdvanceIndex(rs.getInt("advanceindex"));
+				demand.setLicenceeName(rs.getString("licencee_name"));
+				demand.setLicenceeMobile(rs.getString("licencee_mobile"));
 				PGobject adDetail = (PGobject) rs.getObject("demandadditionaldetails");	
 				JsonNode json = util.getJsonValue(adDetail);
 				demand.setAdditionalDetails(json);

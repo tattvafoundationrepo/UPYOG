@@ -64,6 +64,9 @@ public class Demand {
     @JsonProperty("taxPeriodTo")
     private Long taxPeriodTo;
 
+    private String licenceeName;
+    private String licenceeMobile;
+
     @Default
     @JsonProperty("demandDetails")
     @Valid

@@ -70,13 +70,15 @@ public class DemandQueryBuilder {
 			+ "dmd.lastmodifiedtime AS dlastmodifiedtime,dmd.tenantid AS dtenantid,dmd.status,"
 			+ "dmd.additionaldetails as demandadditionaldetails,dmd.ispaymentcompleted as ispaymentcompleted,dmd.demandseqno,"
 			+ "dmd.isadvance as isadvance,dmd.advanceindex as advanceindex,"
-
+            + "concat( eelm.primary_title,' ',eelm.first_name,' ',eelm.last_name ) as licencee_name, eelm.mobile as licencee_mobile, "
 			+ "dmdl.id AS dlid,dmdl.demandid AS dldemandid,dmdl.taxheadcode AS dltaxheadcode,"
 			+ "dmdl.taxamount AS dltaxamount,dmdl.collectionamount AS dlcollectionamount,"
 			+ "dmdl.createdby AS dlcreatedby,dmdl.lastModifiedby AS dllastModifiedby,"
 			+ "dmdl.createdtime AS dlcreatedtime,dmdl.lastModifiedtime AS dllastModifiedtime,"
 			+ "dmdl.tenantid AS dltenantid,dmdl.additionaldetails as detailadditionaldetails " + "FROM egbs_demand_v1 dmd "
-			+ "INNER JOIN egbs_demanddetail_v1 dmdl ON dmd.id=dmdl.demandid " + "AND dmd.tenantid=dmdl.tenantid WHERE ";
+			+ "INNER JOIN egbs_demanddetail_v1 dmdl ON dmd.id=dmdl.demandid " + "AND dmd.tenantid=dmdl.tenantid "
+            + "LEFT JOIN eg_emarket_allotment eea  ON regexp_replace(dmd.consumercode, '[^0-9]', '', 'g')\n" + "=eea.license_number " 
+			+ "LEFT JOIN eg_emarket_licensee_master eelm   ON eea.license_id = eelm.licensee_id " + " WHERE ";
 
 	public static final String BASE_DEMAND_DETAIL_QUERY = "SELECT "
 			+ "demanddetail.id AS dlid,demanddetail.demandid AS dldemandid,demanddetail.taxheadcode AS dltaxheadcode,"
