@@ -195,6 +195,13 @@ public class ReceiptServiceV2 {
 					.additionalDetails(advCollectionMap)
 					.build());
 
+		    d.getDemandDetails().add(DemandDetail.builder()
+					.demandId(d.getId())
+					.taxAmount(gstAdvanceMap.getCollectionAmount())
+					.taxHeadMasterCode("Customer "+d.getConsumerCode())
+					.additionalDetails(advCollectionMap)
+					.build());			
+
 			log.info("demand detailsss while collectionnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn"
 					+ d.getDemandDetails());
 

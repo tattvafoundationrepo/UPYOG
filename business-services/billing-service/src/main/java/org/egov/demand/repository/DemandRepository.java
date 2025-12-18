@@ -48,6 +48,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -150,6 +151,23 @@ public class DemandRepository {
 		
 		for (Demand demand : demands) {
 			demandDetails.addAll(demand.getDemandDetails());
+		   BigDecimal totalTaxAmount =
+            demand.getDemandDetails().stream()
+            .filter(d -> 
+                !(d.getTaxHeadMasterCode().contains("GST") &&
+                  d.getTaxAmount().compareTo(d.getCollectionAmount()) == 0)
+            )
+            .map(DemandDetail::getTaxAmount)
+            .filter(Objects::nonNull)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+			demand.getDemandDetails().add(DemandDetail.builder()
+		        .demandId(demand.getId())
+                .taxAmount(totalTaxAmount)
+                .taxHeadMasterCode("Customer "+demand.getConsumerCode())
+                .additionalDetails(demand.getAdditionalDetails())
+                .build());
+
 			reportList.addAll(buildFiReportsFromDemand(demand , "50", false , null));
 		}
 		
@@ -304,13 +322,15 @@ public class DemandRepository {
                 if (detail.getTaxHeadMasterCode() != null && detail.getTaxHeadMasterCode().contains("ADVANCE")) {
                     postingKey = "39";
                 } else if (advanceTaxHeadLists.contains(detail.getTaxHeadMasterCode())) {
-					if(detail.getTaxHeadMasterCode().contains("Payable")){
+					if(detail.getTaxHeadMasterCode().contains("Payable") ){
                        postingKey = "50";
 					   remark = "Demand";
 					} 
 					else
 					   postingKey = "40";
-                } else {
+                }else if(detail.getTaxHeadMasterCode().contains("Customer") ) {
+                       postingKey = isCollection ? "19" : "01" ;  
+				} else {
                        postingKey = key;
                 }
 
