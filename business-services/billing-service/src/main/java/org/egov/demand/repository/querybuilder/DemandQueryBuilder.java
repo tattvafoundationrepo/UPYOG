@@ -70,7 +70,7 @@ public class DemandQueryBuilder {
 			+ "dmd.lastmodifiedtime AS dlastmodifiedtime,dmd.tenantid AS dtenantid,dmd.status,"
 			+ "dmd.additionaldetails as demandadditionaldetails,dmd.ispaymentcompleted as ispaymentcompleted,dmd.demandseqno,"
 			+ "dmd.isadvance as isadvance,dmd.advanceindex as advanceindex,"
-            + "concat( eelm.primary_title,' ',eelm.first_name,' ',eelm.last_name ) as licencee_name, eelm.mobile as licencee_mobile, "
+            + "concat( eelm.primary_title,' ',eelm.first_name,' ',eelm.last_name ) as licencee_name, eelm.mobile as licencee_mobile,eea.reason, "
 			+ "dmdl.id AS dlid,dmdl.demandid AS dldemandid,dmdl.taxheadcode AS dltaxheadcode,"
 			+ "dmdl.taxamount AS dltaxamount,dmdl.collectionamount AS dlcollectionamount,"
 			+ "dmdl.createdby AS dlcreatedby,dmdl.lastModifiedby AS dllastModifiedby,"

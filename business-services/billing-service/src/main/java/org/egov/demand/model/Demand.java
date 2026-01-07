@@ -88,6 +88,8 @@ public class Demand {
 
     private Long demandSeqNo;
 
+    private String reason;
+
     @Default
     @JsonProperty("minimumAmountPayable")
     private BigDecimal minimumAmountPayable = BigDecimal.ZERO;
