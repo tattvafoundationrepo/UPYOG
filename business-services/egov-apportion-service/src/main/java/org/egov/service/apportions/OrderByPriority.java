@@ -58,9 +58,12 @@ public class OrderByPriority implements ApportionV2 {
         /*
         * If zero amount payment is done and the total amount of bill or demands is zero. We will
         * set the collection amount to the taxamount for all taxHeads
+        * IMPORTANT: Do NOT return early if advance processing is needed (isAdvanceAllowed=true)
+        * because advance buckets need to be processed even when amountPaid=0 and totalAmount=0
         * */
         if(apportionRequestV2.getAmountPaid().compareTo(BigDecimal.ZERO) == 0
-                && getTotalAmount(taxDetails).compareTo(BigDecimal.ZERO) == 0){
+                && getTotalAmount(taxDetails).compareTo(BigDecimal.ZERO) == 0
+                && !apportionRequestV2.getIsAdvanceAllowed()){
             System.out.println("DEBUG - Taking zero payment and zero amount path, returning early");
             apportionZeroPaymentAndZeroAmountToBePaid(taxDetails);
             return taxDetails;
