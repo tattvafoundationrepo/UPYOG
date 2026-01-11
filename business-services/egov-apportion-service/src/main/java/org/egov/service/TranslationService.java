@@ -109,6 +109,17 @@ public class TranslationService {
             taxDetail.setAmountPaid(collectedAmount);
             taxDetail.setAmountToBePaid(amountToBePaid);
 
+            // Debug logging to investigate 2-month advance issue
+            System.out.println("DEBUG - Translation: Demand " + demand.getId() + " (period: " + demand.getTaxPeriodFrom() + ")");
+            System.out.println("  amountToBePaid: " + amountToBePaid);
+            System.out.println("  collectedAmount: " + collectedAmount);
+            System.out.println("  Number of buckets: " + taxDetail.getBuckets().size());
+            for(Bucket bucket : taxDetail.getBuckets()) {
+                if(bucket.getTaxHeadCode().contains("ADVANCE")) {
+                    System.out.println("  ADVANCE bucket found: amount=" + bucket.getAmount() + ", adjustedAmount=" + bucket.getAdjustedAmount());
+                }
+            }
+
             apportionRequestV2.addTaxDetail(taxDetail);
 
         }
