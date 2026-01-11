@@ -48,19 +48,33 @@ public class OrderByPriority implements ApportionV2 {
         BigDecimal amount;
         Boolean isAmountPositive;
 
+        // Debug logging to understand advance processing
+        System.out.println("DEBUG - apportionPaidAmount called:");
+        System.out.println("  businessService: " + apportionRequestV2.getBusinessService());
+        System.out.println("  amountPaid: " + apportionRequestV2.getAmountPaid());
+        System.out.println("  isAdvanceAllowed: " + apportionRequestV2.getIsAdvanceAllowed());
+        System.out.println("  Number of taxDetails: " + taxDetails.size());
+
         /*
         * If zero amount payment is done and the total amount of bill or demands is zero. We will
         * set the collection amount to the taxamount for all taxHeads
         * */
         if(apportionRequestV2.getAmountPaid().compareTo(BigDecimal.ZERO) == 0
                 && getTotalAmount(taxDetails).compareTo(BigDecimal.ZERO) == 0){
+            System.out.println("DEBUG - Taking zero payment and zero amount path, returning early");
             apportionZeroPaymentAndZeroAmountToBePaid(taxDetails);
             return taxDetails;
         }
 
+        System.out.println("DEBUG - Checking if advance processing needed...");
         if(apportionRequestV2.getIsAdvanceAllowed()){
+            System.out.println("DEBUG - isAdvanceAllowed=true, calling apportionAndGetRequiredAdvance");
             BigDecimal requiredAdvanceAmount = apportionAndGetRequiredAdvance(apportionRequestV2);
+            System.out.println("DEBUG - requiredAdvanceAmount returned: " + requiredAdvanceAmount);
             remainingAmount = remainingAmount.add(requiredAdvanceAmount);
+            System.out.println("DEBUG - remainingAmount after adding advance: " + remainingAmount);
+        } else {
+            System.out.println("DEBUG - isAdvanceAllowed=false, skipping advance processing");
         }
 
         if(!config.getApportionByValueAndOrder())
