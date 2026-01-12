@@ -59,6 +59,7 @@ import org.egov.demand.amendment.model.AmendmentCriteria;
 import org.egov.demand.amendment.model.AmendmentUpdate;
 import org.egov.demand.amendment.model.enums.AmendmentStatus;
 import org.egov.demand.config.ApplicationProperties;
+import org.egov.demand.model.AdvSettlement;
 import org.egov.demand.model.ApportionDemandResponse;
 import org.egov.demand.model.AuditDetails;
 import org.egov.demand.model.BillV2.BillStatus;
@@ -447,10 +448,33 @@ public class DemandService {
             
 		
 			DemandApportionRequest apportionRequest = DemandApportionRequest.builder().requestInfo(requestInfo).demands(demandsToBeApportioned).tenantId(tenantId).build();
-
+            log.info("Apportion Request: {}", util.getApportionURL());
 			Object response = serviceRequestRepository.fetchResult(util.getApportionURL(), apportionRequest);
 			ApportionDemandResponse apportionDemandResponse = mapper.convertValue(response, ApportionDemandResponse.class);
 
+			// Added the advance settlement details if advance demand is present
+            if(!CollectionUtils.isEmpty(apportionDemandResponse.getDemands())){
+				AdvSettlement advSettlement = new AdvSettlement();
+
+		    String advanceDemandId =
+            apportionRequest.getDemands().stream()
+                .filter(d->
+                        d.getDemandDetails().stream()
+                                .anyMatch(dd ->
+                                        dd.getTaxHeadMasterCode() != null &&
+                                        dd.getTaxHeadMasterCode().contains("ADVANCE")
+                                )
+                )
+                .map(Demand::getId)
+                .findFirst()
+                .orElse(null);
+            if(advanceDemandId != null){
+				advSettlement.setAdvanceDemandId(advanceDemandId);
+				advSettlement.setSettledDemandId(demand.getId());
+				demandRepository.saveAdvSettlementDemandIds(advSettlement);
+			} 
+			}
+				
 			// Only the current demand is to be created rest all are to be updated
 			apportionDemandResponse.getDemands().forEach(demandFromResponse -> {
 				if(demandFromResponse.getId().equalsIgnoreCase(demand.getId())){

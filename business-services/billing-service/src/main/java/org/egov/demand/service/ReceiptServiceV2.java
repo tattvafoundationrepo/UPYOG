@@ -127,6 +127,42 @@ public class ReceiptServiceV2 {
 				.demands(demandsToBeUpdated)
 				.build();
 
+
+
+	    if(isReceiptCancellation){
+		    String advanceDemandId =
+                demandRequest.getDemands().stream()
+                .filter(d->
+                        d.getDemandDetails().stream()
+                                .anyMatch(dd ->
+                                        dd.getTaxHeadMasterCode() != null &&
+                                        dd.getTaxHeadMasterCode().contains("ADVANCE")
+                                )
+                )
+                .map(Demand::getId)
+                .findFirst()
+                .orElse(null);
+
+		 		if(advanceDemandId != null){
+		 			List<String> settledDemandIds = demandRepository.getSettledDemandIdsByAdvanceDemandId(advanceDemandId);
+                    if(!settledDemandIds.isEmpty()){
+						DemandCriteria searchCriteria = DemandCriteria.builder()
+					.tenantId(tenantId)
+					.demandId(new HashSet<>(settledDemandIds))
+					.build();
+			         List<Demand> demandsFromSearch = demandRepository.getDemands(searchCriteria);
+					 			         demandsFromSearch.forEach(demand -> {
+			         	demand.getDemandDetails().forEach(demandDetail -> {
+			         		if(demandDetail.getCollectionAmount().compareTo(BigDecimal.ZERO) > 0){
+			         			demandDetail.setCollectionAmount(BigDecimal.ZERO);
+			         		}
+			         	});
+			         });
+			          demandRequest.getDemands().addAll(demandsFromSearch);								
+					}	
+		 		}		
+		}			
+
 	    if(isReceiptCancellation) {
 		demandRequest.getDemands().forEach(d -> {
 			if (d.getDemandDetails() == null)
@@ -140,6 +176,8 @@ public class ReceiptServiceV2 {
 			});
 		});
 	  }
+
+
 
 		demandService.updateAsync(demandRequest, paymentBackUpdateAudit);
 

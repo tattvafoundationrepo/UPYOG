@@ -56,6 +56,7 @@ import java.util.stream.Collectors;
 import javax.el.ArrayELResolver;
 
 import org.apache.kafka.common.protocol.types.Field.Str;
+import org.egov.demand.model.AdvSettlement;
 import org.egov.demand.model.AuditDetails;
 import org.egov.demand.model.CollectedReceipt;
 import org.egov.demand.model.Demand;
@@ -753,4 +754,33 @@ public class DemandRepository {
 	   return result;
 
 	}
+
+
+	public void saveAdvSettlementDemandIds(AdvSettlement settlement){
+		   String SQL =
+            "INSERT INTO eg_emarket_demand_settlement_info " +
+            "(advance_demandid, settled_demandid) " +
+            "VALUES (?, ?)";			
+        jdbcTemplate.update(
+                SQL,
+                settlement.getAdvanceDemandId(),
+                settlement.getSettledDemandId()
+        );
+    
+
+	}
+
+	 public List<String> getSettledDemandIdsByAdvanceDemandId(String advanceDemandId) {
+
+		String FETCH_SETTLED_DEMAND_ID =
+            "SELECT settled_demandid " +
+            "FROM eg_emarket_demand_settlement_info " +
+            "WHERE advance_demandid = ?";
+
+        return jdbcTemplate.query(
+                FETCH_SETTLED_DEMAND_ID,
+                new Object[]{advanceDemandId},
+                (rs, rowNum) -> rs.getString("settled_demandid")
+        );
+    }
 }
