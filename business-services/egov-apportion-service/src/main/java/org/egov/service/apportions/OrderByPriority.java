@@ -48,19 +48,36 @@ public class OrderByPriority implements ApportionV2 {
         BigDecimal amount;
         Boolean isAmountPositive;
 
+        // Debug logging to understand advance processing
+        System.out.println("DEBUG - apportionPaidAmount called:");
+        System.out.println("  businessService: " + apportionRequestV2.getBusinessService());
+        System.out.println("  amountPaid: " + apportionRequestV2.getAmountPaid());
+        System.out.println("  isAdvanceAllowed: " + apportionRequestV2.getIsAdvanceAllowed());
+        System.out.println("  Number of taxDetails: " + taxDetails.size());
+
         /*
         * If zero amount payment is done and the total amount of bill or demands is zero. We will
         * set the collection amount to the taxamount for all taxHeads
+        * IMPORTANT: Do NOT return early if advance processing is needed (isAdvanceAllowed=true)
+        * because advance buckets need to be processed even when amountPaid=0 and totalAmount=0
         * */
         if(apportionRequestV2.getAmountPaid().compareTo(BigDecimal.ZERO) == 0
-                && getTotalAmount(taxDetails).compareTo(BigDecimal.ZERO) == 0){
+                && getTotalAmount(taxDetails).compareTo(BigDecimal.ZERO) == 0
+                && !apportionRequestV2.getIsAdvanceAllowed()){
+            System.out.println("DEBUG - Taking zero payment and zero amount path, returning early");
             apportionZeroPaymentAndZeroAmountToBePaid(taxDetails);
             return taxDetails;
         }
 
+        System.out.println("DEBUG - Checking if advance processing needed...");
         if(apportionRequestV2.getIsAdvanceAllowed()){
+            System.out.println("DEBUG - isAdvanceAllowed=true, calling apportionAndGetRequiredAdvance");
             BigDecimal requiredAdvanceAmount = apportionAndGetRequiredAdvance(apportionRequestV2);
+            System.out.println("DEBUG - requiredAdvanceAmount returned: " + requiredAdvanceAmount);
             remainingAmount = remainingAmount.add(requiredAdvanceAmount);
+            System.out.println("DEBUG - remainingAmount after adding advance: " + remainingAmount);
+        } else {
+            System.out.println("DEBUG - isAdvanceAllowed=false, skipping advance processing");
         }
 
         if(!config.getApportionByValueAndOrder())
@@ -225,10 +242,18 @@ public class OrderByPriority implements ApportionV2 {
 
         for (TaxDetail taxDetail : taxDetails) {
 
-            if(taxDetail.getAmountToBePaid().compareTo(BigDecimal.ZERO) > 0 )
+            if(taxDetail.getAmountToBePaid().compareTo(BigDecimal.ZERO) > 0 ) {
                 totalPositiveAmount = totalPositiveAmount.add(taxDetail.getAmountToBePaid());
+                // Debug logging to investigate 2-month advance issue
+                System.out.println("DEBUG - TaxDetail with positive amountToBePaid: " + taxDetail.getAmountToBePaid() + " for period: " + taxDetail.getFromPeriod());
+            } else {
+                // Debug logging to investigate 2-month advance issue
+                System.out.println("DEBUG - TaxDetail with non-positive amountToBePaid: " + taxDetail.getAmountToBePaid() + " for period: " + taxDetail.getFromPeriod());
+            }
 
         }
+        // Debug logging to investigate 2-month advance issue
+        System.out.println("DEBUG - Total positive amount calculated: " + totalPositiveAmount);
 
         /**
          * If net amount to be paid is zero for all billDetails no advance payment from
@@ -262,7 +287,19 @@ public class OrderByPriority implements ApportionV2 {
                 if(bucket.getTaxHeadCode().contains("ADVANCE")){
 
                     BigDecimal net = bucket.getAmount().subtract(bucket.getAdjustedAmount());
-                    if(advance.add(net).abs().compareTo(totalPositiveAmount) > 0){
+                    // Debug logging for advance bucket processing
+                    System.out.println("DEBUG - Processing ADVANCE bucket:");
+                    System.out.println("  bucket.amount: " + bucket.getAmount());
+                    System.out.println("  bucket.adjustedAmount: " + bucket.getAdjustedAmount());
+                    System.out.println("  net: " + net);
+                    System.out.println("  advance (before): " + advance);
+                    System.out.println("  totalPositiveAmount: " + totalPositiveAmount);
+                    System.out.println("  (advance + net).abs(): " + advance.add(net).abs());
+                    System.out.println("  Comparison (advance + net).abs() >= totalPositiveAmount: " + (advance.add(net).abs().compareTo(totalPositiveAmount) >= 0));
+
+                    // Use >= to handle boundary case when advance exactly equals totalPositiveAmount
+                    // This fixes the issue where 2-month advance (2444) fails when totalPositiveAmount = 2444
+                    if(advance.add(net).abs().compareTo(totalPositiveAmount) >= 0){
                         // Advance heads whose amount is partially getting used
                         BigDecimal diff = totalPositiveAmount.subtract(advance.abs());
                         BigDecimal adjustedAmount = bucket.getAdjustedAmount();
