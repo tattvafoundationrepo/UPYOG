@@ -135,8 +135,9 @@ public class ReceiptServiceV2 {
                 .filter(d->
                         d.getDemandDetails().stream()
                                 .anyMatch(dd ->
-                                        dd.getTaxHeadMasterCode() != null &&
-                                        dd.getTaxHeadMasterCode().contains("ADVANCE")
+                                        dd.getTaxHeadMasterCode() != null &&  
+                                        dd.getTaxHeadMasterCode().contains("ADVANCE") && (dd.getTaxAmount().compareTo(BigDecimal.ZERO) > 0 
+										  || dd.getCollectionAmount().compareTo(BigDecimal.ZERO) < 0)
                                 )
                 )
                 .map(Demand::getId)
