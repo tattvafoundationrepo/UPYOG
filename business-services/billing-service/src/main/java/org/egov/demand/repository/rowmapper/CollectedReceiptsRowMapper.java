@@ -24,6 +24,11 @@ public class CollectedReceiptsRowMapper implements RowMapper<CollectedReceipt> {
 		receipt.setTenantId(rs.getString("tenantid"));
 		receipt.setTransactionNumber(rs.getString("transactionnumber"));
 		receipt.setTotalAmountPaid(rs.getDouble("totalamountpaid"));
+		receipt.setAdditionalDetails(rs.getString("additionaldetails"));
+		receipt.setFromPeriod(rs.getLong("fromperiod"));
+		receipt.setToPeriod(rs.getLong("toperiod"));
+		receipt.setAdvancePayment(rs.getDouble("advancepayment"));
+		receipt.setRegularPayment(rs.getDouble("regularpayment"));
 		
 		AuditDetail auditDetail=new AuditDetail();
 		

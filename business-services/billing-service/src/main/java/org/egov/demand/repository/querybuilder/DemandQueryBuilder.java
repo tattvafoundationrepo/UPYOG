@@ -124,7 +124,26 @@ public class DemandQueryBuilder {
 			+ " WHERE tenantid=? AND id IN (";
 	
 
-	public static final String COLLECTED_RECEIPT_QUERY = "SELECT DISTINCT " +
+	public static final String COLLECTED_RECEIPT_QUERY = "WITH bill_periods AS ( " +
+			"SELECT " +
+			"bdt.billid, " +
+			"bdt.tenantid, " +
+			"MIN(bdt.fromperiod) as fromperiod, " +
+			"MAX(bdt.toperiod) as toperiod " +
+			"FROM egcl_billdetial bdt " +
+			"GROUP BY bdt.billid, bdt.tenantid " +
+			"), " +
+			"bill_amounts AS ( " +
+			"SELECT " +
+			"bdt.billid, " +
+			"bdt.tenantid, " +
+			"SUM(CASE WHEN bad.taxheadcode LIKE '%CARRY%' THEN bad.amount ELSE 0 END) as advancepayment, " +
+			"SUM(CASE WHEN bad.taxheadcode NOT LIKE '%CARRY%' THEN bad.amount ELSE 0 END) as regularpayment " +
+			"FROM egcl_billdetial bdt " +
+			"INNER JOIN egcl_billaccountdetail bad ON bdt.id = bad.billdetailid AND bdt.tenantid = bad.tenantid " +
+			"GROUP BY bdt.billid, bdt.tenantid " +
+			") " +
+			"SELECT " +
 			"pd.businessservice, " +
 			"bd.consumercode, " +
 			"pd.receiptnumber, " +
@@ -137,10 +156,17 @@ public class DemandQueryBuilder {
 			"p.lastmodifiedby, " +
 			"p.lastmodifiedtime, " +
 			"p.transactionnumber, " +
-			"p.totalamountpaid " +
+			"p.additionaldetails, " +
+			"p.totalamountpaid, " +
+			"bp.fromperiod, " +
+			"bp.toperiod, " +
+			"COALESCE(ba.advancepayment, 0) as advancepayment, " +
+			"COALESCE(ba.regularpayment, 0) as regularpayment " +
 			"FROM egcl_payment p " +
 			"INNER JOIN egcl_paymentdetail pd ON p.id = pd.paymentid AND p.tenantid = pd.tenantid " +
 			"INNER JOIN egcl_bill bd ON pd.billid = bd.id AND pd.tenantid = bd.tenantid " +
+			"LEFT JOIN bill_periods bp ON bd.id = bp.billid AND bd.tenantid = bp.tenantid " +
+			"LEFT JOIN bill_amounts ba ON bd.id = ba.billid AND bd.tenantid = ba.tenantid " +
 			"WHERE p.tenantid = ? ";
 
 	public String getDemandQueryForConsumerCodes(Map<String,Set<String>> businessConsumercodeMap,List<Object> preparedStmtList, String tenantId){

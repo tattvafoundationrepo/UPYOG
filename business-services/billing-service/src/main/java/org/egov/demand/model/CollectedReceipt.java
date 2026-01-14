@@ -23,6 +23,8 @@ public class CollectedReceipt {
 
 	private String status;
 
+	private String additionalDetails;
+
 	private AuditDetail auditDetail;
 
 	private String tenantId;
@@ -30,4 +32,12 @@ public class CollectedReceipt {
 	private String transactionNumber;
 
 	private Double totalAmountPaid;
+
+	private Long fromPeriod;
+
+	private Long toPeriod;
+
+	private Double advancePayment;
+
+	private Double regularPayment;
 }
