@@ -307,6 +307,12 @@ public class DemandQueryBuilder {
 			demandQuery.append("dmd.taxPeriodTo <= ?");
 			preparedStatementValues.add(demandCriteria.getPeriodTo());
 		}
+
+		if (demandCriteria.getIsAdvance() != null) {
+			addAndClause(demandQuery);
+			demandQuery.append("dmd.isadvance = ?");
+			preparedStatementValues.add(demandCriteria.getIsAdvance());
+		}
 		
 		if (demandCriteria.getConsumerCode() != null && !demandCriteria.getConsumerCode().isEmpty()) {
 			addAndClause(demandQuery);

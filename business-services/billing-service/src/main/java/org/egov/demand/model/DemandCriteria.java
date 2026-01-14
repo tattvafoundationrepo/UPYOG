@@ -89,10 +89,14 @@ public class DemandCriteria {
 	
 	private Boolean isPaymentCompleted;
 	
+	private Boolean isAdvance;
 	@Default
 	private Boolean receiptRequired=false;
 
 	  
 	@Default
 	private Boolean withoutMobNumber=false;
+
+	//private Integer limit;
+    //private Integer offset;
 }
