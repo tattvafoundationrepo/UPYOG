@@ -1,22 +1,23 @@
 package org.egov.demand.helper;
 
-import java.util.List;
-
-import org.egov.demand.model.AdvSettlement;
 import org.egov.demand.model.AdvSettlementRequest;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import lombok.RequiredArgsConstructor;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
+@AllArgsConstructor
+@NoArgsConstructor
 public class MarketServiceClient {
-
-    private final RestTemplate restTemplate;
+   
+@Autowired
+   private  RestTemplate restTemplate;
 
     @Value("${egov.emarket.host}")
     private String emarketHost;
