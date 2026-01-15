@@ -759,28 +759,39 @@ public class DemandRepository {
 	public void saveAdvSettlementDemandIds(AdvSettlement settlement){
 		   String SQL =
             "INSERT INTO eg_emarket_demand_settlement_info " +
-            "(advance_demandid, settled_demandid) " +
-            "VALUES (?, ?)";			
+            "(advance_demandid, settled_demandid , consumercode ,periodfrom, periodto) " +
+            "VALUES (?, ?, ?, ?, ?)";			
         jdbcTemplate.update(
                 SQL,
                 settlement.getAdvanceDemandId(),
-                settlement.getSettledDemandId()
+                settlement.getSettledDemandId(),
+                settlement.getConsumerCode(),
+                settlement.getTaxPeriodFrom(),
+                settlement.getTaxPeriodTo()
         );
     
 
 	}
 
-	 public List<String> getSettledDemandIdsByAdvanceDemandId(String advanceDemandId) {
+public List<AdvSettlement> getSettledDemandIdsByAdvanceDemandId(String advanceDemandId) {
 
-		String FETCH_SETTLED_DEMAND_ID =
-            "SELECT settled_demandid " +
-            "FROM eg_emarket_demand_settlement_info " +
-            "WHERE advance_demandid = ?";
+    String FETCH_SETTLED_DEMAND_ID =
+        "SELECT advance_demandid, settled_demandid, consumercode, periodfrom, periodto " +
+        "FROM eg_emarket_demand_settlement_info " +
+        "WHERE advance_demandid = ?";
 
-        return jdbcTemplate.query(
-                FETCH_SETTLED_DEMAND_ID,
-                new Object[]{advanceDemandId},
-                (rs, rowNum) -> rs.getString("settled_demandid")
-        );
-    }
+    return jdbcTemplate.query(
+        FETCH_SETTLED_DEMAND_ID,
+        new Object[]{advanceDemandId},
+        (rs, rowNum) -> AdvSettlement.builder()
+                .advanceDemandId(rs.getString("advance_demandid"))
+                .settledDemandId(rs.getString("settled_demandid"))
+                .consumerCode(rs.getString("consumercode"))
+                .taxPeriodFrom(rs.getLong("periodfrom"))
+                .taxPeriodTo(rs.getLong("periodto"))
+                .build()
+    );
 }
+
+}
+	

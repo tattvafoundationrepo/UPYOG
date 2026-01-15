@@ -13,5 +13,9 @@ public class AdvSettlement {
 
     private String advanceDemandId;
     private String settledDemandId;
+    private Long taxPeriodFrom;
+    private Long taxPeriodTo;
+    private String consumerCode;
+
 
 }

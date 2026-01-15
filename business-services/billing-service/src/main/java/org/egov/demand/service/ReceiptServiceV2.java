@@ -18,6 +18,9 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.demand.helper.MarketServiceClient;
+import org.egov.demand.model.AdvSettlement;
+import org.egov.demand.model.AdvSettlementRequest;
 import org.egov.demand.model.BillAccountDetailV2;
 import org.egov.demand.model.BillDetailV2;
 import org.egov.demand.model.BillV2;
@@ -28,6 +31,7 @@ import org.egov.demand.model.FiReport;
 import org.egov.demand.model.GstAdvanceMap;
 import org.egov.demand.model.PaymentBackUpdateAudit;
 import org.egov.demand.model.PaymentMarketInfo;
+import org.egov.demand.producer.Producer;
 import org.egov.demand.repository.DemandRepository;
 import org.egov.demand.util.Constants;
 import org.egov.demand.util.Util;
@@ -60,6 +64,12 @@ public class ReceiptServiceV2 {
 
 	@Autowired
 	private DemandRepository demandRepository;
+    
+	// @Autowired
+	// private Producer producer;
+    
+	@Autowired
+	private MarketServiceClient	marketServiceClient;
 
 	public void updateDemandFromReceipt(BillRequestV2 billReq, Boolean isReceiptCancellation) {
 
@@ -127,7 +137,7 @@ public class ReceiptServiceV2 {
 				.demands(demandsToBeUpdated)
 				.build();
 
-
+        List<AdvSettlement> settledDemandIds = null;
 
 	    if(isReceiptCancellation){
 		    String advanceDemandId =
@@ -144,15 +154,16 @@ public class ReceiptServiceV2 {
                 .findFirst()
                 .orElse(null);
 
+				
 		 		if(advanceDemandId != null){
-		 			List<String> settledDemandIds = demandRepository.getSettledDemandIdsByAdvanceDemandId(advanceDemandId);
-                    if(!settledDemandIds.isEmpty()){
+                    settledDemandIds = demandRepository.getSettledDemandIdsByAdvanceDemandId(advanceDemandId);
+                    if(settledDemandIds != null &&!settledDemandIds.isEmpty()){
 						DemandCriteria searchCriteria = DemandCriteria.builder()
 					.tenantId(tenantId)
-					.demandId(new HashSet<>(settledDemandIds))
+					.demandId(new HashSet<>(settledDemandIds.stream().map(AdvSettlement::getSettledDemandId).collect(Collectors.toList())))
 					.build();
 			         List<Demand> demandsFromSearch = demandRepository.getDemands(searchCriteria);
-					 			         demandsFromSearch.forEach(demand -> {
+					 demandsFromSearch.forEach(demand -> {
 			         	demand.getDemandDetails().forEach(demandDetail -> {
 			         		if(demandDetail.getCollectionAmount().compareTo(BigDecimal.ZERO) > 0){
 			         			demandDetail.setCollectionAmount(BigDecimal.ZERO);
@@ -161,7 +172,7 @@ public class ReceiptServiceV2 {
 			         });
 			          demandRequest.getDemands().addAll(demandsFromSearch);								
 					}	
-		 		}		
+		 		}					
 		}			
 
 	    if(isReceiptCancellation) {
@@ -181,6 +192,19 @@ public class ReceiptServiceV2 {
 
 
 		demandService.updateAsync(demandRequest, paymentBackUpdateAudit);
+
+		if (isReceiptCancellation && settledDemandIds != null && !settledDemandIds.isEmpty()) {
+
+         if (isReceiptCancellation && settledDemandIds != null && !settledDemandIds.isEmpty()) {
+			AdvSettlementRequest advSettlementRequest = AdvSettlementRequest.builder()
+					.requestInfo(billRequest.getRequestInfo())
+					.settlements(settledDemandIds)
+					.build();
+             marketServiceClient.pushPenaltySettlements(advSettlementRequest);
+         }
+
+    }
+
 
 		List<FiReport> collectionReportList = new ArrayList<>();
 
