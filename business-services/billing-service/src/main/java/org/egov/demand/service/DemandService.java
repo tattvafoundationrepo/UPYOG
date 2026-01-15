@@ -471,6 +471,9 @@ public class DemandService {
             if(advanceDemandId != null){
 				advSettlement.setAdvanceDemandId(advanceDemandId);
 				advSettlement.setSettledDemandId(demand.getId());
+				advSettlement.setConsumerCode(demand.getConsumerCode());
+				advSettlement.setTaxPeriodFrom(demand.getTaxPeriodFrom());
+				advSettlement.setTaxPeriodTo(demand.getTaxPeriodTo());
 				demandRepository.saveAdvSettlementDemandIds(advSettlement);
 			} 
 			}
