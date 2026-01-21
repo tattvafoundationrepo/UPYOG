@@ -209,11 +209,10 @@ public class ReceiptServiceV2 {
 		List<FiReport> collectionReportList = new ArrayList<>();
 
 		if (!isReceiptCancellation) {
-			Demand rentDemand = demandRequest.getDemands().stream()
-					.filter(d -> "TX.Emarket_Rental_Fees".equalsIgnoreCase(d.getBusinessService()))
-					.findFirst()
-					.orElse(null);
-			// demandRequest.getDemands().forEach(d -> {
+			
+		 Demand rentDemand = demandRequest.getDemands().get(0);
+			 		
+	//	 demandRequest.getDemands().forEach(rentDemand -> {
 			Demand d = new Demand();
 			d.setConsumerCode(rentDemand.getConsumerCode());
 			d.setBusinessService(rentDemand.getBusinessService());
@@ -234,14 +233,15 @@ public class ReceiptServiceV2 {
 			List<DemandDetail> filteredDetails = demandRequest.getDemands().stream()
 					.flatMap(dd -> dd.getDemandDetails().stream()) // flatten all demandDetails
 					.filter(dd -> dd.getTaxHeadMasterCode().contains("ADVANCE"))
-					.peek(dd -> {
-						if (gstAdvanceMap.getCgstAmount() != null &&
-								gstAdvanceMap.getCgstAmount().compareTo(BigDecimal.ZERO) > 0) {
+					// .peek(dd -> {
+					// 	if (gstAdvanceMap.getCgstAmount() != null &&
+					// 			gstAdvanceMap.getCgstAmount().compareTo(BigDecimal.ZERO) > 0) {
 
-							dd.setTaxAmount(
-									dd.getTaxAmount().subtract(gstAdvanceMap.getCgstAmount()));
-						}
-					}).collect(Collectors.toList());
+					// 		dd.setTaxAmount(
+					// 				dd.getTaxAmount().subtract(gstAdvanceMap.getCgstAmount()));
+					// 	}
+				//	})
+					.collect(Collectors.toList());
 
 			log.info("filtereddddddddddd detailsssss" + filteredDetails);
 			d.setDemandDetails(filteredDetails);
@@ -277,7 +277,7 @@ public class ReceiptServiceV2 {
 			List<FiReport> report = demandRepository.buildCollectionFiReports(d, gstAdvanceMap);
 
 			collectionReportList.addAll(report);
-			// });
+	//    });
 
 			demandRepository.batchInsertFiReports(collectionReportList);
 		} else {

@@ -50,4 +50,7 @@ public class DemandDetail   {
         @SafeHtml
         @JsonProperty("tenantId")
         private String tenantId;
+
+
+        private String postingKey;
 }
