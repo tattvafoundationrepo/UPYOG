@@ -258,12 +258,12 @@ public class ReceiptServiceV2 {
 					.additionalDetails(advCollectionMap)
 					.build());
 
-		    d.getDemandDetails().add(DemandDetail.builder()
-					.demandId(d.getId())
-					.taxAmount(gstAdvanceMap.getCollectionAmount())
-					.taxHeadMasterCode("Customer "+d.getConsumerCode())
-					.additionalDetails(advCollectionMap)
-					.build());			
+		    // d.getDemandDetails().add(DemandDetail.builder()
+			// 		.demandId(d.getId())
+			// 		.taxAmount(gstAdvanceMap.getCollectionAmount())
+			// 		.taxHeadMasterCode("Customer "+d.getConsumerCode())
+			// 		.additionalDetails(advCollectionMap)
+			// 		.build());			
 
 			log.info("demand detailsss while collectionnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn"
 					+ d.getDemandDetails());
@@ -272,7 +272,9 @@ public class ReceiptServiceV2 {
 			// log.info("adddditionalDeeeetailssssssssssss"+
 			// d.getAdditionalDetails().toString());
 			log.info("40....40....40....40....40");
-			List<FiReport> report = demandRepository.buildFiReportsFromDemand(d, "40", true, gstAdvanceMap);
+		///	List<FiReport> report = demandRepository.buildFiReportsFromDemand(d, "40", true, gstAdvanceMap);
+
+			List<FiReport> report = demandRepository.buildCollectionFiReports(d, gstAdvanceMap);
 
 			collectionReportList.addAll(report);
 			// });
