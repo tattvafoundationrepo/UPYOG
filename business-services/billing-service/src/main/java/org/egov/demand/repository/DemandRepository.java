@@ -890,7 +890,8 @@ public List<FiReport> buildDemandFiReports(Demand demand) {
     BigDecimal totalReceivable = BigDecimal.ZERO; 
 
     for(DemandDetail dd : demand.getDemandDetails()){
-
+        if(dd.getTaxAmount() == null || dd.getTaxAmount().compareTo(BigDecimal.ZERO) == 0)
+           continue;
         String th = dd.getTaxHeadMasterCode();
 
           reports.add(FiReport.builder()
@@ -922,6 +923,7 @@ public List<FiReport> buildDemandFiReports(Demand demand) {
 
 
     // 1️⃣ Customer / Receivable (Dr)
+     if(totalReceivable.compareTo(BigDecimal.ZERO) != 0){     
     reports.add(FiReport.builder()
             .transactionNumber(demand.getId())
             .docDate(postingDate)
@@ -940,7 +942,7 @@ public List<FiReport> buildDemandFiReports(Demand demand) {
             .createdAt(now)
             .updatedAt(now)
             .build());
-
+     }
     return reports;
 }
 
@@ -1068,6 +1070,8 @@ public List<FiReport> buildCollectionFiReports(Demand demand,
 
    for(DemandDetail d : demand.getDemandDetails()){
     // Bank / Interim Receipt (Dr)
+    if(d.getTaxAmount() == null || d.getTaxAmount().compareTo(BigDecimal.ZERO) == 0)
+           continue;
     reports.add(FiReport.builder()
             .transactionNumber(demand.getId())
             .docDate(postingDate)
@@ -1088,7 +1092,8 @@ public List<FiReport> buildCollectionFiReports(Demand demand,
             .build());
 
    }			
-
+   if(total.compareTo(BigDecimal.ZERO) != 0){
+       
     // Customer / Receivable (Cr)
     reports.add(FiReport.builder()
             .transactionNumber(demand.getId())
@@ -1109,22 +1114,7 @@ public List<FiReport> buildCollectionFiReports(Demand demand,
             .updatedAt(now)
             .build());
 
-    // // CGST Advance (Dr) + CGST Payable (Cr)
-    // if (gstMap.getCgstAmount() != null) {
-    //     reports.add(gstFi(demand, "40", "CGST Advance",
-    //             gstMap.getCgstAmount(), gstMap.getCgstGlCode(), now));
-    //     reports.add(gstFi(demand, "50", "CGST Payable",
-    //             gstMap.getCgstAmount(), gstMap.getCgstGlCode(), now));
-    // }
-
-    // // SGST Advance (Dr) + SGST Payable (Cr)
-    // if (gstMap.getSgstAmount() != null) {
-    //     reports.add(gstFi(demand, "40", "SGST Advance",
-    //             gstMap.getSgstAmount(), gstMap.getSgstGlCode(), now));
-    //     reports.add(gstFi(demand, "50", "SGST Payable",
-    //             gstMap.getSgstAmount(), gstMap.getSgstGlCode(), now));
-    // }
-
+     }
     return reports;
 }
 
@@ -1247,6 +1237,8 @@ public List<FiReport> buildCollectionReversalFiReports(Demand demand,
 
    for(DemandDetail d : demand.getDemandDetails()){
     // Bank / Interim Receipt (Dr)
+     if(d.getTaxAmount() == null || d.getTaxAmount().compareTo(BigDecimal.ZERO) == 0)
+           continue;
     reports.add(FiReport.builder()
             .transactionNumber(demand.getId())
             .docDate(postingDate)
@@ -1269,6 +1261,8 @@ public List<FiReport> buildCollectionReversalFiReports(Demand demand,
    }			
 
     // Customer / Receivable (Cr)
+
+    if(total.compareTo(BigDecimal.ZERO) != 0){
     reports.add(FiReport.builder()
             .transactionNumber(demand.getId())
             .docDate(postingDate)
@@ -1287,23 +1281,7 @@ public List<FiReport> buildCollectionReversalFiReports(Demand demand,
             .createdAt(now)
             .updatedAt(now)
             .build());
-
-    // // CGST Advance (Dr) + CGST Payable (Cr)
-    // if (gstMap.getCgstAmount() != null) {
-    //     reports.add(gstFi(demand, "40", "CGST Advance",
-    //             gstMap.getCgstAmount(), gstMap.getCgstGlCode(), now));
-    //     reports.add(gstFi(demand, "50", "CGST Payable",
-    //             gstMap.getCgstAmount(), gstMap.getCgstGlCode(), now));
-    // }
-
-    // // SGST Advance (Dr) + SGST Payable (Cr)
-    // if (gstMap.getSgstAmount() != null) {
-    //     reports.add(gstFi(demand, "40", "SGST Advance",
-    //             gstMap.getSgstAmount(), gstMap.getSgstGlCode(), now));
-    //     reports.add(gstFi(demand, "50", "SGST Payable",
-    //             gstMap.getSgstAmount(), gstMap.getSgstGlCode(), now));
-    // }
-
+    }
     return reports;
 }
 
