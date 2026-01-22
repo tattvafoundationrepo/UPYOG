@@ -836,7 +836,7 @@ public class DemandRepository {
          "       eem.fund, " +
          "       eem.business_area, " +
 		 "       eem.functional_area, " +
-		 "       ep2.additionaldetails , ep2.totaldue , ep2.totalamountpaid , ep.receiptnumber " +
+		 "       ep2.additionaldetails , ep2.totaldue , ep2.totalamountpaid , ep.receiptnumber , ep2.transactionnumber " +
         "FROM egcl_billdetial eb " +
         "JOIN egcl_bill eb2 ON eb.billid = eb2.id " +
         "JOIN egcl_paymentdetail ep ON ep.billid = eb2.id " +
@@ -863,6 +863,7 @@ public class DemandRepository {
 				info.setTotalDue(rs.getBigDecimal("totaldue"));
 				info.setFunctionalArea(rs.getString("functional_area"));
                 info.setReceiptNumber(rs.getString("receiptnumber"));
+                info.setTransactionNumber(rs.getString("transactionnumber"));
                 return info;
             }
         }

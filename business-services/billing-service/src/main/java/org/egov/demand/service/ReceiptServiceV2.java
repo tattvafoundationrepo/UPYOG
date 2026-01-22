@@ -227,7 +227,7 @@ public class ReceiptServiceV2 {
 				d.setBusinessArea(infoList.get(0).getBusinessArea());
 				d.setPaymentMode(infoList.get(0).getPaymentMode());
 				d.setFunctionalArea(infoList.get(0).getFunctionalArea());
-				d.setFiReceiptNo(infoList.get(0).getReceiptNumber());
+				d.setFiReceiptNo(infoList.get(0).getTransactionNumber());
 				log.info("additioanl from dbbbbbbbbbbbbbbbbbbbbbbbbb" + infoList.get(0));
 			}
 			GstAdvanceMap gstAdvanceMap = extractGstAdvanceFromAdditionalDetails(infoList.get(0));
@@ -276,7 +276,7 @@ public class ReceiptServiceV2 {
 				d.setBusinessArea(infoList.get(0).getBusinessArea());
 				d.setPaymentMode(infoList.get(0).getPaymentMode());
 				d.setFunctionalArea(infoList.get(0).getFunctionalArea());
-				d.setFiReceiptNo(infoList.get(0).getReceiptNumber());
+				d.setFiReceiptNo(infoList.get(0).getTransactionNumber());
 				log.info("additioanl from dbbbbbbbbbbbbbbbbbbbbbbbbb" + infoList.get(0));
 			}
 			GstAdvanceMap gstAdvanceMap = extractGstAdvanceFromAdditionalDetails(infoList.get(0));
