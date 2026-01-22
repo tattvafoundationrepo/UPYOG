@@ -165,12 +165,11 @@ public class DemandRepository {
                
               List<DemandDetail> gstDemandDetail = demand.getDemandDetails().stream()
                 .filter(d -> 
-                    (d.getTaxHeadMasterCode().contains("GST") &&
-                    d.getTaxAmount().compareTo(d.getCollectionAmount()) == 0)
+                    (d.getTaxHeadMasterCode().contains("GST") && !d.getTaxHeadMasterCode().equalsIgnoreCase("GST_CA")
+                      && d.getTaxAmount().compareTo(d.getCollectionAmount()) == 0)
                 ).collect(Collectors.toList());
 
                 if(gstDemandDetail != null && !gstDemandDetail.isEmpty()) {
-
 
                 Map<String, Object> cgstMap = new HashMap<>();
                    cgstMap.put("glcode",  "350200421");
@@ -899,25 +898,26 @@ public List<FiReport> buildDemandFiReports(Demand demand) {
             .docDate(postingDate)
             .postingDate(postingDate)
             .referenceNo(consumerCode)
-            .documentHeaderText(th.contains("GST") && !th.contains("GST_CA") ? 
-			        th.contains("CGST") ? "CGST Payable" : "SGST Payable" 
-					 :  th.equalsIgnoreCase("40") ? th.equalsIgnoreCase("CSP40") ? "CGST Payable" : "SGST Payable"
-                     : th.equalsIgnoreCase("50") ? th.equalsIgnoreCase("CSA50") ? "CGST Advance" : "SGST Advance" 
+            .documentHeaderText(th.contains("GST") && !th.equalsIgnoreCase("GST_CA") ? 
+			        (th.contains("CGST") ? "CGST Payable" : "SGST Payable") 
+					 :  th.contains("40") ? th.equalsIgnoreCase("CSP40") ? "CGST Payable" : "SGST Payable"
+                     : th.contains("50") ? th.equalsIgnoreCase("CSA50") ? "CGST Advance" : "SGST Advance" 
                      : th)
-            .postingKey(th.equalsIgnoreCase("40") ? "40" : 
-                        th.equalsIgnoreCase("50") ? "50" : "50")
+            .postingKey(th.contains("40") ? "40" : 
+                        th.contains("50") ? "50" : "50")
             .glCode(extractGlCode(dd))
             .collectionAmount(dd.getTaxAmount())
             .fund(fund)
             .fundCentre(fundCenter)
             .businessArea(businessArea)
             .functionalArea(functionalArea)
-            .remarks("YX")
+            .remarks("YX")  
             .isNew(Boolean.TRUE)
             .createdAt(now)
             .updatedAt(now)
             .build());
-	    totalReceivable = totalReceivable.add(dd.getTaxAmount());		
+        if(!th.contains("40") && !th.contains("50"))    
+	       totalReceivable = totalReceivable.add(dd.getTaxAmount());		
 	}
 
 
@@ -961,17 +961,22 @@ public List<FiReport> buildCollectionFiReports(Demand demand,
     Boolean hasRentAdvance = false;
     Boolean hasLicenseAdvance = false;
 	for(DemandDetail d: demand.getDemandDetails()){
+        Map<String, Object> advanceGlMap = new HashMap<>();
+        advanceGlMap.put("glcode",  "450100100");
+
        if(d.getTaxHeadMasterCode().contains("ADVANCE")){
           if(d.getTaxHeadMasterCode().equalsIgnoreCase("TX.EMARKET_RENTAL_ADVANCE_CARRYFORWARD")){
               hasRentAdvance = true;
               d.setTaxAmount(advanceMap.getRentalAdvancePaid());
               d.setPostingKey("40");
+              d.setAdditionalDetails(advanceGlMap);
           }
             
           if(d.getTaxHeadMasterCode().equalsIgnoreCase("TX.EMARKET_LICENSE_ADVANCE_CARRYFORWARD")){
               hasLicenseAdvance = true;
               d.setTaxAmount(advanceMap.getLicenseAdvancePaid());
               d.setPostingKey("40");
+              d.setAdditionalDetails(advanceGlMap);
           }
             
           hasAdvanceTaxhead = true;
@@ -983,29 +988,32 @@ public List<FiReport> buildCollectionFiReports(Demand demand,
     // If advanceMap provided, append demandDetails for CGST/SGST and ADV_CGST/ADV_SGST
     if (advanceMap != null  && hasAdvanceTaxhead ) {
             
+        Map<String, Object> advanceGlMap = new HashMap<>();
+        advanceGlMap.put("glcode",  "NA");
+
         demand.getDemandDetails().add(DemandDetail.builder()
 		        .demandId(demand.getId())
                 .taxAmount(hasRentAdvance && hasLicenseAdvance ? 
                             advanceMap.getRentalAdvancePaid().add(advanceMap.getLicenseAdvancePaid()) :
                     hasRentAdvance ? advanceMap.getRentalAdvancePaid() : advanceMap.getLicenseAdvancePaid())
                 .taxHeadMasterCode("Rent From Municipal market")
-                .additionalDetails(demand.getDemandDetails().get(demand.getDemandDetails().size() - 1).getAdditionalDetails())
+                .additionalDetails(advanceGlMap)
                 .postingKey("50")
                 .build());    
         
         if(advanceMap.getCgstAmount() != null && advanceMap.getSgstAmount() != null){
 
         Map<String, Object> cgstMap = new HashMap<>();
-        cgstMap.put("glcode", advanceMap.getCgstGlCode() != null ? advanceMap.getCgstGlCode() : "350200421");
+        cgstMap.put("glcode",  "350200421");
 
         Map<String, Object> sgstMap = new HashMap<>();
-        sgstMap.put("glcode", advanceMap.getSgstGlCode() != null ? advanceMap.getSgstGlCode() : "350200422");
+        sgstMap.put("glcode", "350200422");
 
         Map<String, Object> advCgstMap = new HashMap<>();
-        advCgstMap.put("glcode", advanceMap.getCgstGlCode() != null ? advanceMap.getCgstGlCode() : "439300200");
+        advCgstMap.put("glcode",  "439300200");
 
         Map<String, Object> advSgstMap = new HashMap<>();
-        advSgstMap.put("glcode", advanceMap.getSgstGlCode() != null ? advanceMap.getSgstGlCode() : "439300201");
+        advSgstMap.put("glcode", "439300201");
     
 
          // Add ADV_CGST (payment side)
@@ -1089,6 +1097,185 @@ public List<FiReport> buildCollectionFiReports(Demand demand,
             .referenceNo(demand.getConsumerCode())
             .documentHeaderText("Customer " + demand.getConsumerCode())
             .postingKey("50")
+			.glCode("NA")
+            .collectionAmount(total)
+            .fund(demand.getFund())
+            .fundCentre(demand.getFundCenter())
+            .businessArea(demand.getBusinessArea())
+            .functionalArea(demand.getFunctionalArea())
+            .remarks("YY")
+            .isNew(Boolean.TRUE)
+            .createdAt(now)
+            .updatedAt(now)
+            .build());
+
+    // // CGST Advance (Dr) + CGST Payable (Cr)
+    // if (gstMap.getCgstAmount() != null) {
+    //     reports.add(gstFi(demand, "40", "CGST Advance",
+    //             gstMap.getCgstAmount(), gstMap.getCgstGlCode(), now));
+    //     reports.add(gstFi(demand, "50", "CGST Payable",
+    //             gstMap.getCgstAmount(), gstMap.getCgstGlCode(), now));
+    // }
+
+    // // SGST Advance (Dr) + SGST Payable (Cr)
+    // if (gstMap.getSgstAmount() != null) {
+    //     reports.add(gstFi(demand, "40", "SGST Advance",
+    //             gstMap.getSgstAmount(), gstMap.getSgstGlCode(), now));
+    //     reports.add(gstFi(demand, "50", "SGST Payable",
+    //             gstMap.getSgstAmount(), gstMap.getSgstGlCode(), now));
+    // }
+
+    return reports;
+}
+
+
+
+
+
+
+public List<FiReport> buildCollectionReversalFiReports(Demand demand,
+                                               GstAdvanceMap advanceMap) {
+
+    List<FiReport> reports = new ArrayList<>();
+    long now = System.currentTimeMillis();
+
+    BigDecimal total = advanceMap.getTotalAmountPaid();
+    Long postingDate = demand.getTaxPeriodFrom();
+    
+	List<String> advanceTaxHeadLists = new ArrayList<>();	
+    
+	Boolean hasAdvanceTaxhead = false;
+    Boolean hasRentAdvance = false;
+    Boolean hasLicenseAdvance = false;
+	for(DemandDetail d: demand.getDemandDetails()){
+       if(d.getTaxHeadMasterCode().contains("ADVANCE")){
+          if(d.getTaxHeadMasterCode().equalsIgnoreCase("TX.EMARKET_RENTAL_ADVANCE_CARRYFORWARD")){
+              hasRentAdvance = true;
+              d.setTaxAmount(advanceMap.getRentalAdvancePaid());
+              d.setPostingKey("50");
+          }
+            
+          if(d.getTaxHeadMasterCode().equalsIgnoreCase("TX.EMARKET_LICENSE_ADVANCE_CARRYFORWARD")){
+              hasLicenseAdvance = true;
+              d.setTaxAmount(advanceMap.getLicenseAdvancePaid());
+              d.setPostingKey("50");
+          }
+            
+          hasAdvanceTaxhead = true;
+	   }
+		 
+	}
+
+
+    // If advanceMap provided, append demandDetails for CGST/SGST and ADV_CGST/ADV_SGST
+    if (advanceMap != null  && hasAdvanceTaxhead ) {
+            
+        demand.getDemandDetails().add(DemandDetail.builder()
+		        .demandId(demand.getId())
+                .taxAmount(hasRentAdvance && hasLicenseAdvance ? 
+                            advanceMap.getRentalAdvancePaid().add(advanceMap.getLicenseAdvancePaid()) :
+                    hasRentAdvance ? advanceMap.getRentalAdvancePaid() : advanceMap.getLicenseAdvancePaid())
+                .taxHeadMasterCode("Rent From Municipal market")
+                .additionalDetails(demand.getDemandDetails().get(demand.getDemandDetails().size() - 1).getAdditionalDetails())
+                .postingKey("40")
+                .build());    
+        
+        if(advanceMap.getCgstAmount() != null && advanceMap.getSgstAmount() != null){
+
+        Map<String, Object> cgstMap = new HashMap<>();
+        cgstMap.put("glcode", "350200421");
+
+        Map<String, Object> sgstMap = new HashMap<>();
+        sgstMap.put("glcode", "350200422");
+
+        Map<String, Object> advCgstMap = new HashMap<>();
+        advCgstMap.put("glcode", "439300200");
+
+        Map<String, Object> advSgstMap = new HashMap<>();
+        advSgstMap.put("glcode", "439300201");
+    
+
+         // Add ADV_CGST (payment side)
+        demand.getDemandDetails().add(DemandDetail.builder()
+		        .demandId(demand.getId())
+                .taxAmount(advanceMap.getCgstAmount())
+                .taxHeadMasterCode("ADV_CGST")
+                .additionalDetails(advCgstMap)
+                .postingKey("50")
+                .build());
+
+        // Add ADV_SGST (payment side)
+        demand.getDemandDetails().add(DemandDetail.builder()
+		        .demandId(demand.getId())
+                .taxAmount(advanceMap.getSgstAmount())
+                .taxHeadMasterCode("ADV_SGST")
+                .additionalDetails(advSgstMap)
+                .postingKey("50")
+                .build());        
+
+     
+
+
+        // Add CGST Payable
+        demand.getDemandDetails().add(DemandDetail.builder()
+		        .demandId(demand.getId())
+                .taxAmount(advanceMap.getCgstAmount())
+                .taxHeadMasterCode("CGST Payable")
+                .additionalDetails(cgstMap)
+                .postingKey("40")
+                .build());
+
+        // Add SGST Payable
+        demand.getDemandDetails().add(DemandDetail.builder()
+		        .demandId(demand.getId())
+                .taxAmount(advanceMap.getSgstAmount())
+                .taxHeadMasterCode("SGST Payable")
+                .additionalDetails(sgstMap)
+                .postingKey("40")
+                .build());
+
+       
+            advanceTaxHeadLists.add("ADV_SGST");
+            advanceTaxHeadLists.add("ADV_CGST");
+            advanceTaxHeadLists.add("CGST Payable");
+            advanceTaxHeadLists.add("SGST Payable");				
+    }
+}
+
+
+
+
+   for(DemandDetail d : demand.getDemandDetails()){
+    // Bank / Interim Receipt (Dr)
+    reports.add(FiReport.builder()
+            .transactionNumber(demand.getId())
+            .docDate(postingDate)
+            .postingDate(postingDate)
+            .referenceNo(demand.getConsumerCode())
+            .documentHeaderText(d.getTaxHeadMasterCode())
+            .postingKey(d.getPostingKey() != null ? d.getPostingKey() : "50")
+            .glCode(extractGlCode(d))
+            .collectionAmount(d.getTaxAmount())
+            .fund(demand.getFund())
+            .fundCentre(demand.getFundCenter())
+            .businessArea(demand.getBusinessArea())
+            .functionalArea(demand.getFunctionalArea())
+            .remarks("YY")
+            .isNew(Boolean.TRUE)
+            .createdAt(now)
+            .updatedAt(now)
+            .build());
+
+   }			
+
+    // Customer / Receivable (Cr)
+    reports.add(FiReport.builder()
+            .transactionNumber(demand.getId())
+            .docDate(postingDate)
+            .postingDate(postingDate)
+            .referenceNo(demand.getConsumerCode())
+            .documentHeaderText("Customer " + demand.getConsumerCode())
+            .postingKey("40")
 			.glCode("NA")
             .collectionAmount(total)
             .fund(demand.getFund())
