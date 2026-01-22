@@ -42,4 +42,6 @@ public class FiReport {
 
     private Long createdAt;
     private Long updatedAt;
+
+    private String docType;
 }

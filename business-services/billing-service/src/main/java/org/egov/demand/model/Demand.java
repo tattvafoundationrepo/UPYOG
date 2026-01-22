@@ -90,6 +90,8 @@ public class Demand {
 
     private String reason;
 
+    private String fiReceiptNo;
+
     @Default
     @JsonProperty("minimumAmountPayable")
     private BigDecimal minimumAmountPayable = BigDecimal.ZERO;

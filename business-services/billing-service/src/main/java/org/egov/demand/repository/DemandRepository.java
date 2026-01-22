@@ -45,6 +45,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -80,6 +81,7 @@ import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -157,7 +159,17 @@ public class DemandRepository {
 		insertBatch(demands, demandDetails);
 		log.debug("Demands saved >>>> ");
 		insertBatchForAudit(demands, demandDetails);
+        
 
+        fetchDemandSeqNoByDemandIds(
+            demands.stream()
+                .map(Demand::getId)
+                .collect(Collectors.toSet())
+        ).forEach( (demandId, seqNo) -> {
+            demands.stream()
+                .filter(d -> d.getId().equals(demandId))
+                .forEach( d -> d.setDemandSeqNo(seqNo) );
+        });
 
         for (Demand demand : demands) {
 		  
@@ -228,7 +240,7 @@ public class DemandRepository {
 		}
 
 		if(!reportList.isEmpty()){
-            batchInsertFiReports(reportList);
+            batchInsertDemandFiReports(reportList);
 		}
 
 	}
@@ -426,8 +438,8 @@ public class DemandRepository {
                         .functionalArea(functionalArea)
                         .isNew(Boolean.TRUE)
                         .paymentModeDetails(demand.getPaymentMode())
-                        .createdAt(now)
-                        .updatedAt(now)
+                        .createdAt(System.currentTimeMillis())
+                        .updatedAt(System.currentTimeMillis())
                         .remarks(isCollection ? remark != null ? remark :" Collection " : " Demand")
                         .build();
             })
@@ -435,7 +447,7 @@ public class DemandRepository {
 }
 
 
-	public void batchInsertFiReports(List<FiReport> reports) {
+	public void batchInsertDemandFiReports(List<FiReport> reports) {
 
     if (reports == null || reports.isEmpty()) return;
 
@@ -443,12 +455,12 @@ public class DemandRepository {
         "INSERT INTO public.eg_emarket_fi_report ("
         + " transaction_number, doc_date, posting_date,"
         + " reference_no, document_header_text,"
-        + " posting_key, gl_code, collection_amount,"
+        + " posting_key, gl_code, collection_amount, "
         + " fund, fund_centre,"
         + " functional_area, business_area,"
         + " remarks, payment_mode_details, is_new,"
-        + " created_at, updated_at"
-        + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        + " created_at, updated_at, doc_type"
+        + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
 
     jdbcTemplate.batchUpdate(sql, reports, 100, (ps, r) -> {
@@ -475,9 +487,61 @@ public class DemandRepository {
 
         ps.setTimestamp(16, r.getCreatedAt() == null ? null : new Timestamp(r.getCreatedAt()));
         ps.setTimestamp(17, r.getUpdatedAt() == null ? null : new Timestamp(r.getUpdatedAt()));
+        ps.setString(18,    r.getDocType());   
     });
 
-    log.info("Batch inserted {} FI Report records", reports.size());
+    log.info("Batch inserted Demand {} FI Report records", reports.size());
+}
+
+
+
+
+
+
+	public void batchInsertCollectionFiReports(List<FiReport> reports) {
+
+    if (reports == null || reports.isEmpty()) return;
+
+        String sql =
+        "INSERT INTO public.eg_emarket_fi_report_collection ("
+        + " transaction_number, doc_date, posting_date,"
+        + " reference_no, document_header_text,"
+        + " posting_key, gl_code, collection_amount,"
+        + " fund, fund_centre,"
+        + " functional_area, business_area,"
+        + " remarks, payment_mode_details, is_new,"
+        + " created_at, updated_at, doc_type"
+        + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+
+    jdbcTemplate.batchUpdate(sql, reports, 100, (ps, r) -> {
+
+        ps.setString(1, r.getTransactionNumber() == null ? null : String.valueOf(r.getTransactionNumber()));
+        ps.setObject(2, r.getDocDate());
+        ps.setObject(3, r.getPostingDate());
+
+        ps.setString(4, r.getReferenceNo());
+        ps.setString(5, r.getDocumentHeaderText());
+
+        ps.setString(6, r.getPostingKey());
+        ps.setString(7, r.getGlCode());
+        ps.setBigDecimal(8, r.getCollectionAmount());
+
+        ps.setString(9, r.getFund());
+        ps.setString(10, r.getFundCentre());
+        ps.setString(11, r.getFunctionalArea());
+        ps.setString(12, r.getBusinessArea());
+
+        ps.setString(13, r.getRemarks());
+        ps.setString(14, r.getPaymentModeDetails());
+        ps.setObject(15, r.getIsNew());
+
+        ps.setTimestamp(16, r.getCreatedAt() == null ? null : new Timestamp(r.getCreatedAt()));
+        ps.setTimestamp(17, r.getUpdatedAt() == null ? null : new Timestamp(r.getUpdatedAt()));
+        ps.setString(18,    r.getDocType());
+    });
+
+    log.info("Batch inserted {} Collection FI Report records", reports.size());
 }
 
 
@@ -772,7 +836,7 @@ public class DemandRepository {
          "       eem.fund, " +
          "       eem.business_area, " +
 		 "       eem.functional_area, " +
-		 "       ep2.additionaldetails , ep2.totaldue , ep2.totalamountpaid " +
+		 "       ep2.additionaldetails , ep2.totaldue , ep2.totalamountpaid , ep.receiptnumber " +
         "FROM egcl_billdetial eb " +
         "JOIN egcl_bill eb2 ON eb.billid = eb2.id " +
         "JOIN egcl_paymentdetail ep ON ep.billid = eb2.id " +
@@ -798,6 +862,7 @@ public class DemandRepository {
 				info.setTotalAmountPaid(rs.getBigDecimal("totalamountpaid"));
 				info.setTotalDue(rs.getBigDecimal("totaldue"));
 				info.setFunctionalArea(rs.getString("functional_area"));
+                info.setReceiptNumber(rs.getString("receiptnumber"));
                 return info;
             }
         }
@@ -866,7 +931,6 @@ private String extractGlCode(DemandDetail detail) {
 public List<FiReport> buildDemandFiReports(Demand demand) {
 
     List<FiReport> reports = new ArrayList<>();
-    long now = System.currentTimeMillis();
 
     String consumerCode = demand.getConsumerCode();
     Long postingDate = demand.getTaxPeriodFrom();
@@ -899,7 +963,7 @@ public List<FiReport> buildDemandFiReports(Demand demand) {
             .docDate(postingDate)
             .postingDate(postingDate)
             .referenceNo(consumerCode)
-            .documentHeaderText(th.contains("GST") && !th.equalsIgnoreCase("GST_CA") ? 
+            .remarks(th.contains("GST") && !th.equalsIgnoreCase("GST_CA") ? 
 			        (th.contains("CGST") ? "CGST Payable" : "SGST Payable") 
 					 :  th.contains("40") ? th.equalsIgnoreCase("CSP40") ? "CGST Payable" : "SGST Payable"
                      : th.contains("50") ? th.equalsIgnoreCase("CSA50") ? "CGST Advance" : "SGST Advance" 
@@ -912,10 +976,11 @@ public List<FiReport> buildDemandFiReports(Demand demand) {
             .fundCentre(fundCenter)
             .businessArea(businessArea)
             .functionalArea(functionalArea)
-            .remarks("YX")  
+            .documentHeaderText(demand.getDemandSeqNo() != null ?  demand.getDemandSeqNo().toString() : null)
+            .docType("YX")
             .isNew(Boolean.TRUE)
-            .createdAt(now)
-            .updatedAt(now)
+            .createdAt(System.currentTimeMillis())
+            .updatedAt(System.currentTimeMillis())
             .build());
         if(!th.contains("40") && !th.contains("50"))    
 	       totalReceivable = totalReceivable.add(dd.getTaxAmount());		
@@ -929,7 +994,7 @@ public List<FiReport> buildDemandFiReports(Demand demand) {
             .docDate(postingDate)
             .postingDate(postingDate)
             .referenceNo(consumerCode)
-            .documentHeaderText("Customer " + consumerCode)
+            .remarks("Receivable from Mun Mkt")
             .postingKey("40")
             .glCode("431190300")
             .collectionAmount(totalReceivable)
@@ -937,10 +1002,11 @@ public List<FiReport> buildDemandFiReports(Demand demand) {
             .fundCentre(fundCenter)
             .businessArea(businessArea)
             .functionalArea(functionalArea)
-            .remarks("YX")
+            .documentHeaderText(demand.getDemandSeqNo() != null ?  demand.getDemandSeqNo().toString() : null)
+            .docType("YX")
             .isNew(Boolean.TRUE)
-            .createdAt(now)
-            .updatedAt(now)
+            .createdAt(System.currentTimeMillis())
+            .updatedAt(System.currentTimeMillis())
             .build());
      }
     return reports;
@@ -948,11 +1014,12 @@ public List<FiReport> buildDemandFiReports(Demand demand) {
 
 
 
+
+
 public List<FiReport> buildCollectionFiReports(Demand demand,
                                                GstAdvanceMap advanceMap) {
 
     List<FiReport> reports = new ArrayList<>();
-    long now = System.currentTimeMillis();
 
     BigDecimal total = advanceMap.getTotalAmountPaid();
     Long postingDate = demand.getTaxPeriodFrom();
@@ -1077,7 +1144,7 @@ public List<FiReport> buildCollectionFiReports(Demand demand,
             .docDate(postingDate)
             .postingDate(postingDate)
             .referenceNo(demand.getConsumerCode())
-            .documentHeaderText(d.getTaxHeadMasterCode())
+            .remarks(d.getTaxHeadMasterCode())
             .postingKey(d.getPostingKey() != null ? d.getPostingKey() : "40")
             .glCode(extractGlCode(d))
             .collectionAmount(d.getTaxAmount())
@@ -1085,10 +1152,11 @@ public List<FiReport> buildCollectionFiReports(Demand demand,
             .fundCentre(demand.getFundCenter())
             .businessArea(demand.getBusinessArea())
             .functionalArea(demand.getFunctionalArea())
-            .remarks("YY")
+            .documentHeaderText(demand.getFiReceiptNo())
+            .docType("YY")
             .isNew(Boolean.TRUE)
-            .createdAt(now)
-            .updatedAt(now)
+            .createdAt(System.currentTimeMillis())
+            .updatedAt(System.currentTimeMillis())
             .build());
 
    }			
@@ -1100,7 +1168,7 @@ public List<FiReport> buildCollectionFiReports(Demand demand,
             .docDate(postingDate)
             .postingDate(postingDate)
             .referenceNo(demand.getConsumerCode())
-            .documentHeaderText("Customer " + demand.getConsumerCode())
+            .remarks("Customer " + demand.getConsumerCode())
             .postingKey("50")
 			.glCode("NA")
             .collectionAmount(total)
@@ -1108,10 +1176,11 @@ public List<FiReport> buildCollectionFiReports(Demand demand,
             .fundCentre(demand.getFundCenter())
             .businessArea(demand.getBusinessArea())
             .functionalArea(demand.getFunctionalArea())
-            .remarks("YY")
+            .documentHeaderText(demand.getFiReceiptNo())
+            .docType("YY")
             .isNew(Boolean.TRUE)
-            .createdAt(now)
-            .updatedAt(now)
+            .createdAt(System.currentTimeMillis())
+            .updatedAt(System.currentTimeMillis())
             .build());
 
      }
@@ -1244,7 +1313,7 @@ public List<FiReport> buildCollectionReversalFiReports(Demand demand,
             .docDate(postingDate)
             .postingDate(postingDate)
             .referenceNo(demand.getConsumerCode())
-            .documentHeaderText(d.getTaxHeadMasterCode())
+            .remarks(d.getTaxHeadMasterCode())
             .postingKey(d.getPostingKey() != null ? d.getPostingKey() : "50")
             .glCode(extractGlCode(d))
             .collectionAmount(d.getTaxAmount())
@@ -1252,10 +1321,11 @@ public List<FiReport> buildCollectionReversalFiReports(Demand demand,
             .fundCentre(demand.getFundCenter())
             .businessArea(demand.getBusinessArea())
             .functionalArea(demand.getFunctionalArea())
-            .remarks("YY")
+            .documentHeaderText(demand.getFiReceiptNo())
+            .docType("YY")
             .isNew(Boolean.TRUE)
-            .createdAt(now)
-            .updatedAt(now)
+            .createdAt(System.currentTimeMillis())
+            .updatedAt(System.currentTimeMillis())
             .build());
 
    }			
@@ -1268,7 +1338,7 @@ public List<FiReport> buildCollectionReversalFiReports(Demand demand,
             .docDate(postingDate)
             .postingDate(postingDate)
             .referenceNo(demand.getConsumerCode())
-            .documentHeaderText("Customer " + demand.getConsumerCode())
+            .remarks("Customer " + demand.getConsumerCode())
             .postingKey("40")
 			.glCode("NA")
             .collectionAmount(total)
@@ -1276,10 +1346,11 @@ public List<FiReport> buildCollectionReversalFiReports(Demand demand,
             .fundCentre(demand.getFundCenter())
             .businessArea(demand.getBusinessArea())
             .functionalArea(demand.getFunctionalArea())
-            .remarks("YY")
+            .documentHeaderText(demand.getFiReceiptNo())
+            .docType("YY")
             .isNew(Boolean.TRUE)
-            .createdAt(now)
-            .updatedAt(now)
+            .createdAt(System.currentTimeMillis())
+            .updatedAt(System.currentTimeMillis())
             .build());
     }
     return reports;
@@ -1337,6 +1408,44 @@ private FiReport gstFi(Demand demand,
             .updatedAt(now)
             .build();
 }
+
+
+
+
+
+
+ public Map<String, Long> fetchDemandSeqNoByDemandIds(Set<String> demandIds) {
+
+        String FETCH_DEMAND_SEQNO_BY_IDS = 
+        "SELECT id, demandseqno " +
+        "FROM egbs_demand_v1 " +
+        "WHERE id IN (:ids)";
+
+        if (demandIds == null || demandIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        NamedParameterJdbcTemplate namedJdbcTemplate =
+                new NamedParameterJdbcTemplate(jdbcTemplate);
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("ids", demandIds);
+
+        return namedJdbcTemplate.query(
+                FETCH_DEMAND_SEQNO_BY_IDS,
+                params,
+                rs -> {
+                    Map<String, Long> result = new HashMap<>();
+                    while (rs.next()) {
+                        result.put(
+                                rs.getString("id"),
+                                rs.getLong("demandseqno")
+                        );
+                    }
+                    return result;
+                }
+        );
+    }
 
 
 }

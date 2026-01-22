@@ -227,20 +227,13 @@ public class ReceiptServiceV2 {
 				d.setBusinessArea(infoList.get(0).getBusinessArea());
 				d.setPaymentMode(infoList.get(0).getPaymentMode());
 				d.setFunctionalArea(infoList.get(0).getFunctionalArea());
+				d.setFiReceiptNo(infoList.get(0).getReceiptNumber());
 				log.info("additioanl from dbbbbbbbbbbbbbbbbbbbbbbbbb" + infoList.get(0));
 			}
 			GstAdvanceMap gstAdvanceMap = extractGstAdvanceFromAdditionalDetails(infoList.get(0));
 			List<DemandDetail> filteredDetails = demandRequest.getDemands().stream()
 					.flatMap(dd -> dd.getDemandDetails().stream()) // flatten all demandDetails
 					.filter(dd -> dd.getTaxHeadMasterCode().contains("ADVANCE"))
-					// .peek(dd -> {
-					// 	if (gstAdvanceMap.getCgstAmount() != null &&
-					// 			gstAdvanceMap.getCgstAmount().compareTo(BigDecimal.ZERO) > 0) {
-
-					// 		dd.setTaxAmount(
-					// 				dd.getTaxAmount().subtract(gstAdvanceMap.getCgstAmount()));
-					// 	}
-				//	})
 					.collect(Collectors.toList());
 
 			log.info("filtereddddddddddd detailsssss" + filteredDetails);
@@ -258,33 +251,15 @@ public class ReceiptServiceV2 {
 					.additionalDetails(advCollectionMap)
 					.build());
 
-		    // d.getDemandDetails().add(DemandDetail.builder()
-			// 		.demandId(d.getId())
-			// 		.taxAmount(gstAdvanceMap.getCollectionAmount())
-			// 		.taxHeadMasterCode("Customer "+d.getConsumerCode())
-			// 		.additionalDetails(advCollectionMap)
-			// 		.build());			
-
-			log.info("demand detailsss while collectionnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn"
-					+ d.getDemandDetails());
-
-			log.info("advancemapppppppppppppppppppppppppppp" + gstAdvanceMap);
-			// log.info("adddditionalDeeeetailssssssssssss"+
-			// d.getAdditionalDetails().toString());
-			log.info("40....40....40....40....40");
-		///	List<FiReport> report = demandRepository.buildFiReportsFromDemand(d, "40", true, gstAdvanceMap);
-
 			List<FiReport> report = demandRepository.buildCollectionFiReports(d, gstAdvanceMap);
 
 			collectionReportList.addAll(report);
-	//    });
-
-			demandRepository.batchInsertFiReports(collectionReportList);
+			demandRepository.batchInsertCollectionFiReports(collectionReportList);
 		} else {
+
+
 			log.info("Receipt is cancelled , so not generating collection FI report");
-
-
-					 Demand rentDemand = demandRequest.getDemands().get(0);
+			Demand rentDemand = demandRequest.getDemands().get(0);
 			 		
 	//	 demandRequest.getDemands().forEach(rentDemand -> {
 			Demand d = new Demand();
@@ -301,20 +276,13 @@ public class ReceiptServiceV2 {
 				d.setBusinessArea(infoList.get(0).getBusinessArea());
 				d.setPaymentMode(infoList.get(0).getPaymentMode());
 				d.setFunctionalArea(infoList.get(0).getFunctionalArea());
+				d.setFiReceiptNo(infoList.get(0).getReceiptNumber());
 				log.info("additioanl from dbbbbbbbbbbbbbbbbbbbbbbbbb" + infoList.get(0));
 			}
 			GstAdvanceMap gstAdvanceMap = extractGstAdvanceFromAdditionalDetails(infoList.get(0));
 			List<DemandDetail> filteredDetails = demandRequest.getDemands().stream()
 					.flatMap(dd -> dd.getDemandDetails().stream()) // flatten all demandDetails
 					.filter(dd -> dd.getTaxHeadMasterCode().contains("ADVANCE"))
-					// .peek(dd -> {
-					// 	if (gstAdvanceMap.getCgstAmount() != null &&
-					// 			gstAdvanceMap.getCgstAmount().compareTo(BigDecimal.ZERO) > 0) {
-
-					// 		dd.setTaxAmount(
-					// 				dd.getTaxAmount().subtract(gstAdvanceMap.getCgstAmount()));
-					// 	}
-				//	})
 					.collect(Collectors.toList());
 
 			log.info("filtereddddddddddd detailsssss" + filteredDetails);
@@ -332,28 +300,14 @@ public class ReceiptServiceV2 {
 					.additionalDetails(advCollectionMap)
 					.build());
 
-		    // d.getDemandDetails().add(DemandDetail.builder()
-			// 		.demandId(d.getId())
-			// 		.taxAmount(gstAdvanceMap.getCollectionAmount())
-			// 		.taxHeadMasterCode("Customer "+d.getConsumerCode())
-			// 		.additionalDetails(advCollectionMap)
-			// 		.build());			
+	
 
-			log.info("demand detailsss while collectionnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn"
-					+ d.getDemandDetails());
-
-			log.info("advancemapppppppppppppppppppppppppppp" + gstAdvanceMap);
-			// log.info("adddditionalDeeeetailssssssssssss"+
-			// d.getAdditionalDetails().toString());
-			log.info("40....40....40....40....40");
-		///	List<FiReport> report = demandRepository.buildFiReportsFromDemand(d, "40", true, gstAdvanceMap);
 
 			List<FiReport> report = demandRepository.buildCollectionReversalFiReports(d, gstAdvanceMap);
 
 			collectionReportList.addAll(report);
-	//    });
-
-			demandRepository.batchInsertFiReports(collectionReportList);
+	
+			demandRepository.batchInsertCollectionFiReports(collectionReportList);
 
 		}
 
