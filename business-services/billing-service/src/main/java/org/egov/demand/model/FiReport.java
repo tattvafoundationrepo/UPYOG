@@ -44,4 +44,8 @@ public class FiReport {
     private Long updatedAt;
 
     private String docType;
+
+    private String costCenter;
+
+    private String commitmentItem;
 }

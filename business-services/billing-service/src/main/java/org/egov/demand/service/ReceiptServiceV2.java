@@ -65,8 +65,8 @@ public class ReceiptServiceV2 {
 	@Autowired
 	private DemandRepository demandRepository;
     
-	// @Autowired
-	// private Producer producer;
+	 @Autowired
+	 private Producer producer;
     
 	@Autowired
 	private MarketServiceClient	marketServiceClient;
@@ -193,17 +193,16 @@ public class ReceiptServiceV2 {
 
 		demandService.updateAsync(demandRequest, paymentBackUpdateAudit);
 
-	// 	if (isReceiptCancellation && settledDemandIds != null && !settledDemandIds.isEmpty()) {
 
-    //      if (isReceiptCancellation && settledDemandIds != null && !settledDemandIds.isEmpty()) {
-	// 		AdvSettlementRequest advSettlementRequest = AdvSettlementRequest.builder()
-	// 				.requestInfo(billRequest.getRequestInfo())
-	// 				.settlements(settledDemandIds)
-	// 				.build();
-    //          marketServiceClient.pushPenaltySettlements(advSettlementRequest);
-    //      }
+        if (isReceiptCancellation && settledDemandIds != null && !settledDemandIds.isEmpty()) {
+	 		AdvSettlementRequest advSettlementRequest = AdvSettlementRequest.builder()
+	 				.requestInfo(billRequest.getRequestInfo())
+	 				.settlements(settledDemandIds)
+	 				.build();
+           //   marketServiceClient.pushPenaltySettlements(advSettlementRequest);
+		   producer.push("create-penalty-demand-onpayment-reversal", advSettlementRequest);
+        }
 
-    // }
 
 
 		List<FiReport> collectionReportList = new ArrayList<>();

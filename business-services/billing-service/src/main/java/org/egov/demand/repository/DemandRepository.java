@@ -459,8 +459,8 @@ public class DemandRepository {
         + " fund, fund_centre,"
         + " functional_area, business_area,"
         + " remarks, payment_mode_details, is_new,"
-        + " created_at, updated_at, doc_type"
-        + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        + " created_at, updated_at, doc_type, cost_center, commitmentitem "
+        + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? , ? , ?)";
 
 
     jdbcTemplate.batchUpdate(sql, reports, 100, (ps, r) -> {
@@ -487,7 +487,9 @@ public class DemandRepository {
 
         ps.setTimestamp(16, r.getCreatedAt() == null ? null : new Timestamp(r.getCreatedAt()));
         ps.setTimestamp(17, r.getUpdatedAt() == null ? null : new Timestamp(r.getUpdatedAt()));
-        ps.setString(18,    r.getDocType());   
+        ps.setString(18,    r.getDocType());  
+        ps.setString(19,    r.getCostCenter());
+        ps.setString(20,    r.getCommitmentItem()); 
     });
 
     log.info("Batch inserted Demand {} FI Report records", reports.size());
@@ -510,8 +512,8 @@ public class DemandRepository {
         + " fund, fund_centre,"
         + " functional_area, business_area,"
         + " remarks, payment_mode_details, is_new,"
-        + " created_at, updated_at, doc_type"
-        + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        + " created_at, updated_at, doc_type, cost_center, commitmentitem "
+        + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? , ? , ?)";
 
 
     jdbcTemplate.batchUpdate(sql, reports, 100, (ps, r) -> {
@@ -539,6 +541,8 @@ public class DemandRepository {
         ps.setTimestamp(16, r.getCreatedAt() == null ? null : new Timestamp(r.getCreatedAt()));
         ps.setTimestamp(17, r.getUpdatedAt() == null ? null : new Timestamp(r.getUpdatedAt()));
         ps.setString(18,    r.getDocType());
+        ps.setString(19,    r.getCostCenter());
+        ps.setString(20,    r.getCommitmentItem());
     });
 
     log.info("Batch inserted {} Collection FI Report records", reports.size());
