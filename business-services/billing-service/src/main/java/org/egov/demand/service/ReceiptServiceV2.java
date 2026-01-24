@@ -195,12 +195,10 @@ public class ReceiptServiceV2 {
 
 
         if (isReceiptCancellation && settledDemandIds != null && !settledDemandIds.isEmpty()) {
-	 		AdvSettlementRequest advSettlementRequest = AdvSettlementRequest.builder()
-	 				.requestInfo(billRequest.getRequestInfo())
-	 				.settlements(settledDemandIds)
-	 				.build();
-           //   marketServiceClient.pushPenaltySettlements(advSettlementRequest);
-		   producer.push("create-penalty-demand-onpayment-reversal", advSettlementRequest);
+			for(AdvSettlement settledDemandId : settledDemandIds){
+	 		   settledDemandId.setRequestInfo(billRequest.getRequestInfo());
+		        producer.push("create-penalty-demand-onpayment-reversal", settledDemandIds);
+			}		
         }
 
 
