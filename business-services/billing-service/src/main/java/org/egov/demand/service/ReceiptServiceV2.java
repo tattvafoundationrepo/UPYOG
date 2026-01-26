@@ -194,12 +194,14 @@ public class ReceiptServiceV2 {
 		demandService.updateAsync(demandRequest, paymentBackUpdateAudit);
 
 
-        if (isReceiptCancellation && settledDemandIds != null && !settledDemandIds.isEmpty()) {
-			for(AdvSettlement settledDemandId : settledDemandIds){
-	 		   settledDemandId.setRequestInfo(billRequest.getRequestInfo());
-		        producer.push("create-penalty-demand-onpayment-reversal", settledDemandIds);
-			}		
-        }
+        // if (isReceiptCancellation && settledDemandIds != null && !settledDemandIds.isEmpty()) {
+		// 	for(AdvSettlement settledDemandId : settledDemandIds){
+	 	// 	   settledDemandId.setRequestInfo(billRequest.getRequestInfo());
+		// 	   log.info("Publishing settled demand ids to create penalty demands on payment reversal"+ settledDemandIds.toString());
+		//         producer.push("create-penalty-demand-onpayment-reversal", settledDemandId);
+		// 	}		
+        // }
+
 
 
 
@@ -305,6 +307,17 @@ public class ReceiptServiceV2 {
 			collectionReportList.addAll(report);
 	
 			demandRepository.batchInsertCollectionFiReports(collectionReportList);
+
+
+
+
+			if (isReceiptCancellation && settledDemandIds != null && !settledDemandIds.isEmpty()) {
+			for(AdvSettlement settledDemandId : settledDemandIds){
+	 		   settledDemandId.setRequestInfo(billRequest.getRequestInfo());
+			   log.info("Publishing settled demand ids to create penalty demands on payment reversal"+ settledDemandIds.toString());
+		        producer.push("create-penalty-demand-onpayment-reversal", settledDemandId);
+			}		
+        }
 
 		}
 
