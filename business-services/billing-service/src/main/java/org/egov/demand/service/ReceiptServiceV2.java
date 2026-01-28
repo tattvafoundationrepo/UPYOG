@@ -18,7 +18,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.egov.common.contract.request.RequestInfo;
-import org.egov.demand.helper.MarketServiceClient;
 import org.egov.demand.model.AdvSettlement;
 import org.egov.demand.model.AdvSettlementRequest;
 import org.egov.demand.model.BillAccountDetailV2;
@@ -67,9 +66,7 @@ public class ReceiptServiceV2 {
     
 	 @Autowired
 	 private Producer producer;
-    
-	@Autowired
-	private MarketServiceClient	marketServiceClient;
+
 
 	public void updateDemandFromReceipt(BillRequestV2 billReq, Boolean isReceiptCancellation) {
 
@@ -194,15 +191,6 @@ public class ReceiptServiceV2 {
 		demandService.updateAsync(demandRequest, paymentBackUpdateAudit);
 
 
-        // if (isReceiptCancellation && settledDemandIds != null && !settledDemandIds.isEmpty()) {
-		// 	for(AdvSettlement settledDemandId : settledDemandIds){
-	 	// 	   settledDemandId.setRequestInfo(billRequest.getRequestInfo());
-		// 	   log.info("Publishing settled demand ids to create penalty demands on payment reversal"+ settledDemandIds.toString());
-		//         producer.push("create-penalty-demand-onpayment-reversal", settledDemandId);
-		// 	}		
-        // }
-
-
 
 
 		List<FiReport> collectionReportList = new ArrayList<>();
@@ -210,8 +198,6 @@ public class ReceiptServiceV2 {
 		if (!isReceiptCancellation) {
 			
 		 Demand rentDemand = demandRequest.getDemands().get(0);
-			 		
-	//	 demandRequest.getDemands().forEach(rentDemand -> {
 			Demand d = new Demand();
 			d.setConsumerCode(rentDemand.getConsumerCode());
 			d.setBusinessService(rentDemand.getBusinessService());
@@ -227,7 +213,7 @@ public class ReceiptServiceV2 {
 				d.setPaymentMode(infoList.get(0).getPaymentMode());
 				d.setFunctionalArea(infoList.get(0).getFunctionalArea());
 				d.setFiReceiptNo(infoList.get(0).getTransactionNumber());
-				log.info("additioanl from dbbbbbbbbbbbbbbbbbbbbbbbbb" + infoList.get(0));
+				log.info("additioanl market info from db" + infoList.get(0));
 			}
 			GstAdvanceMap gstAdvanceMap = extractGstAdvanceFromAdditionalDetails(infoList.get(0));
 			List<DemandDetail> filteredDetails = demandRequest.getDemands().stream()
@@ -235,7 +221,6 @@ public class ReceiptServiceV2 {
 					.filter(dd -> dd.getTaxHeadMasterCode().contains("ADVANCE"))
 					.collect(Collectors.toList());
 
-			log.info("filtereddddddddddd detailsssss" + filteredDetails);
 			d.setDemandDetails(filteredDetails);
 			gstAdvanceMap.setCollectionAmount(gstAdvanceMap.getTotalAmountPaid());
 
@@ -257,10 +242,9 @@ public class ReceiptServiceV2 {
 		} else {
 
 
-			log.info("Receipt is cancelled , so not generating collection FI report");
+			log.info("Receipt is cancelled , so generating collection FI report");
 			Demand rentDemand = demandRequest.getDemands().get(0);
-			 		
-	//	 demandRequest.getDemands().forEach(rentDemand -> {
+		
 			Demand d = new Demand();
 			d.setConsumerCode(rentDemand.getConsumerCode());
 			d.setBusinessService(rentDemand.getBusinessService());

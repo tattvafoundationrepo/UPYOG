@@ -1036,7 +1036,7 @@ public List<FiReport> buildCollectionFiReports(Demand demand,
     Boolean hasLicenseAdvance = false;
 	for(DemandDetail d: demand.getDemandDetails()){
         Map<String, Object> advanceGlMap = new HashMap<>();
-        advanceGlMap.put("glcode",  "450100100");
+        advanceGlMap.put("glcode",  "350410215");
 
        if(d.getTaxHeadMasterCode().contains("ADVANCE")){
           if(d.getTaxHeadMasterCode().equalsIgnoreCase("TX.EMARKET_RENTAL_ADVANCE_CARRYFORWARD")){
@@ -1049,6 +1049,7 @@ public List<FiReport> buildCollectionFiReports(Demand demand,
           if(d.getTaxHeadMasterCode().equalsIgnoreCase("TX.EMARKET_LICENSE_ADVANCE_CARRYFORWARD")){
               hasLicenseAdvance = true;
               d.setTaxAmount(advanceMap.getLicenseAdvancePaid());
+
               d.setPostingKey("40");
               d.setAdditionalDetails(advanceGlMap);
           }
@@ -1063,14 +1064,14 @@ public List<FiReport> buildCollectionFiReports(Demand demand,
     if (advanceMap != null  && hasAdvanceTaxhead ) {
             
         Map<String, Object> advanceGlMap = new HashMap<>();
-        advanceGlMap.put("glcode",  "NA");
+        advanceGlMap.put("glcode",  "431409936");
 
         demand.getDemandDetails().add(DemandDetail.builder()
 		        .demandId(demand.getId())
                 .taxAmount(hasRentAdvance && hasLicenseAdvance ? 
                             advanceMap.getRentalAdvancePaid().add(advanceMap.getLicenseAdvancePaid()) :
                     hasRentAdvance ? advanceMap.getRentalAdvancePaid() : advanceMap.getLicenseAdvancePaid())
-                .taxHeadMasterCode("Rent From Municipal market")
+                .taxHeadMasterCode("Receivable from Mun Mkt Advance")
                 .additionalDetails(advanceGlMap)
                 .postingKey("50")
                 .build());    
@@ -1173,9 +1174,9 @@ public List<FiReport> buildCollectionFiReports(Demand demand,
             .docDate(postingDate)
             .postingDate(postingDate)
             .referenceNo(demand.getConsumerCode())
-            .remarks("Customer " + demand.getConsumerCode())
+            .remarks("Receivable from Mun Mkt")
             .postingKey("50")
-			.glCode("NA")
+			.glCode("431409936")
             .collectionAmount(total)
             .fund(demand.getFund())
             .fundCentre(demand.getFundCenter())
@@ -1212,17 +1213,23 @@ public List<FiReport> buildCollectionReversalFiReports(Demand demand,
     Boolean hasRentAdvance = false;
     Boolean hasLicenseAdvance = false;
 	for(DemandDetail d: demand.getDemandDetails()){
+
+         Map<String, Object> advanceGlMap = new HashMap<>();
+        advanceGlMap.put("glcode",  "350410215");
+
        if(d.getTaxHeadMasterCode().contains("ADVANCE")){
           if(d.getTaxHeadMasterCode().equalsIgnoreCase("TX.EMARKET_RENTAL_ADVANCE_CARRYFORWARD")){
               hasRentAdvance = true;
               d.setTaxAmount(advanceMap.getRentalAdvancePaid());
               d.setPostingKey("50");
+              d.setAdditionalDetails(advanceMap);
           }
             
           if(d.getTaxHeadMasterCode().equalsIgnoreCase("TX.EMARKET_LICENSE_ADVANCE_CARRYFORWARD")){
               hasLicenseAdvance = true;
               d.setTaxAmount(advanceMap.getLicenseAdvancePaid());
               d.setPostingKey("50");
+               d.setAdditionalDetails(advanceMap);
           }
             
           hasAdvanceTaxhead = true;
@@ -1234,12 +1241,14 @@ public List<FiReport> buildCollectionReversalFiReports(Demand demand,
     // If advanceMap provided, append demandDetails for CGST/SGST and ADV_CGST/ADV_SGST
     if (advanceMap != null  && hasAdvanceTaxhead ) {
             
+         Map<String, Object> advanceGlMap = new HashMap<>();
+        advanceGlMap.put("glcode",  "431409936");
         demand.getDemandDetails().add(DemandDetail.builder()
 		        .demandId(demand.getId())
                 .taxAmount(hasRentAdvance && hasLicenseAdvance ? 
                             advanceMap.getRentalAdvancePaid().add(advanceMap.getLicenseAdvancePaid()) :
                     hasRentAdvance ? advanceMap.getRentalAdvancePaid() : advanceMap.getLicenseAdvancePaid())
-                .taxHeadMasterCode("Rent From Municipal market")
+                .taxHeadMasterCode("Receivable from Mun Mkt Advance")
                 .additionalDetails(demand.getDemandDetails().get(demand.getDemandDetails().size() - 1).getAdditionalDetails())
                 .postingKey("40")
                 .build());    
@@ -1345,7 +1354,7 @@ public List<FiReport> buildCollectionReversalFiReports(Demand demand,
             .referenceNo(demand.getConsumerCode())
             .remarks("Customer " + demand.getConsumerCode())
             .postingKey("40")
-			.glCode("NA")
+			.glCode("431409936")
             .collectionAmount(total)
             .fund(demand.getFund())
             .fundCentre(demand.getFundCenter())
