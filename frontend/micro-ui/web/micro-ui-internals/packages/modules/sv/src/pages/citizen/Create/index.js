@@ -4,9 +4,17 @@ import { useTranslation } from "react-i18next";
 import { useQueryClient } from "react-query";
 import { Redirect, Route, Switch, useHistory, useLocation, useRouteMatch } from "react-router-dom";
 import { Config } from "../../../config/config";
-
+/**
+ * Main Parent Component which is handling all the sub / Child components 
+ * in this page it is taking config file to render all the componets one by one and also 
+ * with the help of config this parent component knows which file have to render first.
+ * 
+ * It is saving all the filled data in session page by page and extracting it inside params and sending in every component
+ * through formdata.
+ * 
+ * This page also handles the Routing of Check page and Acknowledgement page
+ */
 const SVCreate = ({ parentRoute }) => {
-
   const queryClient = useQueryClient();
   const match = useRouteMatch();
   const { t } = useTranslation();
@@ -156,9 +164,20 @@ const SVCreate = ({ parentRoute }) => {
         );
       })}
 
-      
-      <Route path={`${match.path}/check`}>
-        <SVCheckPage onSubmit={svcreate} value={params} editdata={pathname.includes("apply") ? {} : vendingData} />
+      {/***
+       * @description -  Using an optional parameter to work in both cases:
+       *                 if value of ispayment is present, it will take the value
+       *                 if value is not present, will run without any errors.
+       * 
+       * @author - Khalid Rashid - NIUA
+       */}
+      <Route path={`${match.path}/check/:isPayment?`}>
+        <SVCheckPage onSubmit={svcreate} value={params} editdata={pathname.includes("apply") ? {} : vendingData} renewalData={vendingData} /> 
+        {/**
+         * in above line , i am sending same vendingData in both editData and renewalData 
+         * because we can clarify which type of data is in check page either it is data of Renewal case or edit case
+         * as well as sending vendingData because it is fetching on the behalf of same application number
+         */}
       </Route>
       <Route path={`${match.path}/acknowledgement`}>
         <SVAcknowledgement data={params} onSuccess={onSuccess}/>

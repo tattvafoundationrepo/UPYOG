@@ -22,10 +22,10 @@ import PTRCard from "./components/PTRCard";
 import InboxFilter from "./components/inbox/NewInboxFilter";
 import { TableConfig } from "./config/inbox-table-config";
 import ApplicationDetails from "./pages/employee/ApplicationDetails";
-import PropertySearch from "./pageComponents/PropertySearch";
 import NewApplication from "./pages/employee/NewApplication";
 
 
+// Registering all components to be used in the module
 const componentsToRegister = {
   PTRCheckPage,
   PTRAcknowledgement,
@@ -41,7 +41,6 @@ const componentsToRegister = {
   PTRSelectProofIdentity,
   PTRServiceDoc,
   PTRWFApplicationTimeline,
-  PropertySearch, // component added for property search
 };
 
 // function of component registry to add entries in the registry
@@ -60,6 +59,7 @@ export const PTRModule = ({ stateCode, userType, tenants }) => {
 
   addComponentsToRegistry();
 
+  
   Digit.SessionStorage.set("PTR_TENANTS", tenants);  // setting a value in a session storage object
 
   // loads localization settings for an employee based on the current tenant and language when the component mounts
@@ -74,11 +74,13 @@ export const PTRModule = ({ stateCode, userType, tenants }) => {
     []
   );
 
+    // Displaying employee module if userType is 'employee', otherwise displaying citizen module
   if (userType === "employee") {
     return <EmployeeApp path={path} url={url} userType={userType} />;
   } else return <CitizenApp />;
 };
 
+// Function to display home card links for citizens
 export const PTRLinks = ({ matchPath, userType }) => {
   const { t } = useTranslation();
   const [params, setParams, clearParams] = Digit.Hooks.useSessionStorage("PTR_PET", {});

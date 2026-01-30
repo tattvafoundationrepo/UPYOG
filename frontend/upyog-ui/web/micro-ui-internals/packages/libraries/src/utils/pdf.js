@@ -126,7 +126,90 @@ const defaultLogo =
         fontSize: 11,
         color: "#6f777c",
         margin: [10, 10],
-      }
+      },
+      {
+        text:t("TERMS_AND_CONDITIONS_OF_LICENSE"),
+        fontSize:16, 
+        bold:true, 
+        alignment:"center",
+        decoration:"underline",
+        pageBreak:'before',
+        margin:[0, 25, 0, 0],
+      },
+      {
+        text:t("TERMS_AND_CONDITIONS1"),
+        fontSize:8.5,
+        margin:[15, 10, 10, 0]
+      },
+      {
+        text:t("TERMS_AND_CONDITIONS2"),
+        fontSize:8.5,
+        margin:[15, 2, 10, 0]
+      },
+      {
+        text:t("TERMS_AND_CONDITIONS3"),
+        fontSize:8.5,
+        margin:[15, 2, 10, 0] 
+      },
+      {
+        text:t("TERMS_AND_CONDITIONS4"),
+        fontSize:8.5,
+        margin:[15, 2, 10, 0] 
+      },
+      {
+        text:t("TERMS_AND_CONDITIONS5"),
+        fontSize:8.5,
+        margin:[15, 2, 10, 0] 
+      },
+      {
+        text:t("TERMS_AND_CONDITIONS6"),
+        fontSize:8.5,
+        margin:[15, 2, 10, 0] 
+      },
+      {
+        text:t("TERMS_AND_CONDITIONS7"),
+        fontSize:8.5,
+        margin:[15, 2, 10, 0] 
+      },
+
+      {
+        text:t("TERMS_AND_CONDITIONS8"),
+        fontSize:8.5,
+        margin:[15, 2, 10, 0] 
+      },
+
+      {
+        text:t("TERMS_AND_CONDITIONS9"),
+        fontSize:8.5,
+        margin:[15, 2, 10, 0] 
+      },
+
+      {
+        text:t("TERMS_AND_CONDITIONS10"),
+        fontSize:8.5,
+        margin:[15, 2, 10, 0] 
+      },
+      {
+        text:t("TERMS_AND_CONDITIONS11"),
+        fontSize:8.5,
+        margin:[15, 2, 10, 0] 
+      },
+      {
+        text:t("TERMS_AND_CONDITIONS12"),
+        fontSize:8.5,
+        margin:[15, 2, 10, 0] 
+      },
+      {
+        text:t("TERMS_AND_CONDITIONS13"),
+        fontSize:8.5,
+        margin:[15, 2, 10, 0] 
+      },
+
+      {
+        text:t("TERMS_AND_CONDITIONS14"),
+        fontSize:8.5,
+        margin:[15, 2, 10, 0] 
+      },
               
     ],
     defaultStyle: {
@@ -134,34 +217,6 @@ const defaultLogo =
       margin:[20, 10, 20,10]
     },
   };
-
-  /** 
-   * @description: Function to append Terms and conditions if required
-   * Appends Terms and Conditions if isTOCRequired is true
-   * Solves the problem of displaying Terms and conditions even if those are not required
-   * 
-   * @author Khalid Rashid
-   */
-  if (isTOCRequired) {
-    dd.content.push(
-      {
-        text: "TERMS_AND_CONDITIONS_OF_LICENSE",
-        fontSize: 16,
-        bold: true,
-        alignment: "center",
-        decoration: "underline",
-        pageBreak: "before",
-        margin: [0, 25, 0, 0],
-      },
-      {
-        text: "TERMS_AND_CONDITIONS_OF_LICENSE_CONTENT",
-        fontSize: 8,
-        margin: [10, 20, 10, 0],
-      }
-    );
-  }
-
-
   pdfMake.vfs = Fonts;
   let locale = Digit.SessionStorage.get("locale") || "en_IN";
   let Hind = pdfFonts[locale] || pdfFonts["Hind"];
@@ -183,6 +238,15 @@ const defaultLogo =
   }
   else if(applicationNumber!==undefined &&applicationNumber.split("-")[1]==="AC"){
     ack="PT-AckForm"
+  }
+  else if(applicationNumber!==undefined &&applicationNumber.split("-")[0]==="MT"){
+    ack="MT-AckForm"
+  }
+  else if(applicationNumber!==undefined &&applicationNumber.split("-")[0]==="WT"){
+    ack="WT-AckForm"
+  }
+  else if(applicationNumber!==undefined &&applicationNumber.split("-")[0]==="TP"){
+    ack="TP-AckForm"
   }
   else if(applicationNumber!==undefined &&applicationNumber.split("-")[1]==="BP"){
     ack="BPA-AckForm"
@@ -383,10 +447,78 @@ const jsPdfGeneratorv1 = async ({ breakPageLimit = null, tenantId, logo, name, e
         margin:[0, 25, 0, 0],
       },
       {
-        text: t("TERMS_AND_CONDITIONS_OF_LICENSE_CONTENT"),
-        fontSize:8,
-        margin:[10, 20, 10,0] 
-        
+        text:t("TERMS_AND_CONDITIONS1"),
+        fontSize:8.5,
+        margin:[15, 10, 10, 0]
+      },
+      {
+        text:t("TERMS_AND_CONDITIONS2"),
+        fontSize:8.5,
+        margin:[15, 2, 10, 0]
+      },
+      {
+        text:t("TERMS_AND_CONDITIONS3"),
+        fontSize:8.5,
+        margin:[15, 2, 10, 0] 
+      },
+      {
+        text:t("TERMS_AND_CONDITIONS4"),
+        fontSize:8.5,
+        margin:[15, 2, 10, 0] 
+      },
+      {
+        text:t("TERMS_AND_CONDITIONS5"),
+        fontSize:8.5,
+        margin:[15, 2, 10, 0] 
+      },
+      {
+        text:t("TERMS_AND_CONDITIONS6"),
+        fontSize:8.5,
+        margin:[15, 2, 10, 0] 
+      },
+      {
+        text:t("TERMS_AND_CONDITIONS7"),
+        fontSize:8.5,
+        margin:[15, 2, 10, 0] 
+      },
+
+      {
+        text:t("TERMS_AND_CONDITIONS8"),
+        fontSize:8.5,
+        margin:[15, 2, 10, 0] 
+      },
+
+      {
+        text:t("TERMS_AND_CONDITIONS9"),
+        fontSize:8.5,
+        margin:[15, 2, 10, 0] 
+      },
+
+      {
+        text:t("TERMS_AND_CONDITIONS10"),
+        fontSize:8.5,
+        margin:[15, 2, 10, 0] 
+      },
+      {
+        text:t("TERMS_AND_CONDITIONS11"),
+        fontSize:8.5,
+        margin:[15, 2, 10, 0] 
+      },
+      {
+        text:t("TERMS_AND_CONDITIONS12"),
+        fontSize:8.5,
+        margin:[15, 2, 10, 0] 
+      },
+      {
+        text:t("TERMS_AND_CONDITIONS13"),
+        fontSize:8.5,
+        margin:[15, 2, 10, 0] 
+      },
+
+      {
+        text:t("TERMS_AND_CONDITIONS14"),
+        fontSize:8.5,
+        margin:[15, 2, 10, 0] 
       },
     ],
     defaultStyle: {

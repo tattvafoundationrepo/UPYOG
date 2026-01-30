@@ -29,22 +29,22 @@
 
 	<distributionManagement>
 		<repository>
-			<id>repo.egovernments.org</id>
+			<id>nexus-repo.egovernments.org</id>
 			<name>eGov ERP Releases Repository</name>
-			<url>http://repo.egovernments.org/nexus/content/repositories/releases/</url>
+			<url>http://nexus-repo.egovernments.org/nexus/content/repositories/releases/</url>
 		</repository>
 		<snapshotRepository>
-			<id>repo.egovernments.org</id>
+			<id>nexus-repo.egovernments.org</id>
 			<name>eGov ERP Snapshots Repository</name>
-			<url>http://repo.egovernments.org/nexus/content/repositories/snapshots/</url>
+			<url>http://nexus-repo.egovernments.org/nexus/content/repositories/snapshots/</url>
 		</snapshotRepository>
 	</distributionManagement>
 
 	<repositories>
 		<repository>
-			<id>repo.egovernments.org</id>
+			<id>nexus-repo.egovernments.org</id>
 			<name>eGov Public Repository Group</name>
-			<url>http://repo.egovernments.org/nexus/content/groups/public/</url>
+			<url>http://nexus-repo.egovernments.org/nexus/content/groups/public/</url>
 			<snapshots>
 				<enabled>true</enabled>
 				<updatePolicy>always</updatePolicy>
@@ -64,15 +64,15 @@
 		</repository> 
 		<repository>
 			<id>javaxt.com</id>
-			<url>http://www.javaxt.com/maven</url>
+			<url>https://www.javaxt.com/maven</url>
 		</repository>
 	</repositories>
 
 	<pluginRepositories>
 		<pluginRepository>
-			<id>repo.egovernments.org</id>
+			<id>nexus-repo.egovernments.org</id>
 			<name>eGov Public Repository Group</name>
-			<url>http://repo.egovernments.org/nexus/content/groups/public/</url>
+			<url>http://nexus-repo.egovernments.org/nexus/content/groups/public/</url>
 			<releases>
 				<enabled>true</enabled>
 			</releases>
@@ -209,11 +209,9 @@
 					</exclusion>
 				</exclusions>
 			</dependency>
-			<dependency>
-				<groupId>com.aspose</groupId>
-				<artifactId>aspose-cad</artifactId>
-				<version>20.10</version>
-			</dependency>
+
+			<!--		Below dependency is commented out to avoid jenkinds build issue -->
+		
 			<dependency>
 				<groupId>org.egov.edcr</groupId>
 				<artifactId>egov-egi</artifactId>
@@ -1086,6 +1084,11 @@
 	</dependencyManagement>
 
 	<dependencies>
+			<dependency>
+                            <groupId>com.aspose</groupId>
+                            <artifactId>aspose-cad</artifactId>
+                            <version>20.10</version>
+                        </dependency>
 
 		<!-- SERVLET SPEC JBOSS DEPENDENCIES START -->
 		<dependency>

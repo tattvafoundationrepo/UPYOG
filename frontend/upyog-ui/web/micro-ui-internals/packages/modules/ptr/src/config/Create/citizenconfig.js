@@ -1,3 +1,28 @@
+/**
+ * @file citizenConfig.js
+ * @description Configuration for the citizen flow in the pet registration (PTR) service.
+ * 
+ * @structure
+ * - `head`: Section title (localized).
+ * - `body`: Steps with:
+ *   - `route`: URL path.
+ *   - `component`: Rendered component.
+ *   - `nextStep`: Navigation target.
+ *   - `key`: Unique identifier.
+ *   - `isMandatory`: Marks required steps.
+ *   - `texts`: Localization keys for labels and buttons.
+ * 
+ * @sections
+ * 1. **Owner Details**: Document and citizen info (`PTRServiceDoc`, `PTRCitizenDetails`).
+ * 2. **Pet Details**: Pet info (`PTRCitizenPet`).
+ * 3. **Location Details**: Property search and address selection.
+ * 4. **Document Details**: Proof of identity (`PTRSelectProofIdentity`).
+ * 
+ * @usage
+ * Used to define steps and navigation in the citizen's PTR application.
+ */
+
+
 export const citizenConfig =
     [
         {
@@ -38,7 +63,7 @@ export const citizenConfig =
                     "type": "component",
                     "isMandatory": true,
                     "hideInEmployee": true,
-                    "nextStep": "property-details",
+                    "nextStep": "address",
                     "texts": {
                         "submitBarLabel": "PTR_COMMON_NEXT",
                     }
@@ -51,26 +76,10 @@ export const citizenConfig =
             "body":
                 [
                     {
-                        "route": "property-details",
-                        "component": "PropertySearch",
-                        "withoutLabel": true,
-                        "key": "propertyDetails",
-                        "type": "component",
-                        "nextStep": "address",
-                        "hideInEmployee": true,
-                        "isMandatory": true,
-                        "texts": {
-                            "submitBarLabel": "COMMON_NEXT",
-                            "header": "PROPERTY_DETAILS_HEADER",
-                        }
-                    },
-
-                    {
                         "route": "address",
                         "component": "PTRSelectAddress",
                         "withoutLabel": true,
                         "texts": {
-
                             "submitBarLabel": "PTR_COMMON_NEXT",
                         },
                         "key": "address",

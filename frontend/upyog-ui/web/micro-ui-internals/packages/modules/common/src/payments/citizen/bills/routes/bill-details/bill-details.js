@@ -20,6 +20,7 @@ const BillDetails = ({ paymentRules, businessService }) => {
   const propertyId = state?.propertyId;
   const applicationNumber = state?.applicationNumber;
   const [Time, setTime ] = useState(0);
+  const skipBillingAndArrears = ["adv-services", "chb-services","request-service.mobile_toilet", "request-service.water_tanker", "request-service.tree_pruning"];
 
   if (wrkflow === "WNS" && consumerCode.includes("?")) consumerCode = consumerCode.substring(0, consumerCode.indexOf("?"));
   const { data, isLoading } = state?.bill
@@ -218,7 +219,7 @@ const BillDetails = ({ paymentRules, businessService }) => {
             </CardSubHeader>
           )}
           </div>
-          {businessService !== "PT.MUTATION" && businessService !== "FSM.TRIP_CHARGES" && (
+          {businessService !== "PT.MUTATION" && businessService !== "FSM.TRIP_CHARGES" && !skipBillingAndArrears.includes(businessService) && (
             <KeyNote keyValue={t("CS_PAYMENT_BILLING_PERIOD")} note={getBillingPeriod()} />
           )}
           {businessService?.includes("PT") ||
@@ -236,7 +237,7 @@ const BillDetails = ({ paymentRules, businessService }) => {
               ) : null}
             </div>
           ) : (
-            <BillSumary billAccountDetails={getBillBreakDown()} total={getTotal()} businessService={businessService} arrears={Arrears} />
+            <BillSumary billAccountDetails={getBillBreakDown()} total={getTotal()} businessService={businessService} arrears={Arrears} skipArrears={skipBillingAndArrears}/>
           )}
           <ArrearSummary bill={bill} />
         </div>
@@ -273,7 +274,7 @@ const BillDetails = ({ paymentRules, businessService }) => {
                 <TextInput className="text-indent-xl" onChange={(e) => onChangeAmount(e.target.value)} value={amount} disable={getTotal() === 0} />
               )
             ) : businessService === "FSM.TRIP_CHARGES" ? (
-              <TextInput className="text-indent-xl" value={application?.pdfData?.advanceAmount} onChange={() => {}} disable={true} />
+              <TextInput className="text-indent-xl" value={application?.pdfData?.advanceAmount !== 0 ? application?.pdfData?.advanceAmount:application?.pdfData?.totalAmount} onChange={() => {}} disable={true} />
             ):((
               <TextInput className="text-indent-xl" value={getTotal()} onChange={() => {}} disable={true} />
             ))}

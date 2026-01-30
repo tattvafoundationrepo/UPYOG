@@ -1,16 +1,31 @@
 import React, { useEffect, useState } from "react";
-import { FormStep, TextInput, CardLabel, RadioButtons, LabelFieldPair, Dropdown, Menu, MobileNumber } from "@upyog/digit-ui-react-components";
-import { useLocation, useRouteMatch } from "react-router-dom";
-import { Controller, useForm } from "react-hook-form";
+import { FormStep, TextInput, CardLabel, MobileNumber, Toast } from "@upyog/digit-ui-react-components";
 import Timeline from "../components/EWASTETimeline";
 
-const EWOwnerDetails = ({ t, config, onSelect, userType, formData, ownerIndex }) => {
-  const { pathname: url } = useLocation();
-
+/**
+ * Form component for capturing owner details in the E-Waste module.
+ * Manages personal information including name, contact details, and email.
+ * Supports both citizen and employee user types with different behaviors.
+ *
+ * @param {Object} props Component properties
+ * @param {Function} props.t Translation function
+ * @param {Object} props.config Form configuration settings
+ * @param {Function} props.onSelect Handler for form submission
+ * @param {string} props.userType Type of user (citizen/employee)
+ * @param {Object} props.formData Existing form data
+ * @returns {JSX.Element} Owner details form component
+ */
+const EWOwnerDetails = ({ t, config, onSelect, userType, formData }) => {
   let index = 0;
   let validation = {};
 
   const user = Digit.UserService.getUser().info;
+
+  /**
+   * State management for owner details form fields
+   * Initializes with existing data or defaults
+   */
+  const [showToast, setShowToast] = useState(null);
   const [applicantName, setName] = useState(
     (formData.ownerKey && formData.ownerKey[index] && formData.ownerKey[index].applicantName) || formData?.ownerKey?.applicantName || ""
   );
@@ -24,42 +39,65 @@ const EWOwnerDetails = ({ t, config, onSelect, userType, formData, ownerIndex })
     (formData.ownerKey && formData.ownerKey[index] && formData.ownerKey[index].altMobileNumber) || formData?.ownerKey?.altmobileNumber || ""
   );
 
-  const tenantId = Digit.ULBService.getCurrentTenantId();
-  const stateId = Digit.ULBService.getStateId();
-  const { control } = useForm();
+  const [error, setError] = useState(null);
 
-  function setOwnerName(e) {
-    setName(e.target.value);
+  const validateEmail = (value) => {
+    const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(com|org|in|co)$/;
+    if (value === "") {
+      setError("");
+    }
+    else if (emailPattern.test(value)) {
+      setError("");
+    }
+    else {
+      setError(t("CORE_INVALID_EMAIL_ID_PATTERN"));
+    }
   }
+  useEffect(() => {
+    if (showToast) {
+      const timer = setTimeout(() => {
+        setShowToast(null);
+      }, 2000); // Close toast after 1 seconds
 
-  function setMobileNo(e) {
-    setMobileNumber(e.target.value);
-  }
+      return () => clearTimeout(timer); // Clear timer on cleanup
+    }
+  }, [showToast]);
+  /**
+   * Form field change handlers
+   * Update state with new values while maintaining data format
+   */
+  const setOwnerName = e => setName(e.target.value);
+  const setMobileNo = e => setMobileNumber(e.target.value);
+  const setAltMobileNo = e => setAltMobileNumber(e.target.value);
+  const setOwnerEmail = e => {
+    setEmail(e.target.value)
+    validateEmail(e.target.value)
+ };
 
-  function setAltMobileNo(e) {
-    setAltMobileNumber(e.target.value);
-  }
-
-  function setOwnerEmail(e) {
-    setEmail(e.target.value);
-  }
-
-
-
+  /**
+   * Processes form submission by combining state values
+   * Handles different data structures for citizen and employee users
+   */
   const goNext = () => {
+    if (error) {
+      setShowToast({ error: true, label: error });
+      return;
+    }
     let owner = formData.ownerKey && formData.ownerKey[index];
-    let ownerStep;
+    let ownerStep = { ...owner, applicantName, mobileNumber, altMobileNumber, emailId };
+    
     if (userType === "citizen") {
-      ownerStep = { ...owner, applicantName, mobileNumber, altMobileNumber, emailId };
       onSelect(config.key, { ...formData[config.key], ...ownerStep }, false, index);
     } else {
-      ownerStep = { ...owner, applicantName, mobileNumber, altMobileNumber, emailId };
       onSelect(config.key, ownerStep, false, index);
     }
   };
 
   const onSkip = () => onSelect();
 
+  /**
+   * Auto-saves form data for citizen users when fields change
+   */
   useEffect(() => {
     if (userType === "citizen") {
       goNext();
@@ -69,7 +107,6 @@ const EWOwnerDetails = ({ t, config, onSelect, userType, formData, ownerIndex })
   return (
     <React.Fragment>
       {window.location.href.includes("/citizen") ? <Timeline currentStep={3} /> : null}
-
       <FormStep
         config={config}
         onSelect={goNext}
@@ -101,7 +138,7 @@ const EWOwnerDetails = ({ t, config, onSelect, userType, formData, ownerIndex })
             value={mobileNumber}
             name="mobileNumber"
             onChange={(value) => setMobileNo({ target: { value } })}
-            {...{ required: true, pattern: "[6-9]{1}[0-9]{9}", type: "tel",}}
+            {...{ required: true, pattern: "[6-9]{1}[0-9]{9}", type: "tel" }}
           />
 
           <CardLabel>{`${t("EWASTE_ALT_MOBILE_NUMBER")}`}</CardLabel>
@@ -109,7 +146,7 @@ const EWOwnerDetails = ({ t, config, onSelect, userType, formData, ownerIndex })
             value={altMobileNumber}
             name="altmobileNumber"
             onChange={(value) => setAltMobileNo({ target: { value } })}
-            {...{ required: true, pattern: "[6-9]{1}[0-9]{9}", type: "tel", }}
+            {...{ required: true, pattern: "[6-9]{1}[0-9]{9}", type: "tel" }}
           />
 
           <CardLabel>{`${t("EWASTE_EMAIL_ID")}`}</CardLabel>
@@ -122,14 +159,20 @@ const EWOwnerDetails = ({ t, config, onSelect, userType, formData, ownerIndex })
             value={emailId}
             onChange={setOwnerEmail}
             ValidationRequired={true}
-            {...(validation = {
-              isRequired: true,
-              pattern: "[A-Za-z]{i}\.[A-Za-z]{i}\.[A-Za-z]{i}",
-              type: "email",
-            })}
           />
+          {error && <p style={{ color: "red", fontSize: "12px" }}>{error}</p>}
         </div>
       </FormStep>
+      {showToast && (
+        <Toast
+          error={showToast.error}
+          warning={showToast.warning}
+          label={t(showToast.label)}
+          onClose={() => {
+            setShowToast(null);
+          }}
+        />
+      )}
     </React.Fragment>
   );
 };

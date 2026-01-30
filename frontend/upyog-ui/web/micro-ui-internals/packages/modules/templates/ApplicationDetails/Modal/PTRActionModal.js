@@ -25,7 +25,6 @@ const CloseBtn = (props) => {
 
 const ActionModal = ({ t, action, tenantId, state, id, closeModal, submitAction, actionData, applicationData, businessService, moduleCode }) => {
 
-  console.log("applicationData",applicationData);
   const { data: approverData, isLoading: PTALoading } = Digit.Hooks.useEmployeeSearch(
     tenantId,
     {
@@ -64,7 +63,7 @@ const ActionModal = ({ t, action, tenantId, state, id, closeModal, submitAction,
           setError(t("CS_MAXIMUM_UPLOAD_SIZE_EXCEEDED"));
         } else {
           try {
-            const response = await Digit.UploadServices.Filestorage("PTR", file, Digit.ULBService.getStateId());
+            const response = await Digit.UploadServices.Filestorage("PTR", file, tenantId);
             if (response?.data?.files?.length > 0) {
               setUploadedFile(response?.data?.files[0]?.fileStoreId);
             } else {

@@ -1,3 +1,20 @@
+/**
+ * Utility Functions for Pet Registration and Data Conversion
+ *
+ * This file contains various helper functions used for:
+ * - Checking for null, undefined, and empty values.
+ * - Converting dot-separated values to underscore-separated values.
+ * - Formatting filenames and handling back button visibility.
+ * - Setting address, owner, and pet details in the data object.
+ * - Comparing two objects for equality.
+ * - Converting between date and epoch formats.
+ * - Generating PDF download links and extracting document names.
+ * - Checking if an object is an array and verifying its length.
+ * - Handling workflow details for pet registration.
+ * - Downloading receipts using external services.
+ *
+ */
+
 import { add } from "lodash";
 
 export const checkForNotNull = (value = "") => {
@@ -40,6 +57,7 @@ export const setAddressDetails = (data) => {
     buildingName: address?.houseName,
     addressLine1: address?.addressline1,
     addressLine2: address?.addressline2,
+    propertyId: address?.propertyId || null,
   };
 
   data.address = propAddress;
@@ -101,7 +119,7 @@ export const PetDataConvert = (data) => {
       address: data.address,
       petDetails: data.pets,
       ...data?.documents,
-      propertyId: data?.propertyDetails?.propertyId,
+      propertyId: data?.address?.propertyId,
 
       workflow: {
         businessService: "ptr",
