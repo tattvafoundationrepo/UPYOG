@@ -507,13 +507,17 @@ public class DemandValidatorV1 {
 						.replace(INVALID_DEMAND_DETAIL_COLLECTION_TEXT, collection.toString())
 						.replace(INVALID_DEMAND_DETAIL_TAX_TEXT, tax.toString()));
 			}
-			else if (isTaxLtZeroAndCollectionNeToZeroAndCollectionGtTax) {
+            
+            /*commenting the below validation to allow negative
+			 collection amount and tax amount in order to support advance collection on already pending advance */
+			 
+			// else if (isTaxLtZeroAndCollectionNeToZeroAndCollectionGtTax) {
 
-					errors.add(INVALID_NEGATIVE_DEMAND_DETAIL_ERROR_MSG
-							.replace(INVALID_DEMAND_DETAIL_COLLECTION_TEXT, collection.toString())
-							.replace(INVALID_DEMAND_DETAIL_TAX_TEXT, tax.toString()));
+			// 		errors.add(INVALID_NEGATIVE_DEMAND_DETAIL_ERROR_MSG
+			// 				.replace(INVALID_DEMAND_DETAIL_COLLECTION_TEXT, collection.toString())
+			// 				.replace(INVALID_DEMAND_DETAIL_TAX_TEXT, tax.toString()));
 				
-			}
+			// }
 		}
 		if (!CollectionUtils.isEmpty(errors))
 			errorMap.put(INVALID_DEMAND_DETAIL_KEY,
