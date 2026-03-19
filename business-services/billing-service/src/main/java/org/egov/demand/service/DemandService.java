@@ -63,6 +63,7 @@ import org.egov.demand.model.AdvSettlement;
 import org.egov.demand.model.ApportionDemandResponse;
 import org.egov.demand.model.AuditDetails;
 import org.egov.demand.model.BillV2.BillStatus;
+import org.egov.demand.producer.Producer;
 import org.egov.demand.model.CollectedReceipt;
 import org.egov.demand.model.Demand;
 import org.egov.demand.model.DemandApportionRequest;
@@ -129,6 +130,9 @@ public class DemandService {
 
 	@Autowired
 	private DemandValidatorV1 demandValidatorV1;
+    
+	@Autowired
+	private Producer producer;
 	
 	/**
 	 * Method to create new demand 
@@ -297,7 +301,7 @@ public class DemandService {
 
 			billRepoV2.updateBillStatus(updateBillCriteria);
 		}
-		// producer.push(applicationProperties.getDemandIndexTopic(), demandRequest);
+		 producer.push(applicationProperties.getDemandIndexTopic(), demandRequest);
 		return new DemandResponse(responseInfoFactory.getResponseInfo(requestInfo, HttpStatus.CREATED), demands);
 	}
 
