@@ -78,6 +78,10 @@ public class ReceiptServiceV2 {
 			return;
 		}
 
+		if (isReceiptCancellation) {
+			removeStaleRentalAdvanceCarryForwardDetails(billReq);
+		}
+
 		Set<String> demandIds = new HashSet<>();
 		billReq.getBills().forEach(bill -> {
 
@@ -87,6 +91,63 @@ public class ReceiptServiceV2 {
 		});
 
 		updateDemandFromBill(billReq, demandIds, isReceiptCancellation);
+	}
+
+	/**
+	 * During cancellation, if the latest (highest fromPeriod) rental advance
+	 * carry-forward billDetail has non-zero amount, remove all older billDetails
+	 * that have the same taxhead with zero amount — they represent previously
+	 * settled demands that must not be reversed by this cancellation.
+	 */
+	private void removeStaleRentalAdvanceCarryForwardDetails(BillRequestV2 billReq) {
+		final String RENTAL_ADVANCE_CARRYFORWARD = "TX.EMARKET_RENTAL_ADVANCE_CARRYFORWARD";
+
+		for (BillV2 bill : billReq.getBills()) {
+			List<BillDetailV2> billDetails = bill.getBillDetails();
+			if (billDetails == null || billDetails.size() < 2) {
+				continue;
+			}
+
+			// Find all billDetails that contain the rental advance carryforward taxhead
+			List<BillDetailV2> advanceCarryForwardDetails = billDetails.stream()
+					.filter(bd -> bd.getBillAccountDetails() != null
+							&& bd.getBillAccountDetails().stream()
+							.anyMatch(bad -> RENTAL_ADVANCE_CARRYFORWARD.equals(bad.getTaxHeadCode())))
+					.collect(Collectors.toList());
+
+			if (advanceCarryForwardDetails.size() < 2) {
+				continue;
+			}
+
+			// Find the latest billDetail by fromPeriod
+			BillDetailV2 latestDetail = advanceCarryForwardDetails.stream()
+					.max(Comparator.comparingLong(BillDetailV2::getFromPeriod))
+					.orElse(null);
+
+			if (latestDetail == null) {
+				continue;
+			}
+
+			// Check if the latest billDetail has non-zero amount
+			boolean latestHasNonZeroAmount = latestDetail.getBillAccountDetails().stream()
+					.anyMatch(bad -> RENTAL_ADVANCE_CARRYFORWARD.equals(bad.getTaxHeadCode())
+							&& bad.getAmount().compareTo(BigDecimal.ZERO) != 0);
+
+			if (!latestHasNonZeroAmount) {
+				continue;
+			}
+
+			// Remove all older billDetails with zero amount for this taxhead
+			billDetails.removeIf(bd -> bd != latestDetail
+					&& bd.getBillAccountDetails() != null
+					&& bd.getBillAccountDetails().stream().anyMatch(bad ->
+							RENTAL_ADVANCE_CARRYFORWARD.equals(bad.getTaxHeadCode())
+							&& bad.getAmount().compareTo(BigDecimal.ZERO) == 0
+							&& bad.getAdjustedAmount().compareTo(BigDecimal.ZERO) == 0));
+
+			log.info("Filtered stale rental advance carry-forward billDetails. Remaining billDetails count: {}",
+					billDetails.size());
+		}
 	}
 
 	/**
