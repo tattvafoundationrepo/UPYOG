@@ -141,9 +141,7 @@ public class ReceiptServiceV2 {
 			billDetails.removeIf(bd -> bd != latestDetail
 					&& bd.getBillAccountDetails() != null
 					&& bd.getBillAccountDetails().stream().anyMatch(bad ->
-							RENTAL_ADVANCE_CARRYFORWARD.equals(bad.getTaxHeadCode())
-							&& bad.getAmount().compareTo(BigDecimal.ZERO) == 0
-							&& bad.getAdjustedAmount().compareTo(BigDecimal.ZERO) == 0));
+							RENTAL_ADVANCE_CARRYFORWARD.equals(bad.getTaxHeadCode())));
 
 			log.info("Filtered stale rental advance carry-forward billDetails. Remaining billDetails count: {}",
 					billDetails.size());
