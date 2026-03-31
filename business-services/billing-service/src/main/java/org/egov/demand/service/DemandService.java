@@ -472,7 +472,10 @@ public class DemandService {
                 .map(Demand::getId)
                 .findFirst()
                 .orElse(null);
-            if(advanceDemandId != null){
+			boolean currentDemandHasAdvance = demand.getDemandDetails().stream()
+					.anyMatch(dd -> dd.getTaxHeadMasterCode() != null
+							&& dd.getTaxHeadMasterCode().contains("ADVANCE"));
+            if(advanceDemandId != null && !currentDemandHasAdvance){
 				advSettlement.setAdvanceDemandId(advanceDemandId);
 				advSettlement.setSettledDemandId(demand.getId());
 				advSettlement.setConsumerCode(demand.getConsumerCode());
