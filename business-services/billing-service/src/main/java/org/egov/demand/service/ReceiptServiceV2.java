@@ -128,6 +128,40 @@ public class ReceiptServiceV2 {
 				continue;
 			}
 
+			// If multiple advance billDetails share the same fromPeriod as the latest,
+			// resolve by checking demand createdTime from DB — keep only the most recently created one
+			Long latestFromPeriod = latestDetail.getFromPeriod();
+			List<BillDetailV2> samePeriodAdvanceDetails = advanceCarryForwardDetails.stream()
+					.filter(bd -> bd.getFromPeriod().equals(latestFromPeriod))
+					.collect(Collectors.toList());
+
+			if (samePeriodAdvanceDetails.size() > 1) {
+				Set<String> samePeriodDemandIds = samePeriodAdvanceDetails.stream()
+						.map(BillDetailV2::getDemandId)
+						.collect(Collectors.toSet());
+				String tenantId = bill.getTenantId();
+				DemandCriteria criteria = DemandCriteria.builder()
+						.tenantId(tenantId)
+						.demandId(samePeriodDemandIds)
+						.build();
+				List<Demand> demandsFromDb = demandRepository.getDemands(criteria);
+
+				// Pick the demand with the latest createdTime
+				String latestDemandId = demandsFromDb.stream()
+						.max(Comparator.comparingLong(d -> d.getAuditDetails().getCreatedTime()))
+						.map(Demand::getId)
+						.orElse(null);
+
+				if (latestDemandId != null) {
+					latestDetail = samePeriodAdvanceDetails.stream()
+							.filter(bd -> latestDemandId.equals(bd.getDemandId()))
+							.findFirst()
+							.orElse(latestDetail);
+				}
+				log.info("Multiple advance billDetails with same fromPeriod {}. Resolved latest demandId: {}",
+						latestFromPeriod, latestDetail.getDemandId());
+			}
+
 			// Check if the latest billDetail has non-zero amount
 			boolean latestHasNonZeroAmount = latestDetail.getBillAccountDetails().stream()
 					.anyMatch(bad -> RENTAL_ADVANCE_CARRYFORWARD.equals(bad.getTaxHeadCode())
@@ -137,8 +171,9 @@ public class ReceiptServiceV2 {
 				continue;
 			}
 
-			// Remove all older billDetails with zero amount for this taxhead
-			billDetails.removeIf(bd -> bd != latestDetail
+			// Remove all older billDetails with the advance taxhead, keep only the latest
+			final BillDetailV2 finalLatestDetail = latestDetail;
+			billDetails.removeIf(bd -> bd != finalLatestDetail
 					&& bd.getBillAccountDetails() != null
 					&& bd.getBillAccountDetails().stream().anyMatch(bad ->
 							RENTAL_ADVANCE_CARRYFORWARD.equals(bad.getTaxHeadCode())));
@@ -355,6 +390,7 @@ public class ReceiptServiceV2 {
 
 
 			if (isReceiptCancellation && settledDemandIds != null && !settledDemandIds.isEmpty()) {
+		    log.info("Publishing settled demand ids to create penalty demands on payment reversal"+ settledDemandIds.toString());		
 			for(AdvSettlement settledDemandId : settledDemandIds){
 	 		   settledDemandId.setRequestInfo(billRequest.getRequestInfo());
 			   log.info("Publishing settled demand ids to create penalty demands on payment reversal"+ settledDemandIds.toString());
