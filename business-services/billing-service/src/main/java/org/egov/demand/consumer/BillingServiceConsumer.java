@@ -18,6 +18,7 @@ import org.egov.demand.service.DemandService;
 import org.egov.demand.service.ReceiptService;
 import org.egov.demand.service.ReceiptServiceV2;
 import org.egov.demand.util.Constants;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.egov.demand.util.Util;
 import org.egov.demand.web.contract.BillRequest;
 import org.egov.demand.web.contract.BillRequestV2;
@@ -177,18 +178,21 @@ public class BillingServiceConsumer {
 		context = JsonPath.parse(objectMapper.writeValueAsString(consumerRecord));
 
 		String paymentId = objectMapper.convertValue(context.read("$.Payment.id"), String.class);
+		String transactionNumber = objectMapper.convertValue(context.read("$.Payment.transactionNumber"), String.class);
 		List<BigDecimal> amtPaidList = Arrays.asList(objectMapper.convertValue(context.read("$.Payment.paymentDetails.*.totalAmountPaid"), BigDecimal[].class));
 		List<BillV2> bills = Arrays.asList(objectMapper.convertValue(context.read("$.Payment.paymentDetails.*.bill"), BillV2[].class));
-		
+
 		RequestInfo requestInfo = objectMapper.convertValue(context.read("$.RequestInfo"), RequestInfo.class);
 		billReq.setBills(bills);
 		billReq.setRequestInfo(requestInfo);
-		
+
 		/* payment value is set in zeroth index of bills
-		 * 
+		 *
 		 * additionaldetail info from bill is not needed, so setting new value
 		 */
-		bills.get(0).setAdditionalDetails(util.setValuesAndGetAdditionalDetails(null, Constants.PAYMENT_ID_KEY, paymentId));
+		ObjectNode additionalDetails = util.setValuesAndGetAdditionalDetails(null, Constants.PAYMENT_ID_KEY, paymentId);
+		additionalDetails.put("transactionNumber", transactionNumber);
+		bills.get(0).setAdditionalDetails(additionalDetails);
 		validatePaymentForDuplicateUpdates(isReceiptCancelled, paymentId);
 
 		for (int i = 0; i < bills.size(); i++) {
