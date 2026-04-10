@@ -236,7 +236,9 @@ public class DemandRepository {
         //         .build());
 
 			//reportList.addAll(buildFiReportsFromDemand(demand , "50", false , null));
-			reportList.addAll(buildDemandFiReports(demand));
+			if (!"TX.Emarket_Deposit_Fees".equalsIgnoreCase(demand.getBusinessService())) {
+			    reportList.addAll(buildDemandFiReports(demand));
+			}
 		}
 
 		if(!reportList.isEmpty()){
