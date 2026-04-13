@@ -90,6 +90,7 @@ public class User {
     private boolean mobileValidationMandatory = true;
     private String alternateMobileNumber;
     private boolean digilockerRegistration;
+    private String userHwid;
 
     public User addAddressItem(Address addressItem) {
         if (this.addresses == null) {

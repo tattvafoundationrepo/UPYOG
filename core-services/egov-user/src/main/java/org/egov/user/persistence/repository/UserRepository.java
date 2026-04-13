@@ -559,6 +559,7 @@ public class UserRepository {
         userInputs.put("createdby", entityUser.getLoggedInUserId());
         userInputs.put("lastmodifiedby", entityUser.getLoggedInUserId());
         userInputs.put("alternatemobilenumber", entityUser.getAlternateMobileNumber());
+        userInputs.put("user_hwid", entityUser.getUserHwid());
 
         namedParameterJdbcTemplate.update(userTypeQueryBuilder.getInsertUserQuery(), userInputs);
         return entityUser;
