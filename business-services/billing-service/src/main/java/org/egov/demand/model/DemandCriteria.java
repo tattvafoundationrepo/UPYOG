@@ -66,7 +66,9 @@ public class DemandCriteria {
 	private Set<String> payer;
 	
 	private Set<String> consumerCode;
-	
+
+	private String consumerCodeLike;
+
 	private String businessService;
 
 	private Set<String> businessServices;

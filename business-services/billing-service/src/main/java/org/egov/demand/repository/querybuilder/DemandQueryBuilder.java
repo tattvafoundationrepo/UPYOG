@@ -363,6 +363,11 @@ public class DemandQueryBuilder {
 			addToPreparedStatement(preparedStmtList, criteria.getConsumerCode());
 		}
 
+		if (criteria.getConsumerCodeLike() != null && !criteria.getConsumerCodeLike().isEmpty()) {
+			where.append(" AND dmd.consumercode LIKE ?");
+			preparedStmtList.add("%" + criteria.getConsumerCodeLike() + "%");
+		}
+
 		StringBuilder pagingClause = new StringBuilder();
 		if (criteria.getLimit() != null) {
 			pagingClause.append("LIMIT ? ");
@@ -429,10 +434,15 @@ public class DemandQueryBuilder {
 		
 		// Filter by consumer codes
 		if (!CollectionUtils.isEmpty(demandCriteria.getConsumerCode())) {
-			query.append(" AND bd.consumercode IN (")
+			query.append(" AND LEFT(bd.consumercode, 10) IN (")
 				.append(getIdQueryForStrings(demandCriteria.getConsumerCode()))
 				.append(")");
 			addToPreparedStatement(preparedStatementValues, demandCriteria.getConsumerCode());
+		}
+
+		if (demandCriteria.getConsumerCodeLike() != null && !demandCriteria.getConsumerCodeLike().isEmpty()) {
+			query.append(" AND bd.consumercode LIKE ?");
+			preparedStatementValues.add("%" + demandCriteria.getConsumerCodeLike() + "%");
 		}
 		
 		// Filter by payment status (only successful payments)
