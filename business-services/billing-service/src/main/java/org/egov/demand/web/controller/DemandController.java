@@ -48,10 +48,12 @@ import org.egov.common.contract.request.RequestInfo;
 import org.egov.demand.model.CollectedReceipt;
 import org.egov.demand.model.Demand;
 import org.egov.demand.model.DemandCriteria;
+import org.egov.demand.model.MergedDemand;
 import org.egov.demand.service.DemandService;
 import org.egov.demand.util.migration.DemandMigration;
 import org.egov.demand.web.contract.DemandRequest;
 import org.egov.demand.web.contract.DemandResponse;
+import org.egov.demand.web.contract.MergedDemandResponse;
 import org.egov.demand.web.contract.RequestInfoWrapper;
 import org.egov.demand.web.contract.factory.ResponseFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -126,7 +128,34 @@ public class DemandController {
 		
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
-	
+
+	@PostMapping("_searchMerged")
+	public ResponseEntity<?> searchMerged(@RequestBody RequestInfoWrapper requestInfoWrapper,
+			@ModelAttribute @Valid DemandCriteria demandCriteria) {
+
+		RequestInfo requestInfo = requestInfoWrapper.getRequestInfo();
+
+		List<MergedDemand> mergedDemands = demandService.getMergedDemands(demandCriteria, requestInfo);
+
+		Long totalCount = mergedDemands.isEmpty() ? 0L : mergedDemands.get(0).getTotalCount();
+
+		List<CollectedReceipt> collectedReceipts = null;
+		if (Boolean.TRUE.equals(demandCriteria.getReceiptRequired())) {
+			collectedReceipts = demandService.getCollectedReceipts(demandCriteria, requestInfo);
+		}
+
+		MergedDemandResponse response = MergedDemandResponse.builder()
+				.responseInfo(responseFactory.getResponseInfo(requestInfo, HttpStatus.OK))
+				.mergedDemands(mergedDemands)
+				.collectedReceipts(collectedReceipts)
+				.limit(demandCriteria.getLimit())
+				.offset(demandCriteria.getOffset())
+				.totalCount(totalCount)
+				.build();
+
+		return new ResponseEntity<>(response, HttpStatus.OK);
+	}
+
 	/*
 	 * migration api
 	 */

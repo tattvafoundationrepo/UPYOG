@@ -97,6 +97,7 @@ public class DemandCriteria {
 	@Default
 	private Boolean withoutMobNumber=false;
 
-	//private Integer limit;
-    //private Integer offset;
+	private Integer limit;
+
+	private Integer offset;
 }
