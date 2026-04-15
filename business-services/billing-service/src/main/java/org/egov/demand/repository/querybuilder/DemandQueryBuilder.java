@@ -169,6 +169,220 @@ public class DemandQueryBuilder {
 			"LEFT JOIN bill_amounts ba ON bd.id = ba.billid AND bd.tenantid = ba.tenantid " +
 			"WHERE p.tenantid = ? ";
 
+	public static final String MERGED_DEMAND_BASE_QUERY = "WITH filtered_demands AS ( "
+			+ "    SELECT "
+			+ "        LEFT(dmd.consumercode, 10) AS base_code, "
+			+ "        dmd.id AS did, dmd.consumercode, dmd.consumertype, dmd.businessservice, "
+			+ "        dmd.tenantid, dmd.payer, dmd.taxperiodfrom, dmd.taxperiodto, "
+			+ "        dmd.minimumamountpayable, dmd.status, dmd.ispaymentcompleted, "
+			+ "        dmd.isadvance, dmd.advanceindex, dmd.demandseqno, "
+			+ "        dmd.billexpirytime, dmd.fixedBillExpiryDate, "
+			+ "        dmd.additionaldetails AS demand_additionaldetails, "
+			+ "        dmd.createdby, dmd.lastmodifiedby, dmd.createdtime, dmd.lastmodifiedtime, "
+			+ "        concat(eelm.primary_title,' ',eelm.first_name,' ',eelm.last_name) AS licencee_name, "
+			+ "        eelm.mobile AS licencee_mobile, eea.reason, "
+			+ "        dmdl.id AS dlid, dmdl.taxheadcode, dmdl.taxamount, dmdl.collectionamount, "
+			+ "        dmdl.additionaldetails AS detail_additionaldetails "
+			+ "    FROM egbs_demand_v1 dmd "
+			+ "    INNER JOIN egbs_demanddetail_v1 dmdl ON dmd.id = dmdl.demandid AND dmd.tenantid = dmdl.tenantid "
+			+ "    LEFT JOIN eg_emarket_allotment eea ON regexp_replace(dmd.consumercode, '[^0-9]', '', 'g') = eea.license_number "
+			+ "    LEFT JOIN eg_emarket_licensee_master eelm ON eea.license_id = eelm.licensee_id "
+			+ "    WHERE %s "
+			+ "), "
+			+ "detail_agg AS ( "
+			+ "    SELECT did, "
+			+ "           json_agg(json_build_object( "
+			+ "               'id', dlid, 'demandId', did, 'taxHeadMasterCode', taxheadcode, "
+			+ "               'taxAmount', taxamount, 'collectionAmount', collectionamount, "
+			+ "               'additionalDetails', detail_additionaldetails, 'tenantId', tenantid "
+			+ "           ) ORDER BY dlid) AS demand_details, "
+			+ "           SUM(CASE WHEN taxheadcode NOT LIKE '%%CARRYFORWARD%%' THEN taxamount ELSE 0 END) AS tax_total, "
+			+ "           SUM(CASE WHEN taxheadcode NOT LIKE '%%CARRYFORWARD%%' THEN collectionamount ELSE 0 END) AS coll_total "
+			+ "    FROM filtered_demands "
+			+ "    GROUP BY did "
+			+ "), "
+			+ "demand_info AS ( "
+			+ "    SELECT DISTINCT ON (did) "
+			+ "        base_code, did, consumercode, consumertype, businessservice, tenantid, "
+			+ "        payer, taxperiodfrom, taxperiodto, minimumamountpayable, "
+			+ "        status, ispaymentcompleted, isadvance, advanceindex, demandseqno, "
+			+ "        billexpirytime, fixedBillExpiryDate, demand_additionaldetails, "
+			+ "        createdby, lastmodifiedby, createdtime, lastmodifiedtime, "
+			+ "        licencee_name, licencee_mobile, reason "
+			+ "    FROM filtered_demands "
+			+ "    ORDER BY did "
+			+ "), "
+			+ "service_agg AS ( "
+			+ "    SELECT di.base_code, di.businessservice, "
+			+ "           json_agg(json_build_object( "
+			+ "               'id', di.did, 'consumerCode', di.consumercode, 'businessService', di.businessservice, "
+			+ "               'demandSeqNo', di.demandseqno, 'tenantId', di.tenantid, 'payer', di.payer, "
+			+ "               'taxPeriodFrom', di.taxperiodfrom, 'taxPeriodTo', di.taxperiodto, "
+			+ "               'status', di.status, 'isPaymentCompleted', di.ispaymentcompleted, "
+			+ "               'isAdvance', di.isadvance, 'advanceIndex', di.advanceindex, "
+			+ "               'minimumAmountPayable', di.minimumamountpayable, "
+			+ "               'billExpiryTime', di.billexpirytime, 'fixedBillExpiryDate', di.fixedBillExpiryDate, "
+			+ "               'additionalDetails', di.demand_additionaldetails, "
+			+ "               'demandDetails', dt.demand_details "
+			+ "           ) ORDER BY di.taxperiodfrom) AS service_demands, "
+			+ "           SUM(CASE WHEN di.status='ACTIVE' THEN dt.tax_total ELSE 0 END) AS svc_tax_total, "
+			+ "           SUM(CASE WHEN di.status='ACTIVE' THEN dt.coll_total ELSE 0 END) AS svc_coll_total, "
+			+ "           SUM(CASE WHEN di.status='ACTIVE' THEN di.minimumamountpayable ELSE 0 END) AS svc_min_payable, "
+			+ "           COUNT(CASE WHEN di.status='ACTIVE' THEN 1 END) AS svc_demand_count, "
+			+ "           COUNT(CASE WHEN di.status='ACTIVE' AND di.ispaymentcompleted THEN 1 END) AS svc_paid_count, "
+			+ "           MIN(di.taxperiodfrom) AS svc_min_period, "
+			+ "           MAX(di.taxperiodto) AS svc_max_period "
+			+ "    FROM demand_info di "
+			+ "    JOIN detail_agg dt ON di.did = dt.did "
+			+ "    GROUP BY di.base_code, di.businessservice "
+			+ "), "
+			+ "consumer_info AS ( "
+			+ "    SELECT DISTINCT ON (base_code) "
+			+ "        base_code, consumertype, tenantid, payer, licencee_name, licencee_mobile, reason "
+			+ "    FROM demand_info "
+			+ "    ORDER BY base_code, createdtime ASC "
+			+ "), "
+			+ "consumer_times AS ( "
+			+ "    SELECT base_code, "
+			+ "           MIN(createdtime) AS first_created_time, "
+			+ "           MAX(lastmodifiedtime) AS last_modified_time, "
+			+ "           COUNT(CASE WHEN status='ACTIVE' AND NOT ispaymentcompleted THEN 1 END) AS unpaid_active_count, "
+			+ "           COUNT(CASE WHEN status='ACTIVE' AND ispaymentcompleted THEN 1 END) AS paid_active_count "
+			+ "    FROM demand_info "
+			+ "    GROUP BY base_code "
+			+ "), "
+			+ "all_base_codes AS ( "
+			+ "    SELECT base_code FROM consumer_info ORDER BY base_code "
+			+ "), "
+			+ "total_count_cte AS ( "
+			+ "    SELECT COUNT(*) AS total_count FROM all_base_codes "
+			+ "), "
+			+ "paginated_codes AS ( "
+			+ "    SELECT base_code FROM all_base_codes %s "
+			+ "), "
+			+ "merged AS ( "
+			+ "    SELECT pc.base_code AS consumer_code, "
+			+ "           ci.consumertype AS consumer_type, ci.tenantid AS tenant_id, ci.payer, "
+			+ "           ci.licencee_name, ci.licencee_mobile, ci.reason, "
+			+ "           ct.first_created_time, ct.last_modified_time, "
+			+ "           CASE WHEN ct.paid_active_count + ct.unpaid_active_count > 0 "
+			+ "                THEN 'ACTIVE' ELSE 'INACTIVE' END AS overall_status, "
+			+ "           (ct.unpaid_active_count = 0) AS is_fully_paid, "
+			+ "           (ct.paid_active_count > 0 AND ct.unpaid_active_count > 0) AS has_partial_payment, "
+			+ "           array_agg(DISTINCT sa.businessservice ORDER BY sa.businessservice) AS business_services, "
+			+ "           json_object_agg(sa.businessservice, json_build_object( "
+			+ "               'demands', sa.service_demands, "
+			+ "               'totalTaxAmount', sa.svc_tax_total, "
+			+ "               'totalCollectionAmount', sa.svc_coll_total, "
+			+ "               'totalMinimumPayable', sa.svc_min_payable, "
+			+ "               'remainingAmount', sa.svc_tax_total - sa.svc_coll_total "
+			+ "           )) AS demands_by_service, "
+			+ "           COALESCE(SUM(sa.svc_tax_total), 0) AS total_tax_amount, "
+			+ "           COALESCE(SUM(sa.svc_coll_total), 0) AS total_collection_amount, "
+			+ "           COALESCE(SUM(sa.svc_min_payable), 0) AS total_minimum_payable, "
+			+ "           COALESCE(SUM(sa.svc_tax_total) - SUM(sa.svc_coll_total), 0) AS total_remaining_amount, "
+			+ "           MIN(sa.svc_min_period) AS earliest_tax_period, "
+			+ "           MAX(sa.svc_max_period) AS latest_tax_period, "
+			+ "           COALESCE(SUM(sa.svc_demand_count), 0)::int AS total_demand_count, "
+			+ "           COALESCE(SUM(sa.svc_paid_count), 0)::int AS paid_demand_count, "
+			+ "           COALESCE(SUM(sa.svc_demand_count) - SUM(sa.svc_paid_count), 0)::int AS unpaid_demand_count "
+			+ "    FROM paginated_codes pc "
+			+ "    JOIN consumer_info ci ON pc.base_code = ci.base_code "
+			+ "    JOIN consumer_times ct ON pc.base_code = ct.base_code "
+			+ "    JOIN service_agg sa ON pc.base_code = sa.base_code "
+			+ "    GROUP BY pc.base_code, ci.consumertype, ci.tenantid, ci.payer, "
+			+ "             ci.licencee_name, ci.licencee_mobile, ci.reason, "
+			+ "             ct.first_created_time, ct.last_modified_time, "
+			+ "             ct.unpaid_active_count, ct.paid_active_count "
+			+ ") "
+			+ "SELECT m.*, tc.total_count FROM merged m CROSS JOIN total_count_cte tc ORDER BY m.consumer_code ";
+
+	public String getMergedDemandQuery(DemandCriteria criteria, List<Object> preparedStmtList) {
+
+		StringBuilder where = new StringBuilder();
+
+		String tenantId = criteria.getTenantId();
+		String[] tenantIdChunks = tenantId.split("\\.");
+		if (tenantIdChunks.length == 1) {
+			where.append("dmd.tenantid LIKE ? ");
+			preparedStmtList.add(tenantId + "%");
+		} else {
+			where.append("dmd.tenantid = ? ");
+			preparedStmtList.add(tenantId);
+		}
+
+		if (criteria.getStatus() != null) {
+			where.append(" AND dmd.status = ?");
+			preparedStmtList.add(criteria.getStatus());
+		}
+
+		if (criteria.getDemandId() != null && !criteria.getDemandId().isEmpty()) {
+			where.append(" AND dmd.id IN (").append(getIdQueryForStrings(criteria.getDemandId())).append(")");
+			addToPreparedStatement(preparedStmtList, criteria.getDemandId());
+		}
+
+		if (!CollectionUtils.isEmpty(criteria.getPayer())) {
+			where.append(" AND dmd.payer IN (").append(getIdQueryForStrings(criteria.getPayer())).append(")");
+			addToPreparedStatement(preparedStmtList, criteria.getPayer());
+		}
+
+		if (!CollectionUtils.isEmpty(criteria.getBusinessServices())) {
+			where.append(" AND dmd.businessservice IN (")
+				 .append(getIdQueryForStrings(criteria.getBusinessServices()))
+				 .append(")");
+			addToPreparedStatement(preparedStmtList, criteria.getBusinessServices());
+		} else if (criteria.getBusinessService() != null) {
+			where.append(" AND dmd.businessservice = ?");
+			preparedStmtList.add(criteria.getBusinessService());
+		}
+
+		if (criteria.getIsPaymentCompleted() != null) {
+			where.append(" AND dmd.ispaymentcompleted = ?");
+			preparedStmtList.add(criteria.getIsPaymentCompleted());
+		}
+
+		if (criteria.getPeriodFrom() != null) {
+			where.append(" AND dmd.taxPeriodFrom >= ?");
+			preparedStmtList.add(criteria.getPeriodFrom());
+		}
+
+		if (criteria.getPeriodTo() != null) {
+			where.append(" AND dmd.taxPeriodTo <= ?");
+			preparedStmtList.add(criteria.getPeriodTo());
+		}
+
+		if (criteria.getIsAdvance() != null) {
+			where.append(" AND dmd.isadvance = ?");
+			preparedStmtList.add(criteria.getIsAdvance());
+		}
+
+		if (criteria.getConsumerCode() != null && !criteria.getConsumerCode().isEmpty()) {
+			where.append(" AND LEFT(dmd.consumercode, 10) IN (")
+				 .append(getIdQueryForStrings(criteria.getConsumerCode()))
+				 .append(")");
+			addToPreparedStatement(preparedStmtList, criteria.getConsumerCode());
+		}
+
+		if (criteria.getConsumerCodeLike() != null && !criteria.getConsumerCodeLike().isEmpty()) {
+			where.append(" AND dmd.consumercode LIKE ?");
+			preparedStmtList.add("%" + criteria.getConsumerCodeLike() + "%");
+		}
+
+		StringBuilder pagingClause = new StringBuilder();
+		if (criteria.getLimit() != null) {
+			pagingClause.append("LIMIT ? ");
+			preparedStmtList.add(Math.min(criteria.getLimit(), 200));
+		}
+		if (criteria.getOffset() != null) {
+			pagingClause.append("OFFSET ? ");
+			preparedStmtList.add(criteria.getOffset());
+		}
+
+		String query = String.format(MERGED_DEMAND_BASE_QUERY, where.toString(), pagingClause.toString());
+		log.info("merged demand query: {}", query);
+		return query;
+	}
+
 	public String getDemandQueryForConsumerCodes(Map<String,Set<String>> businessConsumercodeMap,List<Object> preparedStmtList, String tenantId){
 		
 		StringBuilder query = new StringBuilder(BASE_DEMAND_QUERY);
@@ -220,10 +434,15 @@ public class DemandQueryBuilder {
 		
 		// Filter by consumer codes
 		if (!CollectionUtils.isEmpty(demandCriteria.getConsumerCode())) {
-			query.append(" AND bd.consumercode IN (")
+			query.append(" AND LEFT(bd.consumercode, 10) IN (")
 				.append(getIdQueryForStrings(demandCriteria.getConsumerCode()))
 				.append(")");
 			addToPreparedStatement(preparedStatementValues, demandCriteria.getConsumerCode());
+		}
+
+		if (demandCriteria.getConsumerCodeLike() != null && !demandCriteria.getConsumerCodeLike().isEmpty()) {
+			query.append(" AND bd.consumercode LIKE ?");
+			preparedStatementValues.add("%" + demandCriteria.getConsumerCodeLike() + "%");
 		}
 		
 		// Filter by payment status (only successful payments)

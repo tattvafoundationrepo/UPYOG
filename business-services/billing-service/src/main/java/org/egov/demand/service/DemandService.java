@@ -69,6 +69,7 @@ import org.egov.demand.model.Demand;
 import org.egov.demand.model.DemandApportionRequest;
 import org.egov.demand.model.DemandCriteria;
 import org.egov.demand.model.DemandDetail;
+import org.egov.demand.model.MergedDemand;
 import org.egov.demand.model.PaymentBackUpdateAudit;
 import org.egov.demand.model.UpdateBillCriteria;
 import org.egov.demand.repository.AmendmentRepository;
@@ -385,6 +386,15 @@ public class DemandService {
 		// }
 
 		return demands;
+	}
+
+	/**
+	 * Search method that returns demands grouped by base consumer code (LEFT(consumerCode, 10)).
+	 * All aggregation happens in SQL — see DemandQueryBuilder#getMergedDemandQuery.
+	 */
+	public List<MergedDemand> getMergedDemands(DemandCriteria demandCriteria, RequestInfo requestInfo) {
+		demandValidatorV1.validateDemandCriteria(demandCriteria, requestInfo);
+		return demandRepository.getMergedDemands(demandCriteria);
 	}
 
 	/**

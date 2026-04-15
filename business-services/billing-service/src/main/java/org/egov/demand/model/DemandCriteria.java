@@ -66,7 +66,9 @@ public class DemandCriteria {
 	private Set<String> payer;
 	
 	private Set<String> consumerCode;
-	
+
+	private String consumerCodeLike;
+
 	private String businessService;
 
 	private Set<String> businessServices;
@@ -97,6 +99,7 @@ public class DemandCriteria {
 	@Default
 	private Boolean withoutMobNumber=false;
 
-	//private Integer limit;
-    //private Integer offset;
+	private Integer limit;
+
+	private Integer offset;
 }

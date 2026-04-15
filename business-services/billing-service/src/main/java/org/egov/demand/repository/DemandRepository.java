@@ -63,6 +63,7 @@ import org.egov.demand.model.CollectedReceipt;
 import org.egov.demand.model.Demand;
 import org.egov.demand.model.DemandCriteria;
 import org.egov.demand.model.DemandDetail;
+import org.egov.demand.model.MergedDemand;
 import org.egov.demand.model.FiReport;
 import org.egov.demand.model.FiReportRequest;
 import org.egov.demand.model.GstAdvanceMap;
@@ -72,6 +73,7 @@ import org.egov.demand.producer.Producer;
 import org.egov.demand.repository.querybuilder.DemandQueryBuilder;
 import org.egov.demand.repository.rowmapper.CollectedReceiptsRowMapper;
 import org.egov.demand.repository.rowmapper.DemandRowMapper;
+import org.egov.demand.repository.rowmapper.MergedDemandRowMapper;
 import org.egov.demand.util.Util;
 import org.egov.demand.web.contract.DemandRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -104,6 +106,9 @@ public class DemandRepository {
 
 	@Autowired
 	private CollectedReceiptsRowMapper collectedReceiptRowMapper;
+
+	@Autowired
+	private MergedDemandRowMapper mergedDemandRowMapper;
 	
 	@Autowired
 	private Util util;
@@ -116,6 +121,17 @@ public class DemandRepository {
 		List<Object> preparedStatementValues = new ArrayList<>();
 		String searchDemandQuery = demandQueryBuilder.getDemandQuery(demandCriteria, preparedStatementValues);
 		return jdbcTemplate.query(searchDemandQuery, preparedStatementValues.toArray(), demandRowMapper);
+	}
+
+	public List<MergedDemand> getMergedDemands(DemandCriteria demandCriteria) {
+
+		List<Object> preparedStatementValues = new ArrayList<>();
+		String query = demandQueryBuilder.getMergedDemandQuery(demandCriteria, preparedStatementValues);
+
+		log.debug("Merged demand query: {}", query);
+		log.debug("Prepared statement values: {}", preparedStatementValues);
+
+		return jdbcTemplate.query(query, preparedStatementValues.toArray(), mergedDemandRowMapper);
 	}
 
 	public List<CollectedReceipt> getCollectedReceipts(DemandCriteria demandCriteria) {
@@ -236,7 +252,9 @@ public class DemandRepository {
         //         .build());
 
 			//reportList.addAll(buildFiReportsFromDemand(demand , "50", false , null));
-			reportList.addAll(buildDemandFiReports(demand));
+			if (!"TX.Emarket_Deposit_Fees".equalsIgnoreCase(demand.getBusinessService())) {
+			    reportList.addAll(buildDemandFiReports(demand));
+			}
 		}
 
 		if(!reportList.isEmpty()){
