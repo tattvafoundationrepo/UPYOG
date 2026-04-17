@@ -134,10 +134,10 @@ public class DemandRepository {
 		return jdbcTemplate.query(query, preparedStatementValues.toArray(), mergedDemandRowMapper);
 	}
 
-	public List<CollectedReceipt> getCollectedReceipts(DemandCriteria demandCriteria) {
+	public List<CollectedReceipt> getCollectedReceipts(DemandCriteria demandCriteria, Boolean isMerged) {
     
 		List<Object> preparedStatementValues = new ArrayList<>();
-		String query = demandQueryBuilder.getCollectedReceiptsQuery(demandCriteria, preparedStatementValues);
+		String query = demandQueryBuilder.getCollectedReceiptsQuery(demandCriteria, preparedStatementValues, isMerged);
 		
 		log.debug("Collected receipts query: " + query);
 		log.debug("Prepared statement values: " + preparedStatementValues);

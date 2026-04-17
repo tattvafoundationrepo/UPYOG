@@ -404,11 +404,11 @@ public class DemandService {
 	 * @param requestInfo
 	 * @return
 	 */
-	public List<CollectedReceipt> getCollectedReceipts(DemandCriteria demandCriteria, RequestInfo requestInfo) {
+	public List<CollectedReceipt> getCollectedReceipts(DemandCriteria demandCriteria, RequestInfo requestInfo, Boolean isMerged) {
 
 		demandValidatorV1.validateDemandCriteria(demandCriteria, requestInfo);
 
-		List<CollectedReceipt> collectedReceipts = demandRepository.getCollectedReceipts(demandCriteria);
+		List<CollectedReceipt> collectedReceipts = demandRepository.getCollectedReceipts(demandCriteria, isMerged);
 
 		return collectedReceipts;
 	}

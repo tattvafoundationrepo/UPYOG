@@ -415,7 +415,7 @@ public class DemandQueryBuilder {
 		return query.toString();
 	}
 
-	public String getCollectedReceiptsQuery(DemandCriteria demandCriteria, List<Object> preparedStatementValues) {
+	public String getCollectedReceiptsQuery(DemandCriteria demandCriteria, List<Object> preparedStatementValues, Boolean isMerged) {
     
 		StringBuilder query = new StringBuilder(COLLECTED_RECEIPT_QUERY);
 		
@@ -434,9 +434,14 @@ public class DemandQueryBuilder {
 		
 		// Filter by consumer codes
 		if (!CollectionUtils.isEmpty(demandCriteria.getConsumerCode())) {
-			query.append(" AND LEFT(bd.consumercode, 10) IN (")
-				.append(getIdQueryForStrings(demandCriteria.getConsumerCode()))
-				.append(")");
+			if (Boolean.TRUE.equals(isMerged))
+				query.append(" AND LEFT(bd.consumercode, 10) IN (")
+						.append(getIdQueryForStrings(demandCriteria.getConsumerCode()))
+						.append(")");
+			else
+				query.append(" AND bd.consumercode IN (")
+						.append(getIdQueryForStrings(demandCriteria.getConsumerCode()))
+						.append(")");
 			addToPreparedStatement(preparedStatementValues, demandCriteria.getConsumerCode());
 		}
 
