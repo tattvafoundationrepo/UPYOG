@@ -46,7 +46,7 @@ public class ApportionerService {
 		List<Bill> bills = payment.getPaymentDetails().stream().map(PaymentDetail::getBill).collect(Collectors.toList());
 		StringBuilder uri = new StringBuilder();
 		uri.append(applicationProperties.getApportionHost()).append(applicationProperties.getApportionURI());
-		ApportionRequest apportionRequest = ApportionRequest.builder().bills(bills).tenantId(payment.getTenantId())
+		ApportionRequest apportionRequest = ApportionRequest.builder().bills(bills).tenantId(payment.getPaymentDetails().get(0).getTenantId())
 				.requestInfo(requestInfo).build();
 		ApportionResponse apportionResponse;
 		try {
