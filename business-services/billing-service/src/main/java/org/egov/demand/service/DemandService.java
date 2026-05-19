@@ -44,6 +44,7 @@ import static org.egov.demand.util.Constants.ADVANCE_TAXHEAD_JSONPATH_CODE;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -172,13 +173,16 @@ public class DemandService {
 			demandsToBeCreated.addAll(demandRequest.getDemands());
 		}
 
-		save(new DemandRequest(requestInfo,demandsToBeCreated));
+		List<Demand> existingDuplicates = filterOutExistingDemands(demandsToBeCreated);
+
+		if (!CollectionUtils.isEmpty(demandsToBeCreated))
+			save(new DemandRequest(requestInfo,demandsToBeCreated));
 		if (!CollectionUtils.isEmpty(amendmentUpdates))
 			amendmentRepository.updateAmendment(amendmentUpdates);
 
 		if(!CollectionUtils.isEmpty(demandToBeUpdated))
 			update(new DemandRequest(requestInfo,demandToBeUpdated), null);
-		
+
 		billRepoV2.updateBillStatus(
 				UpdateBillCriteria.builder()
 				.statusToBeUpdated(BillStatus.EXPIRED)
@@ -187,7 +191,62 @@ public class DemandService {
 				.tenantId(demands.get(0).getTenantId())
 				.build()
 				);
-		return new DemandResponse(responseInfoFactory.getResponseInfo(requestInfo, HttpStatus.CREATED), demands);
+
+		List<Demand> responseDemands = new ArrayList<>(demandsToBeCreated);
+		if (!CollectionUtils.isEmpty(demandToBeUpdated))
+			responseDemands.addAll(demandToBeUpdated);
+		if (!CollectionUtils.isEmpty(existingDuplicates))
+			responseDemands.addAll(existingDuplicates);
+		return new DemandResponse(responseInfoFactory.getResponseInfo(requestInfo, HttpStatus.CREATED), responseDemands);
+	}
+
+	/**
+	 * Removes from {@code demandsToBeCreated} any demand whose
+	 * (tenantId, businessService, consumerCode, taxPeriodFrom, taxPeriodTo, advanceIndex)
+	 * already exists as an ACTIVE row in the DB — i.e. would violate
+	 * uk_egbs_demand_v1_consumercode_businessservice. Returns the existing rows
+	 * that were matched, so callers can surface them in the response.
+	 */
+	private List<Demand> filterOutExistingDemands(List<Demand> demandsToBeCreated) {
+		if (CollectionUtils.isEmpty(demandsToBeCreated))
+			return Collections.emptyList();
+
+		String tenantId = demandsToBeCreated.get(0).getTenantId();
+		Map<String, Set<String>> businessConsumerCodeMap = demandsToBeCreated.stream()
+				.collect(Collectors.groupingBy(
+						Demand::getBusinessService,
+						Collectors.mapping(Demand::getConsumerCode, Collectors.toSet())));
+
+		List<Demand> existing = demandRepository.getDemandsForConsumerCodes(businessConsumerCodeMap, tenantId);
+		if (CollectionUtils.isEmpty(existing))
+			return Collections.emptyList();
+
+		Map<String, Demand> existingByKey = new HashMap<>();
+		for (Demand e : existing)
+			existingByKey.put(uniqueDemandKey(e), e);
+
+		List<Demand> matched = new ArrayList<>();
+		List<Demand> stillToCreate = new ArrayList<>();
+		for (Demand d : demandsToBeCreated) {
+			Demand match = existingByKey.get(uniqueDemandKey(d));
+			if (match != null) {
+				matched.add(match);
+				log.warn("Skipping duplicate demand creation - existing demandId={} consumerCode={} businessService={} taxPeriodFrom={} taxPeriodTo={} advanceIndex={}",
+						match.getId(), d.getConsumerCode(), d.getBusinessService(),
+						d.getTaxPeriodFrom(), d.getTaxPeriodTo(), d.getAdvanceIndex());
+			} else {
+				stillToCreate.add(d);
+			}
+		}
+		demandsToBeCreated.clear();
+		demandsToBeCreated.addAll(stillToCreate);
+		return matched;
+	}
+
+	private String uniqueDemandKey(Demand d) {
+		return d.getTenantId() + "|" + d.getBusinessService() + "|" + d.getConsumerCode()
+				+ "|" + d.getTaxPeriodFrom() + "|" + d.getTaxPeriodTo()
+				+ "|" + (d.getAdvanceIndex() == null ? 0 : d.getAdvanceIndex());
 	}
 
 	/**
