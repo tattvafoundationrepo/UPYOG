@@ -5,9 +5,7 @@ import com.netflix.zuul.context.RequestContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 
-import java.util.Arrays;
 import java.util.HashSet;
 
 import static org.egov.constants.RequestContextConstants.RBAC_BOOLEAN_FLAG_NAME;
@@ -22,9 +20,6 @@ public class RbacPreCheckFilter extends ZuulFilter {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private HashSet<String> openEndpointsWhitelist;
     private HashSet<String> anonymousEndpointsWhitelist;
-    
-    @Value("#{'${tattva.mixed-mode-endpoints-whitelist}'.split(',')}") //added for rbac check for our endpoints
-    private String[] tattvaMixedModeEndpointsWhitelist;
 
     @Autowired
     public RbacPreCheckFilter(HashSet<String> openEndpointsWhitelist,
@@ -50,11 +45,6 @@ public class RbacPreCheckFilter extends ZuulFilter {
 
     @Override
     public Object run() {
-
-         if (tattvaMixedModeEndpointsWhitelist != null && new HashSet<>(Arrays.asList(tattvaMixedModeEndpointsWhitelist)).contains(getRequestURI())) {
-            setShouldDoRbac(true);  
-            return null;
-        }
         if ((openEndpointsWhitelist.contains(getRequestURI())
             || anonymousEndpointsWhitelist.contains(getRequestURI()))) {
             setShouldDoRbac(false);

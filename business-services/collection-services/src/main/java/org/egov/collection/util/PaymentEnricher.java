@@ -81,7 +81,7 @@ public class PaymentEnricher {
 			codeToBusinessService.put(businessService.get(MASTER_BUSINESSSERVICE_KEY).toString(),businessService);
 		});
 
-		List<Bill> validatedBills = billingRepository.fetchBill(paymentRequest.getRequestInfo(), payment.getTenantId(),
+		List<Bill> validatedBills = billingRepository.fetchBill(paymentRequest.getRequestInfo(), payment.getPaymentDetails().get(0).getTenantId(),
 				billIds);
 		Map<String, Bill> billIdToBillMap = new HashMap<>();
 		Map<String, String> errorMap = new HashMap<>();

@@ -118,7 +118,7 @@ public class DemandController {
 		RequestInfo requestInfo = requestInfoWrapper.getRequestInfo();
 
 		List<Demand> demands = demandService.getDemands(demandCriteria, requestInfo);
-		List<CollectedReceipt> collectedReceipts = demandService.getCollectedReceipts(demandCriteria, requestInfo);
+		List<CollectedReceipt> collectedReceipts = demandService.getCollectedReceipts(demandCriteria, requestInfo, false);
 		
 		DemandResponse response = DemandResponse.builder()
 				.demands(demands)
@@ -141,7 +141,7 @@ public class DemandController {
 
 		List<CollectedReceipt> collectedReceipts = null;
 		if (Boolean.TRUE.equals(demandCriteria.getReceiptRequired())) {
-			collectedReceipts = demandService.getCollectedReceipts(demandCriteria, requestInfo);
+			collectedReceipts = demandService.getCollectedReceipts(demandCriteria, requestInfo, true);
 		}
 
 		MergedDemandResponse response = MergedDemandResponse.builder()

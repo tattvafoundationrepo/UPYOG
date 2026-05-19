@@ -55,9 +55,9 @@ public class PaymentQueryBuilder {
     public static final String ID_QUERY = "WITH py_filtered as (" +
             "select id from egcl_payment as py_inner {{WHERE_CLAUSE}} ) " +
             " SELECT py.id as id FROM py_filtered as py " +
-            " INNER JOIN egcl_paymentdetail as pyd ON pyd.paymentid = py.id and pyd.tenantid {{operator}} :tenantId " +
+            " INNER JOIN egcl_paymentdetail as pyd ON pyd.paymentid = py.id " +
             " INNER JOIN egcl_bill bill ON bill.id = pyd.billid " +
-            " INNER JOIN egcl_billdetial bd ON bd.billid = bill.id and bd.tenantid {{operator}} :tenantId; ";
+            " INNER JOIN egcl_billdetial bd ON bd.billid = bill.id; ";
 
     private static final String PAGINATION_WRAPPER = "SELECT * FROM " +
             "(SELECT *, DENSE_RANK() OVER (ORDER BY py_id) offset_ FROM " +
