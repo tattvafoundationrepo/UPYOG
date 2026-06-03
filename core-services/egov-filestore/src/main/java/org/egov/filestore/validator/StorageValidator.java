@@ -19,7 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 @Component
 public class StorageValidator {
 
-    private static final long MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
+    private static final long MAX_IMAGE_SIZE = 200 * 1024 * 1024; // 200MB
     private FileStoreConfig fileStoreConfig;
 
     @Autowired
@@ -76,7 +76,7 @@ public class StorageValidator {
         MultipartFile file = artifact.getMultipartFile();
    //     validateImageIntegrity(file);
         if (file.getSize() > MAX_IMAGE_SIZE) {
-            throw new CustomException("EG_FILESTORE_INVALID_SIZE", "File size exceeds 5MB.");
+            throw new CustomException("EG_FILESTORE_INVALID_SIZE", "File size exceeds 200MB.");
         }
 
 		List<Pattern> maliciousPatterns = Arrays.asList(
