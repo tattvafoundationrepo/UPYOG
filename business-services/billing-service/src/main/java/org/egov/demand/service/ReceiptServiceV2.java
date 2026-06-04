@@ -26,6 +26,7 @@ import org.egov.demand.model.BillV2;
 import org.egov.demand.model.Demand;
 import org.egov.demand.model.DemandCriteria;
 import org.egov.demand.model.DemandDetail;
+import org.egov.demand.model.FiFlow;
 import org.egov.demand.model.FiReport;
 import org.egov.demand.model.GstAdvanceMap;
 import org.egov.demand.model.PaymentBackUpdateAudit;
@@ -313,26 +314,23 @@ public class ReceiptServiceV2 {
 				log.info("additioanl market info from db" + infoList.get(0));
 			}
 			GstAdvanceMap gstAdvanceMap = extractGstAdvanceFromAdditionalDetails(infoList.get(0));
-			List<DemandDetail> filteredDetails = demandRequest.getDemands().stream()
-					.flatMap(dd -> dd.getDemandDetails().stream()) // flatten all demandDetails
-					.filter(dd -> dd.getTaxHeadMasterCode().contains("ADVANCE"))
-					.collect(Collectors.toList());
+			// Defensive: a malformed/empty payment JSON yields a null map. Substitute an
+			// empty map so total stays 0 and no FI rows are produced, instead of NPE-ing
+			// the Kafka consumer (the demand collection update has already been published).
+			if (gstAdvanceMap == null)
+				gstAdvanceMap = GstAdvanceMap.builder().build();
 
-			d.setDemandDetails(filteredDetails);
-			gstAdvanceMap.setCollectionAmount(gstAdvanceMap.getTotalAmountPaid());
+			FiFlow flow = determineFiFlow(demandRequest.getDemands(), gstAdvanceMap);
+			BigDecimal total = nz(gstAdvanceMap.getTotalAmountPaid());
+			BigDecimal cgst = flow == FiFlow.GST_REGULAR
+					? sumDetails(demandRequest.getDemands(), "CGST")
+					: nz(gstAdvanceMap.getCgstAmount());
+			BigDecimal sgst = flow == FiFlow.GST_REGULAR
+					? sumDetails(demandRequest.getDemands(), "SGST")
+					: nz(gstAdvanceMap.getSgstAmount());
+			log.info("Collection FI flow={} total={} cgst={} sgst={}", flow, total, cgst, sgst);
 
-			Map<String, Object> advCollectionMap = new HashMap<>();
-			advCollectionMap.put("glcode",
-					gstAdvanceMap.getCollectionGlCode() != null ? gstAdvanceMap.getCollectionGlCode() : "450100100");
-
-			d.getDemandDetails().add(DemandDetail.builder()
-					.demandId(d.getId())
-					.taxAmount(gstAdvanceMap.getCollectionAmount())
-					.taxHeadMasterCode("INTRIM-RECEIPT-CA")
-					.additionalDetails(advCollectionMap)
-					.build());
-
-			List<FiReport> report = demandRepository.buildCollectionFiReports(d, gstAdvanceMap);
+			List<FiReport> report = demandRepository.buildCollectionFiReports(d, flow, total, cgst, sgst, false);
 
 			collectionReportList.addAll(report);
 			demandRepository.batchInsertCollectionFiReports(collectionReportList);
@@ -361,33 +359,26 @@ public class ReceiptServiceV2 {
 				log.info("additioanl from dbbbbbbbbbbbbbbbbbbbbbbbbb" + infoList.get(0));
 			}
 			GstAdvanceMap gstAdvanceMap = extractGstAdvanceFromAdditionalDetails(infoList.get(0));
-			List<DemandDetail> filteredDetails = demandRequest.getDemands().stream()
-					.flatMap(dd -> dd.getDemandDetails().stream()) // flatten all demandDetails
-					.filter(dd -> dd.getTaxHeadMasterCode().contains("ADVANCE"))
-					.collect(Collectors.toList());
+			// Defensive: a malformed/empty payment JSON yields a null map. Substitute an
+			// empty map so total stays 0 and no FI rows are produced, instead of NPE-ing
+			// the Kafka consumer (the demand collection update has already been published).
+			if (gstAdvanceMap == null)
+				gstAdvanceMap = GstAdvanceMap.builder().build();
 
-			log.info("filtereddddddddddd detailsssss" + filteredDetails);
-			d.setDemandDetails(filteredDetails);
-			gstAdvanceMap.setCollectionAmount(gstAdvanceMap.getTotalAmountPaid());
+			FiFlow flow = determineFiFlow(demandRequest.getDemands(), gstAdvanceMap);
+			BigDecimal total = nz(gstAdvanceMap.getTotalAmountPaid());
+			BigDecimal cgst = flow == FiFlow.GST_REGULAR
+					? sumDetails(demandRequest.getDemands(), "CGST")
+					: nz(gstAdvanceMap.getCgstAmount());
+			BigDecimal sgst = flow == FiFlow.GST_REGULAR
+					? sumDetails(demandRequest.getDemands(), "SGST")
+					: nz(gstAdvanceMap.getSgstAmount());
+			log.info("Reversal FI flow={} total={} cgst={} sgst={}", flow, total, cgst, sgst);
 
-			Map<String, Object> advCollectionMap = new HashMap<>();
-			advCollectionMap.put("glcode",
-					gstAdvanceMap.getCollectionGlCode() != null ? gstAdvanceMap.getCollectionGlCode() : "450100100");
-
-			d.getDemandDetails().add(DemandDetail.builder()
-					.demandId(d.getId())
-					.taxAmount(gstAdvanceMap.getCollectionAmount())
-					.taxHeadMasterCode("INTRIM-RECEIPT-CA")
-					.additionalDetails(advCollectionMap)
-					.build());
-
-	
-
-
-			List<FiReport> report = demandRepository.buildCollectionReversalFiReports(d, gstAdvanceMap);
+			List<FiReport> report = demandRepository.buildCollectionFiReports(d, flow, total, cgst, sgst, true);
 
 			collectionReportList.addAll(report);
-	
+
 			demandRepository.batchInsertCollectionFiReports(collectionReportList);
 
 
@@ -465,15 +456,34 @@ public class ReceiptServiceV2 {
 			if (root.has("licenseAdvancePaid") && !root.get("licenseAdvancePaid").isNull()) {
 				licenseAdvancePaid = root.get("licenseAdvancePaid").decimalValue();
 			}
+
+			// ---- advance GST amounts (ROOT LEVEL advanceRentalHeads map) ----
+			// The paymentInfo.advance_CGST/advance_SGST nodes carry only a glcode (no amount),
+			// so the actual advance GST amounts are sourced from advanceRentalHeads.
+			JsonNode advanceRentalHeads = root.path("advanceRentalHeads");
+			if (advanceRentalHeads.isObject()) {
+				if (advanceRentalHeads.hasNonNull("CGST"))
+					cgstAmount = advanceRentalHeads.get("CGST").decimalValue();
+				if (advanceRentalHeads.hasNonNull("SGST"))
+					sgstAmount = advanceRentalHeads.get("SGST").decimalValue();
+			}
+
+			// Amount actually collected. Prefer totalAmountPaid (the cash received);
+			// fall back to totalDue to preserve the prior behaviour when
+			// totalAmountPaid is not populated on the payment record.
+			BigDecimal paidAmount = isPositive(info.getTotalAmountPaid())
+					? info.getTotalAmountPaid()
+					: info.getTotalDue();
+
 			log.info("rentalAdvancePaiddddddddddd" + rentalAdvancePaid);
 			return GstAdvanceMap.builder()
 					.cgstAmount(cgstAmount)
 					.cgstGlCode(cgstGl)
 					.sgstAmount(sgstAmount)
 					.sgstGlCode(sgstGl)
-					.collectionAmount(info.getTotalDue())
+					.collectionAmount(paidAmount)
 					.collectionGlCode(collectionGl)
-					.totalAmountPaid(info.getTotalDue())
+					.totalAmountPaid(paidAmount)
 					.rentalAdvancePaid(rentalAdvancePaid)
 					.licenseAdvancePaid(licenseAdvancePaid)
 					.build();
@@ -482,6 +492,69 @@ public class ReceiptServiceV2 {
 			e.printStackTrace();
 			return null;
 		}
+	}
+
+	private static boolean isPositive(BigDecimal v) {
+		return v != null && v.compareTo(BigDecimal.ZERO) > 0;
+	}
+
+	private static BigDecimal nz(BigDecimal v) {
+		return v == null ? BigDecimal.ZERO : v;
+	}
+
+	/**
+	 * Sum the taxAmount of all demand details whose taxHeadMasterCode equals the
+	 * given code (case-insensitive). Used to source the regular-collection GST
+	 * amounts from the demand's own CGST/SGST detail lines.
+	 */
+	private BigDecimal sumDetails(List<Demand> demands, String exactCode) {
+		return demands.stream()
+				.filter(d -> d.getDemandDetails() != null)
+				.flatMap(d -> d.getDemandDetails().stream())
+				.filter(dd -> exactCode.equalsIgnoreCase(dd.getTaxHeadMasterCode()))
+				.map(dd -> nz(dd.getTaxAmount()))
+				.reduce(BigDecimal.ZERO, BigDecimal::add);
+	}
+
+	/**
+	 * Determine which of the 5 emarket collection flows this payment represents.
+	 * Precedence: Deposit -> Advance -> Regular (mixed-flow payments are not split
+	 * in this iteration). GST is detected from advanceRentalHeads for advance and
+	 * from the demand's own CGST/SGST detail lines for regular collections.
+	 */
+	private FiFlow determineFiFlow(List<Demand> demands, GstAdvanceMap m) {
+
+		boolean isDeposit = demands.stream().anyMatch(d ->
+				"TX.Emarket_Deposit_Fees".equalsIgnoreCase(d.getBusinessService())
+				|| (d.getDemandDetails() != null && d.getDemandDetails().stream()
+						.anyMatch(dd -> "DEPOSIT".equalsIgnoreCase(dd.getTaxHeadMasterCode()))));
+		if (isDeposit)
+			return FiFlow.DEPOSIT;
+
+		boolean isAdvance = demands.stream()
+				.filter(d -> d.getDemandDetails() != null)
+				.flatMap(d -> d.getDemandDetails().stream())
+				.anyMatch(dd -> dd.getTaxHeadMasterCode() != null
+						&& dd.getTaxHeadMasterCode().contains("ADVANCE"))
+				|| isPositive(m.getRentalAdvancePaid())
+				|| isPositive(m.getLicenseAdvancePaid());
+
+		boolean hasGst;
+		if (isAdvance) {
+			hasGst = isPositive(m.getCgstAmount()) || isPositive(m.getSgstAmount());
+		} else {
+			hasGst = demands.stream()
+					.filter(d -> d.getDemandDetails() != null)
+					.flatMap(d -> d.getDemandDetails().stream())
+					.anyMatch(dd -> dd.getTaxHeadMasterCode() != null
+							&& dd.getTaxHeadMasterCode().contains("GST")
+							&& !"GST_CA".equalsIgnoreCase(dd.getTaxHeadMasterCode())
+							&& isPositive(dd.getTaxAmount()));
+		}
+
+		if (isAdvance)
+			return hasGst ? FiFlow.GST_ADVANCE : FiFlow.NON_GST_ADVANCE;
+		return hasGst ? FiFlow.GST_REGULAR : FiFlow.NON_GST_REGULAR;
 	}
 
 	/**
