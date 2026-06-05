@@ -48,4 +48,7 @@ public class FiReport {
     private String costCenter;
 
     private String commitmentItem;
+
+    /** One of the FiReportType codes (upmktcoll, upmktcolrev, upmktdemd, ...). */
+    private String reportType;
 }

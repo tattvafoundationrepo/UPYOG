@@ -28,6 +28,7 @@ import org.egov.demand.model.DemandCriteria;
 import org.egov.demand.model.DemandDetail;
 import org.egov.demand.model.FiFlow;
 import org.egov.demand.model.FiReport;
+import org.egov.demand.model.FiReportType;
 import org.egov.demand.model.GstAdvanceMap;
 import org.egov.demand.model.PaymentBackUpdateAudit;
 import org.egov.demand.model.PaymentMarketInfo;
@@ -332,6 +333,11 @@ public class ReceiptServiceV2 {
 
 			List<FiReport> report = demandRepository.buildCollectionFiReports(d, flow, total, cgst, sgst, false);
 
+			// Label only (accounting rows unchanged): advance present -> demand against advance, else collection.
+			String fiReportType = (flow == FiFlow.NON_GST_ADVANCE || flow == FiFlow.GST_ADVANCE)
+					? FiReportType.UPMKT_DEMDADV : FiReportType.UPMKT_COLL;
+			report.forEach(r -> r.setReportType(fiReportType));
+
 			collectionReportList.addAll(report);
 			demandRepository.batchInsertCollectionFiReports(collectionReportList);
 		} else {
@@ -376,6 +382,9 @@ public class ReceiptServiceV2 {
 			log.info("Reversal FI flow={} total={} cgst={} sgst={}", flow, total, cgst, sgst);
 
 			List<FiReport> report = demandRepository.buildCollectionFiReports(d, flow, total, cgst, sgst, true);
+
+			// Label only (accounting rows unchanged): receipt cancellation -> collection reversal.
+			report.forEach(r -> r.setReportType(FiReportType.UPMKT_COLREV));
 
 			collectionReportList.addAll(report);
 

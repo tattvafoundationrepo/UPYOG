@@ -66,6 +66,7 @@ import org.egov.demand.model.DemandDetail;
 import org.egov.demand.model.FiFlow;
 import org.egov.demand.model.MergedDemand;
 import org.egov.demand.model.FiReport;
+import org.egov.demand.model.FiReportType;
 import org.egov.demand.model.FiReportRequest;
 import org.egov.demand.model.GstAdvanceMap;
 import org.egov.demand.model.PaymentBackUpdateAudit;
@@ -254,7 +255,12 @@ public class DemandRepository {
 
 			//reportList.addAll(buildFiReportsFromDemand(demand , "50", false , null));
 			if (!"TX.Emarket_Deposit_Fees".equalsIgnoreCase(demand.getBusinessService())) {
-			    reportList.addAll(buildDemandFiReports(demand));
+			    List<FiReport> demandFiReports = buildDemandFiReports(demand);
+			    // Label only (accounting rows unchanged): dishonour demand -> discheque, else demand.
+			    String fiReportType = "TX.Emarket_Dishonor_Fees".equalsIgnoreCase(demand.getBusinessService())
+			            ? FiReportType.UPMKT_DISCHQ : FiReportType.UPMKT_DEMD;
+			    demandFiReports.forEach(r -> r.setReportType(fiReportType));
+			    reportList.addAll(demandFiReports);
 			}
 		}
 
@@ -478,61 +484,8 @@ public class DemandRepository {
         + " fund, fund_centre,"
         + " functional_area, business_area,"
         + " remarks, payment_mode_details, is_new,"
-        + " created_at, updated_at, doc_type, cost_center, commitmentitem "
-        + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? , ? , ?)";
-
-
-    jdbcTemplate.batchUpdate(sql, reports, 100, (ps, r) -> {
-
-        ps.setString(1, r.getTransactionNumber() == null ? null : String.valueOf(r.getTransactionNumber()));
-        ps.setObject(2, r.getDocDate());
-        ps.setObject(3, r.getPostingDate());
-
-        ps.setString(4, r.getReferenceNo());
-        ps.setString(5, r.getDocumentHeaderText());
-
-        ps.setString(6, r.getPostingKey());
-        ps.setString(7, r.getGlCode());
-        ps.setBigDecimal(8, r.getCollectionAmount());
-
-        ps.setString(9, r.getFund());
-        ps.setString(10, r.getFundCentre());
-        ps.setString(11, r.getFunctionalArea());
-        ps.setString(12, r.getBusinessArea());
-
-        ps.setString(13, r.getRemarks());
-        ps.setString(14, r.getPaymentModeDetails());
-        ps.setObject(15, r.getIsNew());
-
-        ps.setTimestamp(16, r.getCreatedAt() == null ? null : new Timestamp(r.getCreatedAt()));
-        ps.setTimestamp(17, r.getUpdatedAt() == null ? null : new Timestamp(r.getUpdatedAt()));
-        ps.setString(18,    r.getDocType());  
-        ps.setString(19,    r.getCostCenter());
-        ps.setString(20,    r.getCommitmentItem()); 
-    });
-
-    log.info("Batch inserted Demand {} FI Report records", reports.size());
-}
-
-
-
-
-
-
-	public void batchInsertCollectionFiReports(List<FiReport> reports) {
-
-    if (reports == null || reports.isEmpty()) return;
-
-        String sql =
-        "INSERT INTO public.eg_emarket_fi_report_collection ("
-        + " transaction_number, doc_date, posting_date,"
-        + " reference_no, document_header_text,"
-        + " posting_key, gl_code, collection_amount,"
-        + " fund, fund_centre,"
-        + " functional_area, business_area,"
-        + " remarks, payment_mode_details, is_new,"
-        + " created_at, updated_at, doc_type, cost_center, commitmentitem "
-        + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? , ? , ?)";
+        + " created_at, updated_at, doc_type, cost_center, commitmentitem, report_type "
+        + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? , ? , ? , ?)";
 
 
     jdbcTemplate.batchUpdate(sql, reports, 100, (ps, r) -> {
@@ -562,6 +515,61 @@ public class DemandRepository {
         ps.setString(18,    r.getDocType());
         ps.setString(19,    r.getCostCenter());
         ps.setString(20,    r.getCommitmentItem());
+        ps.setString(21,    r.getReportType());
+    });
+
+    log.info("Batch inserted Demand {} FI Report records", reports.size());
+}
+
+
+
+
+
+
+	public void batchInsertCollectionFiReports(List<FiReport> reports) {
+
+    if (reports == null || reports.isEmpty()) return;
+
+        String sql =
+        "INSERT INTO public.eg_emarket_fi_report_collection ("
+        + " transaction_number, doc_date, posting_date,"
+        + " reference_no, document_header_text,"
+        + " posting_key, gl_code, collection_amount,"
+        + " fund, fund_centre,"
+        + " functional_area, business_area,"
+        + " remarks, payment_mode_details, is_new,"
+        + " created_at, updated_at, doc_type, cost_center, commitmentitem, report_type "
+        + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? , ? , ? , ?)";
+
+
+    jdbcTemplate.batchUpdate(sql, reports, 100, (ps, r) -> {
+
+        ps.setString(1, r.getTransactionNumber() == null ? null : String.valueOf(r.getTransactionNumber()));
+        ps.setObject(2, r.getDocDate());
+        ps.setObject(3, r.getPostingDate());
+
+        ps.setString(4, r.getReferenceNo());
+        ps.setString(5, r.getDocumentHeaderText());
+
+        ps.setString(6, r.getPostingKey());
+        ps.setString(7, r.getGlCode());
+        ps.setBigDecimal(8, r.getCollectionAmount());
+
+        ps.setString(9, r.getFund());
+        ps.setString(10, r.getFundCentre());
+        ps.setString(11, r.getFunctionalArea());
+        ps.setString(12, r.getBusinessArea());
+
+        ps.setString(13, r.getRemarks());
+        ps.setString(14, r.getPaymentModeDetails());
+        ps.setObject(15, r.getIsNew());
+
+        ps.setTimestamp(16, r.getCreatedAt() == null ? null : new Timestamp(r.getCreatedAt()));
+        ps.setTimestamp(17, r.getUpdatedAt() == null ? null : new Timestamp(r.getUpdatedAt()));
+        ps.setString(18,    r.getDocType());
+        ps.setString(19,    r.getCostCenter());
+        ps.setString(20,    r.getCommitmentItem());
+        ps.setString(21,    r.getReportType());
     });
 
     log.info("Batch inserted {} Collection FI Report records", reports.size());
