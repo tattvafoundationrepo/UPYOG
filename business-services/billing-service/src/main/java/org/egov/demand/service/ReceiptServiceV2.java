@@ -334,8 +334,12 @@ public class ReceiptServiceV2 {
 			List<FiReport> report = demandRepository.buildCollectionFiReports(d, flow, total, cgst, sgst, false);
 
 			// Label only (accounting rows unchanged): advance present -> demand against advance, else collection.
+			// String fiReportType = (flow == FiFlow.NON_GST_ADVANCE || flow == FiFlow.GST_ADVANCE)
+			// 		? FiReportType.UPMKT_DEMDADV : FiReportType.UPMKT_COLL;
+            
 			String fiReportType = (flow == FiFlow.NON_GST_ADVANCE || flow == FiFlow.GST_ADVANCE)
-					? FiReportType.UPMKT_DEMDADV : FiReportType.UPMKT_COLL;
+			 		? FiReportType.UPMKT_COLL : FiReportType.UPMKT_COLL;
+			
 			report.forEach(r -> r.setReportType(fiReportType));
 
 			collectionReportList.addAll(report);
