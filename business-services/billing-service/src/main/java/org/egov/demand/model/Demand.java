@@ -119,9 +119,17 @@ public class Demand {
     
 
      private String fund;
-       private String fundCenter; 
+       private String fundCenter;
        private String businessArea;
        private String functionalArea;
+
+    /**
+     * In-memory marker (within a single create() request): set when this newly created demand was
+     * apportioned against a previously-collected advance. Used by DemandRepository.save() to tag the
+     * demand FI rows as UPMKT_DEMDADV. Not persisted/serialized.
+     */
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private boolean apportionedAgainstAdvance = false;
 
     /**
      * Gets or Sets status

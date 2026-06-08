@@ -70,6 +70,8 @@ import org.egov.demand.model.Demand;
 import org.egov.demand.model.DemandApportionRequest;
 import org.egov.demand.model.DemandCriteria;
 import org.egov.demand.model.DemandDetail;
+import org.egov.demand.model.FiReport;
+import org.egov.demand.model.FiReportType;
 import org.egov.demand.model.MergedDemand;
 import org.egov.demand.model.PaymentBackUpdateAudit;
 import org.egov.demand.model.UpdateBillCriteria;
@@ -415,7 +417,7 @@ public class DemandService {
 			demands = demandRepository.getDemands(demandCriteria);
 			if (!demands.isEmpty()) {
 
-				Set<String> payerUuids = demands.stream().filter(demand -> null != demand.getPayer())
+	Set<String> payerUuids = demands.stream().filter(demand -> null != demand.getPayer())
 						.map(demand -> demand.getPayer().getUuid()).collect(Collectors.toSet());
 
 				if (!CollectionUtils.isEmpty(payerUuids)) {
@@ -526,6 +528,7 @@ public class DemandService {
 			ApportionDemandResponse apportionDemandResponse = mapper.convertValue(response, ApportionDemandResponse.class);
 
 			// Added the advance settlement details if advance demand is present
+            boolean settledFromAdvance = false;
             if(!CollectionUtils.isEmpty(apportionDemandResponse.getDemands())){
 				AdvSettlement advSettlement = new AdvSettlement();
 
@@ -551,9 +554,11 @@ public class DemandService {
 				advSettlement.setTaxPeriodFrom(demand.getTaxPeriodFrom());
 				advSettlement.setTaxPeriodTo(demand.getTaxPeriodTo());
 				demandRepository.saveAdvSettlementDemandIds(advSettlement);
+				settledFromAdvance = true;
 			} 
 			}
 				
+			final boolean apportionedAgainstAdvance = settledFromAdvance;
 			// Only the current demand is to be created rest all are to be updated
 			apportionDemandResponse.getDemands().forEach(demandFromResponse -> {
 				if(demandFromResponse.getId().equalsIgnoreCase(demand.getId())){
@@ -563,6 +568,8 @@ public class DemandService {
 						demandFromResponse.setAdvanceIndex(d.getAdvanceIndex());
 					 }
 				}); 
+				  if (apportionedAgainstAdvance)
+					demandFromResponse.setApportionedAgainstAdvance(true);
 				  demandToBeCreated.add(demandFromResponse);
 				}
 				else {
