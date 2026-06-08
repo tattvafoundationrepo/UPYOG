@@ -256,9 +256,24 @@ public class DemandRepository {
 			//reportList.addAll(buildFiReportsFromDemand(demand , "50", false , null));
 			if (!"TX.Emarket_Deposit_Fees".equalsIgnoreCase(demand.getBusinessService())) {
 			    List<FiReport> demandFiReports = buildDemandFiReports(demand);
-			    // Label only (accounting rows unchanged): dishonour demand -> discheque, else demand.
-			    String fiReportType = "TX.Emarket_Dishonor_Fees".equalsIgnoreCase(demand.getBusinessService())
-			            ? FiReportType.UPMKT_DISCHQ : FiReportType.UPMKT_DEMD;
+			    // Label only (accounting rows unchanged). This is a demand FI row, so it always goes
+			    // through batchInsertDemandFiReports. Report type:
+			    //   - demand created already settled (collectionAmount == taxAmount, e.g. a pending demand
+			    //     collected from an advance) -> demand against advance (only in this case);
+			    //   - dishonour demand -> discheque;
+			    //   - otherwise -> demand.
+			    boolean settledAtCreation = demand.getDemandDetails().stream()
+			            .anyMatch(dd -> dd.getTaxAmount() != null && dd.getCollectionAmount() != null
+			                    && dd.getTaxAmount().compareTo(BigDecimal.ZERO) != 0
+			                    && dd.getTaxAmount().compareTo(dd.getCollectionAmount()) == 0);
+			    String fiReportType;
+			    if (settledAtCreation) {
+			        fiReportType = FiReportType.UPMKT_DEMDADV;
+			    } else if ("TX.Emarket_Dishonor_Fees".equalsIgnoreCase(demand.getBusinessService())) {
+			        fiReportType = FiReportType.UPMKT_DISCHQ;
+			    } else {
+			        fiReportType = FiReportType.UPMKT_DEMD;
+			    }
 			    demandFiReports.forEach(r -> r.setReportType(fiReportType));
 			    reportList.addAll(demandFiReports);
 			}
