@@ -129,7 +129,13 @@ public class ActionService {
 		Set<Role> applicableRoles = new HashSet<>();
 
 		for(Role role : roles){
-			if(requestTenantIds.contains(role.getTenantId()) || role.getTenantId().equalsIgnoreCase(stateLevelTenantId)){
+			// A role is applicable when it is granted at the exact request tenant, at the
+			// state-level tenant, or at any tenant within the same state as the request
+			// (e.g. a ward/city role like "mh.mumbai.zone1.wardc.221" is valid for an
+			// "mh.mumbai" request because both resolve to the "mh" state).
+			if(requestTenantIds.contains(role.getTenantId())
+					|| role.getTenantId().equalsIgnoreCase(stateLevelTenantId)
+					|| getStateLevelTenant(role.getTenantId()).equalsIgnoreCase(stateLevelTenantId)){
 				applicableRoles.add(role);
 			}
 		}
