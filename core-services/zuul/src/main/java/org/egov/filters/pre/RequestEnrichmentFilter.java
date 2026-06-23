@@ -119,6 +119,7 @@ public class RequestEnrichmentFilter extends ZuulFilter {
         HashMap<String, Object> requestInfo = requestBodyInspector.getRequestInfo();
         if (requestInfo == null) {
             logger.info(SKIPPED_BODY_ENRICHMENT_DUE_TO_NO_KNOWN_FIELD_MESSAGE);
+            replayRequestBody(ctx, requestBodyInspector.getRequestBody());
             return;
         }
         logger.info("Before update: "+requestInfo.toString());
@@ -136,6 +137,12 @@ public class RequestEnrichmentFilter extends ZuulFilter {
     private RequestBodyInspector getRequestBodyInspector(RequestContext ctx) throws IOException {
         HashMap<String, Object> requestBody = getRequestBody(ctx);
         return new RequestBodyInspector(requestBody);
+    }
+
+    private void replayRequestBody(RequestContext ctx, HashMap<String, Object> requestBody) throws JsonProcessingException {
+        CustomRequestWrapper requestWrapper = new CustomRequestWrapper(ctx.getRequest());
+        requestWrapper.setPayload(objectMapper.writeValueAsString(requestBody));
+        ctx.setRequest(requestWrapper);
     }
 
     private void setCorrelationId(HashMap<String, Object> requestInfo) {

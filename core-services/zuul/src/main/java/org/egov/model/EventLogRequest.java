@@ -1,6 +1,7 @@
 package org.egov.model;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.netflix.zuul.context.RequestContext;
 import lombok.AllArgsConstructor;
@@ -12,6 +13,7 @@ import org.apache.commons.io.IOUtils;
 import org.egov.Utils.Utils;
 import org.egov.contract.User;
 
+import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -25,6 +27,7 @@ import static org.egov.constants.RequestContextConstants.*;
 @Slf4j
 public class EventLogRequest {
     private static final ObjectMapper objectMapper = new ObjectMapper();
+    private static final String USER_OTP_SEND_URI = "/user-otp/v1/_send";
 
     Object requestBody;
 
@@ -35,6 +38,8 @@ public class EventLogRequest {
     String url;
     String responseContentType;
     String queryParams;
+    String clientIp;
+    String loginUser;
     Integer uid;
     String username;
 
@@ -114,6 +119,11 @@ public class EventLogRequest {
             userId = user.getId();
         }
 
+        String loginUser = getLoginUser(ctx, body);
+        if (isLoginAuditRequest(ctx)) {
+            body = null;
+        }
+
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US);
         Date date = new Date(startTime);
         formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
@@ -127,6 +137,8 @@ public class EventLogRequest {
             .userType(userType)
             .responseBody(responseBody)
             .queryParams(ctx.getRequest().getQueryString())
+            .clientIp(getClientIp(ctx.getRequest()))
+            .loginUser(loginUser)
             .correlationId((String) ctx.get(CORRELATION_ID_KEY))
             .statusCode(ctx.getResponseStatusCode())
             .timestamp(formatter.format(date))
@@ -137,5 +149,49 @@ public class EventLogRequest {
             .url(ctx.getRequest().getRequestURI()).build();
 
         return req;
+    }
+
+    private static String getLoginUser(RequestContext ctx, Object capturedBody) {
+        if (!isLoginAuditRequest(ctx)) {
+            return "";
+        }
+
+        try {
+            String body = getRequestBody(ctx, capturedBody);
+            if (body == null || body.isEmpty()) {
+                return "";
+            }
+            JsonNode otp = objectMapper.readTree(body).path("otp");
+            return otp.path("mobileNumber").asText("");
+        } catch (Exception e) {
+            log.debug("Exception while extracting login user", e);
+            return "";
+        }
+    }
+
+    private static String getRequestBody(RequestContext ctx, Object capturedBody) throws IOException {
+        Object sanitizedBody = ctx.get(CURRENT_REQUEST_SANITIZED_BODY_STR);
+        if (sanitizedBody instanceof String) {
+            return (String) sanitizedBody;
+        }
+        if (capturedBody instanceof String) {
+            return (String) capturedBody;
+        }
+        return IOUtils.toString(ctx.getRequest().getInputStream());
+    }
+
+    private static boolean isLoginAuditRequest(RequestContext ctx) {
+        return USER_OTP_SEND_URI.equals(ctx.getRequest().getRequestURI());
+    }
+
+    private static String getClientIp(HttpServletRequest request) {
+        String ip = request.getHeader("X-Real-IP");
+        if (ip == null || ip.isEmpty()) {
+            String forwardedFor = request.getHeader("X-Forwarded-For");
+            ip = (forwardedFor != null && !forwardedFor.isEmpty())
+                ? forwardedFor.split(",")[0].trim()
+                : request.getRemoteAddr();
+        }
+        return ip;
     }
 }
