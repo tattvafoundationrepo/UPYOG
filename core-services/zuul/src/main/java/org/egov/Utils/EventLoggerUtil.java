@@ -18,9 +18,6 @@ public class EventLoggerUtil {
     @Autowired
     Producer producer;
 
-    @Autowired
-    ObjectMapper objectMapper;
-
     @Value("${eventlog.captureInputBody:false}")
     private boolean captureInputBody;
 
@@ -44,7 +41,10 @@ public class EventLoggerUtil {
     public Object logCurrentRequest(String topic){
         try {
             EventLogRequest request = EventLogRequest.fromRequestContext(RequestContext.getCurrentContext(), criteria);
-            log.info("LOGIN_AUDIT {}", objectMapper.writeValueAsString(request));
+            try {
+                log.info("LOGIN_AUDIT {}", new ObjectMapper().writeValueAsString(request));
+            } catch (Exception ignore) {
+            }
             producer.push(topic, request);
         } catch (Exception ex) {
             log.error("event logger", ex);
