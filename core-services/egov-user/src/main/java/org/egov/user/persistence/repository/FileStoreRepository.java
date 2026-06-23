@@ -35,7 +35,9 @@ public class FileStoreRepository {
      */
     public Map<String, String> getUrlByFileStoreId(String tenantId, List<String> fileStoreIds) throws Exception {
         Map<String, String> fileStoreUrls = null;
-        tenantId = tenantId.split("\\.")[0];
+        // Query filestore with the full (ULB-level) tenantId as-is. Filestore stores each
+        // artifact against the exact tenantId used at upload time (e.g. "mh.mumbai"), so
+        // stripping to the state-level tenant ("mh") would never match the stored record.
 
         String idLIst = fileStoreIds.toString().substring(1, fileStoreIds.toString().length() - 1).replace(", ", ",");
         log.info("idLIst: " + idLIst);
