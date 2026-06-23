@@ -231,9 +231,11 @@ public class UserService {
         user.setDefaultPasswordExpiry(defaultPasswordExpiryInDays);
         user.setTenantId(getStateLevelTenantForCitizen(user.getTenantId(), user.getType()));
         User persistedNewUser = persistNewUser(user);
-        return encryptionDecryptionUtil.decryptObject(persistedNewUser, "UserSelf", User.class, requestInfo);
-
         /* decrypt here  because encrypted data coming from DB*/
+        User decryptedNewUser = encryptionDecryptionUtil.decryptObject(persistedNewUser, "UserSelf", User.class, requestInfo);
+        /* resolve the stored fileStoreId to a fileStore url in the response payload */
+        setFileStoreUrlsByFileStoreIds(Collections.singletonList(decryptedNewUser));
+        return decryptedNewUser;
 
     }
 
@@ -368,6 +370,8 @@ public class UserService {
 
         User encryptedUpdatedUserfromDB = getUserByUuid(user.getUuid());
         User decryptedupdatedUserfromDB = encryptionDecryptionUtil.decryptObject(encryptedUpdatedUserfromDB, "UserSelf", User.class, requestInfo);
+        /* resolve the stored fileStoreId to a fileStore url in the response payload */
+        setFileStoreUrlsByFileStoreIds(Collections.singletonList(decryptedupdatedUserfromDB));
         return decryptedupdatedUserfromDB;
     }
 
