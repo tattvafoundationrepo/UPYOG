@@ -90,7 +90,16 @@ public class DemandCriteria {
 	private String status;
 	
 	private Boolean isPaymentCompleted;
-	
+
+	/**
+	 * Consumer-level dues filter for _searchMerged, as opposed to isPaymentCompleted which is a
+	 * per-demand flag. TRUE keeps only consumers with nothing outstanding across all their demands;
+	 * FALSE keeps only those with at least one unpaid active demand. isPaymentCompleted cannot
+	 * express this: filtering demands to the paid ones still returns a consumer who is paid on one
+	 * demand and defaulting on another.
+	 */
+	private Boolean isFullyPaid;
+
 	private Boolean isAdvance;
 	@Default
 	private Boolean receiptRequired=false;

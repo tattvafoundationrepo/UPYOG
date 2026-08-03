@@ -187,7 +187,7 @@ public class DemandQueryBuilder {
 			+ "    INNER JOIN egbs_demanddetail_v1 dmdl ON dmd.id = dmdl.demandid AND dmd.tenantid = dmdl.tenantid "
 			+ "    LEFT JOIN eg_emarket_allotment eea ON regexp_replace(dmd.consumercode, '[^0-9]', '', 'g') = eea.license_number "
 			+ "    LEFT JOIN eg_emarket_licensee_master eelm ON eea.license_id = eelm.licensee_id "
-			+ "    WHERE %s "
+			+ "    WHERE %1$s "
 			+ "), "
 			+ "detail_agg AS ( "
 			+ "    SELECT did, "
@@ -251,14 +251,17 @@ public class DemandQueryBuilder {
 			+ "    FROM demand_info "
 			+ "    GROUP BY base_code "
 			+ "), "
+			// %2$s — empty for every existing caller. The dashboard dues drill-down injects DUES_CTE here.
+			+ "%2$s"
 			+ "all_base_codes AS ( "
-			+ "    SELECT base_code FROM consumer_info ORDER BY base_code "
+			// %3$s — empty for every existing caller; the dues drill-down injects its WHERE here.
+			+ "    SELECT base_code FROM consumer_info %3$sORDER BY base_code "
 			+ "), "
 			+ "total_count_cte AS ( "
 			+ "    SELECT COUNT(*) AS total_count FROM all_base_codes "
 			+ "), "
 			+ "paginated_codes AS ( "
-			+ "    SELECT base_code FROM all_base_codes %s "
+			+ "    SELECT base_code FROM all_base_codes %6$s "
 			+ "), "
 			+ "merged AS ( "
 			+ "    SELECT pc.base_code AS consumer_code, "
@@ -267,8 +270,11 @@ public class DemandQueryBuilder {
 			+ "           ct.first_created_time, ct.last_modified_time, "
 			+ "           CASE WHEN ct.paid_active_count + ct.unpaid_active_count > 0 "
 			+ "                THEN 'ACTIVE' ELSE 'INACTIVE' END AS overall_status, "
-			+ "           (ct.unpaid_active_count = 0) AS is_fully_paid, "
-			+ "           (ct.paid_active_count > 0 AND ct.unpaid_active_count > 0) AS has_partial_payment, "
+			// %4$s / %5$s — the ORIGINAL count-based expressions unless the dashboard dues filter is in
+			// play; see DUES_* below. Callers that send no isFullyPaid get exactly the text that was
+			// here before.
+			+ "           %4$s AS is_fully_paid, "
+			+ "           %5$s AS has_partial_payment, "
 			+ "           array_agg(DISTINCT sa.businessservice ORDER BY sa.businessservice) AS business_services, "
 			+ "           json_object_agg(sa.businessservice, json_build_object( "
 			+ "               'demands', sa.service_demands, "
@@ -296,6 +302,54 @@ public class DemandQueryBuilder {
 			+ "             ct.unpaid_active_count, ct.paid_active_count "
 			+ ") "
 			+ "SELECT m.*, tc.total_count FROM merged m CROSS JOIN total_count_cte tc ORDER BY m.consumer_code ";
+
+	// ---------------------------------------------------------------------------------------------
+	// Dashboard-only additions for the eMarket "Licensee Payment Status" drill-down (isFullyPaid).
+	//
+	// These are ADDITIVE: when criteria.getIsFullyPaid() is null every fragment below resolves to the
+	// string that was hard-coded in the query before, so the SQL executed for every pre-existing caller
+	// is byte-for-byte what it always was. Nothing here runs unless the dashboard asks for it.
+	// ---------------------------------------------------------------------------------------------
+
+	/** The pre-existing expressions — the defaults, so untouched callers see no change at all. */
+	private static final String DEFAULT_IS_FULLY_PAID = "(ct.unpaid_active_count = 0)";
+	private static final String DEFAULT_HAS_PARTIAL_PAYMENT =
+			"(ct.paid_active_count > 0 AND ct.unpaid_active_count > 0)";
+
+	/**
+	 * Outstanding balance per consumer. Injected only for the dues drill-down. Deliberately an AMOUNT
+	 * test rather than a count of ispaymentcompleted flags: that column defaults to false at insert and
+	 * is only flipped on the payment back-update path, so a demand settled from advance at creation
+	 * keeps ispaymentcompleted = false forever and would strand its consumer under "dues pending".
+	 * Summed off service_agg, i.e. the same ACTIVE-only, CARRYFORWARD-excluded totals the response
+	 * already reports as total_remaining_amount.
+	 */
+	private static final String DUES_CTE =
+			"consumer_dues AS ( "
+			+ "    SELECT base_code, "
+			+ "           COALESCE(SUM(svc_tax_total) - SUM(svc_coll_total), 0) AS remaining_amount "
+			+ "    FROM service_agg "
+			+ "    GROUP BY base_code "
+			+ "), ";
+
+	/**
+	 * Applied to all_base_codes and not to filtered_demands: "this licensee owes nothing" is a
+	 * statement about the consumer as a whole, so it can only be evaluated once the per-consumer
+	 * balance is known. Filtering the demands themselves would instead keep every consumer who has at
+	 * least one demand of the requested kind. A semi-join on a GROUP BY base_code result, so it cannot
+	 * fan out the row count that total_count_cte and the paging below depend on.
+	 */
+	private static String duesWhereClause(Boolean isFullyPaid) {
+		return "WHERE base_code IN (SELECT base_code FROM consumer_dues WHERE remaining_amount "
+				+ (Boolean.TRUE.equals(isFullyPaid) ? "<= 0" : "> 0") + ") ";
+	}
+
+	/** Keeps the row's own paid/pending badge consistent with the dues filter that selected it. */
+	private static final String DUES_IS_FULLY_PAID =
+			"(COALESCE(SUM(sa.svc_tax_total) - SUM(sa.svc_coll_total), 0) <= 0)";
+	private static final String DUES_HAS_PARTIAL_PAYMENT =
+			"(COALESCE(SUM(sa.svc_coll_total), 0) > 0"
+			+ " AND COALESCE(SUM(sa.svc_tax_total) - SUM(sa.svc_coll_total), 0) > 0)";
 
 	public String getMergedDemandQuery(DemandCriteria criteria, List<Object> preparedStmtList) {
 
@@ -378,7 +432,18 @@ public class DemandQueryBuilder {
 			preparedStmtList.add(criteria.getOffset());
 		}
 
-		String query = String.format(MERGED_DEMAND_BASE_QUERY, where.toString(), pagingClause.toString());
+		// Dashboard dues drill-down. All four fragments are constant text with no bind parameter, so
+		// preparedStmtList — and therefore the existing parameter ordering — is untouched either way.
+		// With no isFullyPaid these resolve to the expressions that were previously hard-coded in the
+		// query, making the emitted SQL identical to what every existing caller has always run.
+		boolean duesFilter = criteria.getIsFullyPaid() != null;
+		String duesCte = duesFilter ? DUES_CTE : "";
+		String duesWhere = duesFilter ? duesWhereClause(criteria.getIsFullyPaid()) : "";
+		String isFullyPaidExpr = duesFilter ? DUES_IS_FULLY_PAID : DEFAULT_IS_FULLY_PAID;
+		String hasPartialExpr = duesFilter ? DUES_HAS_PARTIAL_PAYMENT : DEFAULT_HAS_PARTIAL_PAYMENT;
+
+		String query = String.format(MERGED_DEMAND_BASE_QUERY, where.toString(), duesCte, duesWhere,
+				isFullyPaidExpr, hasPartialExpr, pagingClause.toString());
 		log.info("merged demand query: {}", query);
 		return query;
 	}
