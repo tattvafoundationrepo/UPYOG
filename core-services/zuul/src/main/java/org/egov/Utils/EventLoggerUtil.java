@@ -1,5 +1,6 @@
 package org.egov.Utils;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.netflix.zuul.context.RequestContext;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.model.EventLogRequest;
@@ -40,6 +41,10 @@ public class EventLoggerUtil {
     public Object logCurrentRequest(String topic){
         try {
             EventLogRequest request = EventLogRequest.fromRequestContext(RequestContext.getCurrentContext(), criteria);
+            try {
+                log.info("LOGIN_AUDIT {}", new ObjectMapper().writeValueAsString(request));
+            } catch (Exception ignore) {
+            }
             producer.push(topic, request);
         } catch (Exception ex) {
             log.error("event logger", ex);
