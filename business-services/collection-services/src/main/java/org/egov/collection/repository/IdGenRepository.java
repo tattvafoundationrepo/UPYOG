@@ -57,8 +57,14 @@ public class IdGenRepository {
     public String generateTransactionNumber(RequestInfo requestInfo, String tenantId) {
         log.debug("Attempting to generate Transaction Number from ID Gen");
 
-        String splitTenant = tenantId.contains(".") ? tenantId.split("\\.")[1] : tenantId;
-        String tenantFormat = COLL_TRANSACTION_FORMAT.replace("{tenant}", splitTenant);
+        String configuredPrefix = applicationProperties.getTransactionNumberPrefix();
+        String prefix;
+        if (configuredPrefix != null && !configuredPrefix.trim().isEmpty()) {
+            prefix = configuredPrefix.trim();
+        } else {
+            prefix = tenantId.contains(".") ? tenantId.split("\\.")[1] : tenantId;
+        }
+        String tenantFormat = COLL_TRANSACTION_FORMAT.replace("{tenant}", prefix);
 
 
         return getId(requestInfo, tenantId, COLL_TRANSACTION_ID_NAME, tenantFormat, 1);
