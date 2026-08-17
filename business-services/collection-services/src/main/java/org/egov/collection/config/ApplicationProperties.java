@@ -140,6 +140,13 @@ public class ApplicationProperties {
     @Value("${receiptnumber.state.level.format}")
     private String receiptNumberStateLevelFormat;
 
+    /**
+     * Optional override for the prefix of the generated transaction number.
+     * When blank, the prefix is derived from the tenant id as before.
+     */
+    @Value("${collection.transaction.number.prefix:}")
+    private String transactionNumberPrefix;
+
     @Value("${collection.receipts.search.paginate}")
     private boolean receiptsSearchPaginationEnabled;
 
