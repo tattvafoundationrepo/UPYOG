@@ -146,6 +146,8 @@ public class DemandRepository {
 	private static final String GL_SGST_PAYABLE = "350200422";
 	private static final String GL_CGST_ADVANCE = "439300200";
 	private static final String GL_SGST_ADVANCE = "439300201";
+	/** Rental/licence advance held against future demands. */
+	private static final String GL_ADVANCE = "350410215";
 
 	/** Only rental demands carry GST that can be netted against an advance. */
 	private static final String BS_RENTAL = "TX.Emarket_Rental_Fees";
@@ -928,8 +930,7 @@ public class DemandRepository {
 		return paymentId;
 	}
 
-	public List<PaymentMarketInfo> getMarketEssentialInfo(String demandId) {
-		String sql =
+	private static final String MARKET_ESSENTIAL_INFO_SQL =
         "SELECT ep2.paymentmode, " +
          "       eem.fund_center, " +
          "       eem.fund, " +
@@ -946,10 +947,7 @@ public class DemandRepository {
          "JOIN eg_emarket_markets eem ON eea2.market_id = eem.market_id " +
         "WHERE eb.demandid = ?";
 
-        List<PaymentMarketInfo> result = jdbcTemplate.query(
-        sql,
-        new Object[]{ demandId },
-        new RowMapper<PaymentMarketInfo>() {
+	private static final RowMapper<PaymentMarketInfo> MARKET_INFO_ROW_MAPPER = new RowMapper<PaymentMarketInfo>() {
             @Override
             public PaymentMarketInfo mapRow(ResultSet rs, int rowNum) throws SQLException {
                 PaymentMarketInfo info = new PaymentMarketInfo();
@@ -965,10 +963,47 @@ public class DemandRepository {
                 info.setTransactionNumber(rs.getString("transactionnumber"));
                 return info;
             }
-        }
-       ); 
-	   return result;
+        };
 
+	public List<PaymentMarketInfo> getMarketEssentialInfo(String demandId) {
+		return jdbcTemplate.query(MARKET_ESSENTIAL_INFO_SQL, new Object[] { demandId }, MARKET_INFO_ROW_MAPPER);
+	}
+
+	/**
+	 * The same lookup, narrowed to the payment currently being processed.
+	 *
+	 * <p>The unfiltered query returns one row per (bill, payment) the demand has ever appeared on,
+	 * with no ORDER BY, and every caller then takes {@code get(0)}. For a demand paid more than once
+	 * — a dishonoured cheque followed by cash, say — that is an arbitrary pick, and it supplies the
+	 * total paid, the advance JSON and the payment mode. Licence 5000007527 posted a ₹2,569 cash
+	 * receipt as ₹2,106 because the row chosen was the bounced cheque's.
+	 *
+	 * <p>The market dimensions (fund, fund centre, business area, functional area) are invariant
+	 * across the rows — they come from the allotment/market join, and no demand in the database
+	 * resolves to more than one fund centre — so narrowing can only ever change the five
+	 * payment-derived fields, which is precisely the intent.
+	 *
+	 * <p>Falls back to the unfiltered result when the transaction number is absent or matches
+	 * nothing, so this can only ever refine the choice of row, never remove a posting.
+	 */
+	public List<PaymentMarketInfo> getMarketEssentialInfo(String demandId, String transactionNumber) {
+
+		if (transactionNumber == null || transactionNumber.trim().isEmpty())
+			return getMarketEssentialInfo(demandId);
+
+		List<PaymentMarketInfo> filtered = jdbcTemplate.query(
+				MARKET_ESSENTIAL_INFO_SQL
+						+ " AND ep2.transactionnumber = ? "
+						+ "ORDER BY ep2.transactiondate ASC, ep2.transactionnumber ASC",
+				new Object[] { demandId, transactionNumber },
+				MARKET_INFO_ROW_MAPPER);
+
+		if (filtered.isEmpty()) {
+			log.warn("No payment row for demand {} and transaction {}; falling back to the unfiltered lookup",
+					demandId, transactionNumber);
+			return getMarketEssentialInfo(demandId);
+		}
+		return filtered;
 	}
 
 
@@ -1669,6 +1704,41 @@ private FiReport fiRow(Demand demand, String glCode, String postingKey,
             .build();
 }
 
+/**
+ * Was this receipt originally posted as a SPLIT mixed voucher (an advance leg and a regular
+ * leg), rather than as one voucher booking everything to the advance account?
+ *
+ * <p>A cancellation must give back exactly what was posted. The split is behind a property, so
+ * a receipt taken before it was switched on — or after it was switched back off — would
+ * otherwise be reversed under today's rules rather than the ones it was booked under, leaving
+ * the advance account and the receivable each wrong by the arrears portion. Reading the posted
+ * document instead makes the reversal symmetric no matter how the flag has moved since.
+ *
+ * <p>Identified by the pair of pk-50 legs only a split voucher carries: the advance AND the
+ * receivable. A single advance voucher credits only 350410215; a pure regular voucher credits
+ * only the receivable.
+ */
+public boolean wasCollectionSplit(String transactionNumber) {
+
+    if (transactionNumber == null || transactionNumber.trim().isEmpty())
+        return false;
+
+    String sql =
+        "SELECT count(DISTINCT gl_code) FROM public.eg_emarket_fi_report_collection " +
+        "WHERE document_header_text = ? AND report_type = ? " +
+        "  AND posting_key = '50' AND gl_code IN ('431409936', '350410215')";
+
+    try {
+        Integer distinctLegs = jdbcTemplate.queryForObject(sql,
+                new Object[] { transactionNumber, FiReportType.UPMKT_COLL }, Integer.class);
+        return distinctLegs != null && distinctLegs == 2;
+    } catch (DataAccessException e) {
+        log.error("Could not tell whether receipt {} was posted as a split voucher; "
+                + "reversing it as a single voucher", transactionNumber, e);
+        return false;
+    }
+}
+
 /** True for the CGST/SGST Advance asset GLs that must clear against a demand's netting leg. */
 private boolean isGstAdvanceGl(String glCode) {
     return GL_CGST_ADVANCE.equals(glCode) || GL_SGST_ADVANCE.equals(glCode);
@@ -1834,6 +1904,167 @@ public List<FiReport> buildAdvanceSettlementReversalFiReports(String settledDema
         log.error("Could not read the advance-settlement leg to reverse for demand {}", settledDemandId, e);
         return Collections.emptyList();
     }
+}
+
+/**
+ * GLs that can never be a demand's receivable — the advance account itself and the four GST
+ * legs. Everything else a demand document debits is, by construction, the receivable.
+ */
+private static final String NON_RECEIVABLE_GLS =
+        "'350410215','350200421','350200422','439300200','439300201'";
+
+/**
+ * Relieve the receivable of a PRE-EXISTING demand that an apportion has just settled from the
+ * licensee's advance.
+ *
+ * <p>{@code DemandService.apportionAdvanceIfExist} spreads an advance across every open demand
+ * of a licensee, but only the demand being CREATED is routed through {@link #save}, which
+ * writes FI. The others go to {@link #update}, which writes none — so their dues are marked
+ * collected in the ledger while the receivable they were raised against stays open for ever.
+ *
+ * <p>The missing document is <em>not</em> the one {@code save()} emits. The revenue credits were
+ * already posted when the demand itself was created; re-emitting them would double-count income.
+ * All that is missing is the two-line relief:
+ *
+ * <pre>
+ *   Dr 350410215                        (the advance is drawn down)
+ *   Cr &lt;the demand's own receivable GL&gt;  (the dues are cleared)
+ * </pre>
+ *
+ * <p>The GL and all four FI dimensions are read back from the demand's OWN forward document
+ * rather than taken from the Demand object. A demand raised before the receivable-GL cutover
+ * sits on 431190300, and crediting today's GL would leave the old account overstated for ever;
+ * and the Demand objects reaching this path come from the apportion service without fund,
+ * fundCentre, businessArea or functionalArea at all.
+ *
+ * <p>Idempotent by construction: the amount is capped at the receivable still open on the
+ * demand, so a replay finds nothing left to relieve and posts nothing. A demand with no forward
+ * document, or none still open, emits nothing at all — relief is never invented for a receivable
+ * that was never booked.
+ *
+ * <p>Deliberately writes no {@code eg_emarket_demand_settlement_info} row. That table drives the
+ * cancellation unwind in {@code ReceiptServiceV2}, which zeroes <em>every</em> positive
+ * collection amount on the demands it finds; listing a pre-existing demand there would let the
+ * cancellation of an advance also wipe cash collected against the same demand. The relief posted
+ * here is still residual-based, so {@link #buildAdvanceSettlementReversalFiReports} unwinds it
+ * correctly whenever it is invoked for the demand.
+ */
+@Transactional
+public void postAdvanceSettlementFiReports(Map<String, BigDecimal> settlements) {
+
+    if (settlements == null || settlements.isEmpty())
+        return;
+
+    // The receivable is the only GL a demand document debits once the advance and GST legs are
+    // excluded; revenue is credited, so its signed balance is negative and the HAVING drops it.
+    String sql =
+        "SELECT gl_code, " +
+        "       SUM(CASE WHEN posting_key = '40' THEN collection_amount ELSE -collection_amount END) AS residual, " +
+        "       MIN(doc_date) AS doc_date, MIN(reference_no) AS reference_no, " +
+        "       MIN(document_header_text) AS document_header_text, MIN(assignment) AS assignment, " +
+        "       MIN(fund) AS fund, MIN(fund_centre) AS fund_centre, " +
+        "       MIN(functional_area) AS functional_area, MIN(business_area) AS business_area " +
+        "FROM public.eg_emarket_fi_report " +
+        "WHERE transaction_number = ? AND gl_code NOT IN (" + NON_RECEIVABLE_GLS + ") " +
+        "GROUP BY gl_code " +
+        "HAVING SUM(CASE WHEN posting_key = '40' THEN collection_amount ELSE -collection_amount END) > 0 " +
+        "ORDER BY 2 DESC LIMIT 1";
+
+    long now = System.currentTimeMillis();
+    List<FiReport> rows = new ArrayList<>();
+
+    for (Map.Entry<String, BigDecimal> entry : settlements.entrySet()) {
+
+        String demandId = entry.getKey();
+        BigDecimal settled = entry.getValue();
+        if (demandId == null || settled == null || settled.signum() <= 0)
+            continue;
+
+        try {
+            // Taken BEFORE the residual is read. The cap is read-then-write, so two concurrent
+            // /demand/_create calls apportioning the same pre-existing demand would otherwise
+            // both see the full receivable open and both relieve it. Locking after the read
+            // would serialise the writes but not the decision, which is the part that matters.
+            lockAdvanceSettlement(demandId);
+
+            List<Map<String, Object>> forward = jdbcTemplate.queryForList(sql, new Object[] { demandId });
+            if (forward.isEmpty()) {
+                log.warn("Demand {} has no open receivable to relieve; advance settlement of {} posts no FI",
+                        demandId, settled);
+                continue;
+            }
+
+            Map<String, Object> fwd = forward.get(0);
+            BigDecimal residual = (BigDecimal) fwd.get("residual");
+            BigDecimal amount = settled.min(residual);
+            if (amount.signum() <= 0)
+                continue;
+
+            if (amount.compareTo(settled) != 0)
+                log.warn("Advance settlement of {} on demand {} capped to the {} still open on {}",
+                        settled, demandId, amount, fwd.get("gl_code"));
+
+            Long docDate = (Long) fwd.get("doc_date");
+
+            rows.add(settlementReliefRow(demandId, fwd, GL_ADVANCE, "40", "Advance", amount, docDate, now));
+            rows.add(settlementReliefRow(demandId, fwd, (String) fwd.get("gl_code"), "50",
+                    "Receivable from Mun Mkt", amount, docDate, now));
+
+            log.info("Advance-settlement relief for demand {}: Dr {} / Cr {} {}",
+                    demandId, GL_ADVANCE, fwd.get("gl_code"), amount);
+
+        } catch (DataAccessException e) {
+            log.error("Could not post the advance-settlement relief for demand {}", demandId, e);
+        }
+    }
+
+    if (!rows.isEmpty())
+        batchInsertDemandFiReports(rows);
+}
+
+/**
+ * Serialise advance-settlement relief for one demand across concurrent requests. Keyed on the
+ * demand rather than the licensee: that is exactly the row whose residual is being read and
+ * written, and it keeps this off the lock {@link #save} takes for the GST net-off, so the two
+ * paths cannot deadlock against each other. Transaction-scoped, released at commit or rollback.
+ * A failure to acquire is logged and ignored — the residual cap still bounds the relief, it
+ * merely loses the cross-request guarantee.
+ */
+private void lockAdvanceSettlement(String demandId) {
+    try {
+        jdbcTemplate.query("SELECT pg_advisory_xact_lock(hashtext(?))",
+                new Object[] { "adv-settle:" + demandId }, rs -> null);
+    } catch (DataAccessException e) {
+        log.warn("Could not take the advance-settlement lock for demand {}; continuing without it",
+                demandId, e);
+    }
+}
+
+/** One relief leg, taking its dimensions and dates from the demand's own forward document. */
+private FiReport settlementReliefRow(String demandId, Map<String, Object> fwd, String glCode,
+                                     String postingKey, String remarks, BigDecimal amount,
+                                     Long docDate, long now) {
+    return FiReport.builder()
+            .transactionNumber(demandId)
+            .docDate(docDate)
+            .postingDate(docDate)
+            .referenceNo((String) fwd.get("reference_no"))
+            .documentHeaderText((String) fwd.get("document_header_text"))
+            .postingKey(postingKey)
+            .glCode(glCode)
+            .collectionAmount(amount)
+            .fund((String) fwd.get("fund"))
+            .fundCentre((String) fwd.get("fund_centre"))
+            .functionalArea((String) fwd.get("functional_area"))
+            .businessArea((String) fwd.get("business_area"))
+            .assignment((String) fwd.get("assignment"))
+            .remarks(remarks)
+            .reportType(FiReportType.UPMKT_DEMDADV)
+            .docType("YX")
+            .isNew(Boolean.TRUE)
+            .createdAt(now)
+            .updatedAt(now)
+            .build();
 }
 
 /** One netting-reversal leg, taking its dimensions from the aggregated original rows. */

@@ -46,6 +46,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -108,6 +109,14 @@ public class DemandService {
 	@Autowired
 	private DemandRepository demandRepository;
 
+	/**
+	 * Post the relief voucher for a pre-existing demand that an apportion settles from an
+	 * advance. Off by default: with it false this class behaves exactly as it did before, since
+	 * the settlement map is never populated and no new call is made.
+	 */
+	@org.springframework.beans.factory.annotation.Value("${emarket.fi.advance.settlement.existing.demand.enabled:false}")
+	private boolean advanceSettlementFiEnabled;
+
 	@Autowired
 	private ApplicationProperties applicationProperties;
 
@@ -164,12 +173,16 @@ public class DemandService {
 
 		List<Demand> demandsToBeCreated = new ArrayList<>();
 		List<Demand> demandToBeUpdated = new ArrayList<>();
+		// Dues of PRE-EXISTING demands that this apportion settles from the licensee's advance,
+		// by demand id. Populated only when the feature is enabled; see
+		// DemandRepository.postAdvanceSettlementFiReports for why they need a voucher of their own.
+		Map<String, BigDecimal> advanceSettlements = new LinkedHashMap<>();
 
 		String businessService = demandRequest.getDemands().get(0).getBusinessService();
 		Boolean isAdvanceAllowed = util.getIsAdvanceAllowed(businessService, mdmsData);
 
 		if(isAdvanceAllowed){
-			apportionAdvanceIfExist(demandRequest,mdmsData,demandsToBeCreated,demandToBeUpdated);
+			apportionAdvanceIfExist(demandRequest,mdmsData,demandsToBeCreated,demandToBeUpdated,advanceSettlements);
 		}
 		else {
 			demandsToBeCreated.addAll(demandRequest.getDemands());
@@ -184,6 +197,14 @@ public class DemandService {
 
 		if(!CollectionUtils.isEmpty(demandToBeUpdated))
 			update(new DemandRequest(requestInfo,demandToBeUpdated), null);
+
+		// Deliberately after update() has committed. Emitting inside it would roll the whole
+		// apportion result back if the FI insert failed, while save() has already committed the
+		// advance draw-down — leaving an advance that could be spent twice. Failing here instead
+		// degrades to the pre-existing behaviour for that demand, which is recoverable: the
+		// relief is capped at the receivable still open, so re-running it posts exactly once.
+		if (advanceSettlementFiEnabled && !advanceSettlements.isEmpty())
+			demandRepository.postAdvanceSettlementFiReports(advanceSettlements);
 
 		billRepoV2.updateBillStatus(
 				UpdateBillCriteria.builder()
@@ -490,7 +511,7 @@ public class DemandService {
 	 * @param demandToBeCreated The list which maintains the demand that has to be created in the system
 	 * @param demandToBeUpdated The list which maintains the demand that has to be updated in the system
 	 */
-	private void apportionAdvanceIfExist(DemandRequest demandRequest, DocumentContext mdmsData,List<Demand> demandToBeCreated,List<Demand> demandToBeUpdated){
+	private void apportionAdvanceIfExist(DemandRequest demandRequest, DocumentContext mdmsData,List<Demand> demandToBeCreated,List<Demand> demandToBeUpdated,Map<String, BigDecimal> advanceSettlements){
 		List<Demand> demands = demandRequest.getDemands();
 		RequestInfo requestInfo = demandRequest.getRequestInfo();
 
@@ -577,6 +598,17 @@ public class DemandService {
 			}
 			}
 				
+			// Dues each PRE-EXISTING demand carried before this apportion touched it. Compared
+			// against the response below to tell how much of it the advance has just settled.
+			// The request objects are not mutated by the apportion call, which is what makes the
+			// same technique work for advanceCollectedBefore above.
+			final Map<String, BigDecimal> regularCollectedBefore =
+					advanceSettlementFiEnabled && !"TX.Emarket_Deposit_Fees".equalsIgnoreCase(businessService)
+						? apportionRequest.getDemands().stream()
+							.filter(d -> d.getId() != null)
+							.collect(Collectors.toMap(Demand::getId, DemandService::sumNonAdvanceCollected, (a, b) -> a))
+						: Collections.emptyMap();
+
 			final boolean apportionedAgainstAdvance = settledFromAdvance;
 			// Only the current demand is to be created rest all are to be updated
 			apportionDemandResponse.getDemands().forEach(demandFromResponse -> {
@@ -597,7 +629,18 @@ public class DemandService {
                         demandFromResponse.setIsAdvance(d.getIsAdvance());
 						demandFromResponse.setAdvanceIndex(d.getAdvanceIndex());
 					 }
-					}); 
+					});
+					// This demand already exists, so update() will mark its dues collected without
+					// writing any FI. Record what the advance just settled so create() can post the
+					// relief once update() has committed. putIfAbsent, because two new demands for
+					// one consumer code make the outer loop read the same uncommitted state twice
+					// and add this demand to the list twice — which would otherwise double-post.
+					BigDecimal before = regularCollectedBefore.get(demandFromResponse.getId());
+					if (before != null) {
+						BigDecimal settledNow = sumNonAdvanceCollected(demandFromResponse).subtract(before);
+						if (settledNow.signum() > 0)
+							advanceSettlements.putIfAbsent(demandFromResponse.getId(), settledNow);
+					}
 					demandToBeUpdated.add(demandFromResponse);
 				}
 			});
@@ -658,6 +701,22 @@ public class DemandService {
 		return demand.getDemandDetails().stream()
 				.filter(dd -> dd.getTaxHeadMasterCode() != null
 						&& dd.getTaxHeadMasterCode().contains("ADVANCE"))
+				.map(dd -> dd.getCollectionAmount() == null ? BigDecimal.ZERO : dd.getCollectionAmount())
+				.reduce(BigDecimal.ZERO, BigDecimal::add);
+	}
+
+	/**
+	 * Total collected against a demand's ORDINARY details — the mirror of
+	 * {@link #sumAdvanceCollected}. Its increase across an apportion is the amount of that
+	 * demand's own dues the advance has just settled, which is what the relief voucher clears
+	 * off the receivable.
+	 */
+	private static BigDecimal sumNonAdvanceCollected(Demand demand) {
+		if (demand.getDemandDetails() == null)
+			return BigDecimal.ZERO;
+		return demand.getDemandDetails().stream()
+				.filter(dd -> dd.getTaxHeadMasterCode() == null
+						|| !dd.getTaxHeadMasterCode().contains("ADVANCE"))
 				.map(dd -> dd.getCollectionAmount() == null ? BigDecimal.ZERO : dd.getCollectionAmount())
 				.reduce(BigDecimal.ZERO, BigDecimal::add);
 	}

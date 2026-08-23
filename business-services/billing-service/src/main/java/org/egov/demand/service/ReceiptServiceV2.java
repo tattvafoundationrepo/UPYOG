@@ -317,19 +317,24 @@ public class ReceiptServiceV2 {
 			d.setId(rentDemand.getId());
 			d.setTaxPeriodFrom(rentDemand.getTaxPeriodFrom());
 			d.setTaxPeriodTo(rentDemand.getTaxPeriodTo());
+			// Narrowed to the receipt being processed. A demand paid more than once (a bounced
+			// cheque then cash) otherwise yields several rows in arbitrary order, and get(0)
+			// would supply another receipt's total, advance JSON and payment mode.
 			List<PaymentMarketInfo> infoList = demandRepository
-					.getMarketEssentialInfo(demandRequest.getDemands().get(0).getId());
-			if (!infoList.isEmpty()) {
-				d.setFund(infoList.get(0).getFund());
-				d.setFundCenter(infoList.get(0).getFundCenter());
-				d.setBusinessArea(infoList.get(0).getBusinessArea());
-				d.setPaymentMode(infoList.get(0).getPaymentMode());
-				d.setFunctionalArea(infoList.get(0).getFunctionalArea());
+					.getMarketEssentialInfo(demandRequest.getDemands().get(0).getId(), currentTransactionNumber);
+			PaymentMarketInfo marketInfo = infoList.isEmpty() ? null : infoList.get(0);
+			if (marketInfo != null) {
+				d.setFund(marketInfo.getFund());
+				d.setFundCenter(marketInfo.getFundCenter());
+				d.setBusinessArea(marketInfo.getBusinessArea());
+				d.setPaymentMode(marketInfo.getPaymentMode());
+				d.setFunctionalArea(marketInfo.getFunctionalArea());
 				d.setFiReceiptNo(currentTransactionNumber != null && !currentTransactionNumber.isEmpty()
-						? currentTransactionNumber : infoList.get(0).getTransactionNumber());
-				log.info("additioanl market info from db" + infoList.get(0));
+						? currentTransactionNumber : marketInfo.getTransactionNumber());
+				log.info("additioanl market info from db" + marketInfo);
 			}
-			GstAdvanceMap gstAdvanceMap = extractGstAdvanceFromAdditionalDetails(infoList.get(0));
+			GstAdvanceMap gstAdvanceMap = marketInfo == null ? null
+					: extractGstAdvanceFromAdditionalDetails(marketInfo);
 			// Defensive: a malformed/empty payment JSON yields a null map. Substitute an
 			// empty map so total stays 0 and no FI rows are produced, instead of NPE-ing
 			// the Kafka consumer (the demand collection update has already been published).
@@ -367,19 +372,23 @@ public class ReceiptServiceV2 {
 			d.setId(rentDemand.getId());
 			d.setTaxPeriodFrom(rentDemand.getTaxPeriodFrom());
 			d.setTaxPeriodTo(rentDemand.getTaxPeriodTo());
+			// Narrowed to the receipt being cancelled, so the reversal gives back what that
+			// receipt posted rather than another payment's figures.
 			List<PaymentMarketInfo> infoList = demandRepository
-					.getMarketEssentialInfo(demandRequest.getDemands().get(0).getId());
-			if (!infoList.isEmpty()) {
-				d.setFund(infoList.get(0).getFund());
-				d.setFundCenter(infoList.get(0).getFundCenter());
-				d.setBusinessArea(infoList.get(0).getBusinessArea());
-				d.setPaymentMode(infoList.get(0).getPaymentMode());
-				d.setFunctionalArea(infoList.get(0).getFunctionalArea());
+					.getMarketEssentialInfo(demandRequest.getDemands().get(0).getId(), currentTransactionNumber);
+			PaymentMarketInfo marketInfo = infoList.isEmpty() ? null : infoList.get(0);
+			if (marketInfo != null) {
+				d.setFund(marketInfo.getFund());
+				d.setFundCenter(marketInfo.getFundCenter());
+				d.setBusinessArea(marketInfo.getBusinessArea());
+				d.setPaymentMode(marketInfo.getPaymentMode());
+				d.setFunctionalArea(marketInfo.getFunctionalArea());
 				d.setFiReceiptNo(currentTransactionNumber != null && !currentTransactionNumber.isEmpty()
-						? currentTransactionNumber : infoList.get(0).getTransactionNumber());
-				log.info("additioanl from dbbbbbbbbbbbbbbbbbbbbbbbbb" + infoList.get(0));
+						? currentTransactionNumber : marketInfo.getTransactionNumber());
+				log.info("additioanl from dbbbbbbbbbbbbbbbbbbbbbbbbb" + marketInfo);
 			}
-			GstAdvanceMap gstAdvanceMap = extractGstAdvanceFromAdditionalDetails(infoList.get(0));
+			GstAdvanceMap gstAdvanceMap = marketInfo == null ? null
+					: extractGstAdvanceFromAdditionalDetails(marketInfo);
 			// Defensive: a malformed/empty payment JSON yields a null map. Substitute an
 			// empty map so total stays 0 and no FI rows are produced, instead of NPE-ing
 			// the Kafka consumer (the demand collection update has already been published).
@@ -584,7 +593,16 @@ public class ReceiptServiceV2 {
 				&& isPositive(advancePart)
 				&& isPositive(regularPart);
 
-		if (!mixedReceiptSplitEnabled || !mixed)
+		// A cancellation gives back exactly what was posted, so it follows the ORIGINAL
+		// document rather than today's property. The split is behind a flag, and a receipt
+		// taken before it was switched on — or after it was switched back off — would
+		// otherwise be reversed under rules it was never booked under, leaving the advance
+		// account and the receivable each wrong by the arrears portion.
+		boolean split = mixed && (reversal
+				? demandRepository.wasCollectionSplit(d.getFiReceiptNo())
+				: mixedReceiptSplitEnabled);
+
+		if (!split)
 			return demandRepository.buildCollectionFiReports(d, flow, total, cgst, sgst, reversal, collectionDate);
 
 		log.info("Mixed receipt for consumer {}: advance={} regular={}; splitting vouchers",
