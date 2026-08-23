@@ -229,6 +229,13 @@ public class ReceiptServiceV2 {
 		String currentTransactionNumber = util.getValueFromAdditionalDetailsForKey(bills.get(0).getAdditionalDetails(),
 				"transactionNumber");
 
+		// The date the money actually changed hands. A collection voucher is recognised when the
+		// payment is received, not over the demand's tax period — a March demand settled in August
+		// belongs in August's books. Resolved from the payment being processed; null leaves the
+		// previous behaviour (the demand's tax period) untouched.
+		Long collectionDate = demandRepository.getCollectionDate(paymentId, currentTransactionNumber);
+		log.info("Collection date for payment {} / txn {}: {}", paymentId, currentTransactionNumber, collectionDate);
+
 		PaymentBackUpdateAudit paymentBackUpdateAudit = PaymentBackUpdateAudit.builder()
 				.isReceiptCancellation(isReceiptCancellation)
 				.isBackUpdateSucces(true)
@@ -339,7 +346,7 @@ public class ReceiptServiceV2 {
 					: nz(gstAdvanceMap.getSgstAmount());
 			log.info("Collection FI flow={} total={} cgst={} sgst={}", flow, total, cgst, sgst);
 
-			List<FiReport> report = buildCollectionRows(d, flow, total, cgst, sgst, gstAdvanceMap, false);
+			List<FiReport> report = buildCollectionRows(d, flow, total, cgst, sgst, gstAdvanceMap, false, collectionDate);
 
 			// Label only; the accounting rows are unaffected. Every collection — advance or
 			// regular — is a market collection. The advance is identified downstream by its
@@ -401,7 +408,7 @@ public class ReceiptServiceV2 {
 			log.info("Reversal FI flow={} total={} cgst={} sgst={} (postedAdvanceGst={})",
 					flow, total, cgst, sgst, postedAdvanceGst);
 
-			List<FiReport> report = buildCollectionRows(d, flow, total, cgst, sgst, gstAdvanceMap, true);
+			List<FiReport> report = buildCollectionRows(d, flow, total, cgst, sgst, gstAdvanceMap, true, collectionDate);
 
 			// Label only (accounting rows unchanged): receipt cancellation -> collection reversal.
 			report.forEach(r -> r.setReportType(FiReportType.UPMKT_COLREV));
@@ -567,7 +574,7 @@ public class ReceiptServiceV2 {
 	 * case — flag off, pure advance, pure regular, deposit — this delegates unchanged.
 	 */
 	private List<FiReport> buildCollectionRows(Demand d, FiFlow flow, BigDecimal total,
-			BigDecimal cgst, BigDecimal sgst, GstAdvanceMap m, boolean reversal) {
+			BigDecimal cgst, BigDecimal sgst, GstAdvanceMap m, boolean reversal, Long collectionDate) {
 
 		boolean advanceFlow = flow == FiFlow.NON_GST_ADVANCE || flow == FiFlow.GST_ADVANCE;
 		BigDecimal advancePart = nz(m.getRentalAdvancePaid()).add(nz(m.getLicenseAdvancePaid()));
@@ -578,7 +585,7 @@ public class ReceiptServiceV2 {
 				&& isPositive(regularPart);
 
 		if (!mixedReceiptSplitEnabled || !mixed)
-			return demandRepository.buildCollectionFiReports(d, flow, total, cgst, sgst, reversal);
+			return demandRepository.buildCollectionFiReports(d, flow, total, cgst, sgst, reversal, collectionDate);
 
 		log.info("Mixed receipt for consumer {}: advance={} regular={}; splitting vouchers",
 				d.getConsumerCode(), advancePart, regularPart);
@@ -588,10 +595,10 @@ public class ReceiptServiceV2 {
 		// at demand time, so its voucher carries no GST legs of its own.
 		FiFlow advanceOnly = flow;
 		List<FiReport> rows = new ArrayList<>(
-				demandRepository.buildCollectionFiReports(d, advanceOnly, advancePart, cgst, sgst, reversal));
+				demandRepository.buildCollectionFiReports(d, advanceOnly, advancePart, cgst, sgst, reversal, collectionDate));
 		rows.addAll(
 				demandRepository.buildCollectionFiReports(d, FiFlow.NON_GST_REGULAR, regularPart,
-						BigDecimal.ZERO, BigDecimal.ZERO, reversal));
+						BigDecimal.ZERO, BigDecimal.ZERO, reversal, collectionDate));
 		return rows;
 	}
 

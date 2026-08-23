@@ -245,6 +245,10 @@ public class DemandRepository {
             // response and pushes them to the demand-index topic, so mutating them would ship
             // four phantom tax heads to every caller and inflate the indexed demand total.
             List<DemandDetail> nettingDetails = new ArrayList<>();
+            // Resolved at most once per demand and reused for both the clearing key and the doc-date
+            // clamp. It was previously looked up twice, and the lookup is a scan of the collection
+            // table, so a twelve-month restoration batch paid for it twenty-four times.
+            AdvanceReceiptRef advanceRef = null;
 
             if (BS_RENTAL.equalsIgnoreCase(demand.getBusinessService()) && demand.isApportionedAgainstAdvance()) {
 
@@ -284,7 +288,8 @@ public class DemandRepository {
                 recordBatchRelease(releasedInThisBatch, demand, GL_SGST_ADVANCE, sgstNet);
 
                 // The advance receipt this demand drew on — its number is SAP's clearing key (ZUONR).
-                String advanceDocNo = getAdvanceReceipt(demand.getId()).documentNo;
+                advanceRef = getAdvanceReceipt(demand.getId());
+                String advanceDocNo = advanceRef.documentNo;
 
                 addNettingDetail(nettingDetails, demand, "CSP40", GL_CGST_PAYABLE, cgstNet, advanceDocNo);
                 addNettingDetail(nettingDetails, demand, "SSP40", GL_SGST_PAYABLE, sgstNet, advanceDocNo);
@@ -305,7 +310,7 @@ public class DemandRepository {
 
 			//reportList.addAll(buildFiReportsFromDemand(demand , "50", false , null));
 			if (!"TX.Emarket_Deposit_Fees".equalsIgnoreCase(demand.getBusinessService())) {
-			    List<FiReport> demandFiReports = buildDemandFiReports(demand, nettingDetails);
+			    List<FiReport> demandFiReports = buildDemandFiReports(demand, nettingDetails, advanceRef);
 			    // Label only (accounting rows unchanged). Demand FI rows, inserted via
 			    // batchInsertDemandFiReports. Report type:
 			    //   - new demand apportioned against a previously-collected advance -> demand against advance
@@ -1265,8 +1270,20 @@ private AdvanceReceiptRef getAdvanceReceipt(String settledDemandId) {
     if (settledDemandId == null)
         return AdvanceReceiptRef.NONE;
 
+    // The DATE is taken from the advance's own accounting row, not from when the payment was
+    // keyed in. A backdated advance -- migrated, or a catch-up entry for an earlier period --
+    // carries an FI doc_date in its true period while egcl_payment.transactiondate is the day it
+    // was recorded. Clamping to the latter dragged every demand that drew on that advance forward
+    // to the entry date, so twelve monthly demands all landed in one period and the revenue and
+    // GST fell outside the month they belong to. This is the same source the AT (11A) sheet reads,
+    // so the tax point the demand carries and the date the return declares can no longer disagree.
+    // Falls back to the payment date when the advance has no FI row (a legacy advance).
     String sql =
-        "SELECT p.transactionnumber, p.transactiondate " +
+        "SELECT p.transactionnumber, " +
+        "       COALESCE((SELECT MIN(f.doc_date) FROM public.eg_emarket_fi_report_collection f " +
+        "                  WHERE f.document_header_text = p.transactionnumber " +
+        "                    AND f.gl_code IN ('439300200','439300201','350410215') " +
+        "                    AND f.report_type IS NOT NULL), p.transactiondate) AS transactiondate " +
         "FROM eg_emarket_demand_settlement_info s " +
         "JOIN egcl_billdetial bd ON bd.demandid = s.advance_demandid " +
         "JOIN egcl_paymentdetail pd ON pd.billid = bd.billid " +
@@ -1356,6 +1373,15 @@ public List<FiReport> buildDemandFiReports(Demand demand) {
  *                     persisted details. Empty for every path except the GST net-off.
  */
 public List<FiReport> buildDemandFiReports(Demand demand, List<DemandDetail> extraDetails) {
+    return buildDemandFiReports(demand, extraDetails, null);
+}
+
+/**
+ * @param preResolvedAdvance the advance receipt already looked up by the caller, or null to
+ *                           resolve it here. Avoids a second scan of the collection table.
+ */
+public List<FiReport> buildDemandFiReports(Demand demand, List<DemandDetail> extraDetails,
+                                           AdvanceReceiptRef preResolvedAdvance) {
 
     List<FiReport> reports = new ArrayList<>();
 
@@ -1365,9 +1391,9 @@ public List<FiReport> buildDemandFiReports(Demand demand, List<DemandDetail> ext
     // an already-filed return and drives the GST advance negative until the receipt catches up.
     // Clamped only on that path; plain, reversal and dishonour demands keep taxPeriodFrom.
     // One lookup per demand, reused for the doc-date clamp and the advance leg's clearing key.
-    AdvanceReceiptRef advance = demand.isApportionedAgainstAdvance()
-            ? getAdvanceReceipt(demand.getId())
-            : AdvanceReceiptRef.NONE;
+    AdvanceReceiptRef advance = !demand.isApportionedAgainstAdvance() ? AdvanceReceiptRef.NONE
+            : preResolvedAdvance != null ? preResolvedAdvance
+            : getAdvanceReceipt(demand.getId());
     Long postingDate = resolveDemandDocDate(demand, advance);
 
 	String fund;
@@ -1503,6 +1529,20 @@ public List<FiReport> buildCollectionFiReports(Demand demand,
                                                BigDecimal cgst,
                                                BigDecimal sgst,
                                                boolean reversal) {
+    return buildCollectionFiReports(demand, flow, total, cgst, sgst, reversal, null);
+}
+
+/**
+ * @param collectionDate the date the money changed hands; both doc date and posting date on a
+ *                       collection voucher take it. Null falls back to the demand's tax period.
+ */
+public List<FiReport> buildCollectionFiReports(Demand demand,
+                                               FiFlow flow,
+                                               BigDecimal total,
+                                               BigDecimal cgst,
+                                               BigDecimal sgst,
+                                               boolean reversal,
+                                               Long collectionDate) {
 
     List<FiReport> reports = new ArrayList<>();
 
@@ -1517,34 +1557,34 @@ public List<FiReport> buildCollectionFiReports(Demand demand,
     switch (flow) {
 
         case NON_GST_REGULAR:
-            reports.add(fiRow(demand, "431409936", pk("50", reversal), total, "Receivable from Mun Mkt"));
-            reports.add(fiRow(demand, "450100100", pk("40", reversal), total, "Bank/Interim Receipt"));
+            reports.add(fiRow(demand, "431409936", pk("50", reversal), total, "Receivable from Mun Mkt", collectionDate));
+            reports.add(fiRow(demand, "450100100", pk("40", reversal), total, "Bank/Interim Receipt", collectionDate));
             break;
 
         case GST_REGULAR:
-            reports.add(fiRow(demand, "450100100", pk("40", reversal), net, "Bank/Interim Receipt"));
-            reports.add(fiRow(demand, "431409936", pk("50", reversal), total, "Receivable from Mun Mkt"));
-            reports.add(fiRow(demand, "350200421", pk("40", reversal), cgst, "CGST Payable"));
-            reports.add(fiRow(demand, "350200422", pk("40", reversal), sgst, "SGST Payable"));
+            reports.add(fiRow(demand, "450100100", pk("40", reversal), net, "Bank/Interim Receipt", collectionDate));
+            reports.add(fiRow(demand, "431409936", pk("50", reversal), total, "Receivable from Mun Mkt", collectionDate));
+            reports.add(fiRow(demand, "350200421", pk("40", reversal), cgst, "CGST Payable", collectionDate));
+            reports.add(fiRow(demand, "350200422", pk("40", reversal), sgst, "SGST Payable", collectionDate));
             break;
 
         case NON_GST_ADVANCE:
-            reports.add(fiRow(demand, "350410215", pk("50", reversal), total, "Advance"));
-            reports.add(fiRow(demand, "450100100", pk("40", reversal), total, "Bank/Interim Receipt"));
+            reports.add(fiRow(demand, "350410215", pk("50", reversal), total, "Advance", collectionDate));
+            reports.add(fiRow(demand, "450100100", pk("40", reversal), total, "Bank/Interim Receipt", collectionDate));
             break;
 
         case GST_ADVANCE:
-            reports.add(fiRow(demand, "450100100", pk("40", reversal), total, "Bank/Interim Receipt"));
-            reports.add(fiRow(demand, "350410215", pk("50", reversal), total, "Advance"));
-            reports.add(fiRow(demand, "350200421", pk("50", reversal), cgst, "CGST Payable"));
-            reports.add(fiRow(demand, "350200422", pk("50", reversal), sgst, "SGST Payable"));
-            reports.add(fiRow(demand, "439300200", pk("40", reversal), cgst, "Advance CGST"));
-            reports.add(fiRow(demand, "439300201", pk("40", reversal), sgst, "Advance SGST"));
+            reports.add(fiRow(demand, "450100100", pk("40", reversal), total, "Bank/Interim Receipt", collectionDate));
+            reports.add(fiRow(demand, "350410215", pk("50", reversal), total, "Advance", collectionDate));
+            reports.add(fiRow(demand, "350200421", pk("50", reversal), cgst, "CGST Payable", collectionDate));
+            reports.add(fiRow(demand, "350200422", pk("50", reversal), sgst, "SGST Payable", collectionDate));
+            reports.add(fiRow(demand, "439300200", pk("40", reversal), cgst, "Advance CGST", collectionDate));
+            reports.add(fiRow(demand, "439300201", pk("40", reversal), sgst, "Advance SGST", collectionDate));
             break;
 
         case DEPOSIT:
-            reports.add(fiRow(demand, "340100300", pk("50", reversal), total, "Security Deposit"));
-            reports.add(fiRow(demand, "450100100", pk("40", reversal), total, "Bank/Interim Receipt"));
+            reports.add(fiRow(demand, "340100300", pk("50", reversal), total, "Security Deposit", collectionDate));
+            reports.add(fiRow(demand, "450100100", pk("40", reversal), total, "Bank/Interim Receipt", collectionDate));
             break;
 
         default:
@@ -1562,13 +1602,50 @@ public List<FiReport> buildCollectionFiReports(Demand demand,
  * Build a single collection FI report row with the fields shared across all
  * emarket collection flows.
  */
+/**
+ * The date money actually changed hands, for the collection voucher's doc and posting date.
+ * Resolved from the payment being processed — by id where the bill carries one, else by its
+ * transaction number. Deliberately NOT taken from getMarketEssentialInfo, whose unordered join
+ * returns one row per bill the demand ever appeared on.
+ *
+ * <p>Returns null when the payment cannot be found, and the caller then keeps the demand's tax
+ * period, which is the behaviour that shipped before.
+ */
+public Long getCollectionDate(String paymentId, String transactionNumber) {
+
+    try {
+        if (paymentId != null && !paymentId.isEmpty()) {
+            List<Long> byId = jdbcTemplate.queryForList(
+                    "SELECT transactiondate FROM egcl_payment WHERE id = ?", Long.class, paymentId);
+            if (!byId.isEmpty() && byId.get(0) != null)
+                return byId.get(0);
+        }
+        if (transactionNumber != null && !transactionNumber.isEmpty()) {
+            List<Long> byTxn = jdbcTemplate.queryForList(
+                    "SELECT transactiondate FROM egcl_payment WHERE transactionnumber = ? "
+                  + "ORDER BY transactiondate ASC LIMIT 1", Long.class, transactionNumber);
+            if (!byTxn.isEmpty() && byTxn.get(0) != null)
+                return byTxn.get(0);
+        }
+    } catch (DataAccessException e) {
+        log.error("Could not resolve the collection date for payment {} / txn {}",
+                paymentId, transactionNumber, e);
+    }
+    log.warn("No payment date for payment {} / txn {}; collection voucher keeps the demand's tax period",
+            paymentId, transactionNumber);
+    return null;
+}
+
 private FiReport fiRow(Demand demand, String glCode, String postingKey,
-                       BigDecimal amount, String remarks) {
+                       BigDecimal amount, String remarks, Long collectionDate) {
     long now = System.currentTimeMillis();
+    // A collection is recognised when the money arrives, so both dates are the collection date.
+    // The demand's tax period is the fallback only when the payment cannot be resolved.
+    Long voucherDate = collectionDate != null ? collectionDate : demand.getTaxPeriodFrom();
     return FiReport.builder()
             .transactionNumber(demand.getId())
-            .docDate(demand.getTaxPeriodFrom())
-            .postingDate(demand.getTaxPeriodFrom())
+            .docDate(voucherDate)
+            .postingDate(voucherDate)
             .referenceNo(demand.getConsumerCode())
             .documentHeaderText(demand.getFiReceiptNo())
             .postingKey(postingKey)
