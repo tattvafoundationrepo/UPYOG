@@ -69,6 +69,14 @@ public class ReceiptServiceV2 {
 	 @Autowired
 	 private Producer producer;
 
+	/**
+	 * Split a receipt that pays arrears AND takes an advance into two vouchers instead of
+	 * booking the whole amount to the advance account. Off by default: it changes the row
+	 * shape of an existing flow, so it is enabled only after UAT sign-off.
+	 */
+	@org.springframework.beans.factory.annotation.Value("${emarket.fi.mixed.receipt.split.enabled:false}")
+	private boolean mixedReceiptSplitEnabled;
+
 
 	public void updateDemandFromReceipt(BillRequestV2 billReq, Boolean isReceiptCancellation) {
 
@@ -331,16 +339,12 @@ public class ReceiptServiceV2 {
 					: nz(gstAdvanceMap.getSgstAmount());
 			log.info("Collection FI flow={} total={} cgst={} sgst={}", flow, total, cgst, sgst);
 
-			List<FiReport> report = demandRepository.buildCollectionFiReports(d, flow, total, cgst, sgst, false);
+			List<FiReport> report = buildCollectionRows(d, flow, total, cgst, sgst, gstAdvanceMap, false);
 
-			// Label only (accounting rows unchanged): advance present -> demand against advance, else collection.
-			// String fiReportType = (flow == FiFlow.NON_GST_ADVANCE || flow == FiFlow.GST_ADVANCE)
-			// 		? FiReportType.UPMKT_DEMDADV : FiReportType.UPMKT_COLL;
-            
-			String fiReportType = (flow == FiFlow.NON_GST_ADVANCE || flow == FiFlow.GST_ADVANCE)
-			 		? FiReportType.UPMKT_COLL : FiReportType.UPMKT_COLL;
-			
-			report.forEach(r -> r.setReportType(fiReportType));
+			// Label only; the accounting rows are unaffected. Every collection — advance or
+			// regular — is a market collection. The advance is identified downstream by its
+			// GL codes, not by the report type.
+			report.forEach(r -> r.setReportType(FiReportType.UPMKT_COLL));
 
 			collectionReportList.addAll(report);
 			demandRepository.batchInsertCollectionFiReports(collectionReportList);
@@ -383,9 +387,21 @@ public class ReceiptServiceV2 {
 			BigDecimal sgst = flow == FiFlow.GST_REGULAR
 					? sumDetails(demandRequest.getDemands(), "SGST")
 					: nz(gstAdvanceMap.getSgstAmount());
-			log.info("Reversal FI flow={} total={} cgst={} sgst={}", flow, total, cgst, sgst);
+			// Give back exactly what was posted, not what today's rules would recompute.
+			// Advance GST was previously booked for one month whatever the advance covered;
+			// recomputing here would reverse months x that figure for every receipt taken
+			// before the fix and drive the advance GL deeply negative. Reading the receipt's
+			// own posted rows makes pre-fix and post-fix receipts both reverse correctly.
+			Map<String, BigDecimal> postedAdvanceGst = demandRepository.getPostedAdvanceGst(d.getFiReceiptNo(), d.getConsumerCode());
+			if (postedAdvanceGst.containsKey("439300200"))
+				cgst = nz(postedAdvanceGst.get("439300200"));
+			if (postedAdvanceGst.containsKey("439300201"))
+				sgst = nz(postedAdvanceGst.get("439300201"));
 
-			List<FiReport> report = demandRepository.buildCollectionFiReports(d, flow, total, cgst, sgst, true);
+			log.info("Reversal FI flow={} total={} cgst={} sgst={} (postedAdvanceGst={})",
+					flow, total, cgst, sgst, postedAdvanceGst);
+
+			List<FiReport> report = buildCollectionRows(d, flow, total, cgst, sgst, gstAdvanceMap, true);
 
 			// Label only (accounting rows unchanged): receipt cancellation -> collection reversal.
 			report.forEach(r -> r.setReportType(FiReportType.UPMKT_COLREV));
@@ -394,16 +410,42 @@ public class ReceiptServiceV2 {
 
 			demandRepository.batchInsertCollectionFiReports(collectionReportList);
 
-
-
+			// Cancelling an advance also unwinds every demand-side GST net-off that drew on it.
+			// The collection reversal above credits the whole GST advance back; without these
+			// compensating rows the releases already posted on the settled demands would leave
+			// the advance GL negative and GST payable understated by 63.90 x N. The rows are
+			// mirrored from what was actually posted (not recomputed), and a demand with no
+			// netting legs contributes nothing — so a cancellation with nothing to undo is
+			// byte-identical to today.
+			if (settledDemandIds != null && !settledDemandIds.isEmpty()) {
+				List<FiReport> nettingReversals = new ArrayList<>();
+				for (AdvSettlement settled : settledDemandIds) {
+					// null doc date: each reversal leg keeps the date of the leg it mirrors, so the
+					// original net-off and its reversal always land in the same GST return window.
+					// Stamping the cancelled demand's taxPeriodFrom would split the pair whenever
+					// the original was clamped forward to the advance receipt date.
+					nettingReversals.addAll(demandRepository.buildGstNettingReversalFiReports(
+							settled.getSettledDemandId(), null));
+					// Put the re-opened demand's dues back on the receivable and give the
+					// advance liability back — the collection reversal only unwinds the
+					// receipt side, leaving the demand-side split standing.
+					nettingReversals.addAll(demandRepository.buildAdvanceSettlementReversalFiReports(
+							settled.getSettledDemandId()));
+				}
+				if (!nettingReversals.isEmpty()) {
+					demandRepository.batchInsertDemandFiReports(nettingReversals);
+					log.info("Reversed {} GST netting rows across {} settled demands",
+							nettingReversals.size(), settledDemandIds.size());
+				}
+			}
 
 			if (isReceiptCancellation && settledDemandIds != null && !settledDemandIds.isEmpty()) {
-		    log.info("Publishing settled demand ids to create penalty demands on payment reversal"+ settledDemandIds.toString());		
+		    log.info("Publishing settled demand ids to create penalty demands on payment reversal"+ settledDemandIds.toString());
 			for(AdvSettlement settledDemandId : settledDemandIds){
 	 		   settledDemandId.setRequestInfo(billRequest.getRequestInfo());
 			   log.info("Publishing settled demand ids to create penalty demands on payment reversal"+ settledDemandIds.toString());
 		        producer.push("create-penalty-demand-onpayment-reversal", settledDemandId);
-			}		
+			}
         }
 
 		}
@@ -473,12 +515,19 @@ public class ReceiptServiceV2 {
 			// ---- advance GST amounts (ROOT LEVEL advanceRentalHeads map) ----
 			// The paymentInfo.advance_CGST/advance_SGST nodes carry only a glcode (no amount),
 			// so the actual advance GST amounts are sourced from advanceRentalHeads.
+			//
+			// advanceRentalHeads is a PER-MONTH map (RentService.getrentalFeeForAdvance builds
+			// it from one month's rent and multiplies only the cash total by the month count).
+			// The GST must be scaled the same way, or a 12-month advance credits the full cash
+			// to Advance while paying Government one month's tax — the advance-GST asset can
+			// then never absorb the twelve monthly releases. The receipt PDF already multiplies.
 			JsonNode advanceRentalHeads = root.path("advanceRentalHeads");
 			if (advanceRentalHeads.isObject()) {
+				BigDecimal months = advanceMonthCount(root);
 				if (advanceRentalHeads.hasNonNull("CGST"))
-					cgstAmount = advanceRentalHeads.get("CGST").decimalValue();
+					cgstAmount = advanceRentalHeads.get("CGST").decimalValue().multiply(months);
 				if (advanceRentalHeads.hasNonNull("SGST"))
-					sgstAmount = advanceRentalHeads.get("SGST").decimalValue();
+					sgstAmount = advanceRentalHeads.get("SGST").decimalValue().multiply(months);
 			}
 
 			// Amount actually collected. Prefer totalAmountPaid (the cash received);
@@ -505,6 +554,62 @@ public class ReceiptServiceV2 {
 			e.printStackTrace();
 			return null;
 		}
+	}
+
+	/**
+	 * Collection FI rows for one receipt, splitting a mixed receipt when enabled.
+	 *
+	 * <p>A mixed receipt pays existing dues AND takes an advance in one payment. The single
+	 * flow returned by {@link #determineFiFlow} books the whole amount to the advance
+	 * account, including the arrears portion that should clear the receivable. When the flag
+	 * is on and both parts are non-zero, the receipt is emitted as two vouchers: the regular
+	 * legs for the dues portion and the advance legs for the advance portion. In every other
+	 * case — flag off, pure advance, pure regular, deposit — this delegates unchanged.
+	 */
+	private List<FiReport> buildCollectionRows(Demand d, FiFlow flow, BigDecimal total,
+			BigDecimal cgst, BigDecimal sgst, GstAdvanceMap m, boolean reversal) {
+
+		boolean advanceFlow = flow == FiFlow.NON_GST_ADVANCE || flow == FiFlow.GST_ADVANCE;
+		BigDecimal advancePart = nz(m.getRentalAdvancePaid()).add(nz(m.getLicenseAdvancePaid()));
+		BigDecimal regularPart = total.subtract(advancePart);
+
+		boolean mixed = advanceFlow
+				&& isPositive(advancePart)
+				&& isPositive(regularPart);
+
+		if (!mixedReceiptSplitEnabled || !mixed)
+			return demandRepository.buildCollectionFiReports(d, flow, total, cgst, sgst, reversal);
+
+		log.info("Mixed receipt for consumer {}: advance={} regular={}; splitting vouchers",
+				d.getConsumerCode(), advancePart, regularPart);
+
+		// Advance GST belongs entirely to the advance voucher (it was computed on the advance
+		// months); the regular portion clears already-demanded dues whose GST was recognised
+		// at demand time, so its voucher carries no GST legs of its own.
+		FiFlow advanceOnly = flow;
+		List<FiReport> rows = new ArrayList<>(
+				demandRepository.buildCollectionFiReports(d, advanceOnly, advancePart, cgst, sgst, reversal));
+		rows.addAll(
+				demandRepository.buildCollectionFiReports(d, FiFlow.NON_GST_REGULAR, regularPart,
+						BigDecimal.ZERO, BigDecimal.ZERO, reversal));
+		return rows;
+	}
+
+	/**
+	 * Number of months an advance covers, from the payment's own additionalDetails.
+	 *
+	 * <p>Written only by the rental-advance path ({@code PaymentCollectionService}). Absent for
+	 * a licence-fee advance, a deposit, and every payment recorded before this field existed —
+	 * all of which fall back to 1 and so keep exactly the behaviour they have today.
+	 */
+	private static BigDecimal advanceMonthCount(JsonNode root) {
+
+		JsonNode node = root.path("advanceMonthCount");
+		if (node.isMissingNode() || node.isNull())
+			return BigDecimal.ONE;
+
+		BigDecimal months = node.decimalValue();
+		return isPositive(months) ? months : BigDecimal.ONE;
 	}
 
 	private static boolean isPositive(BigDecimal v) {

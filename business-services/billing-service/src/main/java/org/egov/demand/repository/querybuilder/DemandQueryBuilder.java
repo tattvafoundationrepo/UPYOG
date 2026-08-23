@@ -457,6 +457,19 @@ public class DemandQueryBuilder {
 		
 		query.append("AND dmd.status='ACTIVE' ");
 		
+		/*
+		 * The per-business-service branches are OR-ed, so they must be bracketed as a group.
+		 * Without the brackets SQL precedence binds the query as
+		 *   tenantid=? AND status='ACTIVE' AND (branch1) OR (branch2)
+		 * and every branch after the first escapes BOTH the tenant filter and the ACTIVE
+		 * filter — returning other tenants' demands and CANCELLED ones. That reaches
+		 * filterOutExistingDemands, where a foreign or cancelled match silently suppresses a
+		 * legitimate new demand. Single-entry maps (every request in practice today) parse
+		 * identically with or without the brackets.
+		 *
+		 * businessservice is bound rather than concatenated: it arrives from the request body
+		 * via Demand::getBusinessService.
+		 */
 		boolean orFlag = false;
 		for (Entry<String, Set<String>> consumerCode : businessConsumercodeMap.entrySet()) {
 			
@@ -466,16 +479,20 @@ public class DemandQueryBuilder {
 			if(consumerCodes!=null && !consumerCodes.isEmpty()){
 				
 				if(orFlag)
-					query.append("OR");
+					query.append(" OR");
 				else
-					query.append("AND");
+					query.append("AND (");
 				
-				query.append(" dmd.businessservice='"+businessService+"' AND dmd.consumercode IN ("
-						+getIdQueryForStrings(consumerCodes)+")");
+				query.append(" (dmd.businessservice=? AND dmd.consumercode IN ("
+						+getIdQueryForStrings(consumerCodes)+"))");
+				preparedStmtList.add(businessService);
 				addToPreparedStatement(preparedStmtList, consumerCodes);
 				orFlag=true;
 			}
 		}
+		
+		if(orFlag)
+			query.append(" )");
 		
 		return query.toString();
 	}

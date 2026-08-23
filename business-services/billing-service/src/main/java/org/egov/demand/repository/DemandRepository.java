@@ -45,7 +45,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -117,7 +119,37 @@ public class DemandRepository {
     
 	@Autowired
 	private Producer producer;
-	
+
+	/**
+	 * "Receivable from Mun Mkt". Collection and demand-reversal have always used
+	 * 431409936; demand creation was left on the superseded 431190300, so the two
+	 * sides could never reconcile. Property-driven so the change can be reverted
+	 * without a deploy — see the plan's rollback note.
+	 */
+	@org.springframework.beans.factory.annotation.Value("${emarket.fi.receivable.gl:431409936}")
+	private String receivableGlCode = "431409936"; // field default keeps non-Spring construction (tests) on the same GL
+
+	/** GL codes for the GST-advance netting voucher (Accounting Entries 2025, entry 4). */
+	/**
+	 * The four synthetic, FI-only heads appended by the GST net-off block. Matched exactly:
+	 * deriving the posting key from a substring ("40"/"50") would silently reclassify any real
+	 * tax head whose code happened to contain those digits, giving it the wrong posting key and
+	 * dropping it out of the balancing receivable. No current head does, so this is identical
+	 * in behaviour today and stays correct if one is ever added.
+	 */
+	private static final Set<String> NETTING_DEBIT_HEADS =
+			Collections.unmodifiableSet(new HashSet<>(Arrays.asList("CSP40", "SSP40")));
+	private static final Set<String> NETTING_CREDIT_HEADS =
+			Collections.unmodifiableSet(new HashSet<>(Arrays.asList("CSA50", "SSA50")));
+
+	private static final String GL_CGST_PAYABLE = "350200421";
+	private static final String GL_SGST_PAYABLE = "350200422";
+	private static final String GL_CGST_ADVANCE = "439300200";
+	private static final String GL_SGST_ADVANCE = "439300201";
+
+	/** Only rental demands carry GST that can be netted against an advance. */
+	private static final String BS_RENTAL = "TX.Emarket_Rental_Fees";
+
 	public List<Demand> getDemands(DemandCriteria demandCriteria) {
 
 		List<Object> preparedStatementValues = new ArrayList<>();
@@ -189,62 +221,80 @@ public class DemandRepository {
                 .forEach( d -> d.setDemandSeqNo(seqNo) );
         });
 
+        // GST advance released by demands EARLIER IN THIS BATCH, keyed by consumer+GL. The cap
+        // below reads committed FI rows, but nothing in this request is written until after the
+        // loop — so without this running tally every demand in a multi-month batch would see the
+        // same full balance and they would jointly over-release. Reachable in production:
+        // RestorationService.unblock posts one rental demand per intervening month for a single
+        // licensee in one DemandRequest.
+        Map<String, BigDecimal> releasedInThisBatch = new HashMap<>();
+
         for (Demand demand : demands) {
-		  
-            if(demand.getBusinessService().equalsIgnoreCase("TX.Emarket_Rental_Fees")){
-               
-              List<DemandDetail> gstDemandDetail = demand.getDemandDetails().stream()
-                .filter(d -> 
-                    (d.getTaxHeadMasterCode().contains("GST") && !d.getTaxHeadMasterCode().equalsIgnoreCase("GST_CA")
-                      && d.getTaxAmount().compareTo(d.getCollectionAmount()) == 0)
-                ).collect(Collectors.toList());
 
-                if(gstDemandDetail != null && !gstDemandDetail.isEmpty()) {
+            // GST netting-off voucher (Accounting Entries 2025, entry 4): a demand raised
+            // against a previously-taxed advance must square its GST liability against the
+            // GST already remitted to Government, otherwise the tax is paid twice.
+            //
+            // The amount netted is the GST on THIS demand that was actually settled out of
+            // the advance, capped at the GST advance still unreleased for this licensee.
+            // That cap matters: legacy-migrated advances carry cash but no 439300200 asset
+            // (LegacyFinancialRepository writes no FI row), so an uncapped netting would
+            // credit an asset that never existed and drive the GL negative.
+            // Held locally, never appended to the caller's Demand. These four heads are
+            // FI-only: DemandService.create returns these same objects in the /demand/_create
+            // response and pushes them to the demand-index topic, so mutating them would ship
+            // four phantom tax heads to every caller and inflate the indexed demand total.
+            List<DemandDetail> nettingDetails = new ArrayList<>();
 
-                Map<String, Object> cgstMap = new HashMap<>();
-                   cgstMap.put("glcode",  "350200421");
+            if (BS_RENTAL.equalsIgnoreCase(demand.getBusinessService()) && demand.isApportionedAgainstAdvance()) {
 
-                Map<String, Object> sgstMap = new HashMap<>();
-                   sgstMap.put("glcode",  "350200422");
+                // The batch tally below covers demands within THIS request; this lock covers
+                // concurrent requests for the same licensee, which would otherwise both read
+                // the full balance and jointly over-release it.
+                lockAdvanceForConsumer(demand.getConsumerCode());
 
-                Map<String, Object> advCgstMap = new HashMap<>();
-                   advCgstMap.put("glcode", "439300200");
+                BigDecimal cgstNet = cappedGstNetOff(demand, "CGST", GL_CGST_ADVANCE, releasedInThisBatch);
+                BigDecimal sgstNet = cappedGstNetOff(demand, "SGST", GL_SGST_ADVANCE, releasedInThisBatch);
 
-                Map<String, Object> advSgstMap = new HashMap<>();
-                   advSgstMap.put("glcode",  "439300201");
-                    
-                    demand.getDemandDetails().add(DemandDetail.builder()
-		                .demandId(demand.getId())
-                        .taxAmount(gstDemandDetail.get(0).getTaxAmount())
-                        .taxHeadMasterCode("CSP40")
-                        .additionalDetails(cgstMap)
-                        .build());
-
-                    demand.getDemandDetails().add(DemandDetail.builder()
-		                .demandId(demand.getId())
-                        .taxAmount(gstDemandDetail.get(0).getTaxAmount())
-                        .taxHeadMasterCode("SSP40")
-                        .additionalDetails(sgstMap)
-                        .build());   
-                        
-                    demand.getDemandDetails().add(DemandDetail.builder()
-		                .demandId(demand.getId())
-                        .taxAmount(gstDemandDetail.get(0).getTaxAmount())
-                        .taxHeadMasterCode("CSA50")
-                        .additionalDetails(advCgstMap)
-                        .build());
-
-                    demand.getDemandDetails().add(DemandDetail.builder()
-		                .demandId(demand.getId())
-                        .taxAmount(gstDemandDetail.get(0).getTaxAmount())
-                        .taxHeadMasterCode("SSA50")
-                        .additionalDetails(advSgstMap)
-                        .build());        
+                // An intra-state supply is taxed half CGST, half SGST, so the two legs must
+                // release the same amount. Their caps are computed against two independent GL
+                // balances (439300200 / 439300201) which can diverge — a one-sided legacy row, or
+                // a correction posted to one GL only. Releasing different amounts would file a
+                // GSTR-1 whose CGST and SGST disagree, which the portal rejects.
+                //
+                // Gated on whether the demand CARRIES both heads — not on the caps, and not on how
+                // much of each was settled. Both of those are already zero in the very cases this
+                // exists to catch: apportionment drains buckets in ascending-amount order, so a
+                // nearly-spent advance routinely settles CGST in part and leaves SGST at zero, and
+                // an exhausted advance GL caps its side at zero. Testing either would let exactly
+                // that asymmetry through. A demand carrying only one component has no symmetry to
+                // enforce and keeps its existing treatment.
+                if (carriesGstComponent(demand, "CGST") && carriesGstComponent(demand, "SGST")
+                        && cgstNet.compareTo(sgstNet) != 0) {
+                    BigDecimal symmetric = cgstNet.min(sgstNet);
+                    log.warn("Asymmetric GST advance for licence {} (consumer {}): cgst cap {} vs sgst cap {}; "
+                            + "both legs released at {} to keep the return internally consistent",
+                            licenceKey(demand.getConsumerCode()), demand.getConsumerCode(),
+                            cgstNet, sgstNet, symmetric);
+                    cgstNet = symmetric;
+                    sgstNet = symmetric;
                 }
 
+                recordBatchRelease(releasedInThisBatch, demand, GL_CGST_ADVANCE, cgstNet);
+                recordBatchRelease(releasedInThisBatch, demand, GL_SGST_ADVANCE, sgstNet);
 
+                // The advance receipt this demand drew on — its number is SAP's clearing key (ZUONR).
+                String advanceDocNo = getAdvanceReceipt(demand.getId()).documentNo;
+
+                addNettingDetail(nettingDetails, demand, "CSP40", GL_CGST_PAYABLE, cgstNet, advanceDocNo);
+                addNettingDetail(nettingDetails, demand, "SSP40", GL_SGST_PAYABLE, sgstNet, advanceDocNo);
+                addNettingDetail(nettingDetails, demand, "CSA50", GL_CGST_ADVANCE, cgstNet, advanceDocNo);
+                addNettingDetail(nettingDetails, demand, "SSA50", GL_SGST_ADVANCE, sgstNet, advanceDocNo);
+
+                log.info("GST net-off for demand {} consumer {}: cgst={} sgst={} advanceDoc={}",
+                        demand.getId(), demand.getConsumerCode(), cgstNet, sgstNet, advanceDocNo);
             }
-               
+
 
 		// 	demand.getDemandDetails().add(DemandDetail.builder()
 		//         .demandId(demand.getId())
@@ -255,7 +305,7 @@ public class DemandRepository {
 
 			//reportList.addAll(buildFiReportsFromDemand(demand , "50", false , null));
 			if (!"TX.Emarket_Deposit_Fees".equalsIgnoreCase(demand.getBusinessService())) {
-			    List<FiReport> demandFiReports = buildDemandFiReports(demand);
+			    List<FiReport> demandFiReports = buildDemandFiReports(demand, nettingDetails);
 			    // Label only (accounting rows unchanged). Demand FI rows, inserted via
 			    // batchInsertDemandFiReports. Report type:
 			    //   - new demand apportioned against a previously-collected advance -> demand against advance
@@ -495,8 +545,8 @@ public class DemandRepository {
         + " fund, fund_centre,"
         + " functional_area, business_area,"
         + " remarks, payment_mode_details, is_new,"
-        + " created_at, updated_at, doc_type, cost_center, commitmentitem, report_type "
-        + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? , ? , ? , ?)";
+        + " created_at, updated_at, doc_type, cost_center, commitmentitem, report_type, assignment "
+        + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? , ? , ? , ? , ?)";
 
 
     jdbcTemplate.batchUpdate(sql, reports, 100, (ps, r) -> {
@@ -527,6 +577,7 @@ public class DemandRepository {
         ps.setString(19,    r.getCostCenter());
         ps.setString(20,    r.getCommitmentItem());
         ps.setString(21,    r.getReportType());
+        ps.setString(22,    r.getAssignment());
     });
 
     log.info("Batch inserted Demand {} FI Report records", reports.size());
@@ -549,8 +600,8 @@ public class DemandRepository {
         + " fund, fund_centre,"
         + " functional_area, business_area,"
         + " remarks, payment_mode_details, is_new,"
-        + " created_at, updated_at, doc_type, cost_center, commitmentitem, report_type "
-        + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? , ? , ? , ?)";
+        + " created_at, updated_at, doc_type, cost_center, commitmentitem, report_type, assignment "
+        + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? , ? , ? , ? , ?)";
 
 
     jdbcTemplate.batchUpdate(sql, reports, 100, (ps, r) -> {
@@ -581,6 +632,7 @@ public class DemandRepository {
         ps.setString(19,    r.getCostCenter());
         ps.setString(20,    r.getCommitmentItem());
         ps.setString(21,    r.getReportType());
+        ps.setString(22,    r.getAssignment());
     });
 
     log.info("Batch inserted {} Collection FI Report records", reports.size());
@@ -968,15 +1020,355 @@ private String extractGlCode(DemandDetail detail) {
     return null;
 }
 
+/** SAP Assignment (ZUONR) carried on the synthetic netting heads; null on every other detail. */
+private String extractAssignment(DemandDetail detail) {
+    Object addObj = detail.getAdditionalDetails();
+    if (addObj instanceof Map) {
+        Object a = ((Map<?, ?>) addObj).get("assignment");
+        if (a != null) {
+            return a.toString();
+        }
+    }
+    return null;
+}
+
+/**
+ * GST on this demand that was actually settled out of the advance, capped at the GST
+ * advance still unreleased for the licensee.
+ *
+ * <p>{@code min(taxAmount, collectionAmount)} summed over every head of the component
+ * handles full settlement, partial settlement and multi-head demands in one expression;
+ * the cap handles an exhausted (or never-created) GST advance. Returns ZERO when there is
+ * nothing to net, in which case no netting rows are emitted at all.
+ */
+/**
+ * The licence a consumer code belongs to, with its business-service suffix removed.
+ *
+ * <p>Consumer codes are the licence number plus a per-service suffix — 5000000284rf for rent,
+ * 5000000284lf for the licence fee, prf/plf for penalties. The GST advance, however, is a
+ * single pool held for the LICENSEE: one receipt can carry rent and licence-fee advances
+ * together, and the collection voucher stamps that pool with whichever demand happened to be
+ * oldest. Keying the balance lookup on the raw consumer code would therefore look for the
+ * asset under the wrong code, find nothing, and silently skip the net-off — paying the GST a
+ * second time, which is the very thing this work exists to prevent.
+ */
+private static String licenceKey(String consumerCode) {
+    return consumerCode == null ? null : consumerCode.replaceAll("[^0-9]", "");
+}
+
+/**
+ * Every consumer code under which a licensee's GST advance may have been stamped.
+ *
+ * <p>Deliberately an explicit list of exact values rather than a pattern on the column: the
+ * balance lookup sits on the demand-creation path and runs twice per demand, and the partial
+ * index on (reference_no, gl_code) only serves equality. Matching with regexp_replace on the
+ * column instead forces a sequential scan of the whole FI history.
+ *
+ * <p>The bare licence number is included for rows migrated from the legacy system, which
+ * carry no business-service suffix.
+ */
+private static final String[] CONSUMER_CODE_SUFFIXES = { "rf", "lf", "prf", "plf", "cbf", "tf", "df" };
+
+private static List<String> licenceConsumerCodes(String consumerCode) {
+    String licence = licenceKey(consumerCode);
+    if (licence == null || licence.isEmpty())
+        return Collections.emptyList();
+    List<String> codes = new ArrayList<>(CONSUMER_CODE_SUFFIXES.length + 1);
+    codes.add(licence);
+    for (String suffix : CONSUMER_CODE_SUFFIXES)
+        codes.add(licence + suffix);
+    return codes;
+}
+
+/**
+ * Serialise GST-advance releases for one licensee across concurrent requests.
+ *
+ * <p>The cap is read-then-write: two {@code /demand/_create} calls for the same consumer
+ * (the monthly rent sweeper racing a restoration, say) would each read the full unreleased
+ * balance and both net against it, releasing more advance than exists. A transaction-scoped
+ * Postgres advisory lock closes that window without a schema change; it is released
+ * automatically at commit or rollback.
+ *
+ * <p>Taken only on the rental demand-against-advance path, so the five sibling services and
+ * every ordinary demand never contend for it. A failure to acquire is logged and ignored
+ * rather than failing the demand — the cap still bounds the release, it merely loses the
+ * cross-request guarantee.
+ */
+private void lockAdvanceForConsumer(String consumerCode) {
+
+    if (consumerCode == null || consumerCode.isEmpty())
+        return;
+
+    try {
+        jdbcTemplate.query("SELECT pg_advisory_xact_lock(hashtext(?))",
+                new Object[] { licenceKey(consumerCode) }, rs -> null);
+    } catch (DataAccessException e) {
+        log.warn("Could not take the advance lock for consumer {}; continuing without it", consumerCode, e);
+    }
+}
+
+private BigDecimal cappedGstNetOff(Demand demand, String component, String advanceGlCode,
+                                   Map<String, BigDecimal> releasedInThisBatch) {
+
+    BigDecimal settled = gstSettledFromAdvance(demand, component);
+    if (settled.compareTo(BigDecimal.ZERO) <= 0)
+        return BigDecimal.ZERO;
+
+    // Committed balance, less whatever earlier demands in this same batch have already
+    // claimed but not yet written.
+    String batchKey = licenceKey(demand.getConsumerCode()) + "|" + advanceGlCode;
+    BigDecimal alreadyClaimed = releasedInThisBatch.getOrDefault(batchKey, BigDecimal.ZERO);
+    BigDecimal remaining = remainingGstAdvance(demand.getConsumerCode(), advanceGlCode)
+            .subtract(alreadyClaimed);
+
+    if (remaining.compareTo(BigDecimal.ZERO) <= 0) {
+        // WARN, not INFO: the demand DID settle GST out of an advance, but no unreleased
+        // advance can be found for it. That is either a migrated advance (expected) or a
+        // mis-stamped collection voucher (a defect) — either way it must be visible.
+        log.warn("No unreleased {} advance for licence {} (consumer {}, claimed {} earlier in this batch); "
+                + "net-off of {} suppressed — GST will be borne again on this demand",
+                component, licenceKey(demand.getConsumerCode()), demand.getConsumerCode(), alreadyClaimed, settled);
+        return BigDecimal.ZERO;
+    }
+
+    // Not recorded against the batch tally here: the caller reconciles CGST against SGST
+    // first and commits the agreed amount via recordBatchRelease.
+    return settled.min(remaining);
+}
+
+/** Commit an agreed net-off against the running per-batch tally. */
+private void recordBatchRelease(Map<String, BigDecimal> releasedInThisBatch, Demand demand,
+                                String advanceGlCode, BigDecimal amount) {
+    if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0)
+        return;
+    String batchKey = licenceKey(demand.getConsumerCode()) + "|" + advanceGlCode;
+    releasedInThisBatch.merge(batchKey, amount, BigDecimal::add);
+}
+
+/**
+ * Whether the demand carries a taxable head for this GST component at all — independent of how
+ * much of it any advance settled. GST_CA is a rounding-adjustment head, not tax, and is excluded.
+ */
+private boolean carriesGstComponent(Demand demand, String component) {
+
+    if (demand.getDemandDetails() == null)
+        return false;
+
+    return demand.getDemandDetails().stream()
+            .filter(dd -> dd.getTaxHeadMasterCode() != null)
+            .filter(dd -> dd.getTaxHeadMasterCode().toUpperCase().contains(component)
+                    && !"GST_CA".equalsIgnoreCase(dd.getTaxHeadMasterCode()))
+            .anyMatch(dd -> dd.getTaxAmount() != null && dd.getTaxAmount().signum() > 0);
+}
+
+/**
+ * Sum of {@code min(taxAmount, collectionAmount)} across every demand detail of the given
+ * GST component. GST_CA is a rounding-adjustment head, not tax, and is excluded.
+ */
+private BigDecimal gstSettledFromAdvance(Demand demand, String component) {
+
+    if (demand.getDemandDetails() == null)
+        return BigDecimal.ZERO;
+
+    return demand.getDemandDetails().stream()
+            .filter(dd -> dd.getTaxHeadMasterCode() != null)
+            .filter(dd -> dd.getTaxHeadMasterCode().toUpperCase().contains(component)
+                    && !"GST_CA".equalsIgnoreCase(dd.getTaxHeadMasterCode()))
+            .map(dd -> {
+                BigDecimal tax = dd.getTaxAmount() == null ? BigDecimal.ZERO : dd.getTaxAmount();
+                BigDecimal coll = dd.getCollectionAmount() == null ? BigDecimal.ZERO : dd.getCollectionAmount();
+                BigDecimal settled = tax.min(coll);
+                return settled.compareTo(BigDecimal.ZERO) > 0 ? settled : BigDecimal.ZERO;
+            })
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+}
+
+/**
+ * GST advance created for this licensee and not yet released.
+ *
+ * <p>Created at advance receipt (posting key 40 on the collection side), released by each
+ * demand's netting leg (posting key 50 on the demand side); reversals swap the keys, so a
+ * signed sum over both tables is self-correcting. A licensee whose advance was migrated
+ * rather than collected in-system has no collection row and therefore a zero balance —
+ * which is exactly what stops the netting from inventing an asset.
+ */
+private BigDecimal remainingGstAdvance(String consumerCode, String advanceGlCode) {
+
+    if (consumerCode == null || advanceGlCode == null)
+        return BigDecimal.ZERO;
+
+    List<String> codes = licenceConsumerCodes(consumerCode);
+    if (codes.isEmpty())
+        return BigDecimal.ZERO;
+    String in = String.join(",", Collections.nCopies(codes.size(), "?"));
+    String sql =
+        "SELECT COALESCE(SUM(CASE WHEN posting_key = '40' THEN collection_amount " +
+        "                         WHEN posting_key = '50' THEN -collection_amount " +
+        "                         ELSE 0 END), 0) " +
+        "FROM public.eg_emarket_fi_report_collection " +
+        "WHERE reference_no IN (" + in + ") AND gl_code = ? " +
+        "UNION ALL " +
+        "SELECT COALESCE(SUM(CASE WHEN posting_key = '40' THEN collection_amount " +
+        "                         WHEN posting_key = '50' THEN -collection_amount " +
+        "                         ELSE 0 END), 0) " +
+        "FROM public.eg_emarket_fi_report " +
+        "WHERE reference_no IN (" + in + ") AND gl_code = ?";
+
+    try {
+        List<Object> params = new ArrayList<>(codes);
+        params.add(advanceGlCode);
+        params.addAll(codes);
+        params.add(advanceGlCode);
+        List<BigDecimal> legs = jdbcTemplate.queryForList(sql, params.toArray(), BigDecimal.class);
+        return legs.stream()
+                .map(v -> v == null ? BigDecimal.ZERO : v)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    } catch (DataAccessException e) {
+        // Never block demand creation on the balance lookup. Returning ZERO suppresses the
+        // netting rows, which is the safe direction: GST stays payable rather than being
+        // written off against an advance we could not confirm.
+        log.error("Could not read GST advance balance for consumer {} gl {}; suppressing net-off",
+                consumerCode, advanceGlCode, e);
+        return BigDecimal.ZERO;
+    }
+}
+
+/** The advance receipt a demand drew on: its transaction number and its date. */
+static final class AdvanceReceiptRef {
+    final String documentNo;
+    final Long receiptDate;
+    AdvanceReceiptRef(String documentNo, Long receiptDate) {
+        this.documentNo = documentNo;
+        this.receiptDate = receiptDate;
+    }
+    static final AdvanceReceiptRef NONE = new AdvanceReceiptRef(null, null);
+}
+
+/**
+ * Resolve the advance receipt behind a demand settled from advance, in one query.
+ *
+ * <p>The transaction number becomes the SAP Assignment (ZUONR) on the netting legs — the
+ * key F.13/FB05 matches against the advance receipt's own legs — and the receipt date
+ * bounds the FI doc date. Both come from the same row, so they can never disagree.
+ *
+ * <p>Deliberately joined straight through the payment tables rather than via
+ * {@link #getMarketEssentialInfo}: that helper also joins allotment → assets → markets on a
+ * regexp-stripped consumer code, so a licensee with an incomplete master chain would yield
+ * no row and silently lose its clearing key — which is precisely the "GST not getting
+ * cleared in SAP" symptom this work exists to fix. Nothing here needs the market masters.
+ *
+ * <p>Returns {@link AdvanceReceiptRef#NONE} when unresolvable; the netting rows still post,
+ * they simply carry no clearing key, and the doc date falls back to the tax period.
+ */
+private AdvanceReceiptRef getAdvanceReceipt(String settledDemandId) {
+
+    if (settledDemandId == null)
+        return AdvanceReceiptRef.NONE;
+
+    String sql =
+        "SELECT p.transactionnumber, p.transactiondate " +
+        "FROM eg_emarket_demand_settlement_info s " +
+        "JOIN egcl_billdetial bd ON bd.demandid = s.advance_demandid " +
+        "JOIN egcl_paymentdetail pd ON pd.billid = bd.billid " +
+        "JOIN egcl_payment p ON p.id = pd.paymentid " +
+        // The advance demand rides along as a carry-forward line on every later bill for the
+        // same licensee, so this join yields one row per bill it ever appeared on. The receipt
+        // that FUNDED the advance is the earliest of them — DESC would deterministically pick
+        // an unrelated later payment, giving SAP a clearing key that matches nothing and
+        // clamping the tax point to the wrong date. Cancelled payments are excluded outright.
+        "WHERE s.settled_demandid = ? " +
+        "  AND (p.paymentstatus IS NULL OR p.paymentstatus NOT IN ('CANCELLED','DISHONOURED')) " +
+        "ORDER BY p.transactiondate ASC LIMIT 1";
+
+    try {
+        List<AdvanceReceiptRef> refs = jdbcTemplate.query(sql, new Object[] { settledDemandId },
+                (rs, rowNum) -> new AdvanceReceiptRef(
+                        rs.getString("transactionnumber"), (Long) rs.getObject("transactiondate")));
+        return refs.isEmpty() ? AdvanceReceiptRef.NONE : refs.get(0);
+    } catch (DataAccessException e) {
+        log.error("Could not resolve the advance receipt for settled demand {}", settledDemandId, e);
+        return AdvanceReceiptRef.NONE;
+    }
+}
+
+/**
+ * Doc date for a demand's FI rows.
+ *
+ * <p>Normally the tax period start. For a demand raised against an advance the invoice date
+ * is clamped forward to the advance receipt date when the period has already elapsed: GST
+ * time of supply is the earlier of invoice or payment, so where payment came first the
+ * invoice cannot be stamped into a period that closed before the money arrived. The client's
+ * own Tax Paid sheet honours AT DT &lt;= DEMAND DATE on 14 of its 15 rows.
+ *
+ * <p>Posting date is separately forced to the open period by the CSV exporter, so only the
+ * tax date moves here.
+ */
+private Long resolveDemandDocDate(Demand demand, AdvanceReceiptRef advance) {
+
+    Long taxPeriodFrom = demand.getTaxPeriodFrom();
+    if (!demand.isApportionedAgainstAdvance() || taxPeriodFrom == null)
+        return taxPeriodFrom;
+
+    Long advanceReceiptDate = advance == null ? null : advance.receiptDate;
+    if (advanceReceiptDate == null || advanceReceiptDate <= taxPeriodFrom)
+        return taxPeriodFrom;
+
+    log.info("Demand {} tax period {} predates its advance receipt {}; clamping FI doc date",
+            demand.getId(), taxPeriodFrom, advanceReceiptDate);
+    return advanceReceiptDate;
+}
+
+/**
+ * Collect one synthetic, FI-only demand detail carrying the netting leg. Written to a
+ * caller-supplied list rather than onto the Demand: they must never reach
+ * egbs_demanddetail_v1, the /demand/_create response or the demand-index topic — they exist
+ * purely to drive {@link #buildDemandFiReports}. Zero amounts are skipped so a demand with
+ * nothing to net produces no netting rows.
+ */
+private void addNettingDetail(List<DemandDetail> target, Demand demand, String headCode, String glCode,
+                              BigDecimal amount, String advanceDocNo) {
+
+    if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0)
+        return;
+
+    Map<String, Object> additional = new HashMap<>();
+    additional.put("glcode", glCode);
+    if (advanceDocNo != null)
+        additional.put("assignment", advanceDocNo);
+
+    target.add(DemandDetail.builder()
+            .demandId(demand.getId())
+            .taxAmount(amount)
+            .taxHeadMasterCode(headCode)
+            .additionalDetails(additional)
+            .build());
+}
+
 
 
 
 public List<FiReport> buildDemandFiReports(Demand demand) {
+    return buildDemandFiReports(demand, Collections.<DemandDetail>emptyList());
+}
+
+/**
+ * @param extraDetails synthetic FI-only heads to account for alongside the demand's own
+ *                     persisted details. Empty for every path except the GST net-off.
+ */
+public List<FiReport> buildDemandFiReports(Demand demand, List<DemandDetail> extraDetails) {
 
     List<FiReport> reports = new ArrayList<>();
 
     String consumerCode = demand.getConsumerCode();
-    Long postingDate = demand.getTaxPeriodFrom();
+    // Doc date drives the GST tax point. For a demand raised against an advance the invoice
+    // cannot predate the money: an 11B adjustment stamped with an elapsed tax period lands in
+    // an already-filed return and drives the GST advance negative until the receipt catches up.
+    // Clamped only on that path; plain, reversal and dishonour demands keep taxPeriodFrom.
+    // One lookup per demand, reused for the doc-date clamp and the advance leg's clearing key.
+    AdvanceReceiptRef advance = demand.isApportionedAgainstAdvance()
+            ? getAdvanceReceipt(demand.getId())
+            : AdvanceReceiptRef.NONE;
+    Long postingDate = resolveDemandDocDate(demand, advance);
 
 	String fund;
 	String fundCenter;
@@ -994,9 +1386,21 @@ public List<FiReport> buildDemandFiReports(Demand demand) {
 		functionalArea = additionalMarketDetails.get("functionalArea");
 
 
-    BigDecimal totalReceivable = BigDecimal.ZERO; 
+    BigDecimal totalReceivable = BigDecimal.ZERO;
+    // Portion of this demand already settled out of an advance. The balancing debit for it
+    // belongs on 350410215 (releasing the advance the licensee has already paid), NOT on the
+    // receivable — nothing is owed for it, and a receivable booked here would never clear
+    // because no collection follows a demand settled from advance. Only the unsettled
+    // remainder is a true receivable.
+    BigDecimal settledFromAdvance = BigDecimal.ZERO;
 
-    for(DemandDetail dd : demand.getDemandDetails()){
+    List<DemandDetail> detailsForFi = demand.getDemandDetails();
+    if (extraDetails != null && !extraDetails.isEmpty()) {
+        detailsForFi = new ArrayList<>(detailsForFi);
+        detailsForFi.addAll(extraDetails);
+    }
+
+    for(DemandDetail dd : detailsForFi){
         if(dd.getTaxAmount() == null || dd.getTaxAmount().compareTo(BigDecimal.ZERO) == 0)
            continue;
         String th = dd.getTaxHeadMasterCode();
@@ -1008,12 +1412,12 @@ public List<FiReport> buildDemandFiReports(Demand demand) {
             .referenceNo(consumerCode)
             .remarks(th.contains("GST") && !th.equalsIgnoreCase("GST_CA") ? 
 			        (th.contains("CGST") ? "CGST Payable" : "SGST Payable") 
-					 :  th.contains("40") ? th.equalsIgnoreCase("CSP40") ? "CGST Payable" : "SGST Payable"
-                     : th.contains("50") ? th.equalsIgnoreCase("CSA50") ? "CGST Advance" : "SGST Advance" 
+					 :  NETTING_DEBIT_HEADS.contains(th) ? "CSP40".equals(th) ? "CGST Payable" : "SGST Payable"
+                     : NETTING_CREDIT_HEADS.contains(th) ? "CSA50".equals(th) ? "CGST Advance" : "SGST Advance" 
                      : th)
-            .postingKey(th.contains("40") ? "40" : 
-                        th.contains("50") ? "50" : "50")
+            .postingKey(NETTING_DEBIT_HEADS.contains(th) ? "40" : "50")
             .glCode(extractGlCode(dd))
+            .assignment(extractAssignment(dd))
             .collectionAmount(dd.getTaxAmount())
             .fund(fund)
             .fundCentre(fundCenter)
@@ -1025,13 +1429,47 @@ public List<FiReport> buildDemandFiReports(Demand demand) {
             .createdAt(System.currentTimeMillis())
             .updatedAt(System.currentTimeMillis())
             .build());
-        if(!th.contains("40") && !th.contains("50"))    
-	       totalReceivable = totalReceivable.add(dd.getTaxAmount());		
+        if(!NETTING_DEBIT_HEADS.contains(th) && !NETTING_CREDIT_HEADS.contains(th)) {
+	       totalReceivable = totalReceivable.add(dd.getTaxAmount());
+	       if (demand.isApportionedAgainstAdvance() && dd.getCollectionAmount() != null) {
+	           BigDecimal settled = dd.getTaxAmount().min(dd.getCollectionAmount());
+	           if (settled.compareTo(BigDecimal.ZERO) > 0)
+	               settledFromAdvance = settledFromAdvance.add(settled);
+	       }
+	    }
 	}
 
+    // Balancing debit(s). The advance-settled portion releases 350410215; only the
+    // unsettled remainder is booked as a receivable. A demand with no advance behind it
+    // (settledFromAdvance == 0) produces exactly the single receivable row it always has.
+    settledFromAdvance = settledFromAdvance.min(totalReceivable);
+    BigDecimal openReceivable = totalReceivable.subtract(settledFromAdvance);
+
+    if (settledFromAdvance.compareTo(BigDecimal.ZERO) != 0) {
+        reports.add(FiReport.builder()
+            .transactionNumber(demand.getId())
+            .docDate(postingDate)
+            .postingDate(postingDate)
+            .referenceNo(consumerCode)
+            .remarks("Advance")
+            .postingKey("40")
+            .glCode("350410215")
+            .collectionAmount(settledFromAdvance)
+            .assignment(advance.documentNo)
+            .fund(fund)
+            .fundCentre(fundCenter)
+            .businessArea(businessArea)
+            .functionalArea(functionalArea)
+            .documentHeaderText(demand.getDemandSeqNo() != null ?  demand.getDemandSeqNo().toString() : null)
+            .docType("YX")
+            .isNew(Boolean.TRUE)
+            .createdAt(System.currentTimeMillis())
+            .updatedAt(System.currentTimeMillis())
+            .build());
+    }
 
     // 1️⃣ Customer / Receivable (Dr)
-     if(totalReceivable.compareTo(BigDecimal.ZERO) != 0){     
+     if(openReceivable.compareTo(BigDecimal.ZERO) != 0){
     reports.add(FiReport.builder()
             .transactionNumber(demand.getId())
             .docDate(postingDate)
@@ -1039,8 +1477,8 @@ public List<FiReport> buildDemandFiReports(Demand demand) {
             .referenceNo(consumerCode)
             .remarks("Receivable from Mun Mkt")
             .postingKey("40")
-            .glCode("431190300")
-            .collectionAmount(totalReceivable)
+            .glCode(receivableGlCode)
+            .collectionAmount(openReceivable)
             .fund(fund)
             .fundCentre(fundCenter)
             .businessArea(businessArea)
@@ -1142,7 +1580,206 @@ private FiReport fiRow(Demand demand, String glCode, String postingKey,
             .functionalArea(demand.getFunctionalArea())
             .remarks(remarks)
             .paymentModeDetails(demand.getPaymentMode())
+            // SAP Assignment (ZUONR). Only the GST-advance legs carry it, set to this
+            // receipt's transaction number — the same value the later demand's netting leg
+            // carries — so F.13/FB05 can match the two and clear the advance GST. Every
+            // other GL keeps the blank Assignment it has today.
+            .assignment(isGstAdvanceGl(glCode) ? demand.getFiReceiptNo() : null)
             .docType("YY")
+            .isNew(Boolean.TRUE)
+            .createdAt(now)
+            .updatedAt(now)
+            .build();
+}
+
+/** True for the CGST/SGST Advance asset GLs that must clear against a demand's netting leg. */
+private boolean isGstAdvanceGl(String glCode) {
+    return GL_CGST_ADVANCE.equals(glCode) || GL_SGST_ADVANCE.equals(glCode);
+}
+
+/**
+ * GST actually posted to the advance-asset GLs by a receipt, keyed by GL code.
+ *
+ * <p>A cancellation must give back exactly what was taken, not what today's rules would
+ * compute. Advance GST used to be booked for a single month regardless of how many months
+ * the advance covered; recomputing at cancellation time would now reverse {@code months x}
+ * that amount and drive the advance GL deeply negative for every receipt taken before the
+ * fix. Reading the posted rows back makes pre-fix and post-fix receipts reverse correctly
+ * without needing to know which is which.
+ *
+ * <p>Signed, so an already-reversed receipt yields zero rather than reversing twice.
+ * Returns an empty map when nothing was posted, in which case the caller keeps its
+ * computed amounts (the path a brand-new receipt takes).
+ */
+public Map<String, BigDecimal> getPostedAdvanceGst(String fiReceiptNo, String consumerCode) {
+
+    if (fiReceiptNo == null || fiReceiptNo.isEmpty() || consumerCode == null || consumerCode.isEmpty())
+        return Collections.emptyMap();
+
+    String sql =
+        "SELECT gl_code, " +
+        "       SUM(CASE WHEN posting_key = '40' THEN collection_amount ELSE -collection_amount END) AS posted " +
+        "FROM public.eg_emarket_fi_report_collection " +
+        // Scoped to the licensee as well as the receipt: document_header_text is a
+        // transaction number, not a guaranteed-unique key, and summing another licensee's
+        // advance GST into this cancellation would reverse the wrong amount.
+        "WHERE document_header_text = ? AND reference_no = ? AND gl_code IN (?, ?) " +
+        "GROUP BY gl_code";
+
+    try {
+        Map<String, BigDecimal> posted = new HashMap<>();
+        jdbcTemplate.query(sql, new Object[] { fiReceiptNo, consumerCode, GL_CGST_ADVANCE, GL_SGST_ADVANCE },
+                rs -> { posted.put(rs.getString("gl_code"), rs.getBigDecimal("posted")); });
+        return posted;
+    } catch (DataAccessException e) {
+        log.error("Could not read posted advance GST for receipt {}", fiReceiptNo, e);
+        return Collections.emptyMap();
+    }
+}
+
+/**
+ * Compensating rows that undo a demand's GST net-off when the advance it drew on is
+ * cancelled or dishonoured.
+ *
+ * <p>Without these the collection reversal credits the whole GST advance back while the
+ * demand-side releases stay posted, so the advance GL goes negative and the liability that
+ * was netted away is never restored — GST payable ends up understated.
+ *
+ * <p>The rows are read back from what was actually posted and mirrored, rather than
+ * recomputed, so a reversal can never disagree with its original even if the netting rule
+ * changes later. Returns empty for a demand that carries no netting legs, which keeps a
+ * cancellation with nothing to undo byte-identical to today.
+ */
+public List<FiReport> buildGstNettingReversalFiReports(String settledDemandId, Long postingDate) {
+
+    if (settledDemandId == null)
+        return Collections.emptyList();
+
+    // Reverse the RESIDUAL net-off, not the raw history.
+    //
+    // A demand's net-off can be undone by either of two independent paths — cancelling the
+    // advance receipt (here) or cancelling the demand itself (emarket-v1 DemandReversalService).
+    // Mirroring every upmktdemdadv leg would let the second path reverse what the first already
+    // reversed: GST payable over-credited, the advance asset over-debited, and — worst —
+    // remainingGstAdvance() would then read a phantom positive balance and let FUTURE demands
+    // net against an advance that no longer exists.
+    //
+    // The residual is measured on the ADVANCE GLs alone (439300200/201), which appear on the
+    // demand side only ever as netting legs: released at posting key 50, restored at 40. The
+    // payable GLs cannot be used for this because the ordinary demand GST line shares their
+    // GL and key. A residual of zero means the net-off is already undone — emit nothing.
+    String residualSql =
+        "SELECT gl_code, " +
+        "       SUM(CASE WHEN posting_key = '50' THEN collection_amount ELSE -collection_amount END) AS residual, " +
+        "       MIN(reference_no) AS reference_no, MIN(document_header_text) AS document_header_text, " +
+        "       MIN(fund) AS fund, MIN(fund_centre) AS fund_centre, MIN(functional_area) AS functional_area, " +
+        "       MIN(business_area) AS business_area, " +
+        "       MIN(assignment) AS assignment, MIN(doc_date) AS doc_date " +
+        "FROM public.eg_emarket_fi_report " +
+        "WHERE transaction_number = ? AND report_type IN (?, ?) AND gl_code IN (?, ?) " +
+        "GROUP BY gl_code HAVING SUM(CASE WHEN posting_key = '50' THEN collection_amount ELSE -collection_amount END) > 0";
+
+    try {
+        long now = System.currentTimeMillis();
+        List<FiReport> reversals = new ArrayList<>();
+
+        jdbcTemplate.query(residualSql,
+                new Object[] { settledDemandId, FiReportType.UPMKT_DEMDADV, FiReportType.UPMKT_DEMDREV,
+                               GL_CGST_ADVANCE, GL_SGST_ADVANCE },
+                rs -> {
+                    String advanceGl = rs.getString("gl_code");
+                    BigDecimal residual = rs.getBigDecimal("residual");
+                    boolean cgstSide = GL_CGST_ADVANCE.equals(advanceGl);
+                    String payableGl = cgstSide ? GL_CGST_PAYABLE : GL_SGST_PAYABLE;
+                    // Null postingDate keeps each reversal leg on the doc date of the legs it
+                    // mirrors, so original and reversal always fall in the same report window.
+                    Long docDate = postingDate != null ? postingDate : (Long) rs.getObject("doc_date");
+
+                    // Restore the liability that was netted away, and give the advance asset back.
+                    reversals.add(nettingReversalRow(settledDemandId, rs, payableGl, "50",
+                            cgstSide ? "CGST Payable" : "SGST Payable", residual, docDate, now));
+                    reversals.add(nettingReversalRow(settledDemandId, rs, advanceGl, "40",
+                            cgstSide ? "CGST Advance" : "SGST Advance", residual, docDate, now));
+                });
+
+        if (!reversals.isEmpty())
+            log.info("Reversing residual GST net-off on demand {}: {} legs", settledDemandId, reversals.size());
+        return reversals;
+
+    } catch (DataAccessException e) {
+        log.error("Could not read netting rows to reverse for settled demand {}", settledDemandId, e);
+        return Collections.emptyList();
+    }
+}
+
+/**
+ * Compensating rows that put a re-opened demand's dues back on the receivable when the
+ * advance it was settled from is cancelled.
+ *
+ * <p>The forward document split its balancing debit: the part covered by the advance went to
+ * 350410215, the remainder to the receivable. Cancelling the advance receipt credits the
+ * whole advance back on the collection side and re-opens the demand, but nothing undoes that
+ * demand-side debit — so 350410215 is left permanently overstated and dues the licensee now
+ * genuinely owes never reappear on the receivable. This emits the missing pair.
+ *
+ * <p>Residual-based like the GST netting reversal, so running it twice is a no-op.
+ */
+public List<FiReport> buildAdvanceSettlementReversalFiReports(String settledDemandId) {
+
+    if (settledDemandId == null)
+        return Collections.emptyList();
+
+    String sql =
+        "SELECT SUM(CASE WHEN posting_key = '40' THEN collection_amount ELSE -collection_amount END) AS residual, " +
+        "       MIN(reference_no) AS reference_no, MIN(document_header_text) AS document_header_text, " +
+        "       MIN(fund) AS fund, MIN(fund_centre) AS fund_centre, MIN(functional_area) AS functional_area, " +
+        "       MIN(business_area) AS business_area, MIN(assignment) AS assignment, MIN(doc_date) AS doc_date " +
+        "FROM public.eg_emarket_fi_report " +
+        "WHERE transaction_number = ? AND report_type IN (?, ?) AND gl_code = '350410215' " +
+        "HAVING SUM(CASE WHEN posting_key = '40' THEN collection_amount ELSE -collection_amount END) > 0";
+
+    try {
+        long now = System.currentTimeMillis();
+        List<FiReport> rows = new ArrayList<>();
+        jdbcTemplate.query(sql,
+                new Object[] { settledDemandId, FiReportType.UPMKT_DEMDADV, FiReportType.UPMKT_DEMDREV },
+                rs -> {
+                    BigDecimal residual = rs.getBigDecimal("residual");
+                    Long docDate = (Long) rs.getObject("doc_date");
+                    // Give the advance liability back, and put the dues back on the receivable.
+                    rows.add(nettingReversalRow(settledDemandId, rs, "350410215", "50",
+                            "Advance", residual, docDate, now));
+                    rows.add(nettingReversalRow(settledDemandId, rs, receivableGlCode, "40",
+                            "Receivable from Mun Mkt", residual, docDate, now));
+                });
+        return rows;
+    } catch (DataAccessException e) {
+        log.error("Could not read the advance-settlement leg to reverse for demand {}", settledDemandId, e);
+        return Collections.emptyList();
+    }
+}
+
+/** One netting-reversal leg, taking its dimensions from the aggregated original rows. */
+private FiReport nettingReversalRow(String demandId, java.sql.ResultSet rs, String glCode,
+                                    String postingKey, String remarks, BigDecimal amount,
+                                    Long docDate, long now) throws java.sql.SQLException {
+    return FiReport.builder()
+            .transactionNumber(demandId)
+            .docDate(docDate)
+            .postingDate(docDate)
+            .referenceNo(rs.getString("reference_no"))
+            .documentHeaderText(rs.getString("document_header_text"))
+            .postingKey(postingKey)
+            .glCode(glCode)
+            .collectionAmount(amount)
+            .fund(rs.getString("fund"))
+            .fundCentre(rs.getString("fund_centre"))
+            .functionalArea(rs.getString("functional_area"))
+            .businessArea(rs.getString("business_area"))
+            .assignment(rs.getString("assignment"))
+            .remarks(remarks)
+            .reportType(FiReportType.UPMKT_DEMDREV)
+            .docType("YX")
             .isNew(Boolean.TRUE)
             .createdAt(now)
             .updatedAt(now)

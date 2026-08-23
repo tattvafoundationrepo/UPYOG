@@ -527,13 +527,24 @@ public class DemandService {
 			Object response = serviceRequestRepository.fetchResult(util.getApportionURL(), apportionRequest);
 			ApportionDemandResponse apportionDemandResponse = mapper.convertValue(response, ApportionDemandResponse.class);
 
-			// Added the advance settlement details if advance demand is present
+			// Added the advance settlement details if advance demand is present.
+			// One settlement row per CONTRIBUTING advance: a demand large enough to exhaust
+			// one advance and draw on a second was previously linked (findFirst) to the first
+			// only, so the Tax Paid sheet attributed the whole adjustment to the wrong advance
+			// document and receipt cancellation of the second advance failed to re-open it.
             boolean settledFromAdvance = false;
             if(!CollectionUtils.isEmpty(apportionDemandResponse.getDemands())){
-				AdvSettlement advSettlement = new AdvSettlement();
 
-		    String advanceDemandId =
-            apportionRequest.getDemands().stream()
+			// Advance consumed = the advance detail's collectionAmount moved between the
+			// apportion request and its response. Candidates whose balance was not touched
+			// (a later advance in the queue when an earlier one covered the demand) are
+			// deliberately not linked.
+			Map<String, BigDecimal> advanceCollectedBefore = apportionRequest.getDemands().stream()
+				.collect(Collectors.toMap(Demand::getId, DemandService::sumAdvanceCollected, (a, b) -> a));
+
+			List<String> advanceDemandIds =
+            apportionDemandResponse.getDemands().stream()
+                .filter(d -> !d.getId().equalsIgnoreCase(demand.getId()))
                 .filter(d->
                         d.getDemandDetails().stream()
                                 .anyMatch(dd ->
@@ -541,21 +552,29 @@ public class DemandService {
                                         dd.getTaxHeadMasterCode().contains("ADVANCE")
                                 )
                 )
+                .filter(d -> {
+                        BigDecimal before = advanceCollectedBefore.get(d.getId());
+                        return before == null || sumAdvanceCollected(d).compareTo(before) != 0;
+                })
                 .map(Demand::getId)
-                .findFirst()
-                .orElse(null);
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
 			boolean currentDemandHasAdvance = demand.getDemandDetails().stream()
 					.anyMatch(dd -> dd.getTaxHeadMasterCode() != null
 							&& dd.getTaxHeadMasterCode().contains("ADVANCE"));
-            if(advanceDemandId != null && !currentDemandHasAdvance){
-				advSettlement.setAdvanceDemandId(advanceDemandId);
-				advSettlement.setSettledDemandId(demand.getId());
-				advSettlement.setConsumerCode(demand.getConsumerCode());
-				advSettlement.setTaxPeriodFrom(demand.getTaxPeriodFrom());
-				advSettlement.setTaxPeriodTo(demand.getTaxPeriodTo());
-				demandRepository.saveAdvSettlementDemandIds(advSettlement);
+            if(!advanceDemandIds.isEmpty() && !currentDemandHasAdvance){
+				for (String advanceDemandId : advanceDemandIds) {
+					AdvSettlement advSettlement = new AdvSettlement();
+					advSettlement.setAdvanceDemandId(advanceDemandId);
+					advSettlement.setSettledDemandId(demand.getId());
+					advSettlement.setConsumerCode(demand.getConsumerCode());
+					advSettlement.setTaxPeriodFrom(demand.getTaxPeriodFrom());
+					advSettlement.setTaxPeriodTo(demand.getTaxPeriodTo());
+					demandRepository.saveAdvSettlementDemandIds(advSettlement);
+				}
 				settledFromAdvance = true;
-			} 
+			}
 			}
 				
 			final boolean apportionedAgainstAdvance = settledFromAdvance;
@@ -628,7 +647,21 @@ public class DemandService {
 
 		return new ArrayList<>(demandsWithAdvance);
 	}
-	
+
+	/**
+	 * Total collected against a demand's advance-carry-forward details. Compared before and
+	 * after apportionment to tell a contributing advance apart from a mere candidate.
+	 */
+	private static BigDecimal sumAdvanceCollected(Demand demand) {
+		if (demand.getDemandDetails() == null)
+			return BigDecimal.ZERO;
+		return demand.getDemandDetails().stream()
+				.filter(dd -> dd.getTaxHeadMasterCode() != null
+						&& dd.getTaxHeadMasterCode().contains("ADVANCE"))
+				.map(dd -> dd.getCollectionAmount() == null ? BigDecimal.ZERO : dd.getCollectionAmount())
+				.reduce(BigDecimal.ZERO, BigDecimal::add);
+	}
+
 	/**
 	 * Method to add demand details from amendment if exists in DB
 	 * @param demandRequest

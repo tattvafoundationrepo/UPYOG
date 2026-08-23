@@ -51,4 +51,12 @@ public class FiReport {
 
     /** One of the FiReportType codes (upmktcoll, upmktcolrev, upmktdemd, ...). */
     private String reportType;
+
+    /**
+     * SAP Assignment (ZUONR) — the key F.13/FB05 match open items on. Set only on the
+     * advance-GST legs, to the advance document number, so the advance receipt's
+     * CGST/SGST Advance debit and the later demand's netting credit carry the same
+     * value and SAP can clear them. Null on every other row.
+     */
+    private String assignment;
 }
