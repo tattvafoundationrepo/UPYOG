@@ -1739,6 +1739,46 @@ public boolean wasCollectionSplit(String transactionNumber) {
     }
 }
 
+/**
+ * Was this receipt posted to the ADVANCE account, or against the receivable?
+ *
+ * <p>Returns {@code TRUE} when the posted document credits 350410215 (a pure advance receipt, or
+ * the advance leg of a split mixed receipt), {@code FALSE} when it credits only the receivable,
+ * and {@code null} when neither is present — a deposit, or no document at all — in which case the
+ * caller keeps whatever flow it computed.
+ *
+ * <p>Exists so a cancellation gives back exactly what was posted. Whether a receipt counts as an
+ * advance is decided by rules that sit behind a property, so a receipt taken under one setting
+ * could otherwise be reversed under another: the advance account would be debited for a receipt
+ * that credited the receivable, or the other way round, leaving both GLs wrong by the full receipt
+ * value while the voucher still balanced.
+ */
+public Boolean wasPostedAsAdvance(String transactionNumber) {
+
+    if (transactionNumber == null || transactionNumber.trim().isEmpty())
+        return null;
+
+    String sql =
+        "SELECT COUNT(*) FILTER (WHERE gl_code = '350410215') AS advance_legs, " +
+        "       COUNT(*) FILTER (WHERE gl_code = '431409936') AS receivable_legs " +
+        "FROM public.eg_emarket_fi_report_collection " +
+        "WHERE document_header_text = ? AND report_type = ? AND posting_key = '50'";
+
+    try {
+        Map<String, Object> counts = jdbcTemplate.queryForMap(sql,
+                new Object[] { transactionNumber, FiReportType.UPMKT_COLL });
+        long advance = ((Number) counts.get("advance_legs")).longValue();
+        long receivable = ((Number) counts.get("receivable_legs")).longValue();
+        if (advance > 0)
+            return Boolean.TRUE;
+        return receivable > 0 ? Boolean.FALSE : null;
+    } catch (DataAccessException e) {
+        log.error("Could not read how receipt {} was posted; reversing on the computed flow",
+                transactionNumber, e);
+        return null;
+    }
+}
+
 /** True for the CGST/SGST Advance asset GLs that must clear against a demand's netting leg. */
 private boolean isGstAdvanceGl(String glCode) {
     return GL_CGST_ADVANCE.equals(glCode) || GL_SGST_ADVANCE.equals(glCode);

@@ -77,6 +77,14 @@ public class ReceiptServiceV2 {
 	@org.springframework.beans.factory.annotation.Value("${emarket.fi.mixed.receipt.split.enabled:false}")
 	private boolean mixedReceiptSplitEnabled;
 
+	/**
+	 * Decide advance-vs-regular from the payment's own advance fields rather than from an advance
+	 * carry-forward head left on the licensee's demands. Off by default: with it false the flow is
+	 * chosen exactly as before.
+	 */
+	@org.springframework.beans.factory.annotation.Value("${emarket.fi.advance.flow.from.payment.enabled:false}")
+	private boolean advanceFlowFromPaymentEnabled;
+
 
 	public void updateDemandFromReceipt(BillRequestV2 billReq, Boolean isReceiptCancellation) {
 
@@ -414,6 +422,18 @@ public class ReceiptServiceV2 {
 			if (postedAdvanceGst.containsKey("439300201"))
 				sgst = nz(postedAdvanceGst.get("439300201"));
 
+			// Same principle applied to the flow itself. Whether a receipt is an advance is decided
+			// behind a property, so a receipt taken under one setting must not be reversed under
+			// another — that would debit the advance account for a receipt that credited the
+			// receivable, or vice versa, leaving both GLs wrong by the whole receipt while the
+			// voucher still balanced. Null means the posted document says neither (a deposit, or
+			// no document), and the computed flow stands. Deposits never match either GL.
+			ReversalPosting asPosted = reversalAsPosted(flow, cgst, sgst, postedAdvanceGst,
+					d.getFiReceiptNo(), demandRequest.getDemands());
+			flow = asPosted.flow;
+			cgst = asPosted.cgst;
+			sgst = asPosted.sgst;
+
 			log.info("Reversal FI flow={} total={} cgst={} sgst={} (postedAdvanceGst={})",
 					flow, total, cgst, sgst, postedAdvanceGst);
 
@@ -659,6 +679,61 @@ public class ReceiptServiceV2 {
 				.reduce(BigDecimal.ZERO, BigDecimal::add);
 	}
 
+	/** The flow and GST a reversal must use, once the posted document has had its say. */
+	static final class ReversalPosting {
+		final FiFlow flow; final BigDecimal cgst; final BigDecimal sgst;
+		ReversalPosting(FiFlow flow, BigDecimal cgst, BigDecimal sgst) {
+			this.flow = flow; this.cgst = cgst; this.sgst = sgst;
+		}
+	}
+
+	/**
+	 * Reconcile a cancellation against the document that was actually posted.
+	 *
+	 * <p>Whether a receipt counts as an advance is decided behind a property, so a receipt taken
+	 * under one setting must not be reversed under another: that would debit the advance account
+	 * for a receipt which credited the receivable, or the reverse, leaving both GLs wrong by the
+	 * full receipt value while the voucher still balanced.
+	 *
+	 * <p>When the posted document says neither — a deposit, or nothing on file — the computed flow
+	 * stands untouched.
+	 */
+	ReversalPosting reversalAsPosted(FiFlow computed, BigDecimal cgst, BigDecimal sgst,
+			Map<String, BigDecimal> postedAdvanceGst, String receiptNo, List<Demand> demands) {
+
+		Boolean postedAsAdvance = demandRepository.wasPostedAsAdvance(receiptNo);
+		if (postedAsAdvance == null)
+			return new ReversalPosting(computed, cgst, sgst);
+
+		if (postedAsAdvance) {
+			// The GST on an advance voucher is whatever that voucher actually put on the advance
+			// GLs — never what the demands carry. A receipt booked with no advance GST at all must
+			// reverse with none, or the reversal invents CGST/SGST legs the original never had and
+			// strands them on the payable and advance accounts.
+			BigDecimal postedCgst = nz(postedAdvanceGst.get("439300200"));
+			BigDecimal postedSgst = nz(postedAdvanceGst.get("439300201"));
+			FiFlow asPosted = isPositive(postedCgst) || isPositive(postedSgst)
+					? FiFlow.GST_ADVANCE : FiFlow.NON_GST_ADVANCE;
+			if (asPosted != computed)
+				log.warn("Reversing receipt {} as {} because that is how it was posted, not the {} "
+						+ "today's rules would choose", receiptNo, asPosted, computed);
+			return new ReversalPosting(asPosted, postedCgst, postedSgst);
+		}
+
+		// A regular voucher takes its GST from the demands it settled, not from the advance GLs —
+		// those belong to a voucher this receipt never posted.
+		BigDecimal demandCgst = sumDetails(demands, "CGST");
+		BigDecimal demandSgst = sumDetails(demands, "SGST");
+		FiFlow asPosted = isPositive(demandCgst) || isPositive(demandSgst)
+				? FiFlow.GST_REGULAR : FiFlow.NON_GST_REGULAR;
+		if (asPosted == computed)
+			return new ReversalPosting(computed, cgst, sgst);
+
+		log.warn("Reversing receipt {} as {} because that is how it was posted, not the {} "
+				+ "today's rules would choose", receiptNo, asPosted, computed);
+		return new ReversalPosting(asPosted, demandCgst, demandSgst);
+	}
+
 	/**
 	 * Determine which of the 5 emarket collection flows this payment represents.
 	 * Precedence: Deposit -> Advance -> Regular (mixed-flow payments are not split
@@ -674,13 +749,30 @@ public class ReceiptServiceV2 {
 		if (isDeposit)
 			return FiFlow.DEPOSIT;
 
-		boolean isAdvance = demands.stream()
+		// The payment's own record of what it took. PaymentCollectionService writes these on every
+		// receipt — the amount when an advance was collected, an explicit null when it was not —
+		// so they are authoritative for THIS receipt.
+		boolean paymentTookAdvance = isPositive(m.getRentalAdvancePaid())
+				|| isPositive(m.getLicenseAdvancePaid());
+
+		// An advance carry-forward line stays on a licensee's demands after the advance is taken,
+		// and keeps sitting there at 0.00 once it is exhausted. Reading it as "this is an advance
+		// receipt" books every later ORDINARY collection from that licensee to 350410215 instead
+		// of clearing the receivable — the licence then shows dues outstanding in SAP that the
+		// demand ledger says are paid. The head says the licensee once took an advance; only the
+		// payment says whether this receipt is one.
+		boolean demandCarriesAdvanceHead = demands.stream()
 				.filter(d -> d.getDemandDetails() != null)
 				.flatMap(d -> d.getDemandDetails().stream())
 				.anyMatch(dd -> dd.getTaxHeadMasterCode() != null
-						&& dd.getTaxHeadMasterCode().contains("ADVANCE"))
-				|| isPositive(m.getRentalAdvancePaid())
-				|| isPositive(m.getLicenseAdvancePaid());
+						&& dd.getTaxHeadMasterCode().contains("ADVANCE"));
+
+		// An advance taken when nothing is due is collected against a zero-value demand carrying
+		// only that carry-forward head, so the head alone cannot be dropped as a signal without
+		// the payment being trusted first — and on that receipt the payment does carry the amount.
+		boolean isAdvance = advanceFlowFromPaymentEnabled
+				? paymentTookAdvance
+				: (demandCarriesAdvanceHead || paymentTookAdvance);
 
 		boolean hasGst;
 		if (isAdvance) {
