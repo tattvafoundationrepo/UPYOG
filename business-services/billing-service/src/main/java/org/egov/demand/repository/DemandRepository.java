@@ -1344,30 +1344,20 @@ private AdvanceReceiptRef getAdvanceReceipt(String settledDemandId) {
 }
 
 /**
- * Doc date for a demand's FI rows.
+ * Doc date for a demand's FI rows: always the tax period start, for demands against an
+ * advance too (BMC direction, 2026-08-24 — a demand document belongs in the period of the
+ * rent it invoices, whatever date the funding advance was keyed in).
  *
- * <p>Normally the tax period start. For a demand raised against an advance the invoice date
- * is clamped forward to the advance receipt date when the period has already elapsed: GST
- * time of supply is the earlier of invoice or payment, so where payment came first the
- * invoice cannot be stamped into a period that closed before the money arrived. The client's
- * own Tax Paid sheet honours AT DT &lt;= DEMAND DATE on 14 of its 15 rows.
- *
- * <p>Posting date is separately forced to the open period by the CSV exporter, so only the
- * tax date moves here.
+ * <p>An earlier revision clamped a demand-against-advance forward to its advance receipt
+ * date on GST time-of-supply grounds. In time-aligned operation an advance always arrives
+ * before the period it settles, so that clamp could only ever fire on backdated data —
+ * migration loads and UAT — which is exactly where the true-period date is wanted. The
+ * advance receipt is still resolved for the SAP clearing key (ZUONR); only its date is no
+ * longer used here. SAP-side posting-period control, where needed, belongs to the export
+ * step, not to this document date.
  */
 private Long resolveDemandDocDate(Demand demand, AdvanceReceiptRef advance) {
-
-    Long taxPeriodFrom = demand.getTaxPeriodFrom();
-    if (!demand.isApportionedAgainstAdvance() || taxPeriodFrom == null)
-        return taxPeriodFrom;
-
-    Long advanceReceiptDate = advance == null ? null : advance.receiptDate;
-    if (advanceReceiptDate == null || advanceReceiptDate <= taxPeriodFrom)
-        return taxPeriodFrom;
-
-    log.info("Demand {} tax period {} predates its advance receipt {}; clamping FI doc date",
-            demand.getId(), taxPeriodFrom, advanceReceiptDate);
-    return advanceReceiptDate;
+    return demand.getTaxPeriodFrom();
 }
 
 /**
@@ -1421,11 +1411,9 @@ public List<FiReport> buildDemandFiReports(Demand demand, List<DemandDetail> ext
     List<FiReport> reports = new ArrayList<>();
 
     String consumerCode = demand.getConsumerCode();
-    // Doc date drives the GST tax point. For a demand raised against an advance the invoice
-    // cannot predate the money: an 11B adjustment stamped with an elapsed tax period lands in
-    // an already-filed return and drives the GST advance negative until the receipt catches up.
-    // Clamped only on that path; plain, reversal and dishonour demands keep taxPeriodFrom.
-    // One lookup per demand, reused for the doc-date clamp and the advance leg's clearing key.
+    // Every row of this document is dated the demand's tax period (see resolveDemandDocDate).
+    // The advance receipt is resolved only for the SAP clearing key (ZUONR) on the advance leg;
+    // its date is deliberately not used for dating.
     AdvanceReceiptRef advance = !demand.isApportionedAgainstAdvance() ? AdvanceReceiptRef.NONE
             : preResolvedAdvance != null ? preResolvedAdvance
             : getAdvanceReceipt(demand.getId());
