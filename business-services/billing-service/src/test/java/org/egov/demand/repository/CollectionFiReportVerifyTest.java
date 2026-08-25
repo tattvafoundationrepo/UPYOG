@@ -62,11 +62,20 @@ public class CollectionFiReportVerifyTest {
 
     @Test
     void gstRegular() {
+        // Gross bank: the whole receipt hits Bank, nothing touches the GST payable (2026-08-25).
         List<FiReport> r = repo.buildCollectionFiReports(demand(), FiFlow.GST_REGULAR, bd("1180"), bd("90"), bd("90"), false);
-        assertEquals(4, r.size());
-        assertTrue(keys(r).containsAll(List.of(
-                "40|450100100|1000", "50|431409936|1180", "40|350200421|90", "40|350200422|90")), keys(r).toString());
+        assertEquals(2, r.size());
+        assertTrue(keys(r).containsAll(List.of("40|450100100|1180", "50|431409936|1180")), keys(r).toString());
         assertBalanced(r);
+
+        // Flag off restores the previous net-of-GST shape byte for byte.
+        setFlag(repo, false);
+        List<FiReport> old = repo.buildCollectionFiReports(demand(), FiFlow.GST_REGULAR, bd("1180"), bd("90"), bd("90"), false);
+        setFlag(repo, true);
+        assertEquals(4, old.size());
+        assertTrue(keys(old).containsAll(List.of(
+                "40|450100100|1000", "50|431409936|1180", "40|350200421|90", "40|350200422|90")), keys(old).toString());
+        assertBalanced(old);
     }
 
     @Test
@@ -106,5 +115,12 @@ public class CollectionFiReportVerifyTest {
                 "40|350200421|90", "40|350200422|90",
                 "50|439300200|90", "50|439300201|90")), keys(r).toString());
         assertBalanced(r);
+    }
+
+    private static void setFlag(DemandRepository repo, boolean on) {
+        try {
+            java.lang.reflect.Field f = DemandRepository.class.getDeclaredField("grossBankOnRegularCollection");
+            f.setAccessible(true); f.setBoolean(repo, on);
+        } catch (ReflectiveOperationException e) { throw new IllegalStateException(e); }
     }
 }

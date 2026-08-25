@@ -129,6 +129,17 @@ public class DemandRepository {
 	@org.springframework.beans.factory.annotation.Value("${emarket.fi.receivable.gl:431409936}")
 	private String receivableGlCode = "431409936"; // field default keeps non-Spring construction (tests) on the same GL
 
+	/**
+	 * A regular (non-advance) collection on a GST-bearing demand debits Bank for the FULL cash
+	 * received and credits the receivable for the same — no CGST/SGST legs (BMC direction,
+	 * 2026-08-25). The GST liability was recognised when the demand was raised and is settled to
+	 * Government by a separate remittance, so the collection voucher must not touch the payable.
+	 * The previous shape banked the net and debited the payable, which left 350200421/422 with a
+	 * debit balance and the bank short by the tax on every receipt. False restores that shape.
+	 */
+	@org.springframework.beans.factory.annotation.Value("${emarket.fi.regular.collection.gross.bank.enabled:true}")
+	private boolean grossBankOnRegularCollection = true;
+
 	/** GL codes for the GST-advance netting voucher (Accounting Entries 2025, entry 4). */
 	/**
 	 * The four synthetic, FI-only heads appended by the GST net-off block. Matched exactly:
@@ -1585,10 +1596,17 @@ public List<FiReport> buildCollectionFiReports(Demand demand,
             break;
 
         case GST_REGULAR:
-            reports.add(fiRow(demand, "450100100", pk("40", reversal), net, "Bank/Interim Receipt", collectionDate));
-            reports.add(fiRow(demand, "431409936", pk("50", reversal), total, "Receivable from Mun Mkt", collectionDate));
-            reports.add(fiRow(demand, "350200421", pk("40", reversal), cgst, "CGST Payable", collectionDate));
-            reports.add(fiRow(demand, "350200422", pk("40", reversal), sgst, "SGST Payable", collectionDate));
+            // A cancellation must give back exactly what was posted: a receipt booked under the
+            // old net-of-GST shape keeps its four legs on reversal, whatever the flag says now.
+            if (grossBankOnRegularCollection && !(reversal && wasPostedWithGstPayableDebit(demand.getFiReceiptNo()))) {
+                reports.add(fiRow(demand, "450100100", pk("40", reversal), total, "Bank/Interim Receipt", collectionDate));
+                reports.add(fiRow(demand, "431409936", pk("50", reversal), total, "Receivable from Mun Mkt", collectionDate));
+            } else {
+                reports.add(fiRow(demand, "450100100", pk("40", reversal), net, "Bank/Interim Receipt", collectionDate));
+                reports.add(fiRow(demand, "431409936", pk("50", reversal), total, "Receivable from Mun Mkt", collectionDate));
+                reports.add(fiRow(demand, "350200421", pk("40", reversal), cgst, "CGST Payable", collectionDate));
+                reports.add(fiRow(demand, "350200422", pk("40", reversal), sgst, "SGST Payable", collectionDate));
+            }
             break;
 
         case NON_GST_ADVANCE:
@@ -1764,6 +1782,28 @@ public Boolean wasPostedAsAdvance(String transactionNumber) {
         log.error("Could not read how receipt {} was posted; reversing on the computed flow",
                 transactionNumber, e);
         return null;
+    }
+}
+
+/**
+ * Did this receipt's forward voucher debit the GST payable (the pre-2026-08-25 net-of-GST shape
+ * for a regular GST collection)? Read from the posted rows so a reversal mirrors the document
+ * that exists rather than the shape the flag would produce today. False when nothing is on file
+ * or the lookup cannot run (unit tests construct this repository without a JdbcTemplate).
+ */
+private boolean wasPostedWithGstPayableDebit(String transactionNumber) {
+    if (jdbcTemplate == null || transactionNumber == null || transactionNumber.trim().isEmpty())
+        return false;
+    String sql =
+        "SELECT count(*) FROM public.eg_emarket_fi_report_collection " +
+        "WHERE document_header_text = ? AND report_type = ? AND posting_key = '40' " +
+        "  AND gl_code IN ('350200421','350200422')";
+    try {
+        Integer n = jdbcTemplate.queryForObject(sql, new Object[] { transactionNumber, FiReportType.UPMKT_COLL }, Integer.class);
+        return n != null && n > 0;
+    } catch (DataAccessException e) {
+        log.error("Could not read the posted shape of receipt {}; reversing on the current rule", transactionNumber, e);
+        return false;
     }
 }
 
