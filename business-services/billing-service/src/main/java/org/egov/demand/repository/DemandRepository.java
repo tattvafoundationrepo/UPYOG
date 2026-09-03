@@ -50,6 +50,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -128,6 +129,25 @@ public class DemandRepository {
 	 */
 	@org.springframework.beans.factory.annotation.Value("${emarket.fi.receivable.gl:431409936}")
 	private String receivableGlCode = "431409936"; // field default keeps non-Spring construction (tests) on the same GL
+
+	/**
+	 * The money leg of a collection voucher, split by how the money arrived.
+	 *
+	 * <p>BMC: "where collection is made by cheque, the generated CSV reflects it as an interim
+	 * receipt done by cash. This is to be corrected", and a cheque is to carry its own GL wherever
+	 * the GL is shown. Cash keeps the interim account it has always used; a cheque or DD is not
+	 * money in the bank until it clears, so it is held in cheques-in-hand instead.
+	 *
+	 * <p>Resolved at POSTING time, not at report time: the stored FI row, the CSV built from it and
+	 * the document SAP receives all carry the same account. Property-driven so either code can be
+	 * corrected without a code change, with field defaults so non-Spring construction (tests) keeps
+	 * the same GLs.
+	 */
+	@org.springframework.beans.factory.annotation.Value("${emarket.fi.bank.cash.gl:450100100}")
+	private String cashBankGlCode = "450100100";
+
+	@org.springframework.beans.factory.annotation.Value("${emarket.fi.bank.cheque.gl:450210010}")
+	private String chequeBankGlCode = "450210010";
 
 	/**
 	 * A regular (non-advance) collection on a GST-bearing demand debits Bank for the FULL cash
@@ -1588,21 +1608,26 @@ public List<FiReport> buildCollectionFiReports(Demand demand,
     // Defined as the residual so the GST_REGULAR voucher always balances.
     BigDecimal net = total.subtract(cgst).subtract(sgst);
 
+    // The money leg's account, resolved ONCE per voucher so every leg of one receipt agrees and a
+    // reversal costs at most one lookup. Cash keeps the interim account; cheque and DD are held in
+    // cheques-in-hand until they clear.
+    final String bankGl = resolveBankGl(demand, reversal);
+
     switch (flow) {
 
         case NON_GST_REGULAR:
             reports.add(fiRow(demand, "431409936", pk("50", reversal), total, "Receivable from Mun Mkt", collectionDate));
-            reports.add(fiRow(demand, "450100100", pk("40", reversal), total, "Bank/Interim Receipt", collectionDate));
+            reports.add(fiRow(demand, bankGl,  pk("40", reversal), total, "Bank/Interim Receipt", collectionDate));
             break;
 
         case GST_REGULAR:
             // A cancellation must give back exactly what was posted: a receipt booked under the
             // old net-of-GST shape keeps its four legs on reversal, whatever the flag says now.
             if (grossBankOnRegularCollection && !(reversal && wasPostedWithGstPayableDebit(demand.getFiReceiptNo()))) {
-                reports.add(fiRow(demand, "450100100", pk("40", reversal), total, "Bank/Interim Receipt", collectionDate));
+                reports.add(fiRow(demand, bankGl,  pk("40", reversal), total, "Bank/Interim Receipt", collectionDate));
                 reports.add(fiRow(demand, "431409936", pk("50", reversal), total, "Receivable from Mun Mkt", collectionDate));
             } else {
-                reports.add(fiRow(demand, "450100100", pk("40", reversal), net, "Bank/Interim Receipt", collectionDate));
+                reports.add(fiRow(demand, bankGl,  pk("40", reversal), net, "Bank/Interim Receipt", collectionDate));
                 reports.add(fiRow(demand, "431409936", pk("50", reversal), total, "Receivable from Mun Mkt", collectionDate));
                 reports.add(fiRow(demand, "350200421", pk("40", reversal), cgst, "CGST Payable", collectionDate));
                 reports.add(fiRow(demand, "350200422", pk("40", reversal), sgst, "SGST Payable", collectionDate));
@@ -1611,11 +1636,11 @@ public List<FiReport> buildCollectionFiReports(Demand demand,
 
         case NON_GST_ADVANCE:
             reports.add(fiRow(demand, "350410215", pk("50", reversal), total, "Advance", collectionDate));
-            reports.add(fiRow(demand, "450100100", pk("40", reversal), total, "Bank/Interim Receipt", collectionDate));
+            reports.add(fiRow(demand, bankGl,  pk("40", reversal), total, "Bank/Interim Receipt", collectionDate));
             break;
 
         case GST_ADVANCE:
-            reports.add(fiRow(demand, "450100100", pk("40", reversal), total, "Bank/Interim Receipt", collectionDate));
+            reports.add(fiRow(demand, bankGl,  pk("40", reversal), total, "Bank/Interim Receipt", collectionDate));
             reports.add(fiRow(demand, "350410215", pk("50", reversal), total, "Advance", collectionDate));
             reports.add(fiRow(demand, "350200421", pk("50", reversal), cgst, "CGST Payable", collectionDate));
             reports.add(fiRow(demand, "350200422", pk("50", reversal), sgst, "SGST Payable", collectionDate));
@@ -1625,7 +1650,7 @@ public List<FiReport> buildCollectionFiReports(Demand demand,
 
         case DEPOSIT:
             reports.add(fiRow(demand, "340100300", pk("50", reversal), total, "Security Deposit", collectionDate));
-            reports.add(fiRow(demand, "450100100", pk("40", reversal), total, "Bank/Interim Receipt", collectionDate));
+            reports.add(fiRow(demand, bankGl,  pk("40", reversal), total, "Bank/Interim Receipt", collectionDate));
             break;
 
         default:
@@ -1702,7 +1727,7 @@ private FiReport fiRow(Demand demand, String glCode, String postingKey,
             // receipt's transaction number — the same value the later demand's netting leg
             // carries — so F.13/FB05 can match the two and clear the advance GST. Every
             // other GL keeps the blank Assignment it has today.
-            .assignment(isGstAdvanceGl(glCode) ? demand.getFiReceiptNo() : null)
+            .assignment(resolveAssignment(demand, glCode))
             .docType("YY")
             .isNew(Boolean.TRUE)
             .createdAt(now)
@@ -1810,6 +1835,120 @@ private boolean wasPostedWithGstPayableDebit(String transactionNumber) {
 /** True for the CGST/SGST Advance asset GLs that must clear against a demand's netting leg. */
 private boolean isGstAdvanceGl(String glCode) {
     return GL_CGST_ADVANCE.equals(glCode) || GL_SGST_ADVANCE.equals(glCode);
+}
+
+/**
+ * The GL a collection voucher's money leg posts to, chosen by how the money arrived.
+ *
+ * <p>Cash (and anything not instrument-backed) keeps the bank/interim account. A cheque or DD is
+ * not money in the bank until it clears, so it posts to cheques-in-hand instead.
+ *
+ * <p><b>A reversal gives back exactly what was posted.</b> A receipt taken before this split
+ * existed sits on the cash GL whatever its payment mode was; reversing it onto the cheque GL would
+ * leave both accounts carrying a balance that never nets off. So a reversal reuses the account the
+ * original collection actually used, and only falls back to the payment-mode rule when the original
+ * cannot be read. This mirrors {@link #wasPostedWithGstPayableDebit}, which guards the GST legs for
+ * exactly the same reason.
+ */
+private String resolveBankGl(Demand demand, boolean reversal) {
+    if (reversal) {
+        String posted = postedBankGl(demand.getFiReceiptNo(), demand.getConsumerCode());
+        if (posted != null)
+            return posted;
+    }
+    return isInstrumentBacked(demand) ? chequeBankGlCode : cashBankGlCode;
+}
+
+/** True when the receipt was taken against a physical instrument that has yet to clear. */
+private boolean isInstrumentBacked(Demand demand) {
+    String mode = demand.getPaymentMode() == null
+            ? "" : demand.getPaymentMode().trim().toUpperCase(Locale.ROOT);
+    return "CHEQUE".equals(mode) || "DD".equals(mode);
+}
+
+/**
+ * The money-leg GL an earlier collection on this receipt was actually posted to, or null when
+ * there is none to read. Restricted to the two bank accounts so a receivable or GST leg can never
+ * be mistaken for the money leg.
+ *
+ * <p>Scoped to the LICENCE as well as the receipt, and that is load-bearing rather than defensive:
+ * {@code transactionnumber} carries no unique constraint and is minted from idgen as ten RANDOM
+ * digits, so {@code document_header_text} alone can land on an unrelated receipt and reverse this
+ * one onto the wrong bank account. {@code reference_no} is written from the demand's consumer code
+ * by {@link #fiRow}, so an equality match on it is exact.
+ */
+private String postedBankGl(String transactionNumber, String consumerCode) {
+    if (jdbcTemplate == null || transactionNumber == null || transactionNumber.trim().isEmpty()
+            || consumerCode == null || consumerCode.trim().isEmpty())
+        return null;
+    String sql =
+        "SELECT gl_code FROM public.eg_emarket_fi_report_collection " +
+        "WHERE document_header_text = ? AND reference_no = ? AND report_type = ? " +
+        "  AND posting_key = '40' AND gl_code IN (?, ?) LIMIT 1";
+    try {
+        List<String> gl = jdbcTemplate.queryForList(sql, String.class,
+                transactionNumber, consumerCode, FiReportType.UPMKT_COLL,
+                cashBankGlCode, chequeBankGlCode);
+        return gl.isEmpty() ? null : gl.get(0);
+    } catch (DataAccessException e) {
+        log.error("Could not read the posted bank GL of receipt {} / licence {}; posting on the payment-mode rule",
+                transactionNumber, consumerCode, e);
+        return null;
+    }
+}
+
+/**
+ * SAP Assignment (ZUONR) for one leg.
+ *
+ * <p>Two legs carry one, for unrelated reasons. The GST-advance legs carry the receipt's
+ * transaction number, which is the key F.13/FB05 uses to clear the advance against the later
+ * demand's netting leg. The cheques-in-hand leg carries the cheque number, so finance can identify
+ * the instrument sitting in that account — BMC: "the cheque number is to be mentioned in the
+ * Assignment column for GL 450210010". Every other leg keeps the blank Assignment it has today.
+ */
+private String resolveAssignment(Demand demand, String glCode) {
+    if (isGstAdvanceGl(glCode))
+        return demand.getFiReceiptNo();
+    if (chequeBankGlCode.equals(glCode))
+        return instrumentNumberFor(demand.getFiReceiptNo(), demand.getConsumerCode());
+    return null;
+}
+
+/**
+ * The cheque/DD number on the payment this receipt belongs to.
+ *
+ * <p>Never blocks the posting: the Assignment is a reconciliation aid, so a lookup failure leaves
+ * it blank rather than failing the voucher and, with it, the collection.
+ */
+private String instrumentNumberFor(String transactionNumber, String consumerCode) {
+    if (jdbcTemplate == null || transactionNumber == null || transactionNumber.trim().isEmpty()
+            || consumerCode == null || consumerCode.trim().isEmpty())
+        return null;
+    // The payment must belong to THIS licence. Load-bearing: transactionnumber has no unique
+    // constraint and is ten random idgen digits, so matching on it alone can land on an unrelated
+    // payment and stamp a stranger's cheque number onto this voucher. Matched on the digits of the
+    // bill's consumer code, the same normalisation used to get from a service-suffixed reference
+    // ("5000000284rf") back to a licence number; the blank guard stops a reference with no digits
+    // matching every blank consumer code.
+    String sql =
+        "SELECT NULLIF(p.instrumentnumber, '') FROM egcl_payment p "
+      + " WHERE p.transactionnumber = ? "
+      + "   AND regexp_replace(?, '[^0-9]', '', 'g') <> '' "
+      + "   AND EXISTS (SELECT 1 FROM egcl_paymentdetail pd "
+      + "                 JOIN egcl_bill b ON b.id = pd.billid "
+      + "                WHERE pd.paymentid = p.id "
+      + "                  AND regexp_replace(b.consumercode, '[^0-9]', '', 'g') "
+      + "                      = regexp_replace(?, '[^0-9]', '', 'g')) "
+      + " LIMIT 1";
+    try {
+        List<String> found = jdbcTemplate.queryForList(sql, String.class,
+                transactionNumber, consumerCode, consumerCode);
+        return found.isEmpty() ? null : found.get(0);
+    } catch (DataAccessException e) {
+        log.error("Could not resolve the instrument number for receipt {} / licence {}; Assignment left blank",
+                transactionNumber, consumerCode, e);
+        return null;
+    }
 }
 
 /**
