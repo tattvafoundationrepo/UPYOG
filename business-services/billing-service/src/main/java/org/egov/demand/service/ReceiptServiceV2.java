@@ -11,8 +11,10 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -84,6 +86,49 @@ public class ReceiptServiceV2 {
 	 */
 	@org.springframework.beans.factory.annotation.Value("${emarket.fi.advance.flow.from.payment.enabled:false}")
 	private boolean advanceFlowFromPaymentEnabled;
+
+	/**
+	 * Unwind EVERY advance the cancelled receipt paid, not just the first one found.
+	 *
+	 * <p>A single payment can carry a licence advance and a rental advance on separate bills. The
+	 * demand search orders by taxperiodfrom, so the rental vessel — which rides on the last
+	 * existing rent month — always sorted ahead of the licence vessel, which is stamped with the
+	 * fiscal year being prepaid. The old {@code findFirst()} therefore reopened the rent demands
+	 * and left the licence demand marked paid with its advance destroyed and its advance-settlement
+	 * relief still posted.
+	 *
+	 * <p>Defaults on: the previous behaviour is wrong in every case where a receipt pays more than
+	 * one advance, and identical where it pays one. Kept as a property only as a kill switch.
+	 */
+	@org.springframework.beans.factory.annotation.Value("${emarket.advance.reversal.all.vessels.enabled:true}")
+	private boolean reverseAllAdvanceVessels;
+
+	/**
+	 * The only business service whose settled demands may be published to the penalty-regeneration
+	 * topic. The consumer re-drives rent calculation over the settled demand's period, so a licence
+	 * settlement — whose period is a whole fiscal year — must never reach it. The licence penalty
+	 * needs no message of its own: rent calculation reads licence dues from the database, and the
+	 * licence demand is already back to unpaid by the time this is published.
+	 */
+	@org.springframework.beans.factory.annotation.Value("${emarket.advance.reversal.penalty.businessservice:TX.Emarket_Rental_Fees}")
+	private String penaltyReversalBusinessService;
+
+	/** Fallback for the above, so a blank override cannot silently stop every penalty regeneration. */
+	static final String DEFAULT_PENALTY_REVERSAL_BUSINESSSERVICE = "TX.Emarket_Rental_Fees";
+
+	/**
+	 * True when a settled demand belongs to the service the penalty-regeneration consumer understands.
+	 * An unknown service (the settled demand no longer exists) is NOT published: the consumer would
+	 * re-drive rent calculation for a demand nothing can price.
+	 */
+	boolean isPublishableToPenaltyTopic(String settledBusinessService) {
+
+		String expected = penaltyReversalBusinessService;
+		if (expected == null || expected.trim().isEmpty())
+			expected = DEFAULT_PENALTY_REVERSAL_BUSINESSSERVICE;
+
+		return settledBusinessService != null && expected.trim().equalsIgnoreCase(settledBusinessService.trim());
+	}
 
 
 	public void updateDemandFromReceipt(BillRequestV2 billReq, Boolean isReceiptCancellation) {
@@ -257,9 +302,20 @@ public class ReceiptServiceV2 {
 
         List<AdvSettlement> settledDemandIds = null;
 
+		/**
+		 * Business service of each settled demand, captured while the demand objects are in hand so
+		 * the penalty publish below can tell a rent settlement from a licence one. Deliberately not
+		 * derived from the consumer code: the rent-penalty code ends in "prf", which also ends in
+		 * the rent suffix "rf".
+		 */
+		final Map<String, String> settledDemandBusinessService = new HashMap<>();
+
 	    if(isReceiptCancellation){
-		    String advanceDemandId =
+		    // Every advance vessel the receipt paid. See reverseAllAdvanceVessels for why the old
+		    // findFirst() stranded the licence side of a receipt that took two advances.
+		    List<String> advanceDemandIds =
                 demandRequest.getDemands().stream()
+                .filter(d -> d.getDemandDetails() != null)
                 .filter(d->
                         d.getDemandDetails().stream()
                                 .anyMatch(dd ->
@@ -269,26 +325,52 @@ public class ReceiptServiceV2 {
                                 )
                 )
                 .map(Demand::getId)
-                .findFirst()
-                .orElse(null);
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
 
-				
-		 		if(advanceDemandId != null){
-                    settledDemandIds = demandRepository.getSettledDemandIdsByAdvanceDemandId(advanceDemandId);
-                    if(settledDemandIds != null &&!settledDemandIds.isEmpty()){
+		 		// With the kill switch off, behave exactly as before: the first vessel only.
+		 		if (!reverseAllAdvanceVessels && advanceDemandIds.size() > 1)
+		 			advanceDemandIds = advanceDemandIds.subList(0, 1);
+
+		 		if(!advanceDemandIds.isEmpty()){
+                    // One settlement row per (advance, settled demand). A demand large enough to draw
+                    // on two advances of the same service appears once per advance; keep it once so it
+                    // is neither zeroed twice nor published twice.
+                    Map<String, AdvSettlement> bySettledDemand = new LinkedHashMap<>();
+                    for (String advanceDemandId : advanceDemandIds) {
+                        List<AdvSettlement> rows = demandRepository.getSettledDemandIdsByAdvanceDemandId(advanceDemandId);
+                        if (rows == null)
+                            continue;
+                        for (AdvSettlement row : rows)
+                            if (row.getSettledDemandId() != null)
+                                bySettledDemand.putIfAbsent(row.getSettledDemandId(), row);
+                    }
+                    settledDemandIds = new ArrayList<>(bySettledDemand.values());
+                    if(!settledDemandIds.isEmpty()){
 						DemandCriteria searchCriteria = DemandCriteria.builder()
 					.tenantId(tenantId)
-					.demandId(new HashSet<>(settledDemandIds.stream().map(AdvSettlement::getSettledDemandId).collect(Collectors.toList())))
+					.demandId(new HashSet<>(bySettledDemand.keySet()))
 					.build();
 			         List<Demand> demandsFromSearch = demandRepository.getDemands(searchCriteria);
 					 demandsFromSearch.forEach(demand -> {
+					 	settledDemandBusinessService.put(demand.getId(), demand.getBusinessService());
 			         	demand.getDemandDetails().forEach(demandDetail -> {
 			         		if(demandDetail.getCollectionAmount().compareTo(BigDecimal.ZERO) > 0){
 			         			demandDetail.setCollectionAmount(BigDecimal.ZERO);
 			         		}
 			         	});
 			         });
-			          demandRequest.getDemands().addAll(demandsFromSearch);								
+			          // A demand settled by an advance is created AFTER that advance's receipt, so it
+			          // cannot also be on the receipt's bills. Guarded anyway: a duplicate here would
+			          // be sent through the update twice.
+			          Set<String> alreadyInRequest = demandRequest.getDemands().stream()
+			                  .map(Demand::getId)
+			                  .filter(Objects::nonNull)
+			                  .collect(Collectors.toSet());
+			          demandsFromSearch.stream()
+			                  .filter(d -> !alreadyInRequest.contains(d.getId()))
+			                  .forEach(d -> demandRequest.getDemands().add(d));
 					}	
 		 		}					
 		}			
@@ -478,6 +560,17 @@ public class ReceiptServiceV2 {
 			if (isReceiptCancellation && settledDemandIds != null && !settledDemandIds.isEmpty()) {
 		    log.info("Publishing settled demand ids to create penalty demands on payment reversal"+ settledDemandIds.toString());
 			for(AdvSettlement settledDemandId : settledDemandIds){
+			   // Rent settlements only. The consumer re-drives rent calculation over the settled
+			   // demand's period; a licence settlement carries a whole fiscal year, which would
+			   // price a twelve-month "month". The licence penalty needs no message — rent
+			   // calculation reads licence dues from the database, and the demand update above has
+			   // already committed the licence demand back to unpaid.
+			   String settledBusinessService = settledDemandBusinessService.get(settledDemandId.getSettledDemandId());
+			   if (!isPublishableToPenaltyTopic(settledBusinessService)) {
+				   log.info("Skipping penalty publish for settled demand {} on business service {}",
+						   settledDemandId.getSettledDemandId(), settledBusinessService);
+				   continue;
+			   }
 	 		   settledDemandId.setRequestInfo(billRequest.getRequestInfo());
 			   log.info("Publishing settled demand ids to create penalty demands on payment reversal"+ settledDemandIds.toString());
 		        producer.push("create-penalty-demand-onpayment-reversal", settledDemandId);
