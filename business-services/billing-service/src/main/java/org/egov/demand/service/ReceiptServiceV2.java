@@ -28,6 +28,7 @@ import org.egov.demand.model.BillV2;
 import org.egov.demand.model.Demand;
 import org.egov.demand.model.DemandCriteria;
 import org.egov.demand.model.DemandDetail;
+import org.egov.demand.model.FiDimensions;
 import org.egov.demand.model.FiFlow;
 import org.egov.demand.model.FiReport;
 import org.egov.demand.model.FiReportType;
@@ -421,6 +422,9 @@ public class ReceiptServiceV2 {
 				d.setFunctionalArea(marketInfo.getFunctionalArea());
 				d.setFiReceiptNo(currentTransactionNumber != null && !currentTransactionNumber.isEmpty()
 						? currentTransactionNumber : marketInfo.getTransactionNumber());
+				// Where the money was actually taken. Only the debit legs use it; the four fields
+				// above stay the licensee's market and still carry every credit leg.
+				d.setCollectingDimensions(resolveCollectingDimensions(marketInfo));
 				log.info("additioanl market info from db" + marketInfo);
 			}
 			GstAdvanceMap gstAdvanceMap = marketInfo == null ? null
@@ -475,6 +479,17 @@ public class ReceiptServiceV2 {
 				d.setFunctionalArea(marketInfo.getFunctionalArea());
 				d.setFiReceiptNo(currentTransactionNumber != null && !currentTransactionNumber.isEmpty()
 						? currentTransactionNumber : marketInfo.getTransactionNumber());
+				// Read back from the POSTED document, PER LEG, never re-resolved. A receipt taken
+				// before the rule existed, or before its ward had real values, or while the flag was
+				// off, must be given back on the dimensions it was booked with — otherwise the two
+				// halves sit in different business areas and neither ever clears.
+				//
+				// Unconditional, because the backlog this protects exists whether or not the flag is
+				// on now, and per-leg because the legs of one receipt do not share a dimension set
+				// once the collecting ward differs from the market. An empty map — every receipt
+				// predating this feature — leaves every leg on the market, exactly as today.
+				d.setPostedLegDimensions(demandRepository.getPostedCollectionDimensions(
+						d.getFiReceiptNo(), d.getConsumerCode()));
 				log.info("additioanl from dbbbbbbbbbbbbbbbbbbbbbbbbb" + marketInfo);
 			}
 			GstAdvanceMap gstAdvanceMap = marketInfo == null ? null
@@ -548,6 +563,14 @@ public class ReceiptServiceV2 {
 					// advance liability back — the collection reversal only unwinds the
 					// receipt side, leaving the demand-side split standing.
 					nettingReversals.addAll(demandRepository.buildAdvanceSettlementReversalFiReports(
+							settled.getSettledDemandId()));
+					// And unwind the per-tax-head 4-Series pair. Cancelling the receipt is the
+					// OTHER route by which a demand-against-advance comes undone — emarket-v1's
+					// DemandReversalService covers cancelling the demand itself — and neither can
+					// assume the other has run. Without this a bounced advance cheque returns the
+					// dues to the receivable while the 4-Series account stays debited and the
+					// revenue stays credited twice. Empty when the demand carried no pair.
+					nettingReversals.addAll(demandRepository.buildFourSeriesReversalFiReports(
 							settled.getSettledDemandId()));
 				}
 				if (!nettingReversals.isEmpty()) {
@@ -731,6 +754,81 @@ public class ReceiptServiceV2 {
 				demandRepository.buildCollectionFiReports(d, FiFlow.NON_GST_REGULAR, regularPart,
 						BigDecimal.ZERO, BigDecimal.ZERO, reversal, collectionDate));
 		return rows;
+	}
+
+	/**
+	 * Post the debit legs of a collection voucher at the SAP dimensions of the CFC where the money
+	 * was taken, instead of the market the licensee's stall sits in.
+	 *
+	 * <p>Default OFF, and it gates only the FORWARD path. A reversal always reads its dimensions
+	 * back off the posted document, flag or no flag, because the backlog of receipts booked under
+	 * the other setting exists either way and each must be given back as it was booked.
+	 *
+	 * <p>Before switching this on, confirm with BMC that their SAP client accepts a document whose
+	 * legs carry two different business areas. With document splitting or business-area balance
+	 * sheets active it will be rejected or auto-split.
+	 */
+	@org.springframework.beans.factory.annotation.Value("${emarket.fi.collection.cfc.dimensions.enabled:false}")
+	private boolean collectionCfcDimensionsEnabled = false;
+
+	/**
+	 * Number of dot-separated segments a ward tenant has: {@code mh.mumbai.zone1.warda}. The city
+	 * tenant has two and a zone three, so anything shallower cannot identify a CFC.
+	 */
+	private static final int WARD_TENANT_DEPTH = 4;
+
+	/**
+	 * The collecting CFC's dimensions for this receipt, or null to keep the licensee's market.
+	 *
+	 * <p>Prefers {@code collectingWardTenant} from the payment's own additionalDetails, which the
+	 * CFC collect screen sends, and falls back to {@code egcl_payment.tenantid}. The fallback is not
+	 * a corner case: collection-services stamps every payment with the tenant of the user who took
+	 * it, so for every counter receipt taken to date that column already holds the ward.
+	 *
+	 * <p>Null is the normal answer for an online or citizen payment, a bulk collection and every
+	 * migrated receipt — all of which sit at {@code mh.mumbai} — and for a ward BMC has not yet
+	 * supplied values for. Those keep today's behaviour exactly.
+	 */
+	private FiDimensions resolveCollectingDimensions(PaymentMarketInfo marketInfo) {
+
+		if (!collectionCfcDimensionsEnabled)
+			return null;
+
+		String wardTenant = wardTenantOrNull(collectingWardTenantFrom(marketInfo));
+		if (wardTenant == null)
+			wardTenant = wardTenantOrNull(marketInfo.getPaymentTenantId());
+		if (wardTenant == null)
+			return null;
+
+		return demandRepository.getCfcWardDimensions(wardTenant);
+	}
+
+	/** {@code collectingWardTenant} out of the payment JSON, or null when absent or unreadable. */
+	private String collectingWardTenantFrom(PaymentMarketInfo marketInfo) {
+		String json = marketInfo.getAdditionalDetails();
+		if (json == null || json.trim().isEmpty())
+			return null;
+		try {
+			// Local mapper, matching extractGstAdvanceFromAdditionalDetails above. readTree only
+			// produces a JsonNode, so this never touches the @Builder models that need Spring's
+			// configured mapper to deserialize.
+			JsonNode node = new ObjectMapper().readTree(json).path("collectingWardTenant");
+			return node.isMissingNode() || node.isNull() ? null : node.asText(null);
+		} catch (Exception e) {
+			// Same posture as extractGstAdvanceFromAdditionalDetails: a payment JSON we cannot read
+			// is a reason to keep today's dimensions, never a reason to fail the collection.
+			log.warn("Could not read collectingWardTenant from payment additionalDetails: {}", e.getMessage());
+			return null;
+		}
+	}
+
+	private static String wardTenantOrNull(String tenantId) {
+		if (tenantId == null)
+			return null;
+		String trimmed = tenantId.trim();
+		if (trimmed.isEmpty())
+			return null;
+		return trimmed.split("\\.").length >= WARD_TENANT_DEPTH ? trimmed : null;
 	}
 
 	/**

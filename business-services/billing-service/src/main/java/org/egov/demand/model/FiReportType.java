@@ -22,4 +22,23 @@ public final class FiReportType {
     public static final String UPMKT_DISCHQ = "upmktdischq";
     /** Market Demand against Advance — demand apportioned against an advance. */
     public static final String UPMKT_DEMDADV = "upmktdemdadv";
+
+    /**
+     * The per-tax-head 4-Series pair on a demand raised against an advance: Dr the head's
+     * receivable account (431409937..431409977), Cr the head's revenue account, for the amount
+     * settled out of the advance.
+     *
+     * <p>Carries its own type rather than riding on {@link #UPMKT_DEMDADV} because the GST return
+     * selects on report_type. emarket-v1's GstReturnQueryBuilder B2CS query filters
+     * {@code report_type IN ('upmktdemd','upmktdemdadv','upmktdemdrev')} and signs posting key 50
+     * positive / 40 negative, so a pair tagged as an ordinary demand would file a taxable supply
+     * against a receivable account and double-count the revenue leg. Neither this constant nor
+     * {@link #UPMKT_DEMDADV_4S_REV} may ever be added to that IN list.
+     *
+     * <p>Must stay in step with the emarket-v1 copy of this class.
+     */
+    public static final String UPMKT_DEMDADV_4S = "upmktdemdadv4s";
+
+    /** The mirror of {@link #UPMKT_DEMDADV_4S}, written when the demand or its receipt is reversed. */
+    public static final String UPMKT_DEMDADV_4S_REV = "upmktdemdadv4srev";
 }

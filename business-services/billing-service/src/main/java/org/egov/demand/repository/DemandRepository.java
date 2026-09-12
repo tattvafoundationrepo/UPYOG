@@ -66,6 +66,7 @@ import org.egov.demand.model.CollectedReceipt;
 import org.egov.demand.model.Demand;
 import org.egov.demand.model.DemandCriteria;
 import org.egov.demand.model.DemandDetail;
+import org.egov.demand.model.FiDimensions;
 import org.egov.demand.model.FiFlow;
 import org.egov.demand.model.MergedDemand;
 import org.egov.demand.model.FiReport;
@@ -159,6 +160,26 @@ public class DemandRepository {
 	 */
 	@org.springframework.beans.factory.annotation.Value("${emarket.fi.regular.collection.gross.bank.enabled:true}")
 	private boolean grossBankOnRegularCollection = true;
+
+	/**
+	 * Post the per-tax-head 4-Series pair on a demand raised against an advance: Dr the head's
+	 * receivable account (431409937..431409977), Cr the head's revenue account, for the amount that
+	 * head settled out of the advance. Everything else about the voucher is unchanged, so 350410215
+	 * still takes the full settled amount and still closes to nil over an advance cycle.
+	 *
+	 * <p>Default OFF. The pair credits the head's revenue GL a SECOND time, on top of the credit the
+	 * voucher already posts, so with it on the ledger recognises the month's rent twice. That is what
+	 * BMC's reference entry shows and it may be how they write a summary line rather than what they
+	 * want posted — every automated balance assertion passes either way, so no test can settle it.
+	 * Turn this on only once BMC Finance has confirmed the credit leg.
+	 *
+	 * <p>OFF restores byte-identical output on a database where the flag has never been on. It is
+	 * a kill switch for the WRITE only — the unwind in buildFourSeriesReversalFiReports is
+	 * deliberately ungated, so a pair posted while this was on is still given back if a receipt
+	 * is later cancelled with it off. Gating both would strand the pair for ever.
+	 */
+	@org.springframework.beans.factory.annotation.Value("${emarket.fi.advance.four.series.enabled:false}")
+	private boolean advanceFourSeriesEnabled = false;
 
 	/** GL codes for the GST-advance netting voucher (Accounting Entries 2025, entry 4). */
 	/**
@@ -358,7 +379,17 @@ public class DemandRepository {
 			    } else {
 			        fiReportType = FiReportType.UPMKT_DEMD;
 			    }
-			    demandFiReports.forEach(r -> r.setReportType(fiReportType));
+			    // Guarded on null rather than applied blanketly. Every row buildDemandFiReports
+			    // builds arrives untyped and still takes fiReportType, so nothing about the
+			    // existing output changes. The 4-Series pair is the one exception: it tags itself
+			    // UPMKT_DEMDADV_4S, and overwriting that with UPMKT_DEMDADV would put both of its
+			    // legs inside the GST return's report_type filter — filing a taxable supply against
+			    // a receivable account and double-counting the revenue leg.
+			    demandFiReports.forEach(r -> {
+			        if (r.getReportType() == null) {
+			            r.setReportType(fiReportType);
+			        }
+			    });
 			    reportList.addAll(demandFiReports);
 			}
 		}
@@ -967,7 +998,12 @@ public class DemandRepository {
          "       eem.fund, " +
          "       eem.business_area, " +
 		 "       eem.functional_area, " +
-		 "       ep2.additionaldetails , ep2.totaldue , ep2.totalamountpaid , ep.receiptnumber , ep2.transactionnumber " +
+		 // ep2.tenantid is the tenant the COLLECTING user held when the receipt was taken —
+		 // collection-services stamps it from the request, and the CFC screens send the operator's
+		 // ward-level role tenant, so for a counter receipt this is the ward the money was taken at.
+		 // It is the fallback for payments written before collectingWardTenant existed in
+		 // additionaldetails, which is every receipt taken to date.
+		 "       ep2.additionaldetails , ep2.totaldue , ep2.totalamountpaid , ep.receiptnumber , ep2.transactionnumber , ep2.tenantid " +
         "FROM egcl_billdetial eb " +
         "JOIN egcl_bill eb2 ON eb.billid = eb2.id " +
         "JOIN egcl_paymentdetail ep ON ep.billid = eb2.id " +
@@ -992,6 +1028,7 @@ public class DemandRepository {
 				info.setFunctionalArea(rs.getString("functional_area"));
                 info.setReceiptNumber(rs.getString("receiptnumber"));
                 info.setTransactionNumber(rs.getString("transactionnumber"));
+                info.setPaymentTenantId(rs.getString("tenantid"));
                 return info;
             }
         };
@@ -999,6 +1036,121 @@ public class DemandRepository {
 	public List<PaymentMarketInfo> getMarketEssentialInfo(String demandId) {
 		return jdbcTemplate.query(MARKET_ESSENTIAL_INFO_SQL, new Object[] { demandId }, MARKET_INFO_ROW_MAPPER);
 	}
+
+	/**
+	 * The SAP dimensions of the CFC ward a collection was taken at, or null when the ward is not
+	 * mapped.
+	 *
+	 * <p>Returns null — meaning "keep the licensee's market dimensions, exactly as today" — for
+	 * every case that is not a mapped, active CFC ward: a tenant that is not ward-level, a ward
+	 * BMC has not supplied values for (seeded '0' in all four columns), or a database where
+	 * docs/sql/add_cfc_ward_dimension.sql has not been run yet. The last of those matters: the
+	 * table is created by a hand-run script, not Flyway, so the jar can legitimately reach
+	 * production first and must degrade rather than fail every collection.
+	 *
+	 * <p>All four columns are taken together or not at all. A voucher carrying one ward's business
+	 * area and another's fund centre is worse than one carrying neither.
+	 */
+	public FiDimensions getCfcWardDimensions(String wardTenant) {
+
+		if (wardTenant == null || wardTenant.trim().isEmpty())
+			return null;
+
+		String sql =
+			"SELECT fund, fund_centre, business_area, functional_area " +
+			"FROM eg_emarket_cfc_ward_dimension " +
+			"WHERE ward_tenant = ? AND is_active " +
+			"  AND fund <> '0' AND fund_centre <> '0' " +
+			"  AND business_area <> '0' AND functional_area <> '0' " +
+			"LIMIT 1";
+
+		try {
+			List<FiDimensions> found = jdbcTemplate.query(sql, new Object[] { wardTenant.trim() },
+					(rs, rowNum) -> new FiDimensions(rs.getString("fund"), rs.getString("fund_centre"),
+							rs.getString("business_area"), rs.getString("functional_area")));
+			if (found.isEmpty()) {
+				log.info("Collecting ward {} has no usable CFC dimension row; the collection keeps "
+						+ "the licensee's market dimensions", wardTenant);
+				return null;
+			}
+			return found.get(0);
+		} catch (DataAccessException e) {
+			log.warn("Could not read CFC dimensions for ward {} ({}); keeping the licensee's market "
+					+ "dimensions", wardTenant, e.getMessage());
+			return null;
+		}
+	}
+
+	/**
+	 * The dimensions a receipt's debit legs were ACTUALLY posted with, for its reversal.
+	 *
+	 * <p>A reversal must give back what was posted, which is the principle this file already
+	 * applies four times over — {@code wasCollectionSplit}, {@code wasPostedAsAdvance},
+	 * {@code wasPostedWithGstPayableDebit} and {@code postedBankGl} all read the forward document
+	 * rather than recomputing. Dimensions need it for the same reason and then some: they move
+	 * independently of the payment. Every receipt taken before the feature was switched on carries
+	 * the market's dimensions, the flag can be turned off again, and the ward master is explicitly
+	 * meant to be corrected as BMC supplies real fund centres. Re-resolving at reversal time would
+	 * mirror a K/East cheque against a C-ward original and neither side would ever clear.
+	 *
+	 * <p>Scoped three ways, all load-bearing. {@code report_type} stops a second cancellation
+	 * reading back its own reversal rows. {@code reference_no} is required because
+	 * {@code transactionnumber} is ten random idgen digits with no unique constraint, so a receipt
+	 * number alone can land on another licence's payment. Posting key 40 selects the forward debit
+	 * legs, which are the only ones that carry CFC dimensions.
+	 */
+	public Map<String, FiDimensions> getPostedCollectionDimensions(String documentHeaderText, String referenceNo) {
+
+		if (documentHeaderText == null || documentHeaderText.trim().isEmpty()
+				|| referenceNo == null || referenceNo.trim().isEmpty())
+			return Collections.emptyMap();
+
+		// PER LEG, keyed by GL. One row for the whole voucher cannot work: a GST_ADVANCE receipt
+		// posts THREE forward-40 legs (bank, 439300200, 439300201) and the last two are denied CFC
+		// dimensions by CFC_DIMENSION_EXCLUDED_GLS, so "the first key-40 row" is two different
+		// answers. It is not even a random pick — every leg of a voucher is written in one batch
+		// with the same created_at, so the tiebreak is decided by whatever index the planner walks.
+		//
+		// Reading every leg also fixes the larger problem: the dimensions this returns were applied
+		// to the key-40 legs while the rest of the reversal took demand.getFund()/getBusinessArea(),
+		// which MARKET_ESSENTIAL_INFO_SQL resolves LIVE through the current allotment. Re-point a
+		// stall at another market between collection and cancellation — an ordinary asset edit —
+		// and the compensating document straddles two business areas.
+		String sql =
+			"SELECT gl_code, posting_key, fund, fund_centre, business_area, functional_area " +
+			"FROM public.eg_emarket_fi_report_collection " +
+			"WHERE document_header_text = ? AND reference_no = ? AND report_type = ?";
+
+		try {
+			Map<String, FiDimensions> byLeg = new HashMap<>();
+			jdbcTemplate.query(sql,
+					new Object[] { documentHeaderText.trim(), referenceNo.trim(), FiReportType.UPMKT_COLL },
+					rs -> {
+						FiDimensions dims = new FiDimensions(rs.getString("fund"), rs.getString("fund_centre"),
+								rs.getString("business_area"), rs.getString("functional_area"));
+						if (dims.isComplete())
+							byLeg.put(postedLegKey(rs.getString("gl_code"), rs.getString("posting_key")), dims);
+					});
+			return byLeg;
+		} catch (DataAccessException e) {
+			log.warn("Could not read the posted dimensions of receipt {} for licence {} ({}); the "
+					+ "reversal falls back to the market's dimensions",
+					documentHeaderText, referenceNo, e.getMessage());
+			return Collections.emptyMap();
+		}
+	}
+
+	/**
+	 * Key a posted collection leg by the GL it hit and the key it hit it with.
+	 *
+	 * <p>GL alone is not unique within a voucher — the non-gross GST_REGULAR shape debits
+	 * 350200421/422 while the same GLs can be credited elsewhere — and the forward posting key is
+	 * stable across a reversal, which the final key is not.
+	 */
+	public static String postedLegKey(String glCode, String forwardPostingKey) {
+		return glCode + "@" + forwardPostingKey;
+	}
+
 
 	/**
 	 * The same lookup, narrowed to the payment currently being processed.
@@ -1087,6 +1239,31 @@ private String extractGlCode(DemandDetail detail) {
         if (gl != null) {
             return gl.toString();
         }
+    }
+    return null;
+}
+
+/**
+ * The head's 4-Series RECEIVABLE GL (431409937..431409977), stamped alongside — never instead
+ * of — {@code glcode} by emarket-v1's GlSacMapperService. Null when the head has no 4-Series
+ * row in the master, and null for every demand created before that master was seeded.
+ *
+ * <p>Total by contract: never throws. TransferReversalExecutor.buildFiLegsFor swallows every
+ * RuntimeException and drops ALL of a demand's reversal legs when one is raised, so an
+ * exception here would silently cost a licence its whole reversal document.
+ */
+private String extractAdvanceGlCode(DemandDetail detail) {
+    try {
+        Object addObj = detail.getAdditionalDetails();
+        if (addObj instanceof Map) {
+            Object gl = ((Map<?, ?>) addObj).get("advglcode");
+            if (gl != null && !gl.toString().trim().isEmpty()) {
+                return gl.toString().trim();
+            }
+        }
+    } catch (RuntimeException ignored) {
+        // additionalDetails is typed Object across the whole demand contract; a shape we cannot
+        // read is a reason to post today's voucher, never a reason to fail the demand.
     }
     return null;
 }
@@ -1474,6 +1651,10 @@ public List<FiReport> buildDemandFiReports(Demand demand, List<DemandDetail> ext
     // remainder is a true receivable.
     BigDecimal settledFromAdvance = BigDecimal.ZERO;
 
+    // Per-head breakdown of settledFromAdvance, for the 4-Series pair. Collected in the same pass
+    // so the two can never disagree about what a head settled.
+    List<FourSeriesLine> fourSeriesLines = new ArrayList<>();
+
     List<DemandDetail> detailsForFi = demand.getDemandDetails();
     if (extraDetails != null && !extraDetails.isEmpty()) {
         detailsForFi = new ArrayList<>(detailsForFi);
@@ -1513,8 +1694,11 @@ public List<FiReport> buildDemandFiReports(Demand demand, List<DemandDetail> ext
 	       totalReceivable = totalReceivable.add(dd.getTaxAmount());
 	       if (demand.isApportionedAgainstAdvance() && dd.getCollectionAmount() != null) {
 	           BigDecimal settled = dd.getTaxAmount().min(dd.getCollectionAmount());
-	           if (settled.compareTo(BigDecimal.ZERO) > 0)
+	           if (settled.compareTo(BigDecimal.ZERO) > 0) {
 	               settledFromAdvance = settledFromAdvance.add(settled);
+	               fourSeriesLines.add(new FourSeriesLine(th, settled,
+	                       extractGlCode(dd), extractAdvanceGlCode(dd)));
+	           }
 	       }
 	    }
 	}
@@ -1522,8 +1706,20 @@ public List<FiReport> buildDemandFiReports(Demand demand, List<DemandDetail> ext
     // Balancing debit(s). The advance-settled portion releases 350410215; only the
     // unsettled remainder is booked as a receivable. A demand with no advance behind it
     // (settledFromAdvance == 0) produces exactly the single receivable row it always has.
+    BigDecimal uncappedSettled = settledFromAdvance;
     settledFromAdvance = settledFromAdvance.min(totalReceivable);
     BigDecimal openReceivable = totalReceivable.subtract(settledFromAdvance);
+
+    // The per-head lines sum to the UNCAPPED figure. Each head's settled amount is bounded by its
+    // own taxAmount and totalReceivable is the sum of those same taxAmounts, so the cap cannot
+    // bind — but if it ever did, the per-head rows would no longer add up to the lumped debit, so
+    // drop the pair rather than post a breakdown that disagrees with the total it breaks down.
+    if (!fourSeriesLines.isEmpty() && uncappedSettled.compareTo(settledFromAdvance) != 0) {
+        log.warn("Demand {}: advance-settled total capped from {} to {}; 4-Series pair skipped "
+                + "because the per-head breakdown would no longer reconcile",
+                demand.getId(), uncappedSettled, settledFromAdvance);
+        fourSeriesLines.clear();
+    }
 
     if (settledFromAdvance.compareTo(BigDecimal.ZERO) != 0) {
         reports.add(FiReport.builder()
@@ -1570,7 +1766,115 @@ public List<FiReport> buildDemandFiReports(Demand demand, List<DemandDetail> ext
             .updatedAt(System.currentTimeMillis())
             .build());
      }
+
+    reports.addAll(buildFourSeriesPair(demand, fourSeriesLines, postingDate, consumerCode,
+            fund, fundCenter, businessArea, functionalArea, advance.documentNo));
+
     return reports;
+}
+
+/**
+ * The per-tax-head 4-Series pair for a demand raised against an advance: Dr the head's
+ * RECEIVABLE account (431409937..431409977), Cr the head's revenue account, for the amount that
+ * head settled out of the advance.
+ *
+ * <p>Purely additive. It touches no row the voucher already contains, so 350410215 still takes
+ * the full settled amount and still unwinds to nil across an advance cycle, and switching the
+ * feature off gives byte-identical output.
+ *
+ * <p>Both legs are the same amount at opposite posting keys, so the pair is self-balancing and
+ * the document balances whether or not any given head has a 4-Series account.
+ *
+ * <p>A head with no 4-Series GL gets NO pair rather than a pair on its revenue GL twice. The
+ * master BMC supplied covers 20 rent heads; PAYRI, PHALI, NAME_BOARD_ILLUMINATED, ONING, ADMIN,
+ * REBATE and DIFFERENCE_FEE have none, and CGST/SGST/GST_CA are excluded by design because the
+ * reference entry's 4-Series lines total the NET rent, not the gross. A head with no revenue GL
+ * either — an unmapped head, which stamps no glcode at all — likewise gets nothing: two rows
+ * naming no account is worse than no rows.
+ *
+ * <p>Tagged {@link FiReportType#UPMKT_DEMDADV_4S} here rather than by the caller. The caller
+ * stamps its own type over every row it is handed, and that type sits inside the GST return's
+ * report_type filter, where these rows must never appear.
+ */
+private List<FiReport> buildFourSeriesPair(Demand demand, List<FourSeriesLine> lines,
+                                           Long postingDate, String consumerCode,
+                                           String fund, String fundCenter,
+                                           String businessArea, String functionalArea,
+                                           String advanceDocNo) {
+
+    List<FiReport> pair = new ArrayList<>();
+    if (!advanceFourSeriesEnabled || lines.isEmpty())
+        return pair;
+
+    String headerText = demand.getDemandSeqNo() != null ? demand.getDemandSeqNo().toString() : null;
+    long now = System.currentTimeMillis();
+
+    for (FourSeriesLine line : lines) {
+
+        if (line.advanceGlCode == null || line.revenueGlCode == null)
+            continue;
+
+        // Identical on both legs. The GST return's B2CS inner query is a SELECT DISTINCT over
+        // (gl_code, posting_key, collection_amount, remarks, report_type), so remarks decides
+        // whether two otherwise-identical rows collapse. Keeping them equal and keeping the head
+        // name means the CSV reads the same way as every other line on the voucher.
+        String remarks = line.taxHeadCode;
+
+        pair.add(fourSeriesLeg(demand, "40", line.advanceGlCode, line.settledAmount, remarks,
+                postingDate, consumerCode, fund, fundCenter, businessArea, functionalArea,
+                headerText, advanceDocNo, now));
+        pair.add(fourSeriesLeg(demand, "50", line.revenueGlCode, line.settledAmount, remarks,
+                postingDate, consumerCode, fund, fundCenter, businessArea, functionalArea,
+                headerText, advanceDocNo, now));
+    }
+
+    return pair;
+}
+
+private FiReport fourSeriesLeg(Demand demand, String postingKey, String glCode, BigDecimal amount,
+                               String remarks, Long postingDate, String consumerCode,
+                               String fund, String fundCenter, String businessArea,
+                               String functionalArea, String headerText, String advanceDocNo,
+                               long now) {
+    return FiReport.builder()
+            .transactionNumber(demand.getId())
+            .docDate(postingDate)
+            .postingDate(postingDate)
+            .referenceNo(consumerCode)
+            .remarks(remarks)
+            .postingKey(postingKey)
+            .glCode(glCode)
+            .collectionAmount(amount)
+            .assignment(advanceDocNo)
+            .fund(fund)
+            .fundCentre(fundCenter)
+            .businessArea(businessArea)
+            .functionalArea(functionalArea)
+            .documentHeaderText(headerText)
+            .docType("YX")
+            .reportType(FiReportType.UPMKT_DEMDADV_4S)
+            .isNew(Boolean.TRUE)
+            .createdAt(now)
+            .updatedAt(now)
+            .build();
+}
+
+/** One tax head's contribution to the advance-settled total, with both GLs it can post to. */
+private static final class FourSeriesLine {
+    private final String taxHeadCode;
+    private final BigDecimal settledAmount;
+    /** The head's ordinary revenue GL — the credit leg. Null when the head has no mapping row. */
+    private final String revenueGlCode;
+    /** The head's 4-Series receivable GL — the debit leg. Null when BMC supplied none. */
+    private final String advanceGlCode;
+
+    private FourSeriesLine(String taxHeadCode, BigDecimal settledAmount,
+                           String revenueGlCode, String advanceGlCode) {
+        this.taxHeadCode = taxHeadCode;
+        this.settledAmount = settledAmount;
+        this.revenueGlCode = revenueGlCode;
+        this.advanceGlCode = advanceGlCode;
+    }
 }
 
 
@@ -1613,44 +1917,48 @@ public List<FiReport> buildCollectionFiReports(Demand demand,
     // cheques-in-hand until they clear.
     final String bankGl = resolveBankGl(demand, reversal);
 
+    // Each leg names its FORWARD posting key; fiRow flips it for a reversal. The forward key is
+    // what decides whether a leg carries the collecting CFC's dimensions, and it has to survive the
+    // flip: the legs BMC wants attributed to the CFC are debits going out and credits coming back,
+    // so a rule written against the final key would move the receivable instead on a cancellation.
     switch (flow) {
 
         case NON_GST_REGULAR:
-            reports.add(fiRow(demand, "431409936", pk("50", reversal), total, "Receivable from Mun Mkt", collectionDate));
-            reports.add(fiRow(demand, bankGl,  pk("40", reversal), total, "Bank/Interim Receipt", collectionDate));
+            reports.add(fiRow(demand, "431409936", "50", reversal, total, "Receivable from Mun Mkt", collectionDate));
+            reports.add(fiRow(demand, bankGl,  "40", reversal, total, "Bank/Interim Receipt", collectionDate));
             break;
 
         case GST_REGULAR:
             // A cancellation must give back exactly what was posted: a receipt booked under the
             // old net-of-GST shape keeps its four legs on reversal, whatever the flag says now.
             if (grossBankOnRegularCollection && !(reversal && wasPostedWithGstPayableDebit(demand.getFiReceiptNo()))) {
-                reports.add(fiRow(demand, bankGl,  pk("40", reversal), total, "Bank/Interim Receipt", collectionDate));
-                reports.add(fiRow(demand, "431409936", pk("50", reversal), total, "Receivable from Mun Mkt", collectionDate));
+                reports.add(fiRow(demand, bankGl,  "40", reversal, total, "Bank/Interim Receipt", collectionDate));
+                reports.add(fiRow(demand, "431409936", "50", reversal, total, "Receivable from Mun Mkt", collectionDate));
             } else {
-                reports.add(fiRow(demand, bankGl,  pk("40", reversal), net, "Bank/Interim Receipt", collectionDate));
-                reports.add(fiRow(demand, "431409936", pk("50", reversal), total, "Receivable from Mun Mkt", collectionDate));
-                reports.add(fiRow(demand, "350200421", pk("40", reversal), cgst, "CGST Payable", collectionDate));
-                reports.add(fiRow(demand, "350200422", pk("40", reversal), sgst, "SGST Payable", collectionDate));
+                reports.add(fiRow(demand, bankGl,  "40", reversal, net, "Bank/Interim Receipt", collectionDate));
+                reports.add(fiRow(demand, "431409936", "50", reversal, total, "Receivable from Mun Mkt", collectionDate));
+                reports.add(fiRow(demand, "350200421", "40", reversal, cgst, "CGST Payable", collectionDate));
+                reports.add(fiRow(demand, "350200422", "40", reversal, sgst, "SGST Payable", collectionDate));
             }
             break;
 
         case NON_GST_ADVANCE:
-            reports.add(fiRow(demand, "350410215", pk("50", reversal), total, "Advance", collectionDate));
-            reports.add(fiRow(demand, bankGl,  pk("40", reversal), total, "Bank/Interim Receipt", collectionDate));
+            reports.add(fiRow(demand, "350410215", "50", reversal, total, "Advance", collectionDate));
+            reports.add(fiRow(demand, bankGl,  "40", reversal, total, "Bank/Interim Receipt", collectionDate));
             break;
 
         case GST_ADVANCE:
-            reports.add(fiRow(demand, bankGl,  pk("40", reversal), total, "Bank/Interim Receipt", collectionDate));
-            reports.add(fiRow(demand, "350410215", pk("50", reversal), total, "Advance", collectionDate));
-            reports.add(fiRow(demand, "350200421", pk("50", reversal), cgst, "CGST Payable", collectionDate));
-            reports.add(fiRow(demand, "350200422", pk("50", reversal), sgst, "SGST Payable", collectionDate));
-            reports.add(fiRow(demand, "439300200", pk("40", reversal), cgst, "Advance CGST", collectionDate));
-            reports.add(fiRow(demand, "439300201", pk("40", reversal), sgst, "Advance SGST", collectionDate));
+            reports.add(fiRow(demand, bankGl,  "40", reversal, total, "Bank/Interim Receipt", collectionDate));
+            reports.add(fiRow(demand, "350410215", "50", reversal, total, "Advance", collectionDate));
+            reports.add(fiRow(demand, "350200421", "50", reversal, cgst, "CGST Payable", collectionDate));
+            reports.add(fiRow(demand, "350200422", "50", reversal, sgst, "SGST Payable", collectionDate));
+            reports.add(fiRow(demand, "439300200", "40", reversal, cgst, "Advance CGST", collectionDate));
+            reports.add(fiRow(demand, "439300201", "40", reversal, sgst, "Advance SGST", collectionDate));
             break;
 
         case DEPOSIT:
-            reports.add(fiRow(demand, "340100300", pk("50", reversal), total, "Security Deposit", collectionDate));
-            reports.add(fiRow(demand, bankGl,  pk("40", reversal), total, "Bank/Interim Receipt", collectionDate));
+            reports.add(fiRow(demand, "340100300", "50", reversal, total, "Security Deposit", collectionDate));
+            reports.add(fiRow(demand, bankGl,  "40", reversal, total, "Bank/Interim Receipt", collectionDate));
             break;
 
         default:
@@ -1702,12 +2010,80 @@ public Long getCollectionDate(String paymentId, String transactionNumber) {
     return null;
 }
 
-private FiReport fiRow(Demand demand, String glCode, String postingKey,
+/**
+ * GLs that are excluded from the collecting-CFC rule even though their forward key is 40.
+ *
+ * <p>The two advance-GST legs are one half of a clearing pair: the collection debits them and the
+ * later demand's netting release credits them, matched in SAP on the shared Assignment. That
+ * demand-side leg is built from the DEMAND's dimensions and is not touched by this change, so
+ * moving only the collection half would leave the pair straddling two business areas. It would also
+ * make GSTR-1 table 11A, which reads the collection table, disagree with 11B, which reads the
+ * demand table, for the same advance — and drive the unadjusted-advance register negative under a
+ * ward filter, for a report whose contract is that it equals the GL balance by construction.
+ *
+ * <p>350410215 needs no entry here: it is forward-50, so the rule never reaches it.
+ *
+ * <p>In practice this leaves the bank/interim leg as the one that carries the CFC's dimensions,
+ * which is what "the money was taken here" actually means.
+ */
+private static final Set<String> CFC_DIMENSION_EXCLUDED_GLS =
+        Collections.unmodifiableSet(new HashSet<>(Arrays.asList(GL_CGST_ADVANCE, GL_SGST_ADVANCE)));
+
+/**
+ * The dimensions one leg of a collection voucher posts with, or null to keep the licensee's market.
+ *
+ * <p>Two different rules, because the two directions answer different questions.
+ *
+ * <p><b>Forward</b> — "where was the money taken?". Debit legs follow the money to the CFC;
+ * everything else stays with the market. The receivable is forward-50, so it keeps the market's
+ * dimensions and still clears against the demand that raised it. The advance-GST legs are
+ * forward-40 but excluded: they clear against a demand-side netting release that this change does
+ * not touch, so moving one half would split the clearing pair.
+ *
+ * <p><b>Reversal</b> — "what did the original actually post?". Every leg is mirrored from its own
+ * forward counterpart, never re-derived. Re-deriving would mix eras: the market a licensee's stall
+ * belongs to can be re-pointed by an ordinary asset edit between collection and cancellation, and
+ * the compensating document would then carry the old ward on the legs read back and the new ward on
+ * the rest. A leg with nothing posted to mirror falls back to the market, which is what a receipt
+ * taken before any of this existed will do for all of its legs.
+ */
+private FiDimensions resolveLegDimensions(Demand demand, String glCode, String forwardPostingKey,
+                                          boolean reversal) {
+
+    if (reversal) {
+        Map<String, FiDimensions> posted = demand.getPostedLegDimensions();
+        if (posted == null || posted.isEmpty())
+            return null;
+        FiDimensions mirrored = posted.get(postedLegKey(glCode, forwardPostingKey));
+        return mirrored != null && mirrored.isComplete() ? mirrored : null;
+    }
+
+    FiDimensions collecting = demand.getCollectingDimensions();
+    boolean useCollectingWard = collecting != null && collecting.isComplete()
+            && "40".equals(forwardPostingKey)
+            && !CFC_DIMENSION_EXCLUDED_GLS.contains(glCode);
+    return useCollectingWard ? collecting : null;
+}
+
+/**
+ * @param forwardPostingKey the key this leg carries on the ORIGINAL voucher, before any reversal
+ *                          flip. Both the flip and the dimension rule are derived from it.
+ */
+private FiReport fiRow(Demand demand, String glCode, String forwardPostingKey, boolean reversal,
                        BigDecimal amount, String remarks, Long collectionDate) {
     long now = System.currentTimeMillis();
     // A collection is recognised when the money arrives, so both dates are the collection date.
     // The demand's tax period is the fallback only when the payment cannot be resolved.
     Long voucherDate = collectionDate != null ? collectionDate : demand.getTaxPeriodFrom();
+    String postingKey = pk(forwardPostingKey, reversal);
+
+    FiDimensions dims = resolveLegDimensions(demand, glCode, forwardPostingKey, reversal);
+
+    String fund = dims != null ? dims.getFund() : demand.getFund();
+    String fundCentre = dims != null ? dims.getFundCentre() : demand.getFundCenter();
+    String businessArea = dims != null ? dims.getBusinessArea() : demand.getBusinessArea();
+    String functionalArea = dims != null ? dims.getFunctionalArea() : demand.getFunctionalArea();
+
     return FiReport.builder()
             .transactionNumber(demand.getId())
             .docDate(voucherDate)
@@ -1717,10 +2093,10 @@ private FiReport fiRow(Demand demand, String glCode, String postingKey,
             .postingKey(postingKey)
             .glCode(glCode)
             .collectionAmount(amount)
-            .fund(demand.getFund())
-            .fundCentre(demand.getFundCenter())
-            .businessArea(demand.getBusinessArea())
-            .functionalArea(demand.getFunctionalArea())
+            .fund(fund)
+            .fundCentre(fundCentre)
+            .businessArea(businessArea)
+            .functionalArea(functionalArea)
             .remarks(remarks)
             .paymentModeDetails(demand.getPaymentMode())
             // SAP Assignment (ZUONR). Only the GST-advance legs carry it, set to this
@@ -2114,11 +2490,91 @@ public List<FiReport> buildAdvanceSettlementReversalFiReports(String settledDema
 }
 
 /**
+ * Mirror the per-tax-head 4-Series pair when the ADVANCE RECEIPT behind a demand is cancelled or
+ * its cheque is dishonoured.
+ *
+ * <p>The sibling of the emarket-v1 reversal path. Two entirely separate routes undo a
+ * demand-against-advance — cancelling the demand (emarket-v1 DemandReversalService) and
+ * cancelling the receipt that funded it (here) — and neither can rely on the other having run.
+ * Without this, a bounced advance cheque correctly returns the dues to the receivable while the
+ * 4-Series account stays debited and the revenue stays credited twice, permanently.
+ *
+ * <p>Reads back what was POSTED, exactly like {@link #buildGstNettingReversalFiReports} and
+ * {@link #buildAdvanceSettlementReversalFiReports}: the amounts, the doc date and all four
+ * dimensions come off the forward rows, so the mirror can never disagree with its original nor
+ * fall into a different GST return period.
+ *
+ * <p>The residual is SIGNED and the posting key follows its sign. Filtering {@code > 0} would
+ * keep the receivable debit and drop the revenue credit, leaving the document unbalanced by the
+ * whole amount. Running it twice nets to zero and emits nothing.
+ */
+public List<FiReport> buildFourSeriesReversalFiReports(String settledDemandId) {
+
+    // Deliberately NOT gated on advanceFourSeriesEnabled. The flag is a kill switch for the
+    // WRITE; gating the unwind too makes the switch a trap. A pair posted while it was on is a
+    // persisted row, and turning the flag off would strand it: the receivable would stay debited
+    // and the revenue credited for money that later bounced, with nothing in either service ever
+    // touching 431409937..977 again. With no pair ever posted this query matches nothing, so
+    // leaving it ungated is byte-identical for a database that never had the flag on. Matches
+    // buildAdvanceSettlementReversalFiReports, buildGstNettingReversalFiReports and emarket-v1's
+    // own twin, none of which are flag-gated either.
+    if (settledDemandId == null)
+        return Collections.emptyList();
+
+    String sql =
+        "SELECT gl_code, " +
+        "       SUM(CASE WHEN posting_key = '40' THEN collection_amount ELSE -collection_amount END) AS residual, " +
+        "       MIN(reference_no) AS reference_no, MIN(document_header_text) AS document_header_text, " +
+        "       MIN(fund) AS fund, MIN(fund_centre) AS fund_centre, MIN(functional_area) AS functional_area, " +
+        "       MIN(business_area) AS business_area, MIN(assignment) AS assignment, " +
+        "       MIN(doc_date) AS doc_date, remarks " +
+        "FROM public.eg_emarket_fi_report " +
+        "WHERE transaction_number = ? AND report_type IN (?, ?) " +
+        "GROUP BY gl_code, remarks " +
+        "HAVING SUM(CASE WHEN posting_key = '40' THEN collection_amount ELSE -collection_amount END) <> 0";
+
+    try {
+        long now = System.currentTimeMillis();
+        List<FiReport> rows = new ArrayList<>();
+        jdbcTemplate.query(sql,
+                new Object[] { settledDemandId, FiReportType.UPMKT_DEMDADV_4S,
+                               FiReportType.UPMKT_DEMDADV_4S_REV },
+                rs -> {
+                    BigDecimal residual = rs.getBigDecimal("residual");
+                    if (residual == null || residual.signum() == 0)
+                        return;
+                    // A net debit is given back as a credit, and the other way round.
+                    String mirroredKey = residual.signum() > 0 ? "50" : "40";
+                    FiReport leg = nettingReversalRow(settledDemandId, rs, rs.getString("gl_code"),
+                            mirroredKey, rs.getString("remarks"), residual.abs(),
+                            (Long) rs.getObject("doc_date"), now);
+                    // Tagged here: ReceiptServiceV2 stamps UPMKT_COLREV/UPMKT_DEMDREV over the rows
+                    // it is handed, and both sit inside the GST return's report_type filter.
+                    leg.setReportType(FiReportType.UPMKT_DEMDADV_4S_REV);
+                    rows.add(leg);
+                });
+        return rows;
+    } catch (DataAccessException e) {
+        log.error("Could not read the 4-Series pair to reverse for demand {}", settledDemandId, e);
+        return Collections.emptyList();
+    }
+}
+
+/**
  * GLs that can never be a demand's receivable — the advance account itself and the four GST
  * legs. Everything else a demand document debits is, by construction, the receivable.
  */
 private static final String NON_RECEIVABLE_GLS =
         "'350410215','350200421','350200422','439300200','439300201'";
+
+/**
+ * The per-tax-head 4-Series RECEIVABLE accounts BMC allocated for a demand raised against an
+ * advance. A contiguous block, so range comparison is exact and needs no list to be maintained.
+ * Compared as text because gl_code is a varchar; every code in the range is 9 digits, so the
+ * lexicographic and numeric orderings agree.
+ */
+private static final String FOUR_SERIES_GL_FIRST = "431409937";
+private static final String FOUR_SERIES_GL_LAST  = "431409977";
 
 /**
  * Relieve the receivable of a PRE-EXISTING demand that an apportion has just settled from the
@@ -2162,8 +2618,22 @@ public void postAdvanceSettlementFiReports(Map<String, BigDecimal> settlements) 
     if (settlements == null || settlements.isEmpty())
         return;
 
-    // The receivable is the only GL a demand document debits once the advance and GST legs are
-    // excluded; revenue is credited, so its signed balance is negative and the HAVING drops it.
+    // The receivable is the only GL a demand document debits once the advance, the GST legs and
+    // the 4-Series receivable accounts are excluded; revenue is credited, so its signed balance is
+    // negative and the HAVING drops it.
+    //
+    // The 4-Series exclusion matters and the ORDER BY is why. Picking by largest residual was safe
+    // only while the receivable was the single debit. With the pair posted, a demand whose advance
+    // covered most of it carries a large per-head 4-Series debit and a small remaining receivable —
+    // 431409938 = +720 against 431409936 = +280 — and the 4-Series would win. The relief would then
+    // credit a receivable sub-account instead of the control account, leaving 431409936 overstated
+    // for ever, and cap the amount against 720 rather than 280, which breaks the replay-idempotency
+    // this method documents above.
+    //
+    // Excluded by GL RANGE rather than by report_type: report_type is set by the builders and a
+    // future write site could lose it, and it cannot help rows that are already written.
+    // The receivable GL is also preferred explicitly in the ORDER BY, so the residual-size tiebreak
+    // only ever applies to the pre-cutover 431190300 case this method already supports.
     String sql =
         "SELECT gl_code, " +
         "       SUM(CASE WHEN posting_key = '40' THEN collection_amount ELSE -collection_amount END) AS residual, " +
@@ -2173,9 +2643,10 @@ public void postAdvanceSettlementFiReports(Map<String, BigDecimal> settlements) 
         "       MIN(functional_area) AS functional_area, MIN(business_area) AS business_area " +
         "FROM public.eg_emarket_fi_report " +
         "WHERE transaction_number = ? AND gl_code NOT IN (" + NON_RECEIVABLE_GLS + ") " +
+        "  AND gl_code NOT BETWEEN '" + FOUR_SERIES_GL_FIRST + "' AND '" + FOUR_SERIES_GL_LAST + "' " +
         "GROUP BY gl_code " +
         "HAVING SUM(CASE WHEN posting_key = '40' THEN collection_amount ELSE -collection_amount END) > 0 " +
-        "ORDER BY 2 DESC LIMIT 1";
+        "ORDER BY (gl_code = ?) DESC, 2 DESC LIMIT 1";
 
     long now = System.currentTimeMillis();
     List<FiReport> rows = new ArrayList<>();
@@ -2194,7 +2665,8 @@ public void postAdvanceSettlementFiReports(Map<String, BigDecimal> settlements) 
             // would serialise the writes but not the decision, which is the part that matters.
             lockAdvanceSettlement(demandId);
 
-            List<Map<String, Object>> forward = jdbcTemplate.queryForList(sql, new Object[] { demandId });
+            List<Map<String, Object>> forward =
+                    jdbcTemplate.queryForList(sql, new Object[] { demandId, receivableGlCode });
             if (forward.isEmpty()) {
                 log.warn("Demand {} has no open receivable to relieve; advance settlement of {} posts no FI",
                         demandId, settled);

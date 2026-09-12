@@ -132,6 +132,36 @@ public class Demand {
     private boolean apportionedAgainstAdvance = false;
 
     /**
+     * In-memory marker (within a single collection or cancellation): the SAP dimensions of the CFC
+     * where the money was actually taken, when that differs from the licensee's market.
+     *
+     * <p>The four fields above stay the licensee's market throughout — they are what the credit
+     * legs and the whole demand side post to. This carries the collecting location alongside, for
+     * the debit legs only, so one voucher can name both without either being overwritten.
+     *
+     * <p>Null means "no collecting ward established", which is the normal case for an online or
+     * citizen payment, a bulk collection and every migrated receipt. Not persisted or serialised.
+     */
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private FiDimensions collectingDimensions;
+
+    /**
+     * In-memory marker (within a single cancellation): the dimensions each leg of the ORIGINAL
+     * receipt was posted with, keyed by {@code glCode + "@" + forwardPostingKey}.
+     *
+     * <p>Used instead of {@link #collectingDimensions} on a reversal. A reversal must give back
+     * exactly what was posted, and reading one row for the whole voucher cannot do that: the legs
+     * of one receipt do not all share a dimension set once the collecting ward differs from the
+     * market, and the rest of the reversal would otherwise take the licensee's CURRENT market,
+     * which moves when a stall is re-pointed at another market.
+     *
+     * <p>Empty means "nothing posted to mirror", and every leg falls back to the market. Not
+     * persisted or serialised.
+     */
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private java.util.Map<String, FiDimensions> postedLegDimensions;
+
+    /**
      * Gets or Sets status
      */
     public enum StatusEnum {
