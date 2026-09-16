@@ -7,7 +7,7 @@ package org.egov.demand.model;
  * one ward's business area beside another ward's fund centre is worse than one carrying neither —
  * it looks reconciled and is not. Every resolver either returns a complete set or returns null.
  *
- * <p>Used for the collecting-CFC dimensions on a collection voucher's debit legs. The licensee's
+ * <p>Used for the interim-receipt dimensions on a collection voucher's money leg. The licensee's
  * market dimensions still travel on the {@link Demand} itself, so the two are never confused.
  */
 public final class FiDimensions {

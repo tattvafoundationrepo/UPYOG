@@ -27,7 +27,9 @@ import org.egov.demand.model.BillV2;
 import org.egov.demand.model.Demand;
 import org.egov.demand.model.DemandCriteria;
 import org.egov.demand.model.DemandDetail;
+import org.egov.demand.model.FiDimensions;
 import org.egov.demand.model.PaymentBackUpdateAudit;
+import org.egov.demand.model.PaymentMarketInfo;
 import org.egov.demand.producer.Producer;
 import org.egov.demand.repository.DemandRepository;
 import org.egov.demand.util.Util;
@@ -273,6 +275,89 @@ public class ReceiptServiceV2AdvanceReversalTest {
 
 		verify(demandRepository, never()).getSettledDemandIdsByAdvanceDemandId(any());
 		verify(producer, never()).push(eq(PENALTY_TOPIC), any());
+	}
+
+	// ---------------------------------------------- interim-receipt dimensions wiring
+
+	/**
+	 * The collection AND the cancellation must hand the FI builder the interim-receipt rule. The
+	 * cancellation branch is the one that did not set it before; without it every reversal mirrors
+	 * the posted fund centre and functional area, which is the defect being fixed.
+	 */
+	@Test
+	@DisplayName("Collection and cancellation both carry the collecting ward's interim-receipt dimensions")
+	void bothDirectionsCarryTheInterimReceiptRule() {
+
+		ReflectionTestUtils.setField(receiptServiceV2, "collectionCfcDimensionsEnabled", true);
+		FiDimensions wardC = new FiDimensions("11", "4030130000", "4030", "00301000000");
+		when(demandRepository.getCfcWardDimensions("mh.mumbai.zone1.wardc")).thenReturn(wardC);
+		when(demandRepository.getMarketEssentialInfo(any(), any()))
+				.thenReturn(Collections.singletonList(marketInfoTakenAt("mh.mumbai.zone1.wardc")));
+		Map<String, FiDimensions> posted = Collections.singletonMap(
+				DemandRepository.postedLegKey("450100100", "40"),
+				new FiDimensions("11", "4030420101", "4030", "55800000000"));
+		when(demandRepository.getPostedCollectionDimensions(any(), any())).thenReturn(posted);
+
+		for (boolean cancellation : new boolean[] { false, true }) {
+			org.mockito.Mockito.clearInvocations(demandRepository);
+			Demand plain = settledDemand("plain", "5000006753rf", RENT_SERVICE, "STALLAGE", "795.00");
+			when(demandService.getDemands(any(), any()))
+					.thenReturn(new ArrayList<>(Collections.singletonList(plain)));
+
+			receiptServiceV2.updateDemandFromReceipt(
+					billRequest(billFor(RENT_SERVICE, "bill-rent", "plain")), cancellation);
+
+			ArgumentCaptor<Demand> shim = ArgumentCaptor.forClass(Demand.class);
+			verify(demandRepository, atLeast(1)).buildCollectionFiReports(shim.capture(), any(), any(), any(),
+					any(), eq(cancellation), any());
+			assertTrue(wardC == shim.getValue().getCollectingDimensions(),
+					"cancellation=" + cancellation + " must carry the collecting ward's dimensions");
+			if (cancellation) {
+				assertTrue(posted == shim.getValue().getPostedLegDimensions(),
+						"the cancellation must still read the posted legs back");
+			} else {
+				verify(demandRepository, never()).getPostedCollectionDimensions(any(), any());
+			}
+		}
+	}
+
+	/** Flag off: neither direction carries the rule, so a reversal mirrors what was posted. */
+	@Test
+	@DisplayName("With the rule off neither direction carries interim-receipt dimensions")
+	void ruleOffCarriesNothing() {
+
+		ReflectionTestUtils.setField(receiptServiceV2, "collectionCfcDimensionsEnabled", false);
+		when(demandRepository.getMarketEssentialInfo(any(), any()))
+				.thenReturn(Collections.singletonList(marketInfoTakenAt("mh.mumbai.zone1.wardc")));
+
+		for (boolean cancellation : new boolean[] { false, true }) {
+			org.mockito.Mockito.clearInvocations(demandRepository);
+			Demand plain = settledDemand("plain", "5000006753rf", RENT_SERVICE, "STALLAGE", "795.00");
+			when(demandService.getDemands(any(), any()))
+					.thenReturn(new ArrayList<>(Collections.singletonList(plain)));
+
+			receiptServiceV2.updateDemandFromReceipt(
+					billRequest(billFor(RENT_SERVICE, "bill-rent", "plain")), cancellation);
+
+			ArgumentCaptor<Demand> shim = ArgumentCaptor.forClass(Demand.class);
+			verify(demandRepository, atLeast(1)).buildCollectionFiReports(shim.capture(), any(), any(), any(),
+					any(), eq(cancellation), any());
+			assertEquals(null, shim.getValue().getCollectingDimensions(), "cancellation=" + cancellation);
+			verify(demandRepository, never()).getCfcWardDimensions(any());
+		}
+	}
+
+	private static PaymentMarketInfo marketInfoTakenAt(String collectingWardTenant) {
+		PaymentMarketInfo info = new PaymentMarketInfo();
+		info.setPaymentMode("CASH");
+		info.setFund("11");
+		info.setFundCenter("4120420103");
+		info.setBusinessArea("4120");
+		info.setFunctionalArea("55800000000");
+		info.setAdditionalDetails("{\"collectingWardTenant\":\"" + collectingWardTenant + "\"}");
+		info.setTotalAmountPaid(new BigDecimal("888.00"));
+		info.setTransactionNumber("MARKET/26-27/000032");
+		return info;
 	}
 
 	// ------------------------------------------------------------------ setup

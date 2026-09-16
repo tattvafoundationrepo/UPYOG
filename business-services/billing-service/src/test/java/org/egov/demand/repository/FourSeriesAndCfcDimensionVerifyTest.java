@@ -27,8 +27,9 @@ import org.junit.jupiter.api.Test;
  * <ul>
  *   <li>the per-tax-head 4-Series pair on a demand raised against an advance — Dr the head's
  *       receivable account (431409937..431409977), Cr the head's revenue account;</li>
- *   <li>the collecting-CFC dimensions on a collection voucher's debit legs, and their mirror
- *       when those legs flip to posting key 50 in a reversal.</li>
+ *   <li>the interim-receipt dimensions on a collection voucher's money leg (Business Area = the
+ *       collecting CFC's ward, Fund Centre = business area + 130000, Functional Area = 00301000000),
+ *       on the collection and on its reversal.</li>
  * </ul>
  *
  * The single most important assertion in here is {@link #flagOffIsByteIdentical()} together with
@@ -350,10 +351,30 @@ public class FourSeriesAndCfcDimensionVerifyTest {
                 "advance left standing: " + advanceBalance);
     }
 
-    // -------------------------------------------------- Part 2: collecting-CFC dimensions
+    // ------------------------------------------- Part 2: interim-receipt dimensions (CFC ward)
 
-    private static final FiDimensions CFC_WARD_A =
-            new FiDimensions("11", "4010420101", "4010", "55800000000");
+    /*
+     * BMC's rule for the interim receipt, the money leg of a collection voucher: Business Area = the
+     * ward of the CFC where the money was collected, Fund Centre = business area + 130000,
+     * Functional Area = 00301000000. Every other leg stays with the licensee's market.
+     *
+     * The market below is 4060 / 4060420103 / 55800000000. The CFC is ward A, 4010.
+     */
+
+    private static final String CHEQUE_IN_HAND = "450210010";
+    private static final String MARKET_BA = "4060";
+    private static final String MARKET_FC = "4060420103";
+    private static final String MARKET_FA = "55800000000";
+    private static final String INTERIM_FA = "00301000000";
+
+    private DemandRepository repo() throws Exception {
+        return repoWithFlag(false);
+    }
+
+    /** What ReceiptServiceV2 hands over for a receipt taken at the ward A counter. */
+    private static FiDimensions wardA(DemandRepository repo) {
+        return repo.interimReceiptDimensions("11", "4010");
+    }
 
     private Demand collectionShim(FiDimensions collecting) {
         Demand d = new Demand();
@@ -361,226 +382,441 @@ public class FourSeriesAndCfcDimensionVerifyTest {
         d.setConsumerCode("5000000284rf");
         d.setBusinessService("TX.Emarket_Rental_Fees");
         d.setFund("11");
-        d.setFundCenter("4060420103");
-        d.setBusinessArea("4060");
-        d.setFunctionalArea("55800000000");
+        d.setFundCenter(MARKET_FC);
+        d.setBusinessArea(MARKET_BA);
+        d.setFunctionalArea(MARKET_FA);
         d.setFiReceiptNo("market9152139240");
         d.setPaymentMode("CASH");
         d.setCollectingDimensions(collecting);
         return d;
     }
 
-    /** With no collecting ward established, every leg keeps the licensee's market. */
+    private static void assertDims(FiReport r, String fund, String fundCentre, String businessArea,
+                                   String functionalArea) {
+        String leg = r.getGlCode() + "@" + r.getPostingKey();
+        assertEquals(fund, r.getFund(), leg + " fund");
+        assertEquals(fundCentre, r.getFundCentre(), leg + " fund centre");
+        assertEquals(businessArea, r.getBusinessArea(), leg + " business area");
+        assertEquals(functionalArea, r.getFunctionalArea(), leg + " functional area");
+    }
+
+    private static void assertMarket(FiReport r) {
+        assertDims(r, "11", MARKET_FC, MARKET_BA, MARKET_FA);
+    }
+
+    private static boolean isMoneyLeg(FiReport r) {
+        return BANK.equals(r.getGlCode()) || CHEQUE_IN_HAND.equals(r.getGlCode());
+    }
+
     @Test
-    public void noCollectingWardKeepsTodaysDimensions() throws Exception {
-        List<FiReport> rows = repoWithFlag(false).buildCollectionFiReports(
+    public void theInterimReceiptRuleIsBusinessAreaPlus130000AndAFixedFunctionalArea() throws Exception {
+        DemandRepository repo = repo();
+
+        FiDimensions a = repo.interimReceiptDimensions("11", "4010");
+        assertEquals("11", a.getFund());
+        assertEquals("4010", a.getBusinessArea());
+        assertEquals("4010130000", a.getFundCentre());
+        assertEquals("00301000000", a.getFunctionalArea(), "the leading zeros are part of the value");
+        assertTrue(a.isComplete());
+
+        assertEquals("4090130000", repo.interimReceiptDimensions(" 11 ", " 4090 ").getFundCentre());
+
+        assertEquals(null, repo.interimReceiptDimensions("11", null), "no business area, no fund centre");
+        assertEquals(null, repo.interimReceiptDimensions("11", " "));
+        assertEquals(null, repo.interimReceiptDimensions(null, "4010"));
+    }
+
+    /** Rule off: every leg keeps the licensee's market, exactly as before the feature. */
+    @Test
+    public void ruleOffKeepsTheMarketOnEveryLeg() throws Exception {
+        List<FiReport> rows = repo().buildCollectionFiReports(
                 collectionShim(null), FiFlow.NON_GST_REGULAR, bd("838"), BigDecimal.ZERO,
                 BigDecimal.ZERO, false, 1743465600000L);
 
         assertEquals(2, rows.size());
-        rows.forEach(r -> {
-            assertEquals("4060", r.getBusinessArea());
-            assertEquals("4060420103", r.getFundCentre());
-        });
+        rows.forEach(FourSeriesAndCfcDimensionVerifyTest::assertMarket);
     }
 
-    /** The bank leg follows the CFC; the receivable stays with the market so it still clears. */
+    /** The cash interim receipt posts on the CFC's rule; the receivable stays with the market. */
     @Test
-    public void onlyTheDebitLegMovesToTheCollectingWard() throws Exception {
-        List<FiReport> rows = repoWithFlag(false).buildCollectionFiReports(
-                collectionShim(CFC_WARD_A), FiFlow.NON_GST_REGULAR, bd("838"), BigDecimal.ZERO,
+    public void theCashInterimReceiptPostsOnTheCfcWardRule() throws Exception {
+        DemandRepository repo = repo();
+        List<FiReport> rows = repo.buildCollectionFiReports(
+                collectionShim(wardA(repo)), FiFlow.NON_GST_REGULAR, bd("838"), BigDecimal.ZERO,
                 BigDecimal.ZERO, false, 1743465600000L);
 
         FiReport bank = rowsOn(rows, BANK).get(0);
-        FiReport receivable = rowsOn(rows, RECEIVABLE).get(0);
-
         assertEquals("40", bank.getPostingKey());
-        assertEquals("4010", bank.getBusinessArea());
-        assertEquals("4010420101", bank.getFundCentre());
+        assertDims(bank, "11", "4010130000", "4010", INTERIM_FA);
 
+        FiReport receivable = rowsOn(rows, RECEIVABLE).get(0);
         assertEquals("50", receivable.getPostingKey());
-        assertEquals("4060", receivable.getBusinessArea(),
-                "the receivable must stay with the market or it can never clear against the demand");
+        assertMarket(receivable);
     }
 
-    /** The posted-leg map a real cancellation reads back, keyed glCode@forwardPostingKey. */
-    private static Map<String, FiDimensions> postedLegs(String... glAtKeyThenBa) {
+    /** A cheque receipt's money leg is cheques-in-hand, and it takes the same interim-receipt rule. */
+    @Test
+    public void theChequeInterimReceiptPostsOnTheSameRule() throws Exception {
+        DemandRepository repo = repo();
+        Demand d = collectionShim(wardA(repo));
+        d.setPaymentMode("CHEQUE");
+
+        List<FiReport> rows = repo.buildCollectionFiReports(d, FiFlow.NON_GST_REGULAR, bd("932"),
+                BigDecimal.ZERO, BigDecimal.ZERO, false, 1743465600000L);
+
+        assertTrue(rowsOn(rows, BANK).isEmpty(), "a cheque does not post to the cash interim account");
+        assertDims(rowsOn(rows, CHEQUE_IN_HAND).get(0), "11", "4010130000", "4010", INTERIM_FA);
+        assertMarket(rowsOn(rows, RECEIVABLE).get(0));
+    }
+
+    /**
+     * Only the money leg moves. The old rule moved EVERY forward-40 leg but the advance-GST pair, so
+     * the net-of-GST shape's CGST/SGST payable debits went to the CFC as well.
+     */
+    @Test
+    public void noOtherForwardDebitLegTakesTheCfcDimensions() throws Exception {
+        DemandRepository repo = repo();
+        Field gross = DemandRepository.class.getDeclaredField("grossBankOnRegularCollection");
+        gross.setAccessible(true);
+        gross.setBoolean(repo, false);
+
+        List<FiReport> netOfGst = repo.buildCollectionFiReports(collectionShim(wardA(repo)),
+                FiFlow.GST_REGULAR, bd("1452"), bd("110.70"), bd("110.70"), false, 1743465600000L);
+        assertEquals(4, netOfGst.size());
+        for (String gl : new String[] { "350200421", "350200422" }) {
+            FiReport payable = rowsOn(netOfGst, gl).get(0);
+            assertEquals("40", payable.getPostingKey());
+            assertMarket(payable);
+        }
+
+        List<FiReport> advance = repo.buildCollectionFiReports(collectionShim(wardA(repo)),
+                FiFlow.GST_ADVANCE, bd("11589.60"), bd("766.80"), bd("766.80"), false, 1743465600000L);
+        for (String gl : new String[] { CGST_ADVANCE, SGST_ADVANCE }) {
+            FiReport clearing = rowsOn(advance, gl).get(0);
+            assertEquals("40", clearing.getPostingKey());
+            assertMarket(clearing);
+        }
+        assertDims(rowsOn(advance, BANK).get(0), "11", "4010130000", "4010", INTERIM_FA);
+    }
+
+    /**
+     * The posted-leg map a real cancellation reads back. A money leg gets the corrected rule's values
+     * (what this code posts). Every other leg gets the market's, or, for a business area other than the
+     * market's, what the OLD rule wrote.
+     */
+    private Map<String, FiDimensions> postedLegs(String... glAtKeyThenBa) throws Exception {
+        DemandRepository repo = repo();
         Map<String, FiDimensions> m = new HashMap<>();
         for (int i = 0; i < glAtKeyThenBa.length; i += 2) {
             String[] leg = glAtKeyThenBa[i].split("@");
             String ba = glAtKeyThenBa[i + 1];
-            m.put(DemandRepository.postedLegKey(leg[0], leg[1]),
-                    new FiDimensions("11", ba + "420101", ba, "55800000000"));
+            boolean moneyLeg = BANK.equals(leg[0]) || CHEQUE_IN_HAND.equals(leg[0]);
+            FiDimensions dims = moneyLeg
+                    ? repo.interimReceiptDimensions("11", ba)
+                    : new FiDimensions("11", MARKET_BA.equals(ba) ? MARKET_FC : ba + "420101", ba, MARKET_FA);
+            m.put(DemandRepository.postedLegKey(leg[0], leg[1]), dims);
         }
         return m;
     }
 
-    private Demand reversalShim(Map<String, FiDimensions> posted) {
-        Demand d = collectionShim(null);
+    private Demand reversalShim(Map<String, FiDimensions> posted, FiDimensions collecting) {
+        Demand d = collectionShim(collecting);
         d.setPostedLegDimensions(posted);
         return d;
     }
 
-    /**
-     * The rule that "40 entries become 50 entries". In a reversal the bank leg flips to posting
-     * key 50 and must KEEP the ward it was taken at, while the receivable — now a debit — must
-     * keep the market's.
-     */
-    @Test
-    public void theSameLegsKeepTheWardWhenTheyFlipInAReversal() throws Exception {
-        List<FiReport> rows = repoWithFlag(false).buildCollectionFiReports(
-                reversalShim(postedLegs(BANK + "@40", "4010", RECEIVABLE + "@50", "4060")),
-                FiFlow.NON_GST_REGULAR, bd("838"), BigDecimal.ZERO, BigDecimal.ZERO,
-                true, 1743465600000L);
-
-        FiReport bank = rowsOn(rows, BANK).get(0);
-        FiReport receivable = rowsOn(rows, RECEIVABLE).get(0);
-
-        assertEquals("50", bank.getPostingKey(), "the bank leg flips");
-        assertEquals("4010", bank.getBusinessArea(), "and keeps the ward it was taken at");
-
-        assertEquals("40", receivable.getPostingKey(), "the receivable flips the other way");
-        assertEquals("4060", receivable.getBusinessArea(),
-                "a posting-key-40 rule would wrongly move the receivable here");
+    /** What getPostedCollectionDimensions returns for a set of stored rows, keyed as it keys them. */
+    private static Map<String, FiDimensions> asPosted(List<FiReport> forwardRows) {
+        Map<String, FiDimensions> m = new HashMap<>();
+        for (FiReport r : forwardRows) {
+            m.put(DemandRepository.postedLegKey(r.getGlCode(), r.getPostingKey()),
+                    new FiDimensions(r.getFund(), r.getFundCentre(), r.getBusinessArea(), r.getFunctionalArea()));
+        }
+        return m;
     }
 
     /**
-     * The defect this replaced: applying one dimension set to the key-40 legs only, while every
-     * other leg took the licensee's CURRENT market. Re-pointing a stall at another market between
-     * collection and cancellation then split the compensating document across two business areas.
+     * The round trip SAP depends on. Post a receipt at the ward A counter, read its rows back as a
+     * cancellation does, reverse it. Every leg of the reversal must carry exactly the original's
+     * values with the opposite key, so each account nets to zero per business area AND fund centre.
      */
     @Test
-    public void aReversalMirrorsEveryLegEvenWhenTheMarketHasMovedSince() throws Exception {
-        Demand d = reversalShim(postedLegs(BANK + "@40", "4010", RECEIVABLE + "@50", "4060"));
+    public void aReversalNetsOffItsCollectionLegForLeg() throws Exception {
+        DemandRepository repo = repo();
+        for (String mode : new String[] { "CASH", "CHEQUE" }) {
+            for (FiFlow flow : FiFlow.values()) {
+                Demand forward = collectionShim(wardA(repo));
+                forward.setPaymentMode(mode);
+                List<FiReport> collection = repo.buildCollectionFiReports(forward, flow, bd("1000"),
+                        bd("76.27"), bd("76.27"), false, 1743465600000L);
+                if (collection.isEmpty()) {
+                    continue;
+                }
+
+                Demand back = reversalShim(asPosted(collection), wardA(repo));
+                back.setPaymentMode(mode);
+                // a stall re-pointed at another market in between must change nothing
+                back.setBusinessArea("4130");
+                back.setFundCenter("4130420101");
+                List<FiReport> reversal = repo.buildCollectionFiReports(back, flow, bd("1000"),
+                        bd("76.27"), bd("76.27"), true, 1743465600000L);
+
+                // Dr positive, Cr negative, across BOTH documents: an account only nets to zero if
+                // the reversal flips the key AND carries the same four values.
+                Map<String, BigDecimal> net = new HashMap<>();
+                for (FiReport r : collection) {
+                    net.merge(netKey(r), signed(r), BigDecimal::add);
+                }
+                for (FiReport r : reversal) {
+                    net.merge(netKey(r), signed(r), BigDecimal::add);
+                }
+                String where = mode + " " + flow;
+                assertEquals(collection.size(), reversal.size(), where);
+                net.forEach((k, v) -> assertEquals(0, BigDecimal.ZERO.compareTo(v),
+                        where + " leaves " + v + " standing on " + k));
+                reversal.forEach(r -> assertFalse("4130".equals(r.getBusinessArea()), where));
+            }
+        }
+    }
+
+    private static BigDecimal signed(FiReport r) {
+        return "40".equals(r.getPostingKey()) ? r.getCollectionAmount() : r.getCollectionAmount().negate();
+    }
+
+    /** The account as SAP nets it: GL plus all four dimensions. */
+    private static String netKey(FiReport r) {
+        return r.getGlCode() + "|" + r.getFund() + "|" + r.getFundCentre() + "|" + r.getBusinessArea()
+                + "|" + r.getFunctionalArea();
+    }
+
+    /**
+     * Review finding: a receipt posted BEFORE the rule was corrected carries 4030420101 / 55800000000
+     * on its money leg, and may already be in SAP. Its reversal must carry the same values, or the
+     * original stands at one fund centre and the reversal at another and neither clears. The rule
+     * being on today must not rebuild it. fix_interim_receipt_dimensions.sql is what corrects it,
+     * both rows together.
+     */
+    @Test
+    public void aReversalGivesBackOldValuesSoItNetsAgainstAnUploadedOriginal() throws Exception {
+        DemandRepository repo = repo();
+        Map<String, FiDimensions> postedBeforeTheFix = new HashMap<>();
+        postedBeforeTheFix.put(DemandRepository.postedLegKey(BANK, "40"),
+                new FiDimensions("11", "4030420101", "4030", MARKET_FA));
+        postedBeforeTheFix.put(DemandRepository.postedLegKey(RECEIVABLE, "50"),
+                new FiDimensions("11", MARKET_FC, MARKET_BA, MARKET_FA));
+
+        for (FiDimensions collecting : java.util.Arrays.asList(wardA(repo), null)) {
+            List<FiReport> rows = repo.buildCollectionFiReports(reversalShim(postedBeforeTheFix, collecting),
+                    FiFlow.NON_GST_REGULAR, bd("838"), BigDecimal.ZERO, BigDecimal.ZERO,
+                    true, 1743465600000L);
+
+            FiReport bank = rowsOn(rows, BANK).get(0);
+            assertEquals("50", bank.getPostingKey(), "the money leg flips");
+            assertDims(bank, "11", "4030420101", "4030", MARKET_FA);
+
+            FiReport receivable = rowsOn(rows, RECEIVABLE).get(0);
+            assertEquals("40", receivable.getPostingKey(), "the receivable flips the other way");
+            assertMarket(receivable);
+        }
+    }
+
+    /**
+     * Review finding: a posted money leg with a business area but a blank value elsewhere (a market
+     * with no functional_area) must still land its reversal in THAT business area. It is rebuilt by
+     * the rule there, and does not jump to the collecting ward.
+     */
+    @Test
+    public void anIncompletePostedMoneyLegIsRebuiltAtItsBookedBusinessArea() throws Exception {
+        DemandRepository repo = repo();
+        Map<String, FiDimensions> posted = new HashMap<>();
+        posted.put(DemandRepository.postedLegKey(BANK, "40"), new FiDimensions("11", MARKET_FC, MARKET_BA, null));
+        posted.put(DemandRepository.postedLegKey(RECEIVABLE, "50"), new FiDimensions("11", MARKET_FC, MARKET_BA, null));
+
+        List<FiReport> ruleOn = repo.buildCollectionFiReports(reversalShim(posted, wardA(repo)),
+                FiFlow.NON_GST_REGULAR, bd("838"), BigDecimal.ZERO, BigDecimal.ZERO, true, 1743465600000L);
+        assertDims(rowsOn(ruleOn, BANK).get(0), "11", "4060130000", MARKET_BA, INTERIM_FA);
+        assertMarket(rowsOn(ruleOn, RECEIVABLE).get(0));
+
+        // no fund on the posted row either: the collecting set supplies it
+        posted.put(DemandRepository.postedLegKey(BANK, "40"), new FiDimensions(null, null, MARKET_BA, null));
+        List<FiReport> noFund = repo.buildCollectionFiReports(reversalShim(posted, wardA(repo)),
+                FiFlow.NON_GST_REGULAR, bd("838"), BigDecimal.ZERO, BigDecimal.ZERO, true, 1743465600000L);
+        assertDims(rowsOn(noFund, BANK).get(0), "11", "4060130000", MARKET_BA, INTERIM_FA);
+
+        // rule off: nothing complete to mirror, so the market, as before
+        List<FiReport> ruleOff = repo.buildCollectionFiReports(reversalShim(posted, null),
+                FiFlow.NON_GST_REGULAR, bd("838"), BigDecimal.ZERO, BigDecimal.ZERO, true, 1743465600000L);
+        assertMarket(rowsOn(ruleOff, BANK).get(0));
+    }
+
+    /**
+     * The read-back itself. A row with a business area is kept even when another value is blank; a row
+     * with none is dropped; and where two rows share a key, the complete one wins whatever the order.
+     */
+    @Test
+    public void thePostedReadBackKeepsRowsThatCarryABusinessArea() throws Exception {
+        String[][] rows = {
+            // gl, key, fund, fund_centre, business_area, functional_area
+            { BANK, "40", "11", MARKET_FC, MARKET_BA, null },                 // incomplete, kept
+            { BANK, "40", "11", "4060130000", MARKET_BA, INTERIM_FA },         // same key, complete: wins
+            { RECEIVABLE, "50", "11", MARKET_FC, " ", MARKET_FA },            // blank business area: dropped
+            { ADVANCE, "50", "11", "4060130000", MARKET_BA, INTERIM_FA },     // complete, kept
+            { CHEQUE_IN_HAND, "40", "11", "4060130000", MARKET_BA, INTERIM_FA },
+            { CHEQUE_IN_HAND, "40", "11", null, MARKET_BA, null },            // incomplete AFTER complete: loses
+            { "340100300", "50", "11", MARKET_FC, MARKET_BA, null },          // incomplete and alone: kept
+        };
+
+        org.springframework.jdbc.core.JdbcTemplate jdbc =
+                org.mockito.Mockito.mock(org.springframework.jdbc.core.JdbcTemplate.class);
+        org.mockito.Mockito.doAnswer(inv -> {
+            org.springframework.jdbc.core.RowCallbackHandler handler = inv.getArgument(2);
+            for (String[] row : rows) {
+                java.sql.ResultSet rs = org.mockito.Mockito.mock(java.sql.ResultSet.class);
+                org.mockito.Mockito.when(rs.getString("gl_code")).thenReturn(row[0]);
+                org.mockito.Mockito.when(rs.getString("posting_key")).thenReturn(row[1]);
+                org.mockito.Mockito.when(rs.getString("fund")).thenReturn(row[2]);
+                org.mockito.Mockito.when(rs.getString("fund_centre")).thenReturn(row[3]);
+                org.mockito.Mockito.when(rs.getString("business_area")).thenReturn(row[4]);
+                org.mockito.Mockito.when(rs.getString("functional_area")).thenReturn(row[5]);
+                handler.processRow(rs);
+            }
+            return null;
+        }).when(jdbc).query(org.mockito.ArgumentMatchers.anyString(),
+                org.mockito.ArgumentMatchers.any(Object[].class),
+                org.mockito.ArgumentMatchers.any(org.springframework.jdbc.core.RowCallbackHandler.class));
+
+        DemandRepository repo = repo();
+        Field f = DemandRepository.class.getDeclaredField("jdbcTemplate");
+        f.setAccessible(true);
+        f.set(repo, jdbc);
+
+        Map<String, FiDimensions> posted = repo.getPostedCollectionDimensions("MARKET/26-27/000032", "5000007527rf");
+
+        assertEquals(4, posted.size(), "only the blank-business-area row may be dropped: " + posted);
+        FiDimensions alone = posted.get(DemandRepository.postedLegKey("340100300", "50"));
+        assertNotNull(alone, "a row with a business area must be kept even when incomplete");
+        assertFalse(alone.isComplete());
+        assertEquals(MARKET_BA, alone.getBusinessArea());
+        assertEquals("4060130000", posted.get(DemandRepository.postedLegKey(BANK, "40")).getFundCentre());
+        assertTrue(posted.get(DemandRepository.postedLegKey(BANK, "40")).isComplete());
+        assertTrue(posted.get(DemandRepository.postedLegKey(CHEQUE_IN_HAND, "40")).isComplete(),
+                "a later incomplete row must not overwrite a complete one");
+        assertFalse(posted.containsKey(DemandRepository.postedLegKey(RECEIVABLE, "50")));
+    }
+
+    /** A receipt with no FI rows to read back takes the payment's collecting ward. */
+    @Test
+    public void aReversalWithNothingPostedUsesTheCollectingWard() throws Exception {
+        DemandRepository repo = repo();
+        for (Map<String, FiDimensions> posted : java.util.Arrays.asList(
+                (Map<String, FiDimensions>) null, new HashMap<String, FiDimensions>())) {
+            List<FiReport> rows = repo.buildCollectionFiReports(reversalShim(posted, wardA(repo)),
+                    FiFlow.NON_GST_REGULAR, bd("838"), BigDecimal.ZERO, BigDecimal.ZERO,
+                    true, 1743465600000L);
+            assertDims(rowsOn(rows, BANK).get(0), "11", "4010130000", "4010", INTERIM_FA);
+            assertMarket(rowsOn(rows, RECEIVABLE).get(0));
+        }
+    }
+
+    /**
+     * Re-pointing a stall at another market between collection and cancellation must not move any
+     * leg of the reversal to the new market.
+     */
+    @Test
+    public void aReversalMirrorsEveryOtherLegEvenWhenTheMarketHasMovedSince() throws Exception {
+        DemandRepository repo = repo();
+        Demand d = reversalShim(postedLegs(BANK + "@40", "4010", RECEIVABLE + "@50", MARKET_BA), wardA(repo));
         // the licence has since been re-pointed at a market in another ward
         d.setBusinessArea("4130");
         d.setFundCenter("4130420101");
 
-        List<FiReport> rows = repoWithFlag(false).buildCollectionFiReports(
+        List<FiReport> rows = repo.buildCollectionFiReports(
                 d, FiFlow.NON_GST_REGULAR, bd("838"), BigDecimal.ZERO, BigDecimal.ZERO,
                 true, 1743465600000L);
 
-        assertEquals("4010", rowsOn(rows, BANK).get(0).getBusinessArea());
-        assertEquals("4060", rowsOn(rows, RECEIVABLE).get(0).getBusinessArea(),
-                "the receivable must mirror what was posted, not today's market");
+        assertDims(rowsOn(rows, BANK).get(0), "11", "4010130000", "4010", INTERIM_FA);
+        assertMarket(rowsOn(rows, RECEIVABLE).get(0));
         assertTrue(rows.stream().noneMatch(r -> "4130".equals(r.getBusinessArea())),
                 "no leg may pick up the CURRENT market on a reversal");
-        assertEquals(new java.util.TreeSet<>(java.util.Arrays.asList("4010", "4060")),
-                rows.stream().map(FiReport::getBusinessArea)
-                        .collect(Collectors.toCollection(java.util.TreeSet::new)),
-                "the reversal spans exactly the two business areas the original posted to");
     }
 
     /**
-     * A GST_ADVANCE receipt posts THREE forward-40 legs and two of them are dimension-excluded.
-     * A single-row read-back picked between them by an index-decided tiebreak on an identical
-     * created_at; a per-leg map cannot.
+     * A GST_ADVANCE receipt posts THREE forward-40 legs. Each leg must find its own counterpart, not
+     * whichever key-40 row the planner returns first.
      */
     @Test
     public void aReversalPicksEachLegsOwnDimensionsNotTheFirstKey40Row() throws Exception {
+        DemandRepository repo = repo();
         Demand d = reversalShim(postedLegs(
                 BANK + "@40", "4120",            // taken at the K/East counter
-                CGST_ADVANCE + "@40", "4060",    // clearing legs stayed with the market
-                SGST_ADVANCE + "@40", "4060",
-                ADVANCE + "@50", "4060",
-                "350200421@50", "4060",
-                "350200422@50", "4060"));
+                CGST_ADVANCE + "@40", MARKET_BA, // clearing legs stayed with the market
+                SGST_ADVANCE + "@40", MARKET_BA,
+                ADVANCE + "@50", MARKET_BA,
+                "350200421@50", MARKET_BA,
+                "350200422@50", MARKET_BA), wardA(repo));
 
-        List<FiReport> rows = repoWithFlag(false).buildCollectionFiReports(
+        List<FiReport> rows = repo.buildCollectionFiReports(
                 d, FiFlow.GST_ADVANCE, bd("11589.60"), bd("766.80"), bd("766.80"),
                 true, 1743465600000L);
 
-        assertEquals("4120", rowsOn(rows, BANK).get(0).getBusinessArea(),
-                "the money leg must come back at the counter that took it");
-        assertEquals("4060", rowsOn(rows, CGST_ADVANCE).get(0).getBusinessArea());
-        assertEquals("4060", rowsOn(rows, SGST_ADVANCE).get(0).getBusinessArea());
+        assertDims(rowsOn(rows, BANK).get(0), "11", "4120130000", "4120", INTERIM_FA);
+        assertMarket(rowsOn(rows, CGST_ADVANCE).get(0));
+        assertMarket(rowsOn(rows, SGST_ADVANCE).get(0));
         assertEquals(0, debitTotal(rows).compareTo(creditTotal(rows)));
     }
 
-    /** A receipt posted before any of this existed has no posted map: every leg keeps the market. */
-    @Test
-    public void aReversalWithNothingPostedKeepsTodaysDimensions() throws Exception {
-        for (Map<String, FiDimensions> posted : java.util.Arrays.asList(
-                (Map<String, FiDimensions>) null, new HashMap<String, FiDimensions>())) {
-            List<FiReport> rows = repoWithFlag(false).buildCollectionFiReports(
-                    reversalShim(posted), FiFlow.NON_GST_REGULAR, bd("838"), BigDecimal.ZERO,
-                    BigDecimal.ZERO, true, 1743465600000L);
-            rows.forEach(r -> assertEquals("4060", r.getBusinessArea()));
-        }
-    }
-
-    /**
-     * The advance-GST legs are forward-40 but clear against a demand-side row that keeps the
-     * market's dimensions. Moving them would split the clearing pair and make GSTR-1 table 11A
-     * disagree with 11B for the same advance.
-     */
-    @Test
-    public void theAdvanceGstClearingLegsAreExcluded() throws Exception {
-        List<FiReport> rows = repoWithFlag(false).buildCollectionFiReports(
-                collectionShim(CFC_WARD_A), FiFlow.GST_ADVANCE, bd("11589.60"), bd("766.80"),
-                bd("766.80"), false, 1743465600000L);
-
-        for (String gl : new String[] { CGST_ADVANCE, SGST_ADVANCE }) {
-            List<FiReport> legs = rowsOn(rows, gl);
-            assertEquals(1, legs.size());
-            assertEquals("40", legs.get(0).getPostingKey());
-            assertEquals("4060", legs.get(0).getBusinessArea(),
-                    gl + " must keep the market's dimensions to stay clearable");
-        }
-        // the bank leg of the same voucher still moves
-        assertEquals("4010", rowsOn(rows, BANK).get(0).getBusinessArea());
-        assertEquals(0, debitTotal(rows).compareTo(creditTotal(rows)));
-    }
-
-    /** A ward seeded '0' in the master resolves to no dimensions, so nothing moves. */
+    /** A partial set is treated as the rule being off, so nothing moves. */
     @Test
     public void anIncompleteDimensionSetIsIgnored() throws Exception {
-        FiDimensions partial = new FiDimensions("11", null, "4010", "55800000000");
+        FiDimensions partial = new FiDimensions("11", null, "4010", INTERIM_FA);
         assertFalse(partial.isComplete());
 
-        List<FiReport> rows = repoWithFlag(false).buildCollectionFiReports(
+        List<FiReport> rows = repo().buildCollectionFiReports(
                 collectionShim(partial), FiFlow.NON_GST_REGULAR, bd("838"), BigDecimal.ZERO,
                 BigDecimal.ZERO, false, 1743465600000L);
 
-        rows.forEach(r -> assertEquals("4060", r.getBusinessArea(),
-                "a partial dimension set must be treated as none at all"));
+        rows.forEach(FourSeriesAndCfcDimensionVerifyTest::assertMarket);
     }
 
     /**
-     * Every flow still balances with a ward applied, in BOTH directions.
-     *
-     * <p>The reversal pass must be given a POSTED-LEG map, not {@code collectingDimensions}:
-     * resolveLegDimensions ignores the latter when reversing, so a shim carrying only that field
-     * would silently exercise no ward at all and the assertion would go vacuous for the reversal
-     * half of every flow. The map below covers every GL any flow can post at either forward key.
+     * Every flow, both directions, cash and cheque: the voucher balances, every money leg carries the
+     * interim-receipt set, and no other leg does. Without the "every money leg" assertion a rule that
+     * silently never fired would pass the balance check.
      */
     @Test
-    public void everyFlowStillBalancesWithTheWardApplied() throws Exception {
-        DemandRepository repo = repoWithFlag(false);
-        Map<String, FiDimensions> everyLegAtWardA = postedLegs(
-                BANK + "@40", "4010", "450210010@40", "4010",
-                RECEIVABLE + "@50", "4010", ADVANCE + "@50", "4010",
-                "340100300@50", "4010", "350200421@40", "4010", "350200422@40", "4010",
-                "350200421@50", "4010", "350200422@50", "4010",
-                CGST_ADVANCE + "@40", "4010", SGST_ADVANCE + "@40", "4010");
+    public void everyFlowPutsTheRuleOnTheMoneyLegOnlyAndStillBalances() throws Exception {
+        DemandRepository repo = repo();
+        Map<String, FiDimensions> everyLegPosted = postedLegs(
+                BANK + "@40", "4010", CHEQUE_IN_HAND + "@40", "4010",
+                RECEIVABLE + "@50", MARKET_BA, ADVANCE + "@50", MARKET_BA,
+                "340100300@50", MARKET_BA, "350200421@40", MARKET_BA, "350200422@40", MARKET_BA,
+                "350200421@50", MARKET_BA, "350200422@50", MARKET_BA,
+                CGST_ADVANCE + "@40", MARKET_BA, SGST_ADVANCE + "@40", MARKET_BA);
 
-        for (FiFlow flow : FiFlow.values()) {
-            for (boolean reversal : new boolean[] { false, true }) {
-                Demand shim = reversal ? reversalShim(everyLegAtWardA) : collectionShim(CFC_WARD_A);
-                List<FiReport> rows = repo.buildCollectionFiReports(shim,
-                        flow, bd("1000"), bd("76.27"), bd("76.27"), reversal, 1743465600000L);
-                if (rows != null && !rows.isEmpty()) {
-                    assertTrue(rows.stream().anyMatch(r -> "4010".equals(r.getBusinessArea())),
-                            flow + " reversal=" + reversal + " applied no ward to any leg — the "
-                                    + "balance assertion below would be vacuous");
+        for (String mode : new String[] { "CASH", "CHEQUE" }) {
+            for (FiFlow flow : FiFlow.values()) {
+                for (boolean reversal : new boolean[] { false, true }) {
+                    Demand shim = reversal ? reversalShim(everyLegPosted, wardA(repo)) : collectionShim(wardA(repo));
+                    shim.setPaymentMode(mode);
+                    List<FiReport> rows = repo.buildCollectionFiReports(shim,
+                            flow, bd("1000"), bd("76.27"), bd("76.27"), reversal, 1743465600000L);
+                    assertNotNull(rows);
+                    if (rows.isEmpty()) {
+                        continue;
+                    }
+                    String where = mode + " " + flow + " reversal=" + reversal;
+                    assertTrue(rows.stream().anyMatch(FourSeriesAndCfcDimensionVerifyTest::isMoneyLeg),
+                            where + " posted no money leg; the assertions below would be vacuous");
+                    for (FiReport r : rows) {
+                        if (isMoneyLeg(r)) {
+                            assertDims(r, "11", "4010130000", "4010", INTERIM_FA);
+                        } else {
+                            assertMarket(r);
+                        }
+                    }
+                    assertEquals(0, debitTotal(rows).compareTo(creditTotal(rows)),
+                            where + " is unbalanced: Dr " + debitTotal(rows) + " Cr " + creditTotal(rows));
                 }
-                assertNotNull(rows);
-                if (rows.isEmpty()) {
-                    continue;
-                }
-                assertEquals(0, debitTotal(rows).compareTo(creditTotal(rows)),
-                        flow + " reversal=" + reversal + " is unbalanced: Dr " + debitTotal(rows)
-                                + " Cr " + creditTotal(rows));
             }
         }
     }

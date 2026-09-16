@@ -422,8 +422,8 @@ public class ReceiptServiceV2 {
 				d.setFunctionalArea(marketInfo.getFunctionalArea());
 				d.setFiReceiptNo(currentTransactionNumber != null && !currentTransactionNumber.isEmpty()
 						? currentTransactionNumber : marketInfo.getTransactionNumber());
-				// Where the money was actually taken. Only the debit legs use it; the four fields
-				// above stay the licensee's market and still carry every credit leg.
+				// Where the money was actually taken. Only the interim receipt (the money leg) uses it;
+				// the four fields above stay the licensee's market and carry every other leg.
 				d.setCollectingDimensions(resolveCollectingDimensions(marketInfo));
 				log.info("additioanl market info from db" + marketInfo);
 			}
@@ -479,17 +479,21 @@ public class ReceiptServiceV2 {
 				d.setFunctionalArea(marketInfo.getFunctionalArea());
 				d.setFiReceiptNo(currentTransactionNumber != null && !currentTransactionNumber.isEmpty()
 						? currentTransactionNumber : marketInfo.getTransactionNumber());
-				// Read back from the POSTED document, PER LEG, never re-resolved. A receipt taken
-				// before the rule existed, or before its ward had real values, or while the flag was
-				// off, must be given back on the dimensions it was booked with — otherwise the two
-				// halves sit in different business areas and neither ever clears.
+				// Read back from the POSTED document, PER LEG, and given back as booked, the interim
+				// receipt included. SAP nets each account per business area and fund centre, so a
+				// reversal carrying different values from its original never clears. A receipt posted
+				// under the old values is corrected by fix_interim_receipt_dimensions.sql, which
+				// re-states the collection and its reversal together.
 				//
 				// Unconditional, because the backlog this protects exists whether or not the flag is
-				// on now, and per-leg because the legs of one receipt do not share a dimension set
-				// once the collecting ward differs from the market. An empty map — every receipt
-				// predating this feature — leaves every leg on the market, exactly as today.
+				// on now.
 				d.setPostedLegDimensions(demandRepository.getPostedCollectionDimensions(
 						d.getFiReceiptNo(), d.getConsumerCode()));
+				// The interim-receipt rule for this payment, resolved from the PAYMENT being cancelled
+				// (its own collecting ward), not from whoever is cancelling it. Used only when the
+				// money leg has nothing complete to give back: no FI rows at all, or a posted row
+				// missing a value other than its business area.
+				d.setCollectingDimensions(resolveCollectingDimensions(marketInfo));
 				log.info("additioanl from dbbbbbbbbbbbbbbbbbbbbbbbbb" + marketInfo);
 			}
 			GstAdvanceMap gstAdvanceMap = marketInfo == null ? null
@@ -757,16 +761,18 @@ public class ReceiptServiceV2 {
 	}
 
 	/**
-	 * Post the debit legs of a collection voucher at the SAP dimensions of the CFC where the money
-	 * was taken, instead of the market the licensee's stall sits in.
+	 * Post the interim receipt (the money leg of a collection voucher) on BMC's interim-receipt
+	 * dimensions: Business Area = the CFC ward where the money was taken, Fund Centre = that
+	 * business area + 130000, Functional Area = 00301000000. Every other leg keeps the market the
+	 * licensee's stall sits in.
 	 *
-	 * <p>Default OFF, and it gates only the FORWARD path. A reversal always reads its dimensions
-	 * back off the posted document, flag or no flag, because the backlog of receipts booked under
-	 * the other setting exists either way and each must be given back as it was booked.
+	 * <p>OFF by code default; application.properties ships it true. With it off, the collection
+	 * keeps the market on every leg. A reversal gives back exactly what was posted either way. The
+	 * flag only decides what a reversal with nothing complete to give back falls back to.
 	 *
-	 * <p>Before switching this on, confirm with BMC that their SAP client accepts a document whose
-	 * legs carry two different business areas. With document splitting or business-area balance
-	 * sheets active it will be rejected or auto-split.
+	 * <p>A document whose legs carry two business areas is what BMC's own SAP collection upload
+	 * already contains (NeedClarification.xlsx: the cheque leg at the CFC's 4090, the receivable
+	 * legs at the property's 4100).
 	 */
 	@org.springframework.beans.factory.annotation.Value("${emarket.fi.collection.cfc.dimensions.enabled:false}")
 	private boolean collectionCfcDimensionsEnabled = false;
@@ -778,16 +784,19 @@ public class ReceiptServiceV2 {
 	private static final int WARD_TENANT_DEPTH = 4;
 
 	/**
-	 * The collecting CFC's dimensions for this receipt, or null to keep the licensee's market.
+	 * The interim-receipt dimensions for this receipt, or null when the rule is switched off.
 	 *
-	 * <p>Prefers {@code collectingWardTenant} from the payment's own additionalDetails, which the
-	 * CFC collect screen sends, and falls back to {@code egcl_payment.tenantid}. The fallback is not
-	 * a corner case: collection-services stamps every payment with the tenant of the user who took
-	 * it, so for every counter receipt taken to date that column already holds the ward.
+	 * <p>The business area is the collecting CFC's ward, and it is taken ONLY from
+	 * {@code collectingWardTenant} in the payment's additionalDetails. emarket-v1 writes that key
+	 * from the collector's own role grants, and only when the collector holds a ward-level CFC grant.
+	 * {@code egcl_payment.tenantid} is deliberately not used. It is whatever the browser sent, and
+	 * SUPERUSER receipts MARKET/26-27/000029, 031 and 032 carried ward C there although emarket-v1
+	 * had withheld the ward.
 	 *
-	 * <p>Null is the normal answer for an online or citizen payment, a bulk collection and every
-	 * migrated receipt — all of which sit at {@code mh.mumbai} — and for a ward BMC has not yet
-	 * supplied values for. Those keep today's behaviour exactly.
+	 * <p>BMC: when there is no ward, the ward has no business area, or a superuser took the
+	 * collection, the business area is the licensee's MARKET's ward business area. That also covers
+	 * an online or citizen payment and a bulk collection. The fund centre and functional area still
+	 * follow the rule, because they are fixed for every interim receipt.
 	 */
 	private FiDimensions resolveCollectingDimensions(PaymentMarketInfo marketInfo) {
 
@@ -795,12 +804,12 @@ public class ReceiptServiceV2 {
 			return null;
 
 		String wardTenant = wardTenantOrNull(collectingWardTenantFrom(marketInfo));
-		if (wardTenant == null)
-			wardTenant = wardTenantOrNull(marketInfo.getPaymentTenantId());
-		if (wardTenant == null)
-			return null;
 
-		return demandRepository.getCfcWardDimensions(wardTenant);
+		FiDimensions ward = wardTenant == null ? null : demandRepository.getCfcWardDimensions(wardTenant);
+		if (ward != null)
+			return ward;
+
+		return demandRepository.interimReceiptDimensions(marketInfo.getFund(), marketInfo.getBusinessArea());
 	}
 
 	/** {@code collectingWardTenant} out of the payment JSON, or null when absent or unreadable. */

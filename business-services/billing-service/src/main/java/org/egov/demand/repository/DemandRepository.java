@@ -151,6 +151,27 @@ public class DemandRepository {
 	private String chequeBankGlCode = "450210010";
 
 	/**
+	 * The SAP dimensions of the interim receipt, the money leg of a collection voucher (cash
+	 * interim or cheques-in-hand). BMC: "in the interim receipt entry functional area is fixed
+	 * 00301000000 and the fund centre is business area + 130000; business area is the ward of the
+	 * CFC where the money is collected".
+	 *
+	 * <p>This matches BMC's own SAP collection upload (NeedClarification.xlsx, the CV-system daily
+	 * collection file). There, 450210010 / 450100100 post at Fund Centre 4090130000, Functional Area
+	 * 00301000000 and Business Area 4090, which is the collecting CFC. The receivable and revenue
+	 * legs of the same document stay on the property's own ward, e.g. 4100240000 / 4100. So a
+	 * document that carries two business areas is normal in their SAP client.
+	 *
+	 * <p>Kept as strings, because the functional area's leading zeros are part of the value
+	 * ("11 digits").
+	 */
+	@org.springframework.beans.factory.annotation.Value("${emarket.fi.collection.interim.functional.area:00301000000}")
+	private String interimReceiptFunctionalArea = "00301000000";
+
+	@org.springframework.beans.factory.annotation.Value("${emarket.fi.collection.interim.fund.centre.suffix:130000}")
+	private String interimReceiptFundCentreSuffix = "130000";
+
+	/**
 	 * A regular (non-advance) collection on a GST-bearing demand debits Bank for the FULL cash
 	 * received and credits the receivable for the same — no CGST/SGST legs (BMC direction,
 	 * 2026-08-25). The GST liability was recognised when the demand was raised and is settled to
@@ -998,12 +1019,11 @@ public class DemandRepository {
          "       eem.fund, " +
          "       eem.business_area, " +
 		 "       eem.functional_area, " +
-		 // ep2.tenantid is the tenant the COLLECTING user held when the receipt was taken —
-		 // collection-services stamps it from the request, and the CFC screens send the operator's
-		 // ward-level role tenant, so for a counter receipt this is the ward the money was taken at.
-		 // It is the fallback for payments written before collectingWardTenant existed in
-		 // additionaldetails, which is every receipt taken to date.
-		 "       ep2.additionaldetails , ep2.totaldue , ep2.totalamountpaid , ep.receiptnumber , ep2.transactionnumber , ep2.tenantid " +
+		 // No ep2.tenantid. The collecting ward comes only from additionaldetails.collectingWardTenant,
+		 // which emarket-v1 writes from the collector's own role grants. egcl_payment.tenantid is
+		 // whatever the browser sent, and a SUPERUSER's receipt carried a ward there
+		 // (MARKET/26-27/000029, 031, 032).
+		 "       ep2.additionaldetails , ep2.totaldue , ep2.totalamountpaid , ep.receiptnumber , ep2.transactionnumber " +
         "FROM egcl_billdetial eb " +
         "JOIN egcl_bill eb2 ON eb.billid = eb2.id " +
         "JOIN egcl_paymentdetail ep ON ep.billid = eb2.id " +
@@ -1028,7 +1048,6 @@ public class DemandRepository {
 				info.setFunctionalArea(rs.getString("functional_area"));
                 info.setReceiptNumber(rs.getString("receiptnumber"));
                 info.setTransactionNumber(rs.getString("transactionnumber"));
-                info.setPaymentTenantId(rs.getString("tenantid"));
                 return info;
             }
         };
@@ -1038,18 +1057,20 @@ public class DemandRepository {
 	}
 
 	/**
-	 * The SAP dimensions of the CFC ward a collection was taken at, or null when the ward is not
-	 * mapped.
+	 * The interim-receipt dimensions of the CFC ward a collection was taken at, or null when the
+	 * ward is not mapped.
 	 *
-	 * <p>Returns null — meaning "keep the licensee's market dimensions, exactly as today" — for
-	 * every case that is not a mapped, active CFC ward: a tenant that is not ward-level, a ward
-	 * BMC has not supplied values for (seeded '0' in all four columns), or a database where
-	 * docs/sql/add_cfc_ward_dimension.sql has not been run yet. The last of those matters: the
-	 * table is created by a hand-run script, not Flyway, so the jar can legitimately reach
-	 * production first and must degrade rather than fail every collection.
+	 * <p>Only the ward's fund and business area are read from the master. The fund centre and
+	 * functional area of an interim receipt follow a fixed rule, not a per-ward value, so they are
+	 * derived by {@link #interimReceiptDimensions}. The table's own fund_centre and functional_area
+	 * columns are NOT read.
 	 *
-	 * <p>All four columns are taken together or not at all. A voucher carrying one ward's business
-	 * area and another's fund centre is worse than one carrying neither.
+	 * <p>Returns null — meaning "no collecting ward established" — for every case that is not a
+	 * mapped, active CFC ward: a tenant that is not ward-level, a ward BMC has not supplied a
+	 * business area for (seeded '0'), or a database where docs/sql/add_cfc_ward_dimension.sql has
+	 * not been run yet. The last of those matters: the table is created by a hand-run script, not
+	 * Flyway, so the jar can legitimately reach production first and must degrade rather than fail
+	 * every collection.
 	 */
 	public FiDimensions getCfcWardDimensions(String wardTenant) {
 
@@ -1057,47 +1078,60 @@ public class DemandRepository {
 			return null;
 
 		String sql =
-			"SELECT fund, fund_centre, business_area, functional_area " +
+			"SELECT fund, business_area " +
 			"FROM eg_emarket_cfc_ward_dimension " +
 			"WHERE ward_tenant = ? AND is_active " +
-			"  AND fund <> '0' AND fund_centre <> '0' " +
-			"  AND business_area <> '0' AND functional_area <> '0' " +
+			"  AND fund <> '0' AND business_area <> '0' " +
 			"LIMIT 1";
 
 		try {
 			List<FiDimensions> found = jdbcTemplate.query(sql, new Object[] { wardTenant.trim() },
-					(rs, rowNum) -> new FiDimensions(rs.getString("fund"), rs.getString("fund_centre"),
-							rs.getString("business_area"), rs.getString("functional_area")));
-			if (found.isEmpty()) {
-				log.info("Collecting ward {} has no usable CFC dimension row; the collection keeps "
-						+ "the licensee's market dimensions", wardTenant);
+					(rs, rowNum) -> interimReceiptDimensions(rs.getString("fund"), rs.getString("business_area")));
+			if (found.isEmpty() || found.get(0) == null) {
+				log.info("Collecting ward {} has no usable CFC dimension row; the interim receipt "
+						+ "falls back to the licensee's market business area", wardTenant);
 				return null;
 			}
 			return found.get(0);
 		} catch (DataAccessException e) {
-			log.warn("Could not read CFC dimensions for ward {} ({}); keeping the licensee's market "
-					+ "dimensions", wardTenant, e.getMessage());
+			log.warn("Could not read CFC dimensions for ward {} ({}); the interim receipt falls back "
+					+ "to the licensee's market business area", wardTenant, e.getMessage());
 			return null;
 		}
 	}
 
 	/**
-	 * The dimensions a receipt's debit legs were ACTUALLY posted with, for its reversal.
+	 * The complete dimension set an interim receipt posts with at one business area. The fund
+	 * centre is the business area followed by the fixed suffix, e.g. 4010 -> 4010130000, and the
+	 * functional area is the fixed 00301000000.
+	 *
+	 * <p>Returns null when there is no business area to build on, because a fund centre of
+	 * "130000" alone names no account.
+	 */
+	public FiDimensions interimReceiptDimensions(String fund, String businessArea) {
+		if (fund == null || fund.trim().isEmpty() || businessArea == null || businessArea.trim().isEmpty())
+			return null;
+		String ba = businessArea.trim();
+		return new FiDimensions(fund.trim(), ba + interimReceiptFundCentreSuffix, ba, interimReceiptFunctionalArea);
+	}
+
+	/**
+	 * The dimensions each leg of a receipt was ACTUALLY posted with, for its reversal.
 	 *
 	 * <p>A reversal must give back what was posted, which is the principle this file already
 	 * applies four times over — {@code wasCollectionSplit}, {@code wasPostedAsAdvance},
 	 * {@code wasPostedWithGstPayableDebit} and {@code postedBankGl} all read the forward document
-	 * rather than recomputing. Dimensions need it for the same reason and then some: they move
-	 * independently of the payment. Every receipt taken before the feature was switched on carries
-	 * the market's dimensions, the flag can be turned off again, and the ward master is explicitly
-	 * meant to be corrected as BMC supplies real fund centres. Re-resolving at reversal time would
-	 * mirror a K/East cheque against a C-ward original and neither side would ever clear.
+	 * rather than recomputing. Dimensions need it too: a receipt posted before the interim-receipt rule
+	 * was corrected carries other values on its money leg, the flag can be turned off again, and a
+	 * licensee's market can be re-pointed between collection and cancellation. Rows that carry a
+	 * business area are returned even when another value is blank. See
+	 * {@code interimReceiptLegDimensions} for how the money leg uses such a row.
 	 *
 	 * <p>Scoped three ways, all load-bearing. {@code report_type} stops a second cancellation
 	 * reading back its own reversal rows. {@code reference_no} is required because
 	 * {@code transactionnumber} is ten random idgen digits with no unique constraint, so a receipt
-	 * number alone can land on another licence's payment. Posting key 40 selects the forward debit
-	 * legs, which are the only ones that carry CFC dimensions.
+	 * number alone can land on another licence's payment. Keyed by GL and forward posting key, so each
+	 * leg finds its own counterpart.
 	 */
 	public Map<String, FiDimensions> getPostedCollectionDimensions(String documentHeaderText, String referenceNo) {
 
@@ -1106,9 +1140,8 @@ public class DemandRepository {
 			return Collections.emptyMap();
 
 		// PER LEG, keyed by GL. One row for the whole voucher cannot work: a GST_ADVANCE receipt
-		// posts THREE forward-40 legs (bank, 439300200, 439300201) and the last two are denied CFC
-		// dimensions by CFC_DIMENSION_EXCLUDED_GLS, so "the first key-40 row" is two different
-		// answers. It is not even a random pick — every leg of a voucher is written in one batch
+		// posts THREE forward-40 legs (bank, 439300200, 439300201) and only the bank leg carries the
+		// CFC's dimensions, so "the first key-40 row" is two different answers. It is not even a random pick — every leg of a voucher is written in one batch
 		// with the same created_at, so the tiebreak is decided by whatever index the planner walks.
 		//
 		// Reading every leg also fixes the larger problem: the dimensions this returns were applied
@@ -1128,8 +1161,13 @@ public class DemandRepository {
 					rs -> {
 						FiDimensions dims = new FiDimensions(rs.getString("fund"), rs.getString("fund_centre"),
 								rs.getString("business_area"), rs.getString("functional_area"));
-						if (dims.isComplete())
-							byLeg.put(postedLegKey(rs.getString("gl_code"), rs.getString("posting_key")), dims);
+						// Kept when it has a business area, even if another value is blank: the
+						// interim receipt's reversal needs only that to land where the money was
+						// booked. Every leg that is mirrored whole checks isComplete() itself.
+						// Two legs on one key (the money legs of a split receipt) prefer a complete set.
+						if (notBlank(dims.getBusinessArea()))
+							byLeg.merge(postedLegKey(rs.getString("gl_code"), rs.getString("posting_key")), dims,
+									(kept, next) -> kept.isComplete() ? kept : next);
 					});
 			return byLeg;
 		} catch (DataAccessException e) {
@@ -1918,9 +1956,10 @@ public List<FiReport> buildCollectionFiReports(Demand demand,
     final String bankGl = resolveBankGl(demand, reversal);
 
     // Each leg names its FORWARD posting key; fiRow flips it for a reversal. The forward key is
-    // what decides whether a leg carries the collecting CFC's dimensions, and it has to survive the
-    // flip: the legs BMC wants attributed to the CFC are debits going out and credits coming back,
-    // so a rule written against the final key would move the receivable instead on a cancellation.
+    // what identifies the interim receipt (the money leg) and keys the legs read back off the
+    // posted document, so it has to survive the flip: the money leg is a debit going out and a
+    // credit coming back, and a rule written against the final key would move the receivable
+    // instead on a cancellation.
     switch (flow) {
 
         case NON_GST_REGULAR:
@@ -2011,58 +2050,94 @@ public Long getCollectionDate(String paymentId, String transactionNumber) {
 }
 
 /**
- * GLs that are excluded from the collecting-CFC rule even though their forward key is 40.
- *
- * <p>The two advance-GST legs are one half of a clearing pair: the collection debits them and the
- * later demand's netting release credits them, matched in SAP on the shared Assignment. That
- * demand-side leg is built from the DEMAND's dimensions and is not touched by this change, so
- * moving only the collection half would leave the pair straddling two business areas. It would also
- * make GSTR-1 table 11A, which reads the collection table, disagree with 11B, which reads the
- * demand table, for the same advance — and drive the unadjusted-advance register negative under a
- * ward filter, for a report whose contract is that it equals the GL balance by construction.
- *
- * <p>350410215 needs no entry here: it is forward-50, so the rule never reaches it.
- *
- * <p>In practice this leaves the bank/interim leg as the one that carries the CFC's dimensions,
- * which is what "the money was taken here" actually means.
- */
-private static final Set<String> CFC_DIMENSION_EXCLUDED_GLS =
-        Collections.unmodifiableSet(new HashSet<>(Arrays.asList(GL_CGST_ADVANCE, GL_SGST_ADVANCE)));
-
-/**
  * The dimensions one leg of a collection voucher posts with, or null to keep the licensee's market.
  *
- * <p>Two different rules, because the two directions answer different questions.
+ * <p><b>The interim receipt</b> (the money leg) is the only leg that follows the collecting CFC,
+ * and it posts on BMC's fixed rule: see {@link #interimReceiptDimensions}. Every other leg stays
+ * with the market, including the forward-40 ones: the advance-GST legs clear against a
+ * demand-side netting release built from the market's dimensions, and the GST payable debits of
+ * the old net-of-GST shape are not money. That matches BMC's own upload, where 431910000 is a
+ * forward-40 leg and still carries the property's ward.
  *
- * <p><b>Forward</b> — "where was the money taken?". Debit legs follow the money to the CFC;
- * everything else stays with the market. The receivable is forward-50, so it keeps the market's
- * dimensions and still clears against the demand that raised it. The advance-GST legs are
- * forward-40 but excluded: they clear against a demand-side netting release that this change does
- * not touch, so moving one half would split the clearing pair.
- *
- * <p><b>Reversal</b> — "what did the original actually post?". Every leg is mirrored from its own
- * forward counterpart, never re-derived. Re-deriving would mix eras: the market a licensee's stall
- * belongs to can be re-pointed by an ordinary asset edit between collection and cancellation, and
- * the compensating document would then carry the old ward on the legs read back and the new ward on
- * the rest. A leg with nothing posted to mirror falls back to the market, which is what a receipt
- * taken before any of this existed will do for all of its legs.
+ * <p><b>Every other leg on a reversal</b> is mirrored from its own forward counterpart, never
+ * re-derived. The market a licensee's stall belongs to can be re-pointed by an ordinary asset edit
+ * between collection and cancellation, and a re-derived compensating document would then carry two
+ * business areas where the original carried one. A leg with nothing posted to mirror falls back to
+ * the market.
  */
 private FiDimensions resolveLegDimensions(Demand demand, String glCode, String forwardPostingKey,
                                           boolean reversal) {
 
-    if (reversal) {
-        Map<String, FiDimensions> posted = demand.getPostedLegDimensions();
-        if (posted == null || posted.isEmpty())
-            return null;
-        FiDimensions mirrored = posted.get(postedLegKey(glCode, forwardPostingKey));
-        return mirrored != null && mirrored.isComplete() ? mirrored : null;
-    }
+    if (isInterimReceiptLeg(glCode, forwardPostingKey))
+        return interimReceiptLegDimensions(demand, glCode, forwardPostingKey, reversal);
+
+    if (!reversal)
+        return null;
+
+    FiDimensions mirrored = postedLeg(demand, glCode, forwardPostingKey);
+    return mirrored != null && mirrored.isComplete() ? mirrored : null;
+}
+
+/** The money leg: cash interim or cheques-in-hand, always debited on the forward voucher. */
+private boolean isInterimReceiptLeg(String glCode, String forwardPostingKey) {
+    return "40".equals(forwardPostingKey)
+            && (cashBankGlCode.equals(glCode) || chequeBankGlCode.equals(glCode));
+}
+
+/**
+ * The interim receipt's dimensions, in both directions.
+ *
+ * <p>{@code collectingDimensions} carries the rule's set for this receipt: the collecting CFC ward,
+ * or the market's business area when no ward can be established. It is null when the rule is off,
+ * and also when the rule is on but there is no business area to build on at all. Either way the
+ * forward leg then keeps the market.
+ *
+ * <p><b>Reversal: give back exactly what the money leg was booked with.</b> SAP nets the interim
+ * account per business area AND fund centre, so the cancellation must carry the original's values,
+ * whatever they are. A receipt posted before the rule was corrected carries the market's fund centre
+ * and 55800000000. Rebuilding its reversal by the rule would leave the original standing at the old
+ * fund centre and the reversal at the new one, and neither would ever clear. That is exactly the case
+ * where the original was already uploaded to SAP and cannot be rewritten. Correcting such a receipt is
+ * the job of docs/sql/fix_interim_receipt_dimensions.sql, which re-states the collection and its
+ * reversal together.
+ *
+ * <p>Two fallbacks, rule on only. A posted money leg that carries a business area but not all four
+ * values is rebuilt by the rule at THAT business area, so the reversal still lands where the money was
+ * booked. With nothing posted, the collecting set is used.
+ */
+private FiDimensions interimReceiptLegDimensions(Demand demand, String glCode, String forwardPostingKey,
+                                                 boolean reversal) {
 
     FiDimensions collecting = demand.getCollectingDimensions();
-    boolean useCollectingWard = collecting != null && collecting.isComplete()
-            && "40".equals(forwardPostingKey)
-            && !CFC_DIMENSION_EXCLUDED_GLS.contains(glCode);
-    return useCollectingWard ? collecting : null;
+    boolean ruleOn = collecting != null && collecting.isComplete();
+
+    if (!reversal)
+        return ruleOn ? collecting : null;
+
+    FiDimensions posted = postedLeg(demand, glCode, forwardPostingKey);
+    if (posted != null && posted.isComplete())
+        return posted;
+    if (!ruleOn)
+        return null;
+
+    if (posted != null) {
+        FiDimensions atBookedArea = interimReceiptDimensions(
+                notBlank(posted.getFund()) ? posted.getFund() : collecting.getFund(),
+                posted.getBusinessArea());
+        if (atBookedArea != null)
+            return atBookedArea;
+    }
+    return collecting;
+}
+
+/** The dimensions this leg was posted with on the original receipt, or null. */
+private static FiDimensions postedLeg(Demand demand, String glCode, String forwardPostingKey) {
+    Map<String, FiDimensions> posted = demand.getPostedLegDimensions();
+    return posted == null ? null : posted.get(postedLegKey(glCode, forwardPostingKey));
+}
+
+private static boolean notBlank(String value) {
+    return value != null && !value.trim().isEmpty();
 }
 
 /**
