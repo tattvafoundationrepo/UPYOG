@@ -169,6 +169,89 @@ public class DemandQueryBuilder {
 			"LEFT JOIN bill_amounts ba ON bd.id = ba.billid AND bd.tenantid = ba.tenantid " +
 			"WHERE p.tenantid = ? ";
 
+	/*
+	 * COLLECTED_RECEIPT_QUERY for a consumer-code search (demand/_search from the eMarket CFC screen and the
+	 * demand detail page). The query above totals EVERY bill in egcl_billdetial / egcl_billaccountdetail in its
+	 * two CTEs before the WHERE picks one licence's receipts: 4-7 s on sundeep (~407k bills) to return ~50 rows.
+	 * Here the receipts are selected first and the same two per-bill totals are computed only for the bills
+	 * among them. Restricting a GROUP BY billid to the billids that are joined afterwards cannot change any
+	 * total, and the SELECT list, column names and ORDER BY key are those of the query above.
+	 *
+	 * The caller's filter clauses are appended between HEAD and TAIL, so they land inside the receipts CTE with
+	 * the same pd / bd / p aliases and the same bind order. Used ONLY when consumer codes are given: without a
+	 * selective filter this shape was slower on sundeep (16.5 s against 6.9 s), so every other search keeps the
+	 * query above unchanged. Rows that tie on receiptdate have no defined order in either query and can come
+	 * back in a different order.
+	 */
+	public static final String COLLECTED_RECEIPT_BY_CONSUMER_QUERY_HEAD = "WITH receipts AS ( " +
+			"SELECT " +
+			"pd.businessservice, " +
+			"bd.consumercode, " +
+			"pd.receiptnumber, " +
+			"pd.amountpaid as receiptamount, " +
+			"pd.receiptdate, " +
+			"p.paymentstatus as status, " +
+			"p.tenantid, " +
+			"p.createdby, " +
+			"p.createdtime, " +
+			"p.lastmodifiedby, " +
+			"p.lastmodifiedtime, " +
+			"p.transactionnumber, " +
+			"p.additionaldetails, " +
+			"p.totalamountpaid, " +
+			"bd.id as bill_id, " +
+			"bd.tenantid as bill_tenantid " +
+			"FROM egcl_payment p " +
+			"INNER JOIN egcl_paymentdetail pd ON p.id = pd.paymentid AND p.tenantid = pd.tenantid " +
+			"INNER JOIN egcl_bill bd ON pd.billid = bd.id AND pd.tenantid = bd.tenantid " +
+			"WHERE p.tenantid = ? ";
+
+	public static final String COLLECTED_RECEIPT_BY_CONSUMER_QUERY_TAIL = " ), " +
+			"bill_periods AS ( " +
+			"SELECT " +
+			"bdt.billid, " +
+			"bdt.tenantid, " +
+			"MIN(bdt.fromperiod) as fromperiod, " +
+			"MAX(bdt.toperiod) as toperiod " +
+			"FROM egcl_billdetial bdt " +
+			"WHERE bdt.billid IN (SELECT bill_id FROM receipts) " +
+			"GROUP BY bdt.billid, bdt.tenantid " +
+			"), " +
+			"bill_amounts AS ( " +
+			"SELECT " +
+			"bdt.billid, " +
+			"bdt.tenantid, " +
+			"SUM(CASE WHEN bad.taxheadcode LIKE '%CARRY%' THEN bad.amount ELSE 0 END) as advancepayment, " +
+			"SUM(CASE WHEN bad.taxheadcode NOT LIKE '%CARRY%' THEN bad.amount ELSE 0 END) as regularpayment " +
+			"FROM egcl_billdetial bdt " +
+			"INNER JOIN egcl_billaccountdetail bad ON bdt.id = bad.billdetailid AND bdt.tenantid = bad.tenantid " +
+			"WHERE bdt.billid IN (SELECT bill_id FROM receipts) " +
+			"GROUP BY bdt.billid, bdt.tenantid " +
+			") " +
+			"SELECT " +
+			"r.businessservice, " +
+			"r.consumercode, " +
+			"r.receiptnumber, " +
+			"r.receiptamount, " +
+			"r.receiptdate, " +
+			"r.status, " +
+			"r.tenantid, " +
+			"r.createdby, " +
+			"r.createdtime, " +
+			"r.lastmodifiedby, " +
+			"r.lastmodifiedtime, " +
+			"r.transactionnumber, " +
+			"r.additionaldetails, " +
+			"r.totalamountpaid, " +
+			"bp.fromperiod, " +
+			"bp.toperiod, " +
+			"COALESCE(ba.advancepayment, 0) as advancepayment, " +
+			"COALESCE(ba.regularpayment, 0) as regularpayment " +
+			"FROM receipts r " +
+			"LEFT JOIN bill_periods bp ON r.bill_id = bp.billid AND r.bill_tenantid = bp.tenantid " +
+			"LEFT JOIN bill_amounts ba ON r.bill_id = ba.billid AND r.bill_tenantid = ba.tenantid " +
+			"ORDER BY r.receiptdate DESC";
+
 	public static final String MERGED_DEMAND_BASE_QUERY = "WITH filtered_demands AS ( "
 			+ "    SELECT "
 			+ "        LEFT(dmd.consumercode, 10) AS base_code, "
@@ -498,8 +581,13 @@ public class DemandQueryBuilder {
 	}
 
 	public String getCollectedReceiptsQuery(DemandCriteria demandCriteria, List<Object> preparedStatementValues, Boolean isMerged) {
-    
-		StringBuilder query = new StringBuilder(COLLECTED_RECEIPT_QUERY);
+
+		// Consumer-code searches total only their own bills; see COLLECTED_RECEIPT_BY_CONSUMER_QUERY_HEAD.
+		boolean scopedToConsumerBills = !Boolean.TRUE.equals(isMerged)
+				&& !CollectionUtils.isEmpty(demandCriteria.getConsumerCode());
+
+		StringBuilder query = new StringBuilder(
+				scopedToConsumerBills ? COLLECTED_RECEIPT_BY_CONSUMER_QUERY_HEAD : COLLECTED_RECEIPT_QUERY);
 		
 		preparedStatementValues.add(demandCriteria.getTenantId());
 		
@@ -546,8 +634,11 @@ public class DemandQueryBuilder {
 			preparedStatementValues.add(demandCriteria.getPeriodTo());
 		}
 		
-		query.append(" ORDER BY pd.receiptdate DESC");
-		
+		if (scopedToConsumerBills)
+			query.append(COLLECTED_RECEIPT_BY_CONSUMER_QUERY_TAIL);
+		else
+			query.append(" ORDER BY pd.receiptdate DESC");
+
 		return query.toString();
 	}
 
