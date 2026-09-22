@@ -1270,6 +1270,27 @@ public List<AdvSettlement> getSettledDemandIdsByAdvanceDemandId(String advanceDe
 
 
 
+/**
+ * The line's own SAP dimension when emarket-v1 stamped one on it, else the demand's.
+ *
+ * <p>Only the dishonour charge lines carry their own (emarket-v1
+ * RentService.stampDishonourChargeDimensions, BMC 22-09-2026). The cheque bounce charge posts at
+ * fund centre 1000130000 and business area 1000. The administrative charge posts at the CFC ward
+ * where the cheque was dishonoured. Both use functional area 00301000000. Every other line carries
+ * none and posts at the demand's market dimensions, as before. emarket-v1's DemandReversalService
+ * reads the same keys, so a reversal lands on the same dimensions.
+ */
+private static String lineDimension(DemandDetail detail, String key, String demandValue) {
+    Object addObj = detail.getAdditionalDetails();
+    if (addObj instanceof Map) {
+        Object value = ((Map<?, ?>) addObj).get(key);
+        if (value != null && !value.toString().trim().isEmpty()) {
+            return value.toString().trim();
+        }
+    }
+    return demandValue;
+}
+
 private String extractGlCode(DemandDetail detail) {
     Object addObj = detail.getAdditionalDetails();
     if (addObj instanceof Map) {
@@ -1718,10 +1739,12 @@ public List<FiReport> buildDemandFiReports(Demand demand, List<DemandDetail> ext
             .glCode(extractGlCode(dd))
             .assignment(extractAssignment(dd))
             .collectionAmount(dd.getTaxAmount())
-            .fund(fund)
-            .fundCentre(fundCenter)
-            .businessArea(businessArea)
-            .functionalArea(functionalArea)
+            // A line's own dimensions win over the demand's. Only the dishonour charge lines carry
+            // them; the balancing legs below always keep the demand's (the market's).
+            .fund(lineDimension(dd, "fund", fund))
+            .fundCentre(lineDimension(dd, "fundCenter", fundCenter))
+            .businessArea(lineDimension(dd, "businessArea", businessArea))
+            .functionalArea(lineDimension(dd, "functionalArea", functionalArea))
             .documentHeaderText(demand.getDemandSeqNo() != null ?  demand.getDemandSeqNo().toString() : null)
             .docType("YX")
             .isNew(Boolean.TRUE)
