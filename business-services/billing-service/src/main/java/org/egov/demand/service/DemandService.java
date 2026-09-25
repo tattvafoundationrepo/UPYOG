@@ -206,14 +206,55 @@ public class DemandService {
 		if (advanceSettlementFiEnabled && !advanceSettlements.isEmpty())
 			demandRepository.postAdvanceSettlementFiReports(advanceSettlements);
 
+		// Expire the open bills of EVERY service in this request, not only the first demand's.
+		//
+		// updateBillStatus resolves the bills to expire with findBill(service, consumerCodes), so the single
+		// call below — keyed on demands.get(0).getBusinessService() — matches nothing for the other services
+		// of a MIXED-SERVICE request and silently leaves their bills ACTIVE. RestorationService.unblock posts
+		// exactly such a request (the premium, a Transfer Fee, alongside rent, rent-penalty and
+		// licence-penalty demands); because the premium sorted first, licence 5888888964 kept a stale rent
+		// bill on 24-09-2026 that the counter then served, short by the month the restoration had raised.
+		// update() already groups this way; create() was the remaining path that did not.
+		//
+		// Kept deliberately ADDITIVE. The first call is the previous call, unchanged — same service, same
+		// full consumer-code set — so a single-service request (every routine generation, and every caller
+		// that was already correct) behaves exactly as before, down to the arguments. Only the services that
+		// were being skipped are added, and each of those is asked about ITS OWN consumer codes, so no bill
+		// outside the reported fault is touched either way. Collected into a LinkedHashMap so the order is
+		// deterministic, and because Collectors.groupingBy rejects a null key where the previous code passed
+		// a null service to findBill untouched. Each call builds its own criteria: updateBillStatus mutates
+		// the object it is given (setBillIds).
+		String tenantIdForBillExpiry = demands.get(0).getTenantId();
+
 		billRepoV2.updateBillStatus(
 				UpdateBillCriteria.builder()
 				.statusToBeUpdated(BillStatus.EXPIRED)
 				.businessService(businessService)
 				.consumerCodes(demands.stream().map(Demand::getConsumerCode).collect(Collectors.toSet()))
-				.tenantId(demands.get(0).getTenantId())
+				.tenantId(tenantIdForBillExpiry)
 				.build()
 				);
+
+		Map<String, Set<String>> skippedServiceToConsumerCodes = new LinkedHashMap<>();
+		for (Demand demand : demands) {
+			if (Objects.equals(businessService, demand.getBusinessService()))
+				continue;
+			skippedServiceToConsumerCodes
+					.computeIfAbsent(demand.getBusinessService(), service -> new HashSet<>())
+					.add(demand.getConsumerCode());
+		}
+
+		for (Map.Entry<String, Set<String>> skippedService : skippedServiceToConsumerCodes.entrySet()) {
+
+			billRepoV2.updateBillStatus(
+					UpdateBillCriteria.builder()
+					.statusToBeUpdated(BillStatus.EXPIRED)
+					.businessService(skippedService.getKey())
+					.consumerCodes(skippedService.getValue())
+					.tenantId(tenantIdForBillExpiry)
+					.build()
+					);
+		}
 
 		List<Demand> responseDemands = new ArrayList<>(demandsToBeCreated);
 		if (!CollectionUtils.isEmpty(demandToBeUpdated))
