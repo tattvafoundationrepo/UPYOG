@@ -347,6 +347,59 @@ public class ReceiptServiceV2AdvanceReversalTest {
 		}
 	}
 
+	// ------------------------------------------------------ dishonour (bank return) date
+
+	private static final long COLLECTED_ON = 1757030400000L; // 05-09-2025, the payment's own date
+	private static final long RETURNED_ON = 1758758400000L;  // 25-09-2025 00:00 UTC
+
+	/** The date buildCollectionFiReports was given for a receipt whose bill 0 carries these details. */
+	private Long fiDateFor(boolean cancellation, String dishonourDate) {
+		org.mockito.Mockito.clearInvocations(demandRepository);
+		when(demandRepository.getCollectionDate(any(), any())).thenReturn(COLLECTED_ON);
+		Demand plain = settledDemand("plain", "5000006753rf", RENT_SERVICE, "STALLAGE", "795.00");
+		when(demandService.getDemands(any(), any())).thenReturn(new ArrayList<>(Collections.singletonList(plain)));
+		BillV2 bill = billFor(RENT_SERVICE, "bill-rent", "plain");
+		com.fasterxml.jackson.databind.node.ObjectNode details =
+				com.fasterxml.jackson.databind.node.JsonNodeFactory.instance.objectNode();
+		details.put("paymentId", "pay-1");
+		if (dishonourDate != null) {
+			details.put("dishonourDate", dishonourDate);
+		}
+		bill.setAdditionalDetails(details);
+
+		receiptServiceV2.updateDemandFromReceipt(billRequest(bill), cancellation);
+
+		ArgumentCaptor<Long> date = ArgumentCaptor.forClass(Long.class);
+		verify(demandRepository, atLeast(1)).buildCollectionFiReports(any(), any(), any(), any(), any(),
+				eq(cancellation), date.capture());
+		return date.getValue();
+	}
+
+	@Test
+	@DisplayName("A dishonour reversal is dated the bank return date")
+	void dishonourReversalUsesTheEnteredDate() {
+		assertEquals(Long.valueOf(RETURNED_ON), fiDateFor(true, "2025-09-25"));
+	}
+
+	@Test
+	@DisplayName("A cancellation without a dishonour date keeps the collection date")
+	void plainCancellationKeepsTheCollectionDate() {
+		assertEquals(Long.valueOf(COLLECTED_ON), fiDateFor(true, null));
+	}
+
+	@Test
+	@DisplayName("An unreadable dishonour date falls back to the collection date")
+	void badDishonourDateFallsBack() {
+		assertEquals(Long.valueOf(COLLECTED_ON), fiDateFor(true, "25/09/2025"));
+		assertEquals(Long.valueOf(COLLECTED_ON), fiDateFor(true, "2025-02-30"));
+	}
+
+	@Test
+	@DisplayName("A forward collection never takes a dishonour date")
+	void forwardCollectionIgnoresIt() {
+		assertEquals(Long.valueOf(COLLECTED_ON), fiDateFor(false, "2025-09-25"));
+	}
+
 	private static PaymentMarketInfo marketInfoTakenAt(String collectingWardTenant) {
 		PaymentMarketInfo info = new PaymentMarketInfo();
 		info.setPaymentMode("CASH");

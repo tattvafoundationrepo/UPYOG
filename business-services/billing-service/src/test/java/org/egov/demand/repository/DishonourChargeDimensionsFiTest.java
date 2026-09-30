@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.egov.demand.model.AuditDetails;
 import org.egov.demand.model.Demand;
 import org.egov.demand.model.DemandDetail;
 import org.egov.demand.model.FiReport;
@@ -126,6 +127,147 @@ public class DishonourChargeDimensionsFiTest {
                 line("CHQ_BOUNCE_CHARGE", "200", "180809906", partial)));
 
         assertDims(row(rows, "180809906"), "11", "4120420103", "1000", "55800000000");
+    }
+
+    private static final long DISHONOURED_ON = 1759123800000L;
+
+    /** BMC, 29-09-2026: every leg of the discheque voucher is dated the day of the dishonour. */
+    @Test
+    public void dishonourVoucherIsDatedOnTheDishonourDay() {
+        Demand d = demand("5000007519cbf", "TX.Emarket_Dishonor_Fees",
+                line("CHQ_BOUNCE_CHARGE", "200", "180809906", null),
+                line("Administrative_Charge", "40", "140709903", null));
+        d.setAuditDetails(AuditDetails.builder().createdTime(DISHONOURED_ON).build());
+
+        List<FiReport> rows = new DemandRepository().buildDemandFiReports(d);
+
+        assertEquals(3, rows.size());
+        for (FiReport r : rows) {
+            assertEquals(Long.valueOf(DISHONOURED_ON), r.getDocDate(), r.getGlCode() + " doc date");
+            assertEquals(Long.valueOf(DISHONOURED_ON), r.getPostingDate(), r.getGlCode() + " posting date");
+        }
+    }
+
+    private static void assertDated(List<FiReport> rows, long expected) {
+        for (FiReport r : rows) {
+            assertEquals(Long.valueOf(expected), r.getDocDate(), r.getGlCode() + " doc date");
+            assertEquals(Long.valueOf(expected), r.getPostingDate(), r.getGlCode() + " posting date");
+        }
+    }
+
+    private static Demand dishonour(String businessService) {
+        return demand("5000007519cbf", businessService,
+                line("CHQ_BOUNCE_CHARGE", "200", "180809906", null),
+                line("Administrative_Charge", "40", "140709903", null));
+    }
+
+    @Test
+    public void dishonourWithoutAuditDetailsKeepsTheTaxPeriod() {
+        assertDated(new DemandRepository().buildDemandFiReports(dishonour("TX.Emarket_Dishonor_Fees")), 1743465600000L);
+    }
+
+    @Test
+    public void dishonourWithoutACreatedTimeKeepsTheTaxPeriod() {
+        Demand d = dishonour("TX.Emarket_Dishonor_Fees");
+        d.setAuditDetails(AuditDetails.builder().lastModifiedTime(DISHONOURED_ON).build());
+        assertDated(new DemandRepository().buildDemandFiReports(d), 1743465600000L);
+    }
+
+    @Test
+    public void businessServiceMatchIsCaseInsensitiveLikeTheReportTypeCheck() {
+        Demand d = dishonour("tx.emarket_dishonor_fees");
+        d.setAuditDetails(AuditDetails.builder().createdTime(DISHONOURED_ON).build());
+        assertDated(new DemandRepository().buildDemandFiReports(d), DISHONOURED_ON);
+    }
+
+    /** 31-03-2026 23:30 IST, a rent demand of Apr-2026: the voucher stays in the old financial year. */
+    @Test
+    public void financialYearBoundaryFollowsTheDishonourInstant() {
+        long lastEveningOfFy = 1774980000000L;
+        Demand d = dishonour("TX.Emarket_Dishonor_Fees");
+        d.setAuditDetails(AuditDetails.builder().createdTime(lastEveningOfFy).build());
+        assertDated(new DemandRepository().buildDemandFiReports(d), lastEveningOfFy);
+    }
+
+    @Test
+    public void everyOtherDemandTypeKeepsItsTaxPeriod() {
+        String[][] cases = {
+                {"5000007519rf", "TX.Emarket_Rental_Fees", "STALLAGE", "130100300"},
+                {"5000007519prf", "TX.Emarket_Penalty_Rental_Fees", "PENALTY", "140709901"},
+                {"5000007519lf", "TX.Emarket_License_Fees", "LICENSE_FEE", "140709902"},
+                {"5000007519tf", "TX.Emarket_Transfer_Fees", "TRANSFER_FEE", "140709904"}};
+        for (String[] c : cases) {
+            Demand d = demand(c[0], c[1], line(c[2], "500", c[3], null));
+            d.setAuditDetails(AuditDetails.builder().createdTime(DISHONOURED_ON).build());
+            assertDated(new DemandRepository().buildDemandFiReports(d), 1743465600000L);
+        }
+    }
+
+    /** The create path reaches save() through the Kafka consumer's ObjectMapper; createdTime must survive it. */
+    @Test
+    public void createdTimeSurvivesTheKafkaRoundTrip() throws Exception {
+        com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper()
+                .configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        Demand d = dishonour("TX.Emarket_Dishonor_Fees");
+        d.setAuditDetails(AuditDetails.builder().createdTime(DISHONOURED_ON).build());
+        Map<?, ?> wire = mapper.convertValue(d, Map.class);
+        Demand back = mapper.convertValue(wire, Demand.class);
+        assertDated(new DemandRepository().buildDemandFiReports(back), DISHONOURED_ON);
+    }
+
+    private static Demand withEnteredDate(Demand d, Object enteredDate) {
+        Map<String, Object> additional = new HashMap<>(marketDimensions());
+        additional.put("dishonourDate", enteredDate);
+        d.setAdditionalDetails(additional);
+        d.setAuditDetails(AuditDetails.builder().createdTime(DISHONOURED_ON).build());
+        return d;
+    }
+
+    /** 25-09-2025 00:00 UTC, what the clerk's "2025-09-25" becomes. */
+    private static final long ENTERED_DAY = 1758758400000L;
+
+    @Test
+    public void theEnteredBankReturnDateWinsOverTheDayItWasRaised() {
+        Demand d = withEnteredDate(dishonour("TX.Emarket_Dishonor_Fees"), "2025-09-25");
+        assertDated(new DemandRepository().buildDemandFiReports(d), ENTERED_DAY);
+        // The dimensions are untouched by the date.
+        assertDims(row(new DemandRepository().buildDemandFiReports(d), "431409936"), "11", "4120420103", "4120", "55800000000");
+    }
+
+    @Test
+    public void anUnreadableEnteredDateFallsBackToTheDayItWasRaised() {
+        for (Object bad : new Object[] { "25-09-2025", "2025-02-30", "", "  ", null }) {
+            Demand d = withEnteredDate(dishonour("TX.Emarket_Dishonor_Fees"), bad);
+            assertDated(new DemandRepository().buildDemandFiReports(d), DISHONOURED_ON);
+        }
+    }
+
+    @Test
+    public void anEnteredDateOnAnyOtherDemandIsIgnored() {
+        Demand d = withEnteredDate(demand("5000007519rf", "TX.Emarket_Rental_Fees",
+                line("STALLAGE", "500", "130100300", null)), "2025-09-25");
+        assertDated(new DemandRepository().buildDemandFiReports(d), 1743465600000L);
+    }
+
+    /** The shape billing-service really sees: additionalDetails deserialised from the create request. */
+    @Test
+    public void theEnteredDateSurvivesTheKafkaRoundTrip() throws Exception {
+        com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper()
+                .configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        Demand d = withEnteredDate(dishonour("TX.Emarket_Dishonor_Fees"), "2025-09-25");
+        Demand back = mapper.convertValue(mapper.convertValue(d, Map.class), Demand.class);
+        assertDated(new DemandRepository().buildDemandFiReports(back), ENTERED_DAY);
+    }
+
+    @Test
+    public void aRentDemandKeepsItsTaxPeriod() {
+        Demand d = demand("5000007519rf", "TX.Emarket_Rental_Fees", line("STALLAGE", "500", "130100300", null));
+        d.setAuditDetails(AuditDetails.builder().createdTime(DISHONOURED_ON).build());
+
+        for (FiReport r : new DemandRepository().buildDemandFiReports(d)) {
+            assertEquals(Long.valueOf(1743465600000L), r.getDocDate());
+            assertEquals(Long.valueOf(1743465600000L), r.getPostingDate());
+        }
     }
 
     @Test

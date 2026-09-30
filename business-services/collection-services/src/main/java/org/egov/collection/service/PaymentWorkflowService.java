@@ -21,6 +21,7 @@ import org.egov.collection.model.enums.PaymentModeEnum;
 import org.egov.collection.model.enums.PaymentStatusEnum;
 import org.egov.collection.producer.CollectionProducer;
 import org.egov.collection.repository.PaymentRepository;
+import org.egov.collection.util.DishonourDateValidator;
 import org.egov.collection.util.PaymentWorkflowValidator;
 import org.egov.collection.web.contract.Bill;
 import org.egov.collection.web.contract.PaymentWorkflow;
@@ -193,6 +194,13 @@ public class PaymentWorkflowService {
         payments.sort(reverseOrder(Comparator.comparingLong(Payment::getTransactionDate)));
 
         List<Payment> validatedPayments = paymentWorkflowValidator.validateForCancel(new ArrayList<>(workflowRequestByPaymentId.values()), payments);
+
+        // Every payment is checked before any is changed, so a bad date rejects the whole request.
+        java.time.LocalDate today = DishonourDateValidator.todayInIst();
+        for (Payment payment : validatedPayments) {
+            DishonourDateValidator.validate(workflowRequestByPaymentId.get(payment.getId()).getAdditionalDetails(),
+                    payment.getTransactionDate(), today);
+        }
 
         for(Payment payment : validatedPayments) {
             payment.setPaymentStatus(PaymentStatusEnum.DISHONOURED);

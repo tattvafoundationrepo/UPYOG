@@ -80,6 +80,7 @@ import org.egov.demand.repository.querybuilder.DemandQueryBuilder;
 import org.egov.demand.repository.rowmapper.CollectedReceiptsRowMapper;
 import org.egov.demand.repository.rowmapper.DemandRowMapper;
 import org.egov.demand.repository.rowmapper.MergedDemandRowMapper;
+import org.egov.demand.util.DishonourDate;
 import org.egov.demand.util.Util;
 import org.egov.demand.web.contract.DemandRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -1622,8 +1623,28 @@ private AdvanceReceiptRef getAdvanceReceipt(String settledDemandId) {
  * advance receipt is still resolved for the SAP clearing key (ZUONR); only its date is no
  * longer used here. SAP-side posting-period control, where needed, belongs to the export
  * step, not to this document date.
+ *
+ * <p>The dishonour-fee demand (upmktdischq) is the exception, BMC direction 2026-09-29: like a
+ * collection, doc date and posting date are both the day the event happened — the day the cheque
+ * was dishonoured. Its taxPeriodFrom is copied from the rent demand the cheque was meant to pay, so
+ * it would date the charge months before the bounce. The charge demand is raised in the dishonour
+ * call itself, so its creation time is the dishonour date. Without one, the tax period as before.
+ *
+ * <p>When the clerk entered the bank return date on the dishonour screen, emarket-v1 stamps it on the
+ * charge (additionalDetails.dishonourDate) and it wins, so the charge carries the same date as the
+ * collection reversal.
  */
 private Long resolveDemandDocDate(Demand demand, AdvanceReceiptRef advance) {
+    if ("TX.Emarket_Dishonor_Fees".equalsIgnoreCase(demand.getBusinessService())) {
+        Long enteredDate = DishonourDate.fromAdditionalDetails(demand.getAdditionalDetails());
+        if (enteredDate != null) {
+            return enteredDate;
+        }
+        AuditDetails audit = demand.getAuditDetails();
+        if (audit != null && audit.getCreatedTime() != null) {
+            return audit.getCreatedTime();
+        }
+    }
     return demand.getTaxPeriodFrom();
 }
 

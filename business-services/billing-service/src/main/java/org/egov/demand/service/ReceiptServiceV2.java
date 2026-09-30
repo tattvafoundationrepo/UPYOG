@@ -38,6 +38,7 @@ import org.egov.demand.model.PaymentMarketInfo;
 import org.egov.demand.producer.Producer;
 import org.egov.demand.repository.DemandRepository;
 import org.egov.demand.util.Constants;
+import org.egov.demand.util.DishonourDate;
 import org.egov.demand.util.Util;
 import org.egov.demand.web.contract.BillRequestV2;
 import org.egov.demand.web.contract.DemandRequest;
@@ -538,7 +539,14 @@ public class ReceiptServiceV2 {
 			log.info("Reversal FI flow={} total={} cgst={} sgst={} (postedAdvanceGst={})",
 					flow, total, cgst, sgst, postedAdvanceGst);
 
-			List<FiReport> report = buildCollectionRows(d, flow, total, cgst, sgst, gstAdvanceMap, true, collectionDate);
+			// A dishonour reversal is dated the bank return date the clerk entered (carried over by
+			// BillingServiceConsumer); a plain cancellation, or a dishonour without one, keeps the
+			// collection date as before.
+			Long dishonourDate = DishonourDate.fromAdditionalDetails(bills.get(0).getAdditionalDetails());
+			Long reversalDate = dishonourDate != null ? dishonourDate : collectionDate;
+			log.info("Reversal FI date for payment {}: {} (dishonour date {})", paymentId, reversalDate, dishonourDate);
+
+			List<FiReport> report = buildCollectionRows(d, flow, total, cgst, sgst, gstAdvanceMap, true, reversalDate);
 
 			// Label only (accounting rows unchanged): receipt cancellation -> collection reversal.
 			report.forEach(r -> r.setReportType(FiReportType.UPMKT_COLREV));

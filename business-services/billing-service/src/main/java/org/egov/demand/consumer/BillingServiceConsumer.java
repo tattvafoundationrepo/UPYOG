@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 import org.egov.common.contract.request.RequestInfo;
@@ -18,6 +19,7 @@ import org.egov.demand.service.DemandService;
 import org.egov.demand.service.ReceiptService;
 import org.egov.demand.service.ReceiptServiceV2;
 import org.egov.demand.util.Constants;
+import org.egov.demand.util.DishonourDate;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.egov.demand.util.Util;
 import org.egov.demand.web.contract.BillRequest;
@@ -36,6 +38,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.PathNotFoundException;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -192,6 +195,14 @@ public class BillingServiceConsumer {
 		 */
 		ObjectNode additionalDetails = util.setValuesAndGetAdditionalDetails(null, Constants.PAYMENT_ID_KEY, paymentId);
 		additionalDetails.put("transactionNumber", transactionNumber);
+		// The bank return date the clerk entered on a dishonour, which collection-services merged into
+		// every bill of the payment. Carried over before the bill's own details are replaced. The
+		// earliest, as emarket-v1 picks for the charge, should the bills ever disagree.
+		if (isReceiptCancelled && "DISHONOURED".equalsIgnoreCase(paymentStatusOf(context))) {
+			bills.stream().map(b -> DishonourDate.rawFrom(b.getAdditionalDetails()))
+					.filter(Objects::nonNull).sorted().findFirst()
+					.ifPresent(date -> additionalDetails.put(DishonourDate.KEY, date));
+		}
 		bills.get(0).setAdditionalDetails(additionalDetails);
 		validatePaymentForDuplicateUpdates(isReceiptCancelled, paymentId);
 
@@ -210,6 +221,16 @@ public class BillingServiceConsumer {
 			} else {
 				bill.setStatus(org.egov.demand.model.BillV2.BillStatus.PAID);
 			}
+		}
+	}
+
+	/** Null when the message carries no status, rather than failing the whole back-update. */
+	private static String paymentStatusOf(DocumentContext context) {
+		try {
+			Object status = context.read("$.Payment.paymentStatus");
+			return status == null ? null : status.toString();
+		} catch (PathNotFoundException e) {
+			return null;
 		}
 	}
 
