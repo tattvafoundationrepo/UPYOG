@@ -1,6 +1,5 @@
 package org.egov.collection.util;
 
-import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeParseException;
@@ -16,15 +15,20 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  * billing-service and emarket-v1 date the collection reversal and the dishonour charge by it.
  *
  * <p>Checked here because this is the last point before the receipt is reversed. Optional: a
- * DISHONOUR sent without it (any other module) is not affected. Bounds: not before the receipt day,
- * not after today (IST). The cheque date is deliberately not a bound: on SAP-migrated receipts it is
- * typically months after the receipt, which would forbid the true date or block the dishonour.
+ * DISHONOUR sent without it (any other module) is not affected. Bounds: not after today (IST), and
+ * not before {@link #EARLIEST_DAY} (a typo guard, so a year like 0001 never reaches the FI rows).
+ * Any earlier day is accepted, including one before the receipt day; BMC asked for past dates to
+ * be selectable without that restriction. The cheque date is not a bound either: on SAP-migrated
+ * receipts it is typically months after the receipt.
  */
 public final class DishonourDateValidator {
 
     public static final String DISHONOUR_DATE_KEY = "dishonourDate";
 
     private static final ZoneId IST = ZoneId.of("Asia/Kolkata");
+
+    /** Earliest day accepted; only rules out mistyped years. */
+    static final LocalDate EARLIEST_DAY = LocalDate.of(2000, 1, 1);
 
     private DishonourDateValidator() {
     }
@@ -48,8 +52,8 @@ public final class DishonourDateValidator {
         if (day.isAfter(today)) {
             throw invalid("The dishonour date cannot be in the future.");
         }
-        if (transactionDate != null && day.isBefore(istDay(transactionDate))) {
-            throw invalid("The dishonour date cannot be before " + istDay(transactionDate) + ", the receipt date.");
+        if (day.isBefore(EARLIEST_DAY)) {
+            throw invalid("The dishonour date cannot be before " + EARLIEST_DAY + ".");
         }
         if (additionalDetails instanceof ObjectNode) {
             ((ObjectNode) additionalDetails).put(DISHONOUR_DATE_KEY, day.toString());
@@ -58,10 +62,6 @@ public final class DishonourDateValidator {
 
     public static LocalDate todayInIst() {
         return LocalDate.now(IST);
-    }
-
-    private static LocalDate istDay(long epochMillis) {
-        return Instant.ofEpochMilli(epochMillis).atZone(IST).toLocalDate();
     }
 
     private static CustomException invalid(String message) {

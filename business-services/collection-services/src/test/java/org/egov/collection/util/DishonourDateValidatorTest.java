@@ -74,17 +74,20 @@ public class DishonourDateValidatorTest {
         reject(details("2026-09-30"), RECEIPT);
     }
 
+    /** Past dates are selectable without the old receipt-day floor (BMC, 05-10-2026). */
     @Test
-    public void dateBeforeTheReceiptIsRejected() {
-        reject(details("2026-09-19"), RECEIPT);
+    public void dateBeforeTheReceiptIsAccepted() {
+        for (String ok : new String[] { "2026-09-19", "2026-01-15", "2000-01-01" }) {
+            ObjectNode d = details(ok);
+            DishonourDateValidator.validate(d, RECEIPT, TODAY);
+            assertEquals(ok, d.get("dishonourDate").asText());
+        }
     }
 
-    /** 00:30 IST on 21-09 is still 20-09 in UTC; the bound must be the IST day. */
     @Test
-    public void receiptBoundIsTheIstDay() {
-        long justAfterMidnight = ist("2026-09-21T00:30");
-        reject(details("2026-09-20"), justAfterMidnight);
-        DishonourDateValidator.validate(details("2026-09-21"), justAfterMidnight, TODAY);
+    public void dayBeforeTheEarliestDayIsRejected() {
+        String message = reject(details("1999-12-31"), RECEIPT);
+        org.junit.jupiter.api.Assertions.assertTrue(message.contains("2000-01-01"), message);
     }
 
     @Test
@@ -160,28 +163,6 @@ public class DishonourDateValidatorTest {
     public void sameDayAsALateEveningReceiptIsAllowed() {
         long lateReceipt = ist("2026-09-25T23:50");
         DishonourDateValidator.validate(details("2026-09-25"), lateReceipt, LocalDate.of(2026, 9, 25));
-        reject(details("2026-09-24"), lateReceipt);
-    }
-
-    /** The server's own default timezone must not move the receipt day (both bounds are computed in IST). */
-    @Test
-    public void resultDoesNotDependOnTheJvmTimezone() {
-        java.util.TimeZone original = java.util.TimeZone.getDefault();
-        long justAfterIstMidnight = ist("2026-09-21T00:30");
-        try {
-            for (String zone : new String[] { "UTC", "America/New_York", "Pacific/Kiritimati", "Asia/Kolkata" }) {
-                java.util.TimeZone.setDefault(java.util.TimeZone.getTimeZone(zone));
-                reject(details("2026-09-20"), justAfterIstMidnight);
-                DishonourDateValidator.validate(details("2026-09-21"), justAfterIstMidnight, TODAY);
-            }
-        } finally {
-            java.util.TimeZone.setDefault(original);
-        }
-    }
-
-    @Test
-    public void rejectionNamesTheReceiptDay() {
-        String message = reject(details("2026-09-19"), RECEIPT);
-        org.junit.jupiter.api.Assertions.assertTrue(message.contains("2026-09-20"), message);
+        DishonourDateValidator.validate(details("2026-09-24"), lateReceipt, LocalDate.of(2026, 9, 25));
     }
 }
