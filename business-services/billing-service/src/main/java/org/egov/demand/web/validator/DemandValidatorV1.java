@@ -308,6 +308,29 @@ public class DemandValidatorV1 {
 	 * @param errorMap map with error key and msg
 	 * @param mdmsData MDMS data for fetching business service configuration
 	 */
+	/**
+	 * True when {@code existing} is only an advance credit - it has detail lines and every one is a carry-forward
+	 * head - AND sits on a different advanceIndex than {@code incoming}. It bills nothing for the period, and with a
+	 * different advanceIndex the two cannot clash on uk_egbs_demand_v1_consumercode_businessservice. eMarket transfers
+	 * carry the source licence's advance this way (isAdvance false, advanceIndex -1, period = the transfer month), and
+	 * it blocked that month's rent as a "duplicate" (5888888990, Oct-2026).
+	 *
+	 * A credit on the SAME advanceIndex is still a duplicate: the unique index would refuse the insert.
+	 */
+	static boolean isAdvanceCreditOnOtherIndex(Demand existing, Demand incoming) {
+		List<DemandDetail> details = existing.getDemandDetails();
+		if (CollectionUtils.isEmpty(details))
+			return false;
+		for (DemandDetail detail : details) {
+			String head = detail == null ? null : detail.getTaxHeadMasterCode();
+			if (head == null || !head.toUpperCase().contains("CARRYFORWARD"))
+				return false;
+		}
+		int existingIndex = existing.getAdvanceIndex() == null ? 0 : existing.getAdvanceIndex();
+		int incomingIndex = incoming.getAdvanceIndex() == null ? 0 : incoming.getAdvanceIndex();
+		return existingIndex != incomingIndex;
+	}
+
 	private void validateConsumerCodes(List<Demand> demands, Map<String, Set<String>> businessConsumerValidatorMap,
 			Map<String, String> errorMap, DocumentContext mdmsData) {
 
@@ -368,6 +391,9 @@ public class DemandValidatorV1 {
 				// Only check against non-advance demands with advanceIndex=0
 				if (Boolean.TRUE.equals(demandFromMap.getIsAdvance()) ||
 					(demandFromMap.getAdvanceIndex() != null && demandFromMap.getAdvanceIndex() > 0)) {
+					continue;
+				}
+				if (isAdvanceCreditOnOtherIndex(demandFromMap, demand)) {
 					continue;
 				}
 
