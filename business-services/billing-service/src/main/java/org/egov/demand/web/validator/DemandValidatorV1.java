@@ -331,6 +331,60 @@ public class DemandValidatorV1 {
 		return existingIndex != incomingIndex;
 	}
 
+	private static final java.time.ZoneId TENANT_ZONE = java.time.ZoneId.of("Asia/Kolkata");
+
+	/**
+	 * True when {@code existing} is an eMarket transfer's carried-dues demand (advanceIndex -1) whose rent lines
+	 * carried only months OTHER than {@code incoming}'s. A transfer raises the source licence's unpaid rent as one
+	 * demand dated in the transfer month, the real span on each line's additionalDetails.periodFrom/periodTo; dues
+	 * for March-July on an October demand left October's own rent refused as a duplicate (5888888995, 08-10-2026).
+	 * It is then not a duplicate: the two differ on advanceIndex, so uk_egbs_demand_v1_consumercode_businessservice
+	 * cannot clash either. A carried demand whose lines DO include the month, or carry no numeric span, is still a
+	 * duplicate, exactly as before. Carry-forward credit lines are not billed rent and are ignored.
+	 */
+	static boolean isCarriedDuesOutsideMonth(Demand existing, Demand incoming) {
+		if (existing.getAdvanceIndex() == null || existing.getAdvanceIndex() != -1
+				|| incoming.getTaxPeriodFrom() == null || CollectionUtils.isEmpty(existing.getDemandDetails()))
+			return false;
+		long from = Long.MAX_VALUE;
+		long to = Long.MIN_VALUE;
+		for (DemandDetail detail : existing.getDemandDetails()) {
+			if (detail == null) continue;
+			String head = detail.getTaxHeadMasterCode();
+			if (head == null || head.toUpperCase().contains("CARRYFORWARD")) continue;
+			Long pf = epochField(detail.getAdditionalDetails(), "periodFrom");
+			Long pt = epochField(detail.getAdditionalDetails(), "periodTo");
+			if (pf == null || pt == null) continue;
+			from = Math.min(from, Math.min(pf, pt));
+			to = Math.max(to, Math.max(pf, pt));
+		}
+		if (from == Long.MAX_VALUE)
+			return false;
+		java.time.YearMonth month = monthOf(incoming.getTaxPeriodFrom());
+		return monthOf(from).isAfter(month) || monthOf(to).isBefore(month);
+	}
+
+	private static java.time.YearMonth monthOf(long epochMillis) {
+		return java.time.YearMonth.from(java.time.Instant.ofEpochMilli(epochMillis).atZone(TENANT_ZONE));
+	}
+
+	/** A numeric epoch-millis value from a detail's additionalDetails (JsonNode from the row mapper, or a Map). */
+	static Long epochField(Object additionalDetails, String key) {
+		Object v = null;
+		if (additionalDetails instanceof com.fasterxml.jackson.databind.JsonNode) {
+			com.fasterxml.jackson.databind.JsonNode node = (com.fasterxml.jackson.databind.JsonNode) additionalDetails;
+			if (node.has(key)) {
+				com.fasterxml.jackson.databind.JsonNode n = node.get(key);
+				v = n.isNumber() ? (Object) n.asLong() : n.asText(null);
+			}
+		} else if (additionalDetails instanceof Map) {
+			v = ((Map<?, ?>) additionalDetails).get(key);
+		}
+		if (v instanceof Number) return ((Number) v).longValue();
+		if (v instanceof String && ((String) v).trim().matches("[0-9]{1,15}")) return Long.parseLong(((String) v).trim());
+		return null;
+	}
+
 	private void validateConsumerCodes(List<Demand> demands, Map<String, Set<String>> businessConsumerValidatorMap,
 			Map<String, String> errorMap, DocumentContext mdmsData) {
 
@@ -394,6 +448,9 @@ public class DemandValidatorV1 {
 					continue;
 				}
 				if (isAdvanceCreditOnOtherIndex(demandFromMap, demand)) {
+					continue;
+				}
+				if (isCarriedDuesOutsideMonth(demandFromMap, demand)) {
 					continue;
 				}
 
