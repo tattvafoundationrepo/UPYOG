@@ -37,6 +37,7 @@ import org.egov.demand.model.PaymentBackUpdateAudit;
 import org.egov.demand.model.PaymentMarketInfo;
 import org.egov.demand.producer.Producer;
 import org.egov.demand.repository.DemandRepository;
+import org.egov.demand.repository.RegularCollectionPlan;
 import org.egov.demand.util.Constants;
 import org.egov.demand.util.DishonourDate;
 import org.egov.demand.util.Util;
@@ -446,7 +447,14 @@ public class ReceiptServiceV2 {
 					: nz(gstAdvanceMap.getSgstAmount());
 			log.info("Collection FI flow={} total={} cgst={} sgst={}", flow, total, cgst, sgst);
 
-			List<FiReport> report = buildCollectionRows(d, flow, total, cgst, sgst, gstAdvanceMap, false, collectionDate);
+			// BMC 24-Sep-2026 entries: the regular credit goes on the receivable accounts each paid
+			// demand actually debited. Inactive (today's single line) unless a paid demand carries a
+			// per-head balance or is a dishonour charge recognised at collection.
+			// A deposit voucher has no receivable leg to place, so it is not even looked up.
+			RegularCollectionPlan regularPlan = flow == FiFlow.DEPOSIT ? null : regularCollectionPlan(bills, demandIdMap);
+
+			List<FiReport> report = buildCollectionRows(d, flow, total, cgst, sgst, gstAdvanceMap, false, collectionDate,
+					regularPlan);
 
 			// Label only; the accounting rows are unaffected. Every collection — advance or
 			// regular — is a market collection. The advance is identified downstream by its
@@ -546,7 +554,14 @@ public class ReceiptServiceV2 {
 			Long reversalDate = dishonourDate != null ? dishonourDate : collectionDate;
 			log.info("Reversal FI date for payment {}: {} (dishonour date {})", paymentId, reversalDate, dishonourDate);
 
-			List<FiReport> report = buildCollectionRows(d, flow, total, cgst, sgst, gstAdvanceMap, true, reversalDate);
+			// A receipt posted with per-head credits is given back leg for leg (BMC 24-Sep-2026, "Cheque
+			// Reversal Entry"). Empty for every receipt posted the old way, which reverses as before.
+			List<FiReport> report = demandRepository.mirrorPerHeadCollection(d.getFiReceiptNo(), d.getConsumerCode(),
+					dishonourDate);
+			if (report.isEmpty())
+				report = buildCollectionRows(d, flow, total, cgst, sgst, gstAdvanceMap, true, reversalDate, null);
+			else
+				log.info("Reversal of receipt {} mirrors its {} per-head legs", d.getFiReceiptNo(), report.size());
 
 			// Label only (accounting rows unchanged): receipt cancellation -> collection reversal.
 			report.forEach(r -> r.setReportType(FiReportType.UPMKT_COLREV));
@@ -731,7 +746,8 @@ public class ReceiptServiceV2 {
 	 * case — flag off, pure advance, pure regular, deposit — this delegates unchanged.
 	 */
 	private List<FiReport> buildCollectionRows(Demand d, FiFlow flow, BigDecimal total,
-			BigDecimal cgst, BigDecimal sgst, GstAdvanceMap m, boolean reversal, Long collectionDate) {
+			BigDecimal cgst, BigDecimal sgst, GstAdvanceMap m, boolean reversal, Long collectionDate,
+			RegularCollectionPlan regularPlan) {
 
 		boolean advanceFlow = flow == FiFlow.NON_GST_ADVANCE || flow == FiFlow.GST_ADVANCE;
 		BigDecimal advancePart = nz(m.getRentalAdvancePaid()).add(nz(m.getLicenseAdvancePaid()));
@@ -751,7 +767,8 @@ public class ReceiptServiceV2 {
 				: mixedReceiptSplitEnabled);
 
 		if (!split)
-			return demandRepository.buildCollectionFiReports(d, flow, total, cgst, sgst, reversal, collectionDate);
+			return demandRepository.buildCollectionFiReports(d, flow, total, cgst, sgst, reversal, collectionDate,
+					regularPlan);
 
 		log.info("Mixed receipt for consumer {}: advance={} regular={}; splitting vouchers",
 				d.getConsumerCode(), advancePart, regularPart);
@@ -764,8 +781,44 @@ public class ReceiptServiceV2 {
 				demandRepository.buildCollectionFiReports(d, advanceOnly, advancePart, cgst, sgst, reversal, collectionDate));
 		rows.addAll(
 				demandRepository.buildCollectionFiReports(d, FiFlow.NON_GST_REGULAR, regularPart,
-						BigDecimal.ZERO, BigDecimal.ZERO, reversal, collectionDate));
+						BigDecimal.ZERO, BigDecimal.ZERO, reversal, collectionDate, regularPlan));
 		return rows;
+	}
+
+	/**
+	 * What this receipt paid, per demand and per demand line, read from the apportioned bills it
+	 * carries (bill order is kept, so credits are placed in the order the bill lists the demands).
+	 * A bill detail's amountPaid is used when present, otherwise the sum of its lines' adjusted
+	 * amounts. Never fails the receipt: any problem yields an inactive plan, i.e. today's voucher.
+	 */
+	RegularCollectionPlan regularCollectionPlan(List<BillV2> bills, Map<String, Demand> demandsById) {
+		Map<String, BigDecimal> paidByDemand = new LinkedHashMap<>();
+		Map<String, BigDecimal> paidByDetail = new HashMap<>();
+		try {
+			for (BillV2 bill : bills) {
+				if (bill.getBillDetails() == null)
+					continue;
+				for (BillDetailV2 bd : bill.getBillDetails()) {
+					if (bd.getDemandId() == null)
+						continue;
+					BigDecimal lines = BigDecimal.ZERO;
+					if (bd.getBillAccountDetails() != null) {
+						for (BillAccountDetailV2 bad : bd.getBillAccountDetails()) {
+							BigDecimal adj = nz(bad.getAdjustedAmount());
+							lines = lines.add(adj);
+							if (bad.getDemandDetailId() != null)
+								paidByDetail.merge(bad.getDemandDetailId(), adj, BigDecimal::add);
+						}
+					}
+					BigDecimal paid = bd.getAmountPaid() != null ? bd.getAmountPaid() : lines;
+					paidByDemand.merge(bd.getDemandId(), paid, BigDecimal::add);
+				}
+			}
+			return demandRepository.regularCollectionPlan(paidByDemand, paidByDetail, demandsById);
+		} catch (RuntimeException e) {
+			log.error("Could not build the per-head collection plan; posting the single receivable line", e);
+			return null;
+		}
 	}
 
 	/**

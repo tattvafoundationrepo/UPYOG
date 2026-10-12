@@ -104,7 +104,7 @@ public class ReceiptServiceV2AdvanceReversalTest {
 		when(demandRepository.getMarketEssentialInfo(any(), any())).thenReturn(Collections.emptyList());
 		when(demandRepository.getPostedAdvanceGst(any(), any())).thenReturn(Collections.emptyMap());
 		when(demandRepository.wasPostedAsAdvance(any())).thenReturn(null);
-		when(demandRepository.buildCollectionFiReports(any(), any(), any(), any(), any(), anyBoolean(), any()))
+		when(demandRepository.buildCollectionFiReports(any(), any(), any(), any(), any(), anyBoolean(), any(), any()))
 				.thenReturn(new ArrayList<>());
 		when(demandRepository.buildGstNettingReversalFiReports(any(), any())).thenReturn(new ArrayList<>());
 		when(demandRepository.buildAdvanceSettlementReversalFiReports(any())).thenReturn(new ArrayList<>());
@@ -309,7 +309,7 @@ public class ReceiptServiceV2AdvanceReversalTest {
 
 			ArgumentCaptor<Demand> shim = ArgumentCaptor.forClass(Demand.class);
 			verify(demandRepository, atLeast(1)).buildCollectionFiReports(shim.capture(), any(), any(), any(),
-					any(), eq(cancellation), any());
+					any(), eq(cancellation), any(), any());
 			assertTrue(wardC == shim.getValue().getCollectingDimensions(),
 					"cancellation=" + cancellation + " must carry the collecting ward's dimensions");
 			if (cancellation) {
@@ -341,7 +341,7 @@ public class ReceiptServiceV2AdvanceReversalTest {
 
 			ArgumentCaptor<Demand> shim = ArgumentCaptor.forClass(Demand.class);
 			verify(demandRepository, atLeast(1)).buildCollectionFiReports(shim.capture(), any(), any(), any(),
-					any(), eq(cancellation), any());
+					any(), eq(cancellation), any(), any());
 			assertEquals(null, shim.getValue().getCollectingDimensions(), "cancellation=" + cancellation);
 			verify(demandRepository, never()).getCfcWardDimensions(any());
 		}
@@ -371,7 +371,7 @@ public class ReceiptServiceV2AdvanceReversalTest {
 
 		ArgumentCaptor<Long> date = ArgumentCaptor.forClass(Long.class);
 		verify(demandRepository, atLeast(1)).buildCollectionFiReports(any(), any(), any(), any(), any(),
-				eq(cancellation), date.capture());
+				eq(cancellation), date.capture(), any());
 		return date.getValue();
 	}
 

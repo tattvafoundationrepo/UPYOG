@@ -49,6 +49,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -202,6 +203,39 @@ public class DemandRepository {
 	 */
 	@org.springframework.beans.factory.annotation.Value("${emarket.fi.advance.four.series.enabled:false}")
 	private boolean advanceFourSeriesEnabled = false;
+
+	/**
+	 * BMC's 24-Sep-2026 entries (AO FAR): a demand debits one 4-Series receivable per revenue head,
+	 * gross of that head's GST share, instead of the single control account. A demand raised against
+	 * an advance also posts the Revenue Adjustment, Cr the same 4-Series accounts against the
+	 * 350410215 debit. That supersedes the 4-Series pair, which is suppressed while this is on.
+	 *
+	 * <p>Gates the WRITE only. Collections and reversals follow whatever a demand actually posted, so
+	 * documents written while this was on keep clearing correctly after it is turned off.
+	 */
+	@org.springframework.beans.factory.annotation.Value("${emarket.fi.per.head.receivable.enabled:false}")
+	private boolean perHeadReceivableEnabled = false;
+
+	/**
+	 * Written as the GL of a receivable line whose head has no 4-Series account in BMC's master
+	 * (penalties, transfer heads, dishonour charges, taxable licence fees). User decision 09-10-2026:
+	 * "where 4 series is not there write NA", until BMC supplies the codes.
+	 */
+	@org.springframework.beans.factory.annotation.Value("${emarket.fi.four.series.missing.gl:NA}")
+	private String missingFourSeriesGl = "NA";
+
+	/** The round-off ("4 Series Coin note") receivable. BMC has not supplied its code yet. */
+	@org.springframework.beans.factory.annotation.Value("${emarket.fi.four.series.coin.gl:${emarket.fi.four.series.missing.gl:NA}}")
+	private String coinFourSeriesGl = "NA";
+
+	/**
+	 * Marker on a dishonour-charge demand whose income is recognised when it is collected (BMC
+	 * 24-Sep-2026, "Post Reversal Collection"). Such a demand posts no FI of its own; the receipt that
+	 * pays it credits the charge heads' income GLs. Stamped by emarket-v1 RentService.
+	 */
+	static final String FI_RECOGNITION_KEY = "fiRecognition";
+	static final String FI_RECOGNITION_ON_COLLECTION = "ON_COLLECTION";
+	private static final String BS_DISHONOUR = "TX.Emarket_Dishonor_Fees";
 
 	/** GL codes for the GST-advance netting voucher (Accounting Entries 2025, entry 4). */
 	/**
@@ -385,7 +419,8 @@ public class DemandRepository {
         //         .build());
 
 			//reportList.addAll(buildFiReportsFromDemand(demand , "50", false , null));
-			if (!"TX.Emarket_Deposit_Fees".equalsIgnoreCase(demand.getBusinessService())) {
+			if (!"TX.Emarket_Deposit_Fees".equalsIgnoreCase(demand.getBusinessService())
+			        && !isRecognisedOnCollection(demand)) {
 			    List<FiReport> demandFiReports = buildDemandFiReports(demand, nettingDetails, advanceRef);
 			    // Label only (accounting rows unchanged). Demand FI rows, inserted via
 			    // batchInsertDemandFiReports. Report type:
@@ -1735,6 +1770,10 @@ public List<FiReport> buildDemandFiReports(Demand demand, List<DemandDetail> ext
     // so the two can never disagree about what a head settled.
     List<FourSeriesLine> fourSeriesLines = new ArrayList<>();
 
+    // Every receivable-bearing detail, for the per-head receivable (24-Sep-2026 entries). Filled only
+    // while that feature is on.
+    List<PerHeadReceivable.Head> receivableHeads = new ArrayList<>();
+
     List<DemandDetail> detailsForFi = demand.getDemandDetails();
     if (extraDetails != null && !extraDetails.isEmpty()) {
         detailsForFi = new ArrayList<>(detailsForFi);
@@ -1774,6 +1813,8 @@ public List<FiReport> buildDemandFiReports(Demand demand, List<DemandDetail> ext
             .build());
         if(!NETTING_DEBIT_HEADS.contains(th) && !NETTING_CREDIT_HEADS.contains(th)) {
 	       totalReceivable = totalReceivable.add(dd.getTaxAmount());
+	       if (perHeadReceivableEnabled)
+	           receivableHeads.add(new PerHeadReceivable.Head(th, dd.getTaxAmount(), receivableGlFor(dd)));
 	       if (demand.isApportionedAgainstAdvance() && dd.getCollectionAmount() != null) {
 	           BigDecimal settled = dd.getTaxAmount().min(dd.getCollectionAmount());
 	           if (settled.compareTo(BigDecimal.ZERO) > 0) {
@@ -1803,6 +1844,13 @@ public List<FiReport> buildDemandFiReports(Demand demand, List<DemandDetail> ext
         fourSeriesLines.clear();
     }
 
+    // BMC 24-Sep-2026: per-head 4-Series receivables plus, against an advance, the Revenue
+    // Adjustment. Empty when the demand has no revenue head to split by (an advance vessel, for
+    // instance), which keeps the single receivable line below.
+    List<PerHeadReceivable.Line> perHeadLines = perHeadReceivableEnabled
+            ? PerHeadReceivable.lines(receivableHeads, totalReceivable, coinFourSeriesGl)
+            : Collections.<PerHeadReceivable.Line>emptyList();
+
     if (settledFromAdvance.compareTo(BigDecimal.ZERO) != 0) {
         reports.add(FiReport.builder()
             .transactionNumber(demand.getId())
@@ -1824,6 +1872,14 @@ public List<FiReport> buildDemandFiReports(Demand demand, List<DemandDetail> ext
             .createdAt(System.currentTimeMillis())
             .updatedAt(System.currentTimeMillis())
             .build());
+    }
+
+    if (!perHeadLines.isEmpty()) {
+        reports.addAll(perHeadReceivableRows(demand, perHeadLines, settledFromAdvance, postingDate,
+                consumerCode, fund, fundCenter, businessArea, functionalArea, advance.documentNo));
+        // The Revenue Adjustment above replaces the 4-Series pair; posting both would credit the
+        // 4-Series accounts and revenue twice.
+        return reports;
     }
 
     // 1️⃣ Customer / Receivable (Dr)
@@ -1853,6 +1909,189 @@ public List<FiReport> buildDemandFiReports(Demand demand, List<DemandDetail> ext
             fund, fundCenter, businessArea, functionalArea, advance.documentNo));
 
     return reports;
+}
+
+/** Remark on the Revenue Adjustment credits (BMC 24-Sep-2026, "Revenue Adjustment entry"). */
+static final String REVENUE_ADJUSTMENT_REMARK = "Revenue Adjustment";
+
+/**
+ * The receivable side of a demand under BMC's 24-Sep-2026 entries.
+ *
+ * <p>One Dr per head on its 4-Series GL, gross of its GST share ("431409938 Revenue Stallage A/C Dr
+ * 118"), plus the round-off on the coin-note receivable. Against an advance, the Revenue
+ * Adjustment then credits the same accounts for the settled amount ("3Series Liability from Market
+ * A/C Dr 130, To 4 Series Receivable A/C Cr 130"); its debit is the 350410215 row the caller has
+ * already added, unchanged from before, so the advance register, the GST return and the advance
+ * reversal read it exactly as they always have.
+ *
+ * <p>The debits sum to the demand's whole receivable and the credits to the settled amount, so
+ * the document balances exactly as the single-receivable version did.
+ */
+private List<FiReport> perHeadReceivableRows(Demand demand, List<PerHeadReceivable.Line> lines,
+                                             BigDecimal settledFromAdvance, Long postingDate,
+                                             String consumerCode, String fund, String fundCenter,
+                                             String businessArea, String functionalArea,
+                                             String advanceDocNo) {
+    List<FiReport> rows = new ArrayList<>();
+    String headerText = demand.getDemandSeqNo() != null ? demand.getDemandSeqNo().toString() : null;
+    long now = System.currentTimeMillis();
+
+    for (PerHeadReceivable.Line l : lines) {
+        if (l.amount.signum() == 0)
+            continue;
+        rows.add(perHeadRow(demand, "40", l.glCode, l.amount, l.taxHeadCode, null, postingDate,
+                consumerCode, fund, fundCenter, businessArea, functionalArea, headerText, now));
+    }
+
+    if (settledFromAdvance.signum() > 0) {
+        Map<Integer, BigDecimal> debits = new LinkedHashMap<>();
+        for (int i = 0; i < lines.size(); i++)
+            debits.put(i, lines.get(i).amount);
+        Map<Integer, BigDecimal> credits = PerHeadReceivable.allocateCapped(settledFromAdvance, debits);
+        BigDecimal placed = BigDecimal.ZERO;
+        for (BigDecimal v : credits.values())
+            placed = placed.add(v);
+        BigDecimal left = settledFromAdvance.subtract(placed);
+        if (left.signum() != 0) {
+            // Only reachable when a negative line (a carry-forward larger than its month) shrank the
+            // positive debits below the settled amount. Kept on the largest debit so the document
+            // still balances; the account still nets to the right figure across the document.
+            int largest = 0;
+            for (int i = 1; i < lines.size(); i++)
+                if (lines.get(i).amount.compareTo(lines.get(largest).amount) > 0)
+                    largest = i;
+            credits.put(largest, credits.getOrDefault(largest, BigDecimal.ZERO).add(left));
+        }
+        for (Map.Entry<Integer, BigDecimal> e : credits.entrySet()) {
+            if (e.getValue().signum() == 0)
+                continue;
+            rows.add(perHeadRow(demand, "50", lines.get(e.getKey()).glCode, e.getValue(),
+                    REVENUE_ADJUSTMENT_REMARK, advanceDocNo, postingDate, consumerCode, fund, fundCenter,
+                    businessArea, functionalArea, headerText, now));
+        }
+    }
+    return rows;
+}
+
+private FiReport perHeadRow(Demand demand, String postingKey, String glCode, BigDecimal amount,
+                            String remarks, String assignment, Long postingDate, String consumerCode,
+                            String fund, String fundCenter, String businessArea, String functionalArea,
+                            String headerText, long now) {
+    return FiReport.builder()
+            .transactionNumber(demand.getId())
+            .docDate(postingDate)
+            .postingDate(postingDate)
+            .referenceNo(consumerCode)
+            .remarks(remarks)
+            .postingKey(postingKey)
+            .glCode(glCode)
+            .collectionAmount(amount)
+            .assignment(assignment)
+            .fund(fund)
+            .fundCentre(fundCenter)
+            .businessArea(businessArea)
+            .functionalArea(functionalArea)
+            .documentHeaderText(headerText)
+            .docType("YX")
+            .isNew(Boolean.TRUE)
+            .createdAt(now)
+            .updatedAt(now)
+            .build();
+}
+
+/**
+ * The 4-Series receivable GL of one demand line, in this order:
+ * <ol>
+ *   <li>the {@code advglcode} emarket-v1 stamped on it;</li>
+ *   <li>the 4-Series row of the master that shares the head and treatment of the line's own revenue
+ *       GL. Some creators (legacy onboarding) stamp no {@code advglcode};</li>
+ *   <li>{@link #missingFourSeriesGl}.</li>
+ * </ol>
+ */
+String receivableGlFor(DemandDetail detail) {
+    String stamped = jsonValue(detail.getAdditionalDetails(), "advglcode");
+    if (stamped != null)
+        return stamped;
+    String revenueGl = jsonValue(detail.getAdditionalDetails(), "glcode");
+    if (revenueGl != null) {
+        String mapped = fourSeriesByRevenueGl().get(detail.getTaxHeadMasterCode() + "|" + revenueGl.trim());
+        if (mapped != null)
+            return mapped;
+    }
+    return missingFourSeriesGl;
+}
+
+private volatile Map<String, String> fourSeriesByRevenueGlCache;
+private volatile long fourSeriesByRevenueGlLoadedAt;
+private static final long FOUR_SERIES_CACHE_TTL_MS = 600_000L;
+
+/**
+ * {@code tax_head_code|series-1 gl_code -> series-4 gl_code}, from the GL master. Both series share
+ * the (head, treatment) key. Cached for ten minutes, like emarket-v1's copy of the same master.
+ * Empty, never an exception, when the table or its gl_series column is unavailable: the line then
+ * posts on {@link #missingFourSeriesGl}, which the FI screen flags.
+ */
+private Map<String, String> fourSeriesByRevenueGl() {
+    Map<String, String> cached = fourSeriesByRevenueGlCache;
+    if (cached != null && System.currentTimeMillis() - fourSeriesByRevenueGlLoadedAt < FOUR_SERIES_CACHE_TTL_MS)
+        return cached;
+    Map<String, String> loaded = new HashMap<>();
+    if (jdbcTemplate != null && jdbcTemplate.getDataSource() != null) {
+        // On a connection of its own, NOT the caller's: this runs inside save()'s transaction, and a
+        // failed statement there (e.g. a database without the gl_series column) would abort the
+        // whole demand insert even though the error is caught here.
+        try (java.sql.Connection c = jdbcTemplate.getDataSource().getConnection();
+             java.sql.Statement st = c.createStatement();
+             ResultSet rs = st.executeQuery(
+                    "SELECT s1.tax_head_code, s1.gl_code, MIN(s4.gl_code) "
+                  + "  FROM eg_emarket_gl_taxhead_mapping s1 "
+                  + "  JOIN eg_emarket_gl_taxhead_mapping s4 "
+                  + "    ON s4.tax_head_code = s1.tax_head_code AND s4.gl_description = s1.gl_description "
+                  + "   AND s4.gl_series = '4' "
+                  + " WHERE COALESCE(NULLIF(TRIM(s1.gl_series), ''), '1') = '1' "
+                  + " GROUP BY s1.tax_head_code, s1.gl_code")) {
+            while (rs.next()) {
+                String head = rs.getString(1), gl1 = rs.getString(2), gl4 = rs.getString(3);
+                if (head != null && gl1 != null && gl4 != null)
+                    loaded.put(head + "|" + gl1.trim(), gl4.trim());
+            }
+        } catch (java.sql.SQLException | RuntimeException e) {
+            log.warn("4-Series GL lookup unavailable; unstamped lines post on {}: {}", missingFourSeriesGl, e.getMessage());
+            loaded.clear();
+        }
+    }
+    fourSeriesByRevenueGlCache = loaded;
+    fourSeriesByRevenueGlLoadedAt = System.currentTimeMillis();
+    return loaded;
+}
+
+/** True for a dishonour-charge demand whose income is recognised at collection (see FI_RECOGNITION_KEY). */
+static boolean isRecognisedOnCollection(Demand demand) {
+    return demand != null && BS_DISHONOUR.equalsIgnoreCase(demand.getBusinessService())
+            && FI_RECOGNITION_ON_COLLECTION.equals(jsonValue(demand.getAdditionalDetails(), FI_RECOGNITION_KEY));
+}
+
+/**
+ * One key of an additionalDetails object, trimmed, or null when blank. Reads both shapes the field
+ * arrives in: a Map from an API request, a Jackson JsonNode when the row was read from the database
+ * (DemandRowMapper). Total: never throws.
+ */
+static String jsonValue(Object additionalDetails, String key) {
+    try {
+        Object v = null;
+        if (additionalDetails instanceof Map) {
+            v = ((Map<?, ?>) additionalDetails).get(key);
+        } else if (additionalDetails instanceof com.fasterxml.jackson.databind.JsonNode) {
+            com.fasterxml.jackson.databind.JsonNode n = ((com.fasterxml.jackson.databind.JsonNode) additionalDetails).get(key);
+            v = n == null || n.isNull() ? null : n.asText();
+        }
+        if (v == null)
+            return null;
+        String s = v.toString().trim();
+        return s.isEmpty() ? null : s;
+    } catch (RuntimeException e) {
+        return null;
+    }
 }
 
 /**
@@ -1885,7 +2124,8 @@ private List<FiReport> buildFourSeriesPair(Demand demand, List<FourSeriesLine> l
                                            String advanceDocNo) {
 
     List<FiReport> pair = new ArrayList<>();
-    if (!advanceFourSeriesEnabled || lines.isEmpty())
+    // The per-head receivable's Revenue Adjustment supersedes the pair (24-Sep-2026 entries).
+    if (!advanceFourSeriesEnabled || perHeadReceivableEnabled || lines.isEmpty())
         return pair;
 
     String headerText = demand.getDemandSeqNo() != null ? demand.getDemandSeqNo().toString() : null;
@@ -1983,8 +2223,26 @@ public List<FiReport> buildCollectionFiReports(Demand demand,
                                                BigDecimal sgst,
                                                boolean reversal,
                                                Long collectionDate) {
+    return buildCollectionFiReports(demand, flow, total, cgst, sgst, reversal, collectionDate, null);
+}
+
+/**
+ * @param regularPlan how the regular credit is split across receivable accounts (BMC 24-Sep-2026
+ *                    entries), or null. Used only on a forward regular voucher, and only when
+ *                    {@link RegularCollectionPlan#isActive()}; otherwise the single receivable line
+ *                    is posted exactly as before.
+ */
+public List<FiReport> buildCollectionFiReports(Demand demand,
+                                               FiFlow flow,
+                                               BigDecimal total,
+                                               BigDecimal cgst,
+                                               BigDecimal sgst,
+                                               boolean reversal,
+                                               Long collectionDate,
+                                               RegularCollectionPlan regularPlan) {
 
     List<FiReport> reports = new ArrayList<>();
+    boolean perHeadCredits = !reversal && regularPlan != null && regularPlan.isActive();
 
     total = total == null ? BigDecimal.ZERO : total;
     cgst = cgst == null ? BigDecimal.ZERO : cgst;
@@ -2007,7 +2265,10 @@ public List<FiReport> buildCollectionFiReports(Demand demand,
     switch (flow) {
 
         case NON_GST_REGULAR:
-            reports.add(fiRow(demand, "431409936", "50", reversal, total, "Receivable from Mun Mkt", collectionDate));
+            if (perHeadCredits)
+                reports.addAll(regularCreditRows(demand, regularPlan, total, collectionDate));
+            else
+                reports.add(fiRow(demand, "431409936", "50", reversal, total, "Receivable from Mun Mkt", collectionDate));
             reports.add(fiRow(demand, bankGl,  "40", reversal, total, "Bank/Interim Receipt", collectionDate));
             break;
 
@@ -2016,10 +2277,16 @@ public List<FiReport> buildCollectionFiReports(Demand demand,
             // old net-of-GST shape keeps its four legs on reversal, whatever the flag says now.
             if (grossBankOnRegularCollection && !(reversal && wasPostedWithGstPayableDebit(demand.getFiReceiptNo()))) {
                 reports.add(fiRow(demand, bankGl,  "40", reversal, total, "Bank/Interim Receipt", collectionDate));
-                reports.add(fiRow(demand, "431409936", "50", reversal, total, "Receivable from Mun Mkt", collectionDate));
+                if (perHeadCredits)
+                    reports.addAll(regularCreditRows(demand, regularPlan, total, collectionDate));
+                else
+                    reports.add(fiRow(demand, "431409936", "50", reversal, total, "Receivable from Mun Mkt", collectionDate));
             } else {
                 reports.add(fiRow(demand, bankGl,  "40", reversal, net, "Bank/Interim Receipt", collectionDate));
-                reports.add(fiRow(demand, "431409936", "50", reversal, total, "Receivable from Mun Mkt", collectionDate));
+                if (perHeadCredits)
+                    reports.addAll(regularCreditRows(demand, regularPlan, total, collectionDate));
+                else
+                    reports.add(fiRow(demand, "431409936", "50", reversal, total, "Receivable from Mun Mkt", collectionDate));
                 reports.add(fiRow(demand, "350200421", "40", reversal, cgst, "CGST Payable", collectionDate));
                 reports.add(fiRow(demand, "350200422", "40", reversal, sgst, "SGST Payable", collectionDate));
             }
@@ -2053,6 +2320,229 @@ public List<FiReport> buildCollectionFiReports(Demand demand,
             || r.getCollectionAmount().compareTo(BigDecimal.ZERO) == 0);
 
     return reports;
+}
+
+/**
+ * The credit legs of a regular collection under BMC's 24-Sep-2026 entries, one per receivable
+ * account (and per demand) the plan places the money on. Each is an ordinary collection row (same
+ * dates, reference, receipt, payment mode and market dimensions as the single line it replaces)
+ * except that it names the demand it clears in transaction_number, so that demand's open balance
+ * can be read back later, and a dishonour charge credits its income GL at the charge's own
+ * dimensions.
+ */
+private List<FiReport> regularCreditRows(Demand demand, RegularCollectionPlan plan, BigDecimal amount,
+                                         Long collectionDate) {
+    List<FiReport> rows = new ArrayList<>();
+    for (RegularCollectionPlan.Credit c : plan.creditsFor(amount, demand.getId())) {
+        FiReport row = fiRow(demand, c.glCode, "50", false, c.amount, c.remarks, collectionDate);
+        row.setTransactionNumber(c.demandId);
+        if (c.dimensions != null) {
+            row.setFund(c.dimensions.getFund());
+            row.setFundCentre(c.dimensions.getFundCentre());
+            row.setBusinessArea(c.dimensions.getBusinessArea());
+            row.setFunctionalArea(c.dimensions.getFunctionalArea());
+        }
+        rows.add(row);
+    }
+    return rows;
+}
+
+/**
+ * The placeholder as first shipped. Always read back, whatever the property says now: rows already
+ * posted on it must keep clearing after BMC supplies real codes and the property is changed.
+ */
+static final String HISTORICAL_PLACEHOLDER_GL = "NA";
+
+/** Control accounts that predate the per-head receivable. A balance on these alone keeps the old voucher. */
+static final Set<String> LEGACY_RECEIVABLE_GLS =
+        Collections.unmodifiableSet(new HashSet<>(Arrays.asList("431409936", "431190300")));
+
+/** The receivable accounts an open balance is read from: the 4-Series range, the placeholders, the control accounts. */
+private String receivableGlPredicate(String column) {
+    return "(" + column + " BETWEEN '" + FOUR_SERIES_GL_FIRST + "' AND '" + FOUR_SERIES_GL_LAST + "'"
+            + " OR " + column + " IN ('431409936', '431190300', '" + HISTORICAL_PLACEHOLDER_GL + "', ?, ?))";
+}
+
+/**
+ * Open receivable per demand and GL: what each demand's own document debited, less what has
+ * been credited against it since. Read over BOTH FI tables, because a collection credit names the
+ * demand it clears in transaction_number (see regularCreditRows). Positive balances only.
+ *
+ * <p>Collection rows written before the per-head receivable named only the receipt's first demand,
+ * so for a demand on the old control account this figure can be off; it only ever chooses between
+ * accounts the demand actually used, and an old-shape demand has just the one.
+ */
+public Map<String, Map<String, BigDecimal>> openReceivableByDemand(java.util.Collection<String> demandIds) {
+    Map<String, Map<String, BigDecimal>> out = new HashMap<>();
+    if (demandIds == null || demandIds.isEmpty() || jdbcTemplate == null)
+        return out;
+    List<String> ids = new ArrayList<>(new java.util.LinkedHashSet<>(demandIds));
+    String in = ids.stream().map(x -> "?").collect(Collectors.joining(","));
+    String sql =
+        "SELECT transaction_number, gl_code, "
+      + "       SUM(CASE WHEN posting_key = '40' THEN collection_amount ELSE -collection_amount END) AS open "
+      + "  FROM ( SELECT transaction_number, gl_code, posting_key, collection_amount "
+      + "           FROM public.eg_emarket_fi_report WHERE transaction_number IN (" + in + ") "
+      // The superseded 4-Series pair debits a 4-Series GL too, but it is never collected: its own
+      // unwind (buildFourSeriesReversalFiReports) gives it back. Counting it would send cash there.
+      + "            AND COALESCE(report_type, '') NOT IN ('" + FiReportType.UPMKT_DEMDADV_4S + "', '"
+      + FiReportType.UPMKT_DEMDADV_4S_REV + "') "
+      + "         UNION ALL "
+      + "         SELECT transaction_number, gl_code, posting_key, collection_amount "
+      + "           FROM public.eg_emarket_fi_report_collection WHERE transaction_number IN (" + in + ") ) x "
+      + " WHERE " + receivableGlPredicate("gl_code")
+      + " GROUP BY transaction_number, gl_code "
+      + "HAVING SUM(CASE WHEN posting_key = '40' THEN collection_amount ELSE -collection_amount END) > 0 "
+      + " ORDER BY transaction_number, gl_code";
+    List<Object> args = new ArrayList<>(ids);
+    args.addAll(ids);
+    args.add(missingFourSeriesGl);
+    args.add(coinFourSeriesGl);
+    try {
+        jdbcTemplate.query(sql, args.toArray(), (ResultSet rs) -> {
+            out.computeIfAbsent(rs.getString(1), k -> new LinkedHashMap<>())
+               .put(rs.getString(2), rs.getBigDecimal(3));
+        });
+    } catch (DataAccessException e) {
+        // Without balances the plan stays inactive and the receipt posts today's single line.
+        log.error("Could not read open receivables for demands {}; posting the single receivable line", ids, e);
+        return new HashMap<>();
+    }
+    return out;
+}
+
+/**
+ * A plan for the regular part of a receipt: each paid demand (bill order) with its open receivable
+ * per GL, or, for a dishonour charge recognised at collection, its charge heads as paid.
+ *
+ * @param paidByDemand amount this receipt paid per demand id, in bill order
+ * @param paidByDetail amount paid per demand-detail id, for the charge heads
+ * @param demandsById  the demands the receipt paid, with their details
+ */
+public RegularCollectionPlan regularCollectionPlan(Map<String, BigDecimal> paidByDemand,
+                                                   Map<String, BigDecimal> paidByDetail,
+                                                   Map<String, Demand> demandsById) {
+    Map<String, Map<String, BigDecimal>> open = openReceivableByDemand(paidByDemand.keySet());
+    List<RegularCollectionPlan.PaidDemand> paid = new ArrayList<>();
+    for (Map.Entry<String, BigDecimal> e : paidByDemand.entrySet()) {
+        Demand d = demandsById.get(e.getKey());
+        List<RegularCollectionPlan.Charge> charges = new ArrayList<>();
+        // Marked AND carrying no receivable of its own. A marked charge that posted its voucher anyway
+        // (billing without marker support at the time) is settled as posted, on that receivable,
+        // or its income would be recognised twice.
+        Map<String, BigDecimal> demandOpen = open.get(e.getKey());
+        if (d != null && isRecognisedOnCollection(d) && (demandOpen == null || demandOpen.isEmpty())
+                && d.getDemandDetails() != null) {
+            for (DemandDetail dd : d.getDemandDetails()) {
+                BigDecimal p = paidByDetail.get(dd.getId());
+                if (p == null || p.signum() <= 0)
+                    continue;
+                String gl = jsonValue(dd.getAdditionalDetails(), "glcode");
+                if (gl == null) {
+                    log.warn("Charge head {} of demand {} has no GL; its payment stays on the receivable",
+                            dd.getTaxHeadMasterCode(), d.getId());
+                    continue;
+                }
+                charges.add(new RegularCollectionPlan.Charge(dd.getTaxHeadMasterCode(), gl.trim(), p,
+                        chargeDimensions(dd, d)));
+            }
+        }
+        paid.add(new RegularCollectionPlan.PaidDemand(e.getKey(), e.getValue(),
+                open.get(e.getKey()), charges));
+    }
+    return new RegularCollectionPlan(paid, "431409936", LEGACY_RECEIVABLE_GLS);
+}
+
+/**
+ * Where a dishonour charge's income posts: the dimensions stamped on its line by emarket-v1
+ * (RentService.stampDishonourChargeDimensions, user rule 22-09-2026), else the demand's own.
+ * Null when neither is complete, which keeps the licensee's market like any other leg.
+ */
+private static FiDimensions chargeDimensions(DemandDetail dd, Demand d) {
+    String fund = firstNonBlank(jsonValue(dd.getAdditionalDetails(), "fund"), jsonValue(d.getAdditionalDetails(), "fund"));
+    String fc = firstNonBlank(jsonValue(dd.getAdditionalDetails(), "fundCenter"), jsonValue(d.getAdditionalDetails(), "fundCenter"));
+    String ba = firstNonBlank(jsonValue(dd.getAdditionalDetails(), "businessArea"), jsonValue(d.getAdditionalDetails(), "businessArea"));
+    String fa = firstNonBlank(jsonValue(dd.getAdditionalDetails(), "functionalArea"), jsonValue(d.getAdditionalDetails(), "functionalArea"));
+    FiDimensions dims = new FiDimensions(fund, fc, ba, fa);
+    return dims.isComplete() ? dims : null;
+}
+
+private static String firstNonBlank(String a, String b) {
+    return a != null ? a : b;
+}
+
+/**
+ * Is this receipt's forward document one only the per-head receivable could have written? True when
+ * it credits any account the original collection builder never credits: a 4-Series receivable, a
+ * placeholder, or a charge's income GL.
+ */
+private static final String OLD_SHAPE_COLLECTION_CREDIT_GLS =
+        "('431409936', '350410215', '350200421', '350200422', '340100300')";
+
+/**
+ * The reversal of a receipt posted with per-head credits: every forward leg given back exactly, its
+ * posting key swapped and its account, amount, dimensions, transaction number and assignment kept.
+ * BMC 24-Sep-2026, "Cheque Reversal Entry" is the collection entry mirrored line for line.
+ *
+ * <p>Returns an empty list when the receipt carries no per-head credit, and the caller then reverses
+ * it the way it always has. Scoped by receipt number AND licence digits, because receipt numbers are
+ * random digits that can repeat across licences.
+ *
+ * @param reversalDate the bank return date for a dishonour, or null to keep each leg's own date
+ */
+public List<FiReport> mirrorPerHeadCollection(String receiptNo, String consumerCode, Long reversalDate) {
+    List<FiReport> rows = new ArrayList<>();
+    if (receiptNo == null || receiptNo.trim().isEmpty() || consumerCode == null || jdbcTemplate == null)
+        return rows;
+    String licence = licenceKey(consumerCode);
+    String scope = " FROM public.eg_emarket_fi_report_collection "
+            + "WHERE document_header_text = ? AND report_type = ? "
+            + "  AND regexp_replace(reference_no, '[^0-9]', '', 'g') = ? ";
+    try {
+        Integer perHead = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*)::int" + scope + " AND posting_key = '50' AND gl_code NOT IN " + OLD_SHAPE_COLLECTION_CREDIT_GLS,
+                new Object[] { receiptNo, FiReportType.UPMKT_COLL, licence }, Integer.class);
+        if (perHead == null || perHead == 0)
+            return rows;
+        long now = System.currentTimeMillis();
+        jdbcTemplate.query(
+                "SELECT transaction_number, doc_date, reference_no, document_header_text, posting_key, gl_code, "
+              + "       collection_amount, fund, fund_centre, functional_area, business_area, remarks, "
+              + "       payment_mode_details, doc_type, assignment" + scope + " ORDER BY id",
+                new Object[] { receiptNo, FiReportType.UPMKT_COLL, licence },
+                (ResultSet rs) -> {
+                    Long date = reversalDate != null ? reversalDate : (Long) rs.getObject("doc_date");
+                    rows.add(FiReport.builder()
+                            .transactionNumber(rs.getString("transaction_number"))
+                            .docDate(date)
+                            .postingDate(date)
+                            .referenceNo(rs.getString("reference_no"))
+                            .documentHeaderText(rs.getString("document_header_text"))
+                            .postingKey("40".equals(rs.getString("posting_key")) ? "50" : "40")
+                            .glCode(rs.getString("gl_code"))
+                            .collectionAmount(rs.getBigDecimal("collection_amount"))
+                            .fund(rs.getString("fund"))
+                            .fundCentre(rs.getString("fund_centre"))
+                            .functionalArea(rs.getString("functional_area"))
+                            .businessArea(rs.getString("business_area"))
+                            .remarks(rs.getString("remarks"))
+                            .paymentModeDetails(rs.getString("payment_mode_details"))
+                            .docType(rs.getString("doc_type"))
+                            .assignment(rs.getString("assignment"))
+                            .isNew(Boolean.TRUE)
+                            .createdAt(now)
+                            .updatedAt(now)
+                            .build());
+                });
+    } catch (DataAccessException e) {
+        // Throwing here would abort the whole cancellation's FI, the advance unwinds after it
+        // included. The rebuilt reversal still balances; it just debits the control account, which
+        // this ERROR makes findable.
+        log.error("Could not mirror the per-head collection of receipt {}; reversing it with the "
+                + "single receivable line instead", receiptNo, e);
+        return new ArrayList<>();
+    }
+    return rows;
 }
 
 /**
@@ -2590,6 +3080,10 @@ public List<FiReport> buildAdvanceSettlementReversalFiReports(String settledDema
     try {
         long now = System.currentTimeMillis();
         List<FiReport> rows = new ArrayList<>();
+        // Under BMC's 24-Sep-2026 entries the settlement credited per-head 4-Series accounts (the
+        // Revenue Adjustment), so the dues go back on THOSE accounts, in the same proportion. A
+        // document posted before that has no such credit and keeps the single receivable line.
+        Map<String, BigDecimal> revenueAdjustment = revenueAdjustmentCredits(settledDemandId);
         jdbcTemplate.query(sql,
                 new Object[] { settledDemandId, FiReportType.UPMKT_DEMDADV, FiReportType.UPMKT_DEMDREV },
                 rs -> {
@@ -2598,14 +3092,48 @@ public List<FiReport> buildAdvanceSettlementReversalFiReports(String settledDema
                     // Give the advance liability back, and put the dues back on the receivable.
                     rows.add(nettingReversalRow(settledDemandId, rs, "350410215", "50",
                             "Advance", residual, docDate, now));
-                    rows.add(nettingReversalRow(settledDemandId, rs, receivableGlCode, "40",
-                            "Receivable from Mun Mkt", residual, docDate, now));
+                    Map<String, BigDecimal> back = PerHeadReceivable.splitByWeights(residual, revenueAdjustment);
+                    if (back.isEmpty()) {
+                        rows.add(nettingReversalRow(settledDemandId, rs, receivableGlCode, "40",
+                                "Receivable from Mun Mkt", residual, docDate, now));
+                    } else {
+                        for (Map.Entry<String, BigDecimal> e : back.entrySet())
+                            rows.add(nettingReversalRow(settledDemandId, rs, e.getKey(), "40",
+                                    REVENUE_ADJUSTMENT_REMARK, e.getValue(), docDate, now));
+                    }
                 });
         return rows;
     } catch (DataAccessException e) {
         log.error("Could not read the advance-settlement leg to reverse for demand {}", settledDemandId, e);
         return Collections.emptyList();
     }
+}
+
+/**
+ * The Revenue Adjustment a demand-against-advance posted, per GL: its pk-50 credits on receivable
+ * accounts. Empty for a document posted before the per-head receivable, or when it cannot be read.
+ */
+private Map<String, BigDecimal> revenueAdjustmentCredits(String demandId) {
+    Map<String, BigDecimal> out = new LinkedHashMap<>();
+    try {
+        jdbcTemplate.query(
+                "SELECT gl_code, SUM(collection_amount) FROM public.eg_emarket_fi_report "
+              + " WHERE transaction_number = ? AND report_type = ? AND posting_key = '50' AND remarks = ? AND "
+              + receivableGlPredicate("gl_code")
+              + " GROUP BY gl_code ORDER BY gl_code",
+                // Identified by the remark only perHeadReceivableRows writes, so no row posted by any
+                // other builder (e.g. the advance-settlement relief) can change an old reversal.
+                new Object[] { demandId, FiReportType.UPMKT_DEMDADV, REVENUE_ADJUSTMENT_REMARK,
+                        missingFourSeriesGl, coinFourSeriesGl },
+                (ResultSet rs) -> {
+                    out.put(rs.getString(1), rs.getBigDecimal(2));
+                });
+    } catch (DataAccessException e) {
+        log.error("Could not read the Revenue Adjustment of demand {}; its settlement reverses onto {}",
+                demandId, receivableGlCode, e);
+        return new LinkedHashMap<>();
+    }
+    return out;
 }
 
 /**
@@ -2736,6 +3264,15 @@ public void postAdvanceSettlementFiReports(Map<String, BigDecimal> settlements) 
 
     if (settlements == null || settlements.isEmpty())
         return;
+
+    // Its receivable choice predates the per-head 4-Series receivable and excludes the very
+    // accounts that feature debits, so with both on it would relieve the wrong account. It is off
+    // in every environment; refuse loudly rather than post a wrong relief if both are switched on.
+    if (perHeadReceivableEnabled) {
+        log.error("Advance settlement relief skipped for {} demand(s): emarket.fi.advance.settlement.existing.demand.enabled "
+                + "is not supported together with emarket.fi.per.head.receivable.enabled", settlements.size());
+        return;
+    }
 
     // The receivable is the only GL a demand document debits once the advance, the GST legs and
     // the 4-Series receivable accounts are excluded; revenue is credited, so its signed balance is
