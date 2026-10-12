@@ -308,6 +308,83 @@ public class DemandValidatorV1 {
 	 * @param errorMap map with error key and msg
 	 * @param mdmsData MDMS data for fetching business service configuration
 	 */
+	/**
+	 * True when {@code existing} is only an advance credit - it has detail lines and every one is a carry-forward
+	 * head - AND sits on a different advanceIndex than {@code incoming}. It bills nothing for the period, and with a
+	 * different advanceIndex the two cannot clash on uk_egbs_demand_v1_consumercode_businessservice. eMarket transfers
+	 * carry the source licence's advance this way (isAdvance false, advanceIndex -1, period = the transfer month), and
+	 * it blocked that month's rent as a "duplicate" (5888888990, Oct-2026).
+	 *
+	 * A credit on the SAME advanceIndex is still a duplicate: the unique index would refuse the insert.
+	 */
+	static boolean isAdvanceCreditOnOtherIndex(Demand existing, Demand incoming) {
+		List<DemandDetail> details = existing.getDemandDetails();
+		if (CollectionUtils.isEmpty(details))
+			return false;
+		for (DemandDetail detail : details) {
+			String head = detail == null ? null : detail.getTaxHeadMasterCode();
+			if (head == null || !head.toUpperCase().contains("CARRYFORWARD"))
+				return false;
+		}
+		int existingIndex = existing.getAdvanceIndex() == null ? 0 : existing.getAdvanceIndex();
+		int incomingIndex = incoming.getAdvanceIndex() == null ? 0 : incoming.getAdvanceIndex();
+		return existingIndex != incomingIndex;
+	}
+
+	private static final java.time.ZoneId TENANT_ZONE = java.time.ZoneId.of("Asia/Kolkata");
+
+	/**
+	 * True when {@code existing} is an eMarket transfer's carried-dues demand (advanceIndex -1) whose rent lines
+	 * carried only months OTHER than {@code incoming}'s. A transfer raises the source licence's unpaid rent as one
+	 * demand dated in the transfer month, the real span on each line's additionalDetails.periodFrom/periodTo; dues
+	 * for March-July on an October demand left October's own rent refused as a duplicate (5888888995, 08-10-2026).
+	 * It is then not a duplicate: the two differ on advanceIndex, so uk_egbs_demand_v1_consumercode_businessservice
+	 * cannot clash either. A carried demand whose lines DO include the month, or carry no numeric span, is still a
+	 * duplicate, exactly as before. Carry-forward credit lines are not billed rent and are ignored.
+	 */
+	static boolean isCarriedDuesOutsideMonth(Demand existing, Demand incoming) {
+		if (existing.getAdvanceIndex() == null || existing.getAdvanceIndex() != -1
+				|| incoming.getTaxPeriodFrom() == null || CollectionUtils.isEmpty(existing.getDemandDetails()))
+			return false;
+		long from = Long.MAX_VALUE;
+		long to = Long.MIN_VALUE;
+		for (DemandDetail detail : existing.getDemandDetails()) {
+			if (detail == null) continue;
+			String head = detail.getTaxHeadMasterCode();
+			if (head == null || head.toUpperCase().contains("CARRYFORWARD")) continue;
+			Long pf = epochField(detail.getAdditionalDetails(), "periodFrom");
+			Long pt = epochField(detail.getAdditionalDetails(), "periodTo");
+			if (pf == null || pt == null) continue;
+			from = Math.min(from, Math.min(pf, pt));
+			to = Math.max(to, Math.max(pf, pt));
+		}
+		if (from == Long.MAX_VALUE)
+			return false;
+		java.time.YearMonth month = monthOf(incoming.getTaxPeriodFrom());
+		return monthOf(from).isAfter(month) || monthOf(to).isBefore(month);
+	}
+
+	private static java.time.YearMonth monthOf(long epochMillis) {
+		return java.time.YearMonth.from(java.time.Instant.ofEpochMilli(epochMillis).atZone(TENANT_ZONE));
+	}
+
+	/** A numeric epoch-millis value from a detail's additionalDetails (JsonNode from the row mapper, or a Map). */
+	static Long epochField(Object additionalDetails, String key) {
+		Object v = null;
+		if (additionalDetails instanceof com.fasterxml.jackson.databind.JsonNode) {
+			com.fasterxml.jackson.databind.JsonNode node = (com.fasterxml.jackson.databind.JsonNode) additionalDetails;
+			if (node.has(key)) {
+				com.fasterxml.jackson.databind.JsonNode n = node.get(key);
+				v = n.isNumber() ? (Object) n.asLong() : n.asText(null);
+			}
+		} else if (additionalDetails instanceof Map) {
+			v = ((Map<?, ?>) additionalDetails).get(key);
+		}
+		if (v instanceof Number) return ((Number) v).longValue();
+		if (v instanceof String && ((String) v).trim().matches("[0-9]{1,15}")) return Long.parseLong(((String) v).trim());
+		return null;
+	}
+
 	private void validateConsumerCodes(List<Demand> demands, Map<String, Set<String>> businessConsumerValidatorMap,
 			Map<String, String> errorMap, DocumentContext mdmsData) {
 
@@ -368,6 +445,12 @@ public class DemandValidatorV1 {
 				// Only check against non-advance demands with advanceIndex=0
 				if (Boolean.TRUE.equals(demandFromMap.getIsAdvance()) ||
 					(demandFromMap.getAdvanceIndex() != null && demandFromMap.getAdvanceIndex() > 0)) {
+					continue;
+				}
+				if (isAdvanceCreditOnOtherIndex(demandFromMap, demand)) {
+					continue;
+				}
+				if (isCarriedDuesOutsideMonth(demandFromMap, demand)) {
 					continue;
 				}
 

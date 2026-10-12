@@ -225,12 +225,16 @@ public class PaymentValidator {
                         CHEQUE_DD_DATE_WITH_MANUAL_RECEIPT_DATE_MESSAGE);
             }
 
-        } else {
-            Days daysDiff = Days.daysBetween(instrumentDate, new DateTime());
-            if (daysDiff.getDays() > Integer.valueOf(INSTRUMENT_DATE_DAYS)) {
+        } else if (payment.getInstrumentDate() != null) {
+            // By IST calendar day and a 3-month window (see ChequeDateWindow): today's cheque is no longer refused as
+            // "future" for being sent as 23:59:59, nor the oldest day of a 3-month window for exceeding 90 days. Only
+            // ever accepts more than the instant-based checks it replaces. A missing date (update path) passes, as
+            // before, when it was read as "now".
+            long now = System.currentTimeMillis();
+            if (ChequeDateWindow.isTooOld(payment.getInstrumentDate(), now, Integer.valueOf(INSTRUMENT_DATE_DAYS))) {
                 errorMap.put("CHEQUE_DD_DATE_WITH_RECEIPT_DATE", CHEQUE_DD_DATE_WITH_RECEIPT_DATE_MESSAGE);
             }
-            if (instrumentDate.isAfter(new DateTime().getMillis())) {
+            if (ChequeDateWindow.isFutureDated(payment.getInstrumentDate(), now)) {
                 errorMap.put("CHEQUE_DD_DATE_WITH_FUTURE_DATE", CHEQUE_DD_DATE_WITH_FUTURE_DATE_MESSAGE);
             }
         }
