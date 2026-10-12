@@ -2336,6 +2336,12 @@ private List<FiReport> regularCreditRows(Demand demand, RegularCollectionPlan pl
     for (RegularCollectionPlan.Credit c : plan.creditsFor(amount, demand.getId())) {
         FiReport row = fiRow(demand, c.glCode, "50", false, c.amount, c.remarks, collectionDate);
         row.setTransactionNumber(c.demandId);
+        if (c.docDate != null) {
+            // A dishonour charge is dated the day the bank returned the cheque (user decision
+            // 12-10-2026), on its own lines only; the rest of the receipt keeps the collection date.
+            row.setDocDate(c.docDate);
+            row.setPostingDate(c.docDate);
+        }
         if (c.dimensions != null) {
             row.setFund(c.dimensions.getFund());
             row.setFundCentre(c.dimensions.getFundCentre());
@@ -2443,8 +2449,11 @@ public RegularCollectionPlan regularCollectionPlan(Map<String, BigDecimal> paidB
                             dd.getTaxHeadMasterCode(), d.getId());
                     continue;
                 }
+                // Dated the bank dishonour date the clerk entered, which RentService stamps on the
+                // charge demand; a charge without one keeps the collection date.
                 charges.add(new RegularCollectionPlan.Charge(dd.getTaxHeadMasterCode(), gl.trim(), p,
-                        chargeDimensions(dd, d)));
+                        chargeDimensions(dd, d),
+                        org.egov.demand.util.DishonourDate.fromAdditionalDetails(d.getAdditionalDetails())));
             }
         }
         paid.add(new RegularCollectionPlan.PaidDemand(e.getKey(), e.getValue(),

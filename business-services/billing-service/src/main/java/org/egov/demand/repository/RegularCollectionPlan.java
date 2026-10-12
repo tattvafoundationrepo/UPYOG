@@ -36,12 +36,19 @@ public final class RegularCollectionPlan {
         final String glCode;
         final BigDecimal paid;
         final FiDimensions dimensions;
+        /** The bank dishonour date (doc and posting date of this credit), or null for the collection date. */
+        final Long docDate;
 
         public Charge(String taxHeadCode, String glCode, BigDecimal paid, FiDimensions dimensions) {
+            this(taxHeadCode, glCode, paid, dimensions, null);
+        }
+
+        public Charge(String taxHeadCode, String glCode, BigDecimal paid, FiDimensions dimensions, Long docDate) {
             this.taxHeadCode = taxHeadCode;
             this.glCode = glCode;
             this.paid = paid;
             this.dimensions = dimensions;
+            this.docDate = docDate;
         }
     }
 
@@ -71,13 +78,21 @@ public final class RegularCollectionPlan {
         public final String remarks;
         /** Null to keep the licensee's market dimensions, as every receivable leg always has. */
         public final FiDimensions dimensions;
+        /** Doc and posting date of this leg, or null for the receipt's collection date. */
+        public final Long docDate;
 
         Credit(String glCode, BigDecimal amount, String demandId, String remarks, FiDimensions dimensions) {
+            this(glCode, amount, demandId, remarks, dimensions, null);
+        }
+
+        Credit(String glCode, BigDecimal amount, String demandId, String remarks, FiDimensions dimensions,
+               Long docDate) {
             this.glCode = glCode;
             this.amount = amount;
             this.demandId = demandId;
             this.remarks = remarks;
             this.dimensions = dimensions;
+            this.docDate = docDate;
         }
 
         @Override
@@ -137,7 +152,7 @@ public final class RegularCollectionPlan {
                     BigDecimal take = c.paid.min(available);
                     if (take.signum() <= 0 || c.glCode == null)
                         continue;
-                    out.add(new Credit(c.glCode, take, d.demandId, c.taxHeadCode, c.dimensions));
+                    out.add(new Credit(c.glCode, take, d.demandId, c.taxHeadCode, c.dimensions, c.docDate));
                     available = available.subtract(take);
                 }
                 continue;
@@ -164,7 +179,7 @@ public final class RegularCollectionPlan {
                     : c.demandId + "|" + c.glCode + "|" + c.remarks;
             Credit prev = byKey.get(key);
             byKey.put(key, prev == null ? c
-                    : new Credit(c.glCode, prev.amount.add(c.amount), c.demandId, c.remarks, c.dimensions));
+                    : new Credit(c.glCode, prev.amount.add(c.amount), c.demandId, c.remarks, c.dimensions, c.docDate));
         }
         return new ArrayList<>(byKey.values());
     }

@@ -476,6 +476,29 @@ public class PerHeadReceivableFiTest {
     }
 
     @Test
+    void chargeLinesCarryTheBankDishonourDateAndTheRestTheCollectionDate() throws Exception {
+        long collected = 1791763200000L;   // 12-10-2026, the day the cash was taken
+        long dishonoured = 1791158400000L; // 05-10-2026 00:00 UTC, the bank return date entered
+        DemandRepository r = repo(true, false);
+        List<FiReport> rent = build(r, pdfDemand("d12", false));
+        FiDimensions dims = new FiDimensions("11", "1000130000", "1000", "00301000000");
+        RegularCollectionPlan p = new RegularCollectionPlan(Arrays.asList(
+                new RegularCollectionPlan.PaidDemand("d12", bd("130"), open(rent, "d12"), null),
+                new RegularCollectionPlan.PaidDemand("cbf12", bd("240"), null, Arrays.asList(
+                        new RegularCollectionPlan.Charge("CHQ_BOUNCE_CHARGE", "180809906", bd("200"), dims, dishonoured),
+                        new RegularCollectionPlan.Charge("Administrative_Charge", "140709903", bd("40"), dims, null)))),
+                RECEIVABLE, DemandRepository.LEGACY_RECEIVABLE_GLS);
+        List<FiReport> coll = r.buildCollectionFiReports(voucher("d12"), FiFlow.GST_REGULAR, bd("370"), bd("9.90"),
+                bd("9.90"), false, collected, p);
+        for (FiReport x : coll) {
+            long expected = "180809906".equals(x.getGlCode()) ? dishonoured : collected;
+            assertEquals(expected, x.getDocDate().longValue(), "doc date of " + x.getGlCode());
+            assertEquals(expected, x.getPostingDate().longValue(), "posting date of " + x.getGlCode());
+        }
+        assertBalanced(coll);
+    }
+
+    @Test
     void theRegularHalfOfASplitReceiptUsesThePlanAndTheAdvanceHalfIsUntouched() throws Exception {
         DemandRepository r = repo(true, false);
         List<FiReport> rent = build(r, pdfDemand("d10", false));
