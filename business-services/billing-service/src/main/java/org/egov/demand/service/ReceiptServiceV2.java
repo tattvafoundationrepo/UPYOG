@@ -83,6 +83,14 @@ public class ReceiptServiceV2 {
 	private boolean mixedReceiptSplitEnabled;
 
 	/**
+	 * Split a receipt that pays a deposit AND other demands into a deposit voucher and a regular one,
+	 * instead of crediting the whole receipt to Security Deposit (340100300). Off by default: with it
+	 * false every receipt containing a deposit posts exactly as before.
+	 */
+	@org.springframework.beans.factory.annotation.Value("${emarket.fi.deposit.receipt.split.enabled:false}")
+	private boolean depositReceiptSplitEnabled;
+
+	/**
 	 * Decide advance-vs-regular from the payment's own advance fields rather than from an advance
 	 * carry-forward head left on the licensee's demands. Off by default: with it false the flow is
 	 * chosen exactly as before.
@@ -451,10 +459,19 @@ public class ReceiptServiceV2 {
 			// demand actually debited. Inactive (today's single line) unless a paid demand carries a
 			// per-head balance or is a dishonour charge recognised at collection.
 			// A deposit voucher has no receivable leg to place, so it is not even looked up.
-			RegularCollectionPlan regularPlan = flow == FiFlow.DEPOSIT ? null : regularCollectionPlan(bills, demandIdMap);
+			// A receipt that pays a deposit together with other demands (a transfer's licence fee +
+			// deposit + transfer fee, a permission's premium + deposit) is split: only the deposit
+			// goes to Security Deposit, the rest clears its receivables like any regular receipt.
+			List<FiReport> report = flow == FiFlow.DEPOSIT && depositReceiptSplitEnabled
+					? buildDepositSplitRows(d, demandRequest.getDemands(), bills, demandIdMap, total, gstAdvanceMap,
+							collectionDate)
+					: null;
 
-			List<FiReport> report = buildCollectionRows(d, flow, total, cgst, sgst, gstAdvanceMap, false, collectionDate,
-					regularPlan);
+			if (report == null) {
+				RegularCollectionPlan regularPlan = flow == FiFlow.DEPOSIT ? null : regularCollectionPlan(bills, demandIdMap);
+				report = buildCollectionRows(d, flow, total, cgst, sgst, gstAdvanceMap, false, collectionDate,
+						regularPlan);
+			}
 
 			// Label only; the accounting rows are unaffected. Every collection — advance or
 			// regular — is a market collection. The advance is identified downstream by its
@@ -554,14 +571,11 @@ public class ReceiptServiceV2 {
 			Long reversalDate = dishonourDate != null ? dishonourDate : collectionDate;
 			log.info("Reversal FI date for payment {}: {} (dishonour date {})", paymentId, reversalDate, dishonourDate);
 
-			// A receipt posted with per-head credits is given back leg for leg (BMC 24-Sep-2026, "Cheque
-			// Reversal Entry"). Empty for every receipt posted the old way, which reverses as before.
-			List<FiReport> report = demandRepository.mirrorPerHeadCollection(d.getFiReceiptNo(), d.getConsumerCode(),
-					dishonourDate);
+			List<FiReport> report = mirroredReversal(d, dishonourDate);
 			if (report.isEmpty())
 				report = buildCollectionRows(d, flow, total, cgst, sgst, gstAdvanceMap, true, reversalDate, null);
 			else
-				log.info("Reversal of receipt {} mirrors its {} per-head legs", d.getFiReceiptNo(), report.size());
+				log.info("Reversal of receipt {} mirrors its {} posted legs", d.getFiReceiptNo(), report.size());
 
 			// Label only (accounting rows unchanged): receipt cancellation -> collection reversal.
 			report.forEach(r -> r.setReportType(FiReportType.UPMKT_COLREV));
@@ -792,6 +806,12 @@ public class ReceiptServiceV2 {
 	 * amounts. Never fails the receipt: any problem yields an inactive plan, i.e. today's voucher.
 	 */
 	RegularCollectionPlan regularCollectionPlan(List<BillV2> bills, Map<String, Demand> demandsById) {
+		return regularCollectionPlan(bills, demandsById, Collections.emptySet());
+	}
+
+	/** As above, leaving out the demands in {@code excludedDemandIds} (the deposit of a split receipt). */
+	RegularCollectionPlan regularCollectionPlan(List<BillV2> bills, Map<String, Demand> demandsById,
+			Set<String> excludedDemandIds) {
 		Map<String, BigDecimal> paidByDemand = new LinkedHashMap<>();
 		Map<String, BigDecimal> paidByDetail = new HashMap<>();
 		try {
@@ -799,7 +819,7 @@ public class ReceiptServiceV2 {
 				if (bill.getBillDetails() == null)
 					continue;
 				for (BillDetailV2 bd : bill.getBillDetails()) {
-					if (bd.getDemandId() == null)
+					if (bd.getDemandId() == null || excludedDemandIds.contains(bd.getDemandId()))
 						continue;
 					BigDecimal lines = BigDecimal.ZERO;
 					if (bd.getBillAccountDetails() != null) {
@@ -819,6 +839,113 @@ public class ReceiptServiceV2 {
 			log.error("Could not build the per-head collection plan; posting the single receivable line", e);
 			return null;
 		}
+	}
+
+	/**
+	 * Collection rows for a receipt that pays a deposit together with other demands: a deposit voucher
+	 * for what the deposit demands received (Cr 340100300, referenced to the deposit demand) and, for
+	 * the rest, the voucher the other demands would get on their own (regular, per-head or advance).
+	 *
+	 * <p>Before this, {@link #determineFiFlow} made the whole receipt a deposit, so a transfer's licence
+	 * fee and transfer fee (MARKET/26-27/000126, Rs 1,900) and a permission's premium and debris
+	 * (MARKET/26-27/000136, Rs 15,200) were credited to Security Deposit and their receivables, debited
+	 * when the demands were raised, never cleared.
+	 *
+	 * @return null when the receipt is not mixed (nothing but deposit, or the bills do not show what
+	 *         the deposit received); the caller then posts it as before
+	 */
+	List<FiReport> buildDepositSplitRows(Demand d, List<Demand> demands, List<BillV2> bills,
+			Map<String, Demand> demandsById, BigDecimal total, GstAdvanceMap m, Long collectionDate) {
+
+		List<Demand> deposits = new ArrayList<>();
+		List<Demand> others = new ArrayList<>();
+		for (Demand demand : demands)
+			(isDepositDemand(demand) ? deposits : others).add(demand);
+		if (deposits.isEmpty() || others.isEmpty())
+			return null;
+
+		Set<String> depositIds = deposits.stream().map(Demand::getId).collect(Collectors.toSet());
+		BigDecimal depositPart = BigDecimal.ZERO;
+		for (BillV2 bill : bills) {
+			if (bill.getBillDetails() == null)
+				continue;
+			for (BillDetailV2 bd : bill.getBillDetails()) {
+				if (bd.getDemandId() == null || !depositIds.contains(bd.getDemandId()))
+					continue;
+				// As regularCollectionPlan reads a bill detail: amountPaid, else its lines' adjusted amounts.
+				BigDecimal paid = bd.getAmountPaid();
+				if (paid == null && bd.getBillAccountDetails() != null) {
+					paid = BigDecimal.ZERO;
+					for (BillAccountDetailV2 bad : bd.getBillAccountDetails())
+						paid = paid.add(nz(bad.getAdjustedAmount()));
+				}
+				depositPart = depositPart.add(nz(paid));
+			}
+		}
+		BigDecimal rest = total.subtract(depositPart);
+		if (!isPositive(depositPart) || !isPositive(rest)) {
+			log.warn("Receipt {} pays a deposit with other demands but the split could not be made "
+					+ "(deposit paid {}, total {}); posting it whole as a deposit", d.getFiReceiptNo(), depositPart, total);
+			return null;
+		}
+
+		FiFlow restFlow = determineFiFlow(others, m);
+		BigDecimal cgst = restFlow == FiFlow.GST_REGULAR ? sumDetails(others, "CGST") : nz(m.getCgstAmount());
+		BigDecimal sgst = restFlow == FiFlow.GST_REGULAR ? sumDetails(others, "SGST") : nz(m.getSgstAmount());
+		log.info("Deposit receipt {} split: deposit={} rest={} as {}", d.getFiReceiptNo(), depositPart, rest, restFlow);
+
+		List<FiReport> rows = new ArrayList<>(demandRepository.buildCollectionFiReports(referencedTo(d, deposits.get(0)),
+				FiFlow.DEPOSIT, depositPart, BigDecimal.ZERO, BigDecimal.ZERO, false, collectionDate));
+		RegularCollectionPlan plan = restFlow == FiFlow.NON_GST_REGULAR || restFlow == FiFlow.GST_REGULAR
+				? regularCollectionPlan(bills, demandsById, depositIds) : null;
+		rows.addAll(buildCollectionRows(referencedTo(d, others.get(0)), restFlow, rest, cgst, sgst, m, false,
+				collectionDate, plan));
+		return rows;
+	}
+
+	/**
+	 * The reversal of a receipt whose forward document must be given back exactly as posted, or empty when
+	 * the caller should rebuild it from the flow as before.
+	 * <ul>
+	 * <li>Per-head credits (BMC 24-Sep-2026, "Cheque Reversal Entry"): mirrored leg for leg.</li>
+	 * <li>A split deposit receipt (it credits Security Deposit AND another account): mirrored leg for leg.</li>
+	 * </ul>
+	 * Decided by the POSTED document only, deliberately without the receipt's flow: by the time a cancellation
+	 * gets here {@link #reversalAsPosted} has turned a split receipt's DEPOSIT flow into the regular or advance
+	 * flow of its other half, so a flow test would never see the split (and rebuilt the whole receipt onto the
+	 * receivable, leaving the deposit on 340100300 for ever).
+	 */
+	List<FiReport> mirroredReversal(Demand d, Long dishonourDate) {
+		List<FiReport> report = demandRepository.mirrorPerHeadCollection(d.getFiReceiptNo(), d.getConsumerCode(),
+				dishonourDate);
+		if (report.isEmpty())
+			report = demandRepository.mirrorSplitDepositCollection(d.getFiReceiptNo(), d.getConsumerCode(),
+					dishonourDate);
+		return report;
+	}
+
+	/** The receipt's voucher header (dimensions, receipt no., payment mode) referenced to another demand. */
+	private static Demand referencedTo(Demand receipt, Demand target) {
+		Demand r = new Demand();
+		r.setConsumerCode(target.getConsumerCode());
+		r.setBusinessService(target.getBusinessService());
+		r.setId(target.getId());
+		r.setTaxPeriodFrom(target.getTaxPeriodFrom());
+		r.setTaxPeriodTo(target.getTaxPeriodTo());
+		r.setFund(receipt.getFund());
+		r.setFundCenter(receipt.getFundCenter());
+		r.setBusinessArea(receipt.getBusinessArea());
+		r.setFunctionalArea(receipt.getFunctionalArea());
+		r.setPaymentMode(receipt.getPaymentMode());
+		r.setFiReceiptNo(receipt.getFiReceiptNo());
+		r.setCollectingDimensions(receipt.getCollectingDimensions());
+		return r;
+	}
+
+	private static boolean isDepositDemand(Demand d) {
+		return "TX.Emarket_Deposit_Fees".equalsIgnoreCase(d.getBusinessService())
+				|| (d.getDemandDetails() != null && d.getDemandDetails().stream()
+						.anyMatch(dd -> "DEPOSIT".equalsIgnoreCase(dd.getTaxHeadMasterCode())));
 	}
 
 	/**
@@ -1003,10 +1130,7 @@ public class ReceiptServiceV2 {
 	 */
 	private FiFlow determineFiFlow(List<Demand> demands, GstAdvanceMap m) {
 
-		boolean isDeposit = demands.stream().anyMatch(d ->
-				"TX.Emarket_Deposit_Fees".equalsIgnoreCase(d.getBusinessService())
-				|| (d.getDemandDetails() != null && d.getDemandDetails().stream()
-						.anyMatch(dd -> "DEPOSIT".equalsIgnoreCase(dd.getTaxHeadMasterCode()))));
+		boolean isDeposit = demands.stream().anyMatch(ReceiptServiceV2::isDepositDemand);
 		if (isDeposit)
 			return FiFlow.DEPOSIT;
 

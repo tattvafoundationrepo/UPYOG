@@ -2513,36 +2513,7 @@ public List<FiReport> mirrorPerHeadCollection(String receiptNo, String consumerC
                 new Object[] { receiptNo, FiReportType.UPMKT_COLL, licence }, Integer.class);
         if (perHead == null || perHead == 0)
             return rows;
-        long now = System.currentTimeMillis();
-        jdbcTemplate.query(
-                "SELECT transaction_number, doc_date, reference_no, document_header_text, posting_key, gl_code, "
-              + "       collection_amount, fund, fund_centre, functional_area, business_area, remarks, "
-              + "       payment_mode_details, doc_type, assignment" + scope + " ORDER BY id",
-                new Object[] { receiptNo, FiReportType.UPMKT_COLL, licence },
-                (ResultSet rs) -> {
-                    Long date = reversalDate != null ? reversalDate : (Long) rs.getObject("doc_date");
-                    rows.add(FiReport.builder()
-                            .transactionNumber(rs.getString("transaction_number"))
-                            .docDate(date)
-                            .postingDate(date)
-                            .referenceNo(rs.getString("reference_no"))
-                            .documentHeaderText(rs.getString("document_header_text"))
-                            .postingKey("40".equals(rs.getString("posting_key")) ? "50" : "40")
-                            .glCode(rs.getString("gl_code"))
-                            .collectionAmount(rs.getBigDecimal("collection_amount"))
-                            .fund(rs.getString("fund"))
-                            .fundCentre(rs.getString("fund_centre"))
-                            .functionalArea(rs.getString("functional_area"))
-                            .businessArea(rs.getString("business_area"))
-                            .remarks(rs.getString("remarks"))
-                            .paymentModeDetails(rs.getString("payment_mode_details"))
-                            .docType(rs.getString("doc_type"))
-                            .assignment(rs.getString("assignment"))
-                            .isNew(Boolean.TRUE)
-                            .createdAt(now)
-                            .updatedAt(now)
-                            .build());
-                });
+        return mirrorCollection(scope, receiptNo, licence, reversalDate);
     } catch (DataAccessException e) {
         // Throwing here would abort the whole cancellation's FI, the advance unwinds after it
         // included. The rebuilt reversal still balances; it just debits the control account, which
@@ -2551,6 +2522,72 @@ public List<FiReport> mirrorPerHeadCollection(String receiptNo, String consumerC
                 + "single receivable line instead", receiptNo, e);
         return new ArrayList<>();
     }
+}
+
+/**
+ * The reversal of a receipt that paid a deposit together with other demands and was posted split
+ * (ReceiptServiceV2.buildDepositSplitRows): its forward document credits Security Deposit AND some
+ * other account. Every leg is given back exactly, as {@link #mirrorPerHeadCollection} does.
+ *
+ * <p>Empty when the receipt credited Security Deposit alone (a pure deposit, or a mixed receipt
+ * posted whole before the split), and the caller then reverses it whole, which is how it was booked.
+ */
+public List<FiReport> mirrorSplitDepositCollection(String receiptNo, String consumerCode, Long reversalDate) {
+    if (receiptNo == null || receiptNo.trim().isEmpty() || consumerCode == null || jdbcTemplate == null)
+        return new ArrayList<>();
+    String licence = licenceKey(consumerCode);
+    String scope = " FROM public.eg_emarket_fi_report_collection "
+            + "WHERE document_header_text = ? AND report_type = ? "
+            + "  AND regexp_replace(reference_no, '[^0-9]', '', 'g') = ? ";
+    try {
+        Integer split = jdbcTemplate.queryForObject(
+                "SELECT (COUNT(*) FILTER (WHERE gl_code = '340100300') > 0"
+              + "    AND COUNT(*) FILTER (WHERE gl_code <> '340100300') > 0)::int"
+              + scope + " AND posting_key = '50'",
+                new Object[] { receiptNo, FiReportType.UPMKT_COLL, licence }, Integer.class);
+        if (split == null || split == 0)
+            return new ArrayList<>();
+        return mirrorCollection(scope, receiptNo, licence, reversalDate);
+    } catch (DataAccessException e) {
+        log.error("Could not mirror the split deposit collection of receipt {}; reversing it whole "
+                + "as a deposit instead", receiptNo, e);
+        return new ArrayList<>();
+    }
+}
+
+/** Every posted leg of the receipt in {@code scope}, posting keys swapped, in posting order. */
+private List<FiReport> mirrorCollection(String scope, String receiptNo, String licence, Long reversalDate) {
+    List<FiReport> rows = new ArrayList<>();
+    long now = System.currentTimeMillis();
+    jdbcTemplate.query(
+            "SELECT transaction_number, doc_date, reference_no, document_header_text, posting_key, gl_code, "
+          + "       collection_amount, fund, fund_centre, functional_area, business_area, remarks, "
+          + "       payment_mode_details, doc_type, assignment" + scope + " ORDER BY id",
+            new Object[] { receiptNo, FiReportType.UPMKT_COLL, licence },
+            (ResultSet rs) -> {
+                Long date = reversalDate != null ? reversalDate : (Long) rs.getObject("doc_date");
+                rows.add(FiReport.builder()
+                        .transactionNumber(rs.getString("transaction_number"))
+                        .docDate(date)
+                        .postingDate(date)
+                        .referenceNo(rs.getString("reference_no"))
+                        .documentHeaderText(rs.getString("document_header_text"))
+                        .postingKey("40".equals(rs.getString("posting_key")) ? "50" : "40")
+                        .glCode(rs.getString("gl_code"))
+                        .collectionAmount(rs.getBigDecimal("collection_amount"))
+                        .fund(rs.getString("fund"))
+                        .fundCentre(rs.getString("fund_centre"))
+                        .functionalArea(rs.getString("functional_area"))
+                        .businessArea(rs.getString("business_area"))
+                        .remarks(rs.getString("remarks"))
+                        .paymentModeDetails(rs.getString("payment_mode_details"))
+                        .docType(rs.getString("doc_type"))
+                        .assignment(rs.getString("assignment"))
+                        .isNew(Boolean.TRUE)
+                        .createdAt(now)
+                        .updatedAt(now)
+                        .build());
+            });
     return rows;
 }
 
