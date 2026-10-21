@@ -93,14 +93,15 @@ public final class PerHeadReceivable {
      * <ul>
      *   <li>Each revenue head with a positive amount gets one line on its own receivable GL.</li>
      *   <li>That line also carries the head's proportional share of CGST + SGST.</li>
-     *   <li>Each positive round-off head gets its own line on {@code coinGl}.</li>
+     *   <li>Each positive round-off head gets its own line on {@code coinGl}, or on its own GL when
+     *       {@code coinGl} is null (no round-off receivable configured; user decision 21-10-2026: never NA).</li>
      *   <li>Anything else, such as a negative advance carry-forward or a negative round-off, is
      *       netted into the revenue lines in proportion.</li>
      * </ul>
      *
      * @param heads           every non-netting detail with a non-zero amount, in posting order
      * @param totalReceivable what the single receivable line would have carried
-     * @param coinGl          the round-off receivable GL
+     * @param coinGl          the round-off receivable GL, or null to post each round-off on its own GL
      * @return the lines, which sum to exactly {@code totalReceivable}. An empty list means the
      *         demand has no revenue head to split by (an advance vessel, for instance); the caller
      *         keeps the single receivable line it has always posted.
@@ -119,7 +120,7 @@ public final class PerHeadReceivable {
             if (isRoundOffHead(h.taxHeadCode) && h.amount.signum() > 0) {
                 // A negative round-off is left to the netting below: a negative receivable line
                 // could never be cleared by a collection.
-                coinLines.add(new Line(h.taxHeadCode, coinGl, h.amount));
+                coinLines.add(new Line(h.taxHeadCode, coinGl != null ? coinGl : h.receivableGl, h.amount));
                 accounted = accounted.add(h.amount);
             } else if (isGstHead(h.taxHeadCode)) {
                 gst = gst.add(h.amount);

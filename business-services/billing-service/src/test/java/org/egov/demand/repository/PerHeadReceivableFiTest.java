@@ -251,7 +251,10 @@ public class PerHeadReceivableFiTest {
         List<FiReport> rows = build(repo(true, false), pdfDemand("d1", false));
         assertAmount("118", on(rows, STALLAGE_T_4S, "40"), "Dr Revenue Stallage");
         assertAmount("11.80", on(rows, LOFT_T_4S, "40"), "Dr Revenue Loft");
-        assertAmount("0.20", on(rows, NA, "40"), "Dr 4 Series Coin note");
+        assertAmount("0.20", on(rows, COIN, "40"), "Dr Coin note on its own GL, never NA");
+        assertAmount("0", on(rows, NA, "40"), "nothing on NA");
+        rows.stream().filter(x -> COIN.equals(x.getGlCode()) && "40".equals(x.getPostingKey()))
+                .forEach(x -> assertEquals("Receivable from Mun Mkt", x.getRemarks(), "marked as the receivable"));
         assertAmount("100", on(rows, STALLAGE_T, "50"), "Cr Stallage");
         assertAmount("10", on(rows, LOFT_T, "50"), "Cr Loft");
         assertAmount("9.90", on(rows, "350200421", "50"), "Cr CGST");
@@ -273,13 +276,76 @@ public class PerHeadReceivableFiTest {
     }
 
     @Test
-    void aHeadWithNoFourSeriesGlPostsNa() throws Exception {
+    void aHeadWithNoFourSeriesGlPostsItsOwnGlNeverNa() throws Exception {
         Demand penalty = demand("p1", false, detail("STALLAGE_PENALTY", "60", "0", "140409942", null),
                 detail("RENT_PENALTY_CA", "0.25", "0", COIN, null));
         penalty.setBusinessService("TX.Emarket_Penalty_Fees");
         List<FiReport> rows = build(repo(true, false), penalty);
-        assertAmount("60.25", on(rows, NA, "40"), "penalty and its round-off on NA");
+        assertAmount("0", on(rows, NA, "40"), "user decision 21-10-2026: never NA while a GL exists");
+        assertAmount("60", on(rows, "140409942", "40"), "penalty receivable on its own GL");
+        assertAmount("0.25", on(rows, COIN, "40"), "round-off receivable on its own GL");
+        rows.stream().filter(x -> "40".equals(x.getPostingKey()))
+                .forEach(x -> assertEquals("Receivable from Mun Mkt", x.getRemarks(), x.getGlCode()));
+        Map<String, BigDecimal> open = open(rows, "p1");
+        assertAmount("60", open.get("140409942"), "the revenue credit on the same GL does not cancel the receivable");
+        assertAmount("0.25", open.get(COIN), "nor does the round-off credit");
         assertBalanced(rows);
+    }
+
+    @Test
+    void theKillSwitchRestoresTheNaPlaceholderExactly() throws Exception {
+        DemandRepository off = repo(true, false);
+        set(off, "useOwnGlWhenNoFourSeries", false);
+        Demand penalty = demand("k1", false, detail("STALLAGE_PENALTY", "60", "0", "140409942", null),
+                detail("RENT_PENALTY_CA", "0.25", "0", COIN, null));
+        penalty.setBusinessService("TX.Emarket_Penalty_Fees");
+        List<FiReport> rows = build(off, penalty);
+        assertAmount("60.25", on(rows, NA, "40"), "off: penalty and round-off on NA, as before 21-10-2026");
+        rows.stream().filter(x -> NA.equals(x.getGlCode()))
+                .forEach(x -> assertTrue(!"Receivable from Mun Mkt".equals(x.getRemarks()), "off: head remarks, as before"));
+        assertEquals(NA, off.receivableGlFor(detail("PREMIUM", "500", "0", "140110300", null)));
+        assertBalanced(rows);
+        // and the same demand with the switch on (the default)
+        List<FiReport> on = build(repo(true, false), penalty);
+        assertAmount("0", on(on, NA, "40"), "on: nothing on NA");
+        assertBalanced(on);
+    }
+
+    @Test
+    void aRealCoinGlIsHonouredAndOnlyThePlaceholderFallsBackToTheHeadsOwnGl() throws Exception {
+        DemandRepository r = repo(true, false);
+        set(r, "coinFourSeriesGl", "431409990");
+        assertEquals("431409990", r.configuredCoinGl(), "a real coin GL is used");
+        set(r, "missingFourSeriesGl", "431409990");
+        assertEquals("431409990", r.configuredCoinGl(), "even when it equals the missing-GL value (property default)");
+        set(r, "coinFourSeriesGl", " na ");
+        assertEquals(null, r.configuredCoinGl(), "the placeholder means: the round-off head's own GL");
+        set(r, "coinFourSeriesGl", "");
+        assertEquals(null, r.configuredCoinGl());
+    }
+
+    @Test
+    void theReceivablesBmcAddedOn21OctAreFourSeries() throws Exception {
+        DemandRepository r = repo(true, false);
+        assertTrue(r.isFourSeriesOrPlaceholderGl("431409978"), "licence late-payment composition");
+        assertTrue(r.isFourSeriesOrPlaceholderGl("431409986"), "transfer fees / submission charges");
+        assertFalse(r.isFourSeriesOrPlaceholderGl("431409987"), "outside the block");
+        assertFalse(r.isFourSeriesOrPlaceholderGl("140409942"), "a revenue GL");
+        Demand fee = demand("t1", false, detail("PREMIUM", "81000", "0", "140800300", "431409983"));
+        fee.setBusinessService("TX.Emarket_Transfer_Fees");
+        List<FiReport> rows = build(r, fee);
+        assertAmount("81000", on(rows, "431409983", "40"), "Dr Re-Premium Charges");
+        rows.stream().filter(x -> "431409983".equals(x.getGlCode()))
+                .forEach(x -> assertEquals("PREMIUM", x.getRemarks(), "a 4-Series line keeps its head as remark"));
+        assertAmount("81000", open(rows, "t1").get("431409983"), "open on the new receivable");
+        assertBalanced(rows);
+    }
+
+    @Test
+    void aLineWithNoGlAtAllStillFallsBackToTheConfiguredPlaceholder() throws Exception {
+        DemandRepository r = repo(true, false);
+        set(r, "missingFourSeriesGl", NA);
+        assertEquals(NA, r.receivableGlFor(detail("DIFFERENCE_FEE", "104", "0", null, null)));
     }
 
     // ------------------------------------------------------------------ entries 4, 5, 6
@@ -295,7 +361,10 @@ public class PerHeadReceivableFiTest {
         assertAmount("130", on(rows, ADVANCE, "40"), "Dr 3Series Liability");
         assertAmount("118", on(rows, STALLAGE_T_4S, "50"), "Cr Revenue Stallage");
         assertAmount("11.80", on(rows, LOFT_T_4S, "50"), "Cr Revenue Loft");
-        assertAmount("0.20", on(rows, NA, "50"), "Cr 4 Series Coin note");
+        assertAmount("0.20", rows.stream().filter(x -> COIN.equals(x.getGlCode()) && "50".equals(x.getPostingKey())
+                && "Revenue Adjustment".equals(x.getRemarks())).map(FiReport::getCollectionAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add), "Revenue Adjustment Cr on the coin's own GL");
+        assertAmount("0", on(rows, NA, "50"), "nothing on NA");
         assertTrue(rows.stream().noneMatch(r -> "upmktdemdadv4s".equals(r.getReportType())),
                 "the 4-Series pair is retired while per-head is on, whatever its own flag says");
         rows.stream().filter(r -> "50".equals(r.getPostingKey()) && STALLAGE_T_4S.equals(r.getGlCode()))
@@ -341,8 +410,11 @@ public class PerHeadReceivableFiTest {
             if ("upmktdemdadv4s".equals(r.getReportType()) || "upmktdemdadv4srev".equals(r.getReportType()))
                 continue; // the superseded pair has its own unwind and is never collected
             String gl = r.getGlCode();
+            // Same rule as DemandRepository.receivableGlPredicate: by GL number, or by the receivable remarks
+            // (a head with no 4-Series account posts its receivable on its own GL, 21-10-2026).
             boolean receivable = gl.equals(NA) || gl.equals(RECEIVABLE)
-                    || (gl.compareTo("431409937") >= 0 && gl.compareTo("431409977") <= 0);
+                    || (gl.length() == 9 && gl.compareTo("431409937") >= 0 && gl.compareTo("431409986") <= 0)
+                    || "Receivable from Mun Mkt".equals(r.getRemarks()) || "Revenue Adjustment".equals(r.getRemarks());
             if (!receivable)
                 continue;
             BigDecimal v = "40".equals(r.getPostingKey()) ? r.getCollectionAmount() : r.getCollectionAmount().negate();
@@ -367,7 +439,8 @@ public class PerHeadReceivableFiTest {
         assertAmount("130", on(coll, BANK, "40"), "Dr Interim Receipt");
         assertAmount("118", on(coll, STALLAGE_T_4S, "50"), "Cr Revenue Stallage");
         assertAmount("11.80", on(coll, LOFT_T_4S, "50"), "Cr Revenue Loft");
-        assertAmount("0.20", on(coll, NA, "50"), "Cr 4 Series Coin note");
+        assertAmount("0.20", on(coll, COIN, "50"), "Cr Coin note receivable on its own GL");
+        assertAmount("0", on(coll, NA, "50"), "nothing on NA");
         assertAmount("0", on(coll, RECEIVABLE, "50"), "nothing on the control account");
         coll.stream().filter(x -> "50".equals(x.getPostingKey()))
                 .forEach(x -> assertEquals("d5", x.getTransactionNumber(), "credit names its demand"));
@@ -573,9 +646,9 @@ public class PerHeadReceivableFiTest {
     }
 
     @Test
-    void anUnstampedLineFallsBackToNaWithoutADatabase() throws Exception {
+    void anUnstampedLineWithNoFourSeriesUsesItsOwnGlWithoutADatabase() throws Exception {
         DemandRepository r = repo(true, false);
-        assertEquals(NA, r.receivableGlFor(detail("PREMIUM", "500", "0", "140110300", null)));
+        assertEquals("140110300", r.receivableGlFor(detail("PREMIUM", "500", "0", "140110300", null)));
         assertEquals(STALLAGE_T_4S, r.receivableGlFor(detail("STALLAGE", "1", "0", STALLAGE_T, STALLAGE_T_4S)));
         DemandDetail fromDb = DemandDetail.builder().taxHeadMasterCode("STALLAGE").taxAmount(bd("1"))
                 .additionalDetails(new com.fasterxml.jackson.databind.ObjectMapper().readTree(

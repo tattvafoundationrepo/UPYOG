@@ -224,6 +224,15 @@ public class DemandRepository {
 	@org.springframework.beans.factory.annotation.Value("${emarket.fi.four.series.missing.gl:NA}")
 	private String missingFourSeriesGl = "NA";
 
+	/**
+	 * User decision 21-10-2026: a head with no 4-Series account posts its receivable on its own GL, never "NA".
+	 * Off restores the placeholder exactly (receivable and round-off on {@link #missingFourSeriesGl} /
+	 * {@link #coinFourSeriesGl}) — the kill switch, and the setting for a billing-service deployed before the
+	 * emarket-v1 build that recognises own-GL receivables in its reversals and GST return.
+	 */
+	@org.springframework.beans.factory.annotation.Value("${emarket.fi.four.series.missing.use.own.gl:true}")
+	private boolean useOwnGlWhenNoFourSeries = true;
+
 	/** The round-off ("4 Series Coin note") receivable. BMC has not supplied its code yet. */
 	@org.springframework.beans.factory.annotation.Value("${emarket.fi.four.series.coin.gl:${emarket.fi.four.series.missing.gl:NA}}")
 	private String coinFourSeriesGl = "NA";
@@ -1848,7 +1857,7 @@ public List<FiReport> buildDemandFiReports(Demand demand, List<DemandDetail> ext
     // Adjustment. Empty when the demand has no revenue head to split by (an advance vessel, for
     // instance), which keeps the single receivable line below.
     List<PerHeadReceivable.Line> perHeadLines = perHeadReceivableEnabled
-            ? PerHeadReceivable.lines(receivableHeads, totalReceivable, coinFourSeriesGl)
+            ? PerHeadReceivable.lines(receivableHeads, totalReceivable, configuredCoinGl())
             : Collections.<PerHeadReceivable.Line>emptyList();
 
     if (settledFromAdvance.compareTo(BigDecimal.ZERO) != 0) {
@@ -1939,7 +1948,10 @@ private List<FiReport> perHeadReceivableRows(Demand demand, List<PerHeadReceivab
     for (PerHeadReceivable.Line l : lines) {
         if (l.amount.signum() == 0)
             continue;
-        rows.add(perHeadRow(demand, "40", l.glCode, l.amount, l.taxHeadCode, null, postingDate,
+        // On a head's own GL (no 4-Series account) the debit shares its GL with the revenue credit, so the
+        // remark is what marks it as the receivable for collections and reversals.
+        String remark = isFourSeriesOrPlaceholderGl(l.glCode) ? l.taxHeadCode : RegularCollectionPlan.RECEIVABLE_REMARK;
+        rows.add(perHeadRow(demand, "40", l.glCode, l.amount, remark, null, postingDate,
                 consumerCode, fund, fundCenter, businessArea, functionalArea, headerText, now));
     }
 
@@ -2005,7 +2017,11 @@ private FiReport perHeadRow(Demand demand, String postingKey, String glCode, Big
  *   <li>the {@code advglcode} emarket-v1 stamped on it;</li>
  *   <li>the 4-Series row of the master that shares the head and treatment of the line's own revenue
  *       GL. Some creators (legacy onboarding) stamp no {@code advglcode};</li>
- *   <li>{@link #missingFourSeriesGl}.</li>
+ *   <li>the line's own (1-Series) GL. User decision 21-10-2026: "where a head has no 4-Series account,
+ *       use its GL code which is available, don't post NA". Such a line is written with
+ *       {@link RegularCollectionPlan#RECEIVABLE_REMARK}, which is how it is told apart from the revenue
+ *       credit on the same GL (see {@link #isFourSeriesOrPlaceholderGl});</li>
+ *   <li>{@link #missingFourSeriesGl}, only when the line carries no GL at all.</li>
  * </ol>
  */
 String receivableGlFor(DemandDetail detail) {
@@ -2013,12 +2029,39 @@ String receivableGlFor(DemandDetail detail) {
     if (stamped != null)
         return stamped;
     String revenueGl = jsonValue(detail.getAdditionalDetails(), "glcode");
-    if (revenueGl != null) {
+    if (revenueGl != null && !revenueGl.trim().isEmpty()) {
         String mapped = fourSeriesByRevenueGl().get(detail.getTaxHeadMasterCode() + "|" + revenueGl.trim());
         if (mapped != null)
             return mapped;
+        return useOwnGlWhenNoFourSeries ? revenueGl.trim() : missingFourSeriesGl;
     }
     return missingFourSeriesGl;
+}
+
+/**
+ * True for a GL that is a receivable account by its NUMBER: the 4-Series range, the control accounts and
+ * the placeholders. A receivable line on any other GL (a head's own GL, see {@link #receivableGlFor}) is
+ * recognised by its remark instead.
+ */
+boolean isFourSeriesOrPlaceholderGl(String gl) {
+    if (gl == null)
+        return false;
+    String g = gl.trim();
+    return (g.length() == 9 && g.compareTo(FOUR_SERIES_GL_FIRST) >= 0 && g.compareTo(FOUR_SERIES_GL_LAST) <= 0)
+            || LEGACY_RECEIVABLE_GLS.contains(g) || HISTORICAL_PLACEHOLDER_GL.equals(g)
+            || g.equals(missingFourSeriesGl) || g.equals(coinFourSeriesGl);
+}
+
+/**
+ * The configured round-off receivable, or null while it is still the placeholder (blank or "NA"): the head's own
+ * GL is used then. Compared with the placeholder literal, not with {@link #missingFourSeriesGl}: the coin property
+ * defaults to the missing one, and a real GL set there must still be honoured.
+ */
+String configuredCoinGl() {
+    if (!useOwnGlWhenNoFourSeries)
+        return coinFourSeriesGl;
+    String c = coinFourSeriesGl == null ? "" : coinFourSeriesGl.trim();
+    return c.isEmpty() || HISTORICAL_PLACEHOLDER_GL.equalsIgnoreCase(c) ? null : c;
 }
 
 private volatile Map<String, String> fourSeriesByRevenueGlCache;
@@ -2363,10 +2406,16 @@ static final String HISTORICAL_PLACEHOLDER_GL = "NA";
 static final Set<String> LEGACY_RECEIVABLE_GLS =
         Collections.unmodifiableSet(new HashSet<>(Arrays.asList("431409936", "431190300")));
 
-/** The receivable accounts an open balance is read from: the 4-Series range, the placeholders, the control accounts. */
-private String receivableGlPredicate(String column) {
+/**
+ * The receivable rows an open balance is read from: the 4-Series range, the placeholders, the control accounts,
+ * and any row remarked as a receivable (a head's own GL, 21-10-2026). Those remarks appear on receivable rows
+ * only — the revenue credit on the same GL is remarked with its tax head.
+ */
+private String receivableGlPredicate(String column, String remarksColumn) {
     return "(" + column + " BETWEEN '" + FOUR_SERIES_GL_FIRST + "' AND '" + FOUR_SERIES_GL_LAST + "'"
-            + " OR " + column + " IN ('431409936', '431190300', '" + HISTORICAL_PLACEHOLDER_GL + "', ?, ?))";
+            + " OR " + column + " IN ('431409936', '431190300', '" + HISTORICAL_PLACEHOLDER_GL + "', ?, ?)"
+            + " OR " + remarksColumn + " IN ('" + RegularCollectionPlan.RECEIVABLE_REMARK + "', '"
+            + REVENUE_ADJUSTMENT_REMARK + "'))";
 }
 
 /**
@@ -2387,16 +2436,16 @@ public Map<String, Map<String, BigDecimal>> openReceivableByDemand(java.util.Col
     String sql =
         "SELECT transaction_number, gl_code, "
       + "       SUM(CASE WHEN posting_key = '40' THEN collection_amount ELSE -collection_amount END) AS open "
-      + "  FROM ( SELECT transaction_number, gl_code, posting_key, collection_amount "
+      + "  FROM ( SELECT transaction_number, gl_code, posting_key, collection_amount, remarks "
       + "           FROM public.eg_emarket_fi_report WHERE transaction_number IN (" + in + ") "
       // The superseded 4-Series pair debits a 4-Series GL too, but it is never collected: its own
       // unwind (buildFourSeriesReversalFiReports) gives it back. Counting it would send cash there.
       + "            AND COALESCE(report_type, '') NOT IN ('" + FiReportType.UPMKT_DEMDADV_4S + "', '"
       + FiReportType.UPMKT_DEMDADV_4S_REV + "') "
       + "         UNION ALL "
-      + "         SELECT transaction_number, gl_code, posting_key, collection_amount "
+      + "         SELECT transaction_number, gl_code, posting_key, collection_amount, remarks "
       + "           FROM public.eg_emarket_fi_report_collection WHERE transaction_number IN (" + in + ") ) x "
-      + " WHERE " + receivableGlPredicate("gl_code")
+      + " WHERE " + receivableGlPredicate("gl_code", "remarks")
       + " GROUP BY transaction_number, gl_code "
       + "HAVING SUM(CASE WHEN posting_key = '40' THEN collection_amount ELSE -collection_amount END) > 0 "
       + " ORDER BY transaction_number, gl_code";
@@ -3165,7 +3214,7 @@ private Map<String, BigDecimal> revenueAdjustmentCredits(String demandId) {
         jdbcTemplate.query(
                 "SELECT gl_code, SUM(collection_amount) FROM public.eg_emarket_fi_report "
               + " WHERE transaction_number = ? AND report_type = ? AND posting_key = '50' AND remarks = ? AND "
-              + receivableGlPredicate("gl_code")
+              + receivableGlPredicate("gl_code", "remarks")
               + " GROUP BY gl_code ORDER BY gl_code",
                 // Identified by the remark only perHeadReceivableRows writes, so no row posted by any
                 // other builder (e.g. the advance-settlement relief) can change an old reversal.
@@ -3267,7 +3316,8 @@ private static final String NON_RECEIVABLE_GLS =
  * lexicographic and numeric orderings agree.
  */
 private static final String FOUR_SERIES_GL_FIRST = "431409937";
-private static final String FOUR_SERIES_GL_LAST  = "431409977";
+// 431409978..431409986 (penalty / transfer-fee receivables) added by BMC on 21-10-2026.
+private static final String FOUR_SERIES_GL_LAST  = "431409986";
 
 /**
  * Relieve the receivable of a PRE-EXISTING demand that an apportion has just settled from the
@@ -3346,6 +3396,11 @@ public void postAdvanceSettlementFiReports(Map<String, BigDecimal> settlements) 
         "FROM public.eg_emarket_fi_report " +
         "WHERE transaction_number = ? AND gl_code NOT IN (" + NON_RECEIVABLE_GLS + ") " +
         "  AND gl_code NOT BETWEEN '" + FOUR_SERIES_GL_FIRST + "' AND '" + FOUR_SERIES_GL_LAST + "' " +
+        // Receivable rows only. A head with no 4-Series account posts its receivable on its OWN GL (21-10-2026),
+        // next to its revenue credit; summing every row of that GL would net the two and relieve only the GST
+        // share, or nothing. On every other GL this keeps exactly the rows that were ever counted here.
+        "  AND (gl_code IN ('431409936', '431190300', '" + HISTORICAL_PLACEHOLDER_GL + "', ?, ?) " +
+        "       OR remarks IN ('" + RegularCollectionPlan.RECEIVABLE_REMARK + "', '" + REVENUE_ADJUSTMENT_REMARK + "')) " +
         "GROUP BY gl_code " +
         "HAVING SUM(CASE WHEN posting_key = '40' THEN collection_amount ELSE -collection_amount END) > 0 " +
         "ORDER BY (gl_code = ?) DESC, 2 DESC LIMIT 1";
@@ -3368,7 +3423,8 @@ public void postAdvanceSettlementFiReports(Map<String, BigDecimal> settlements) 
             lockAdvanceSettlement(demandId);
 
             List<Map<String, Object>> forward =
-                    jdbcTemplate.queryForList(sql, new Object[] { demandId, receivableGlCode });
+                    jdbcTemplate.queryForList(sql, new Object[] { demandId, missingFourSeriesGl, coinFourSeriesGl,
+                            receivableGlCode });
             if (forward.isEmpty()) {
                 log.warn("Demand {} has no open receivable to relieve; advance settlement of {} posts no FI",
                         demandId, settled);

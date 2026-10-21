@@ -163,7 +163,7 @@ public class FourSeriesAndCfcDimensionVerifyTest {
         assertEquals(6, off.size());
         assertTrue(off.stream().noneMatch(r -> r.getGlCode() != null
                 && r.getGlCode().compareTo("431409937") >= 0
-                && r.getGlCode().compareTo("431409977") <= 0),
+                && r.getGlCode().compareTo("431409986") <= 0),
                 "no 4-Series GL may appear with the flag off");
         assertEquals(1, rowsOn(off, ADVANCE).size());
         assertEquals(0, bd("1121.00").compareTo(rowsOn(off, ADVANCE).get(0).getCollectionAmount()));
