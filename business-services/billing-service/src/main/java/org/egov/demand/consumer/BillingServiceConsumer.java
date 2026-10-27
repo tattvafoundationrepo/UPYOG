@@ -195,6 +195,10 @@ public class BillingServiceConsumer {
 		 */
 		ObjectNode additionalDetails = util.setValuesAndGetAdditionalDetails(null, Constants.PAYMENT_ID_KEY, paymentId);
 		additionalDetails.put("transactionNumber", transactionNumber);
+		// What the payment applied to its bills, as collection-services recorded it. A Coin Note (BMC 26-10-2026) is
+		// trusted only when it is exactly the cash received less this. Kept as text: Util reads these keys as String.
+		additionalDetails.put(Constants.PAYMENT_APPLIED_TOTAL_KEY, amtPaidList.stream().filter(Objects::nonNull)
+				.reduce(BigDecimal.ZERO, BigDecimal::add).toPlainString());
 		// The bank return date the clerk entered on a dishonour, which collection-services merged into
 		// every bill of the payment. Carried over before the bill's own details are replaced. The
 		// earliest, as emarket-v1 picks for the charge, should the bills ever disagree.

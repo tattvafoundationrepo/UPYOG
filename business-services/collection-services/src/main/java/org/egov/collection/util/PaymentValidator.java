@@ -374,6 +374,16 @@ public class PaymentValidator {
         // If IsAdvanceAllowed is null it is interpretated as not allowed
         Boolean isAdvanceAllowed = !(bill.getIsAdvanceAllowed() == null || !bill.getIsAdvanceAllowed());
 
+        // Paise are allowed only for the configured business services (eMarket: exact demands, cash rounding
+        // goes to Coin Note), and then to at most 2 places. Every other service keeps the whole-rupee checks.
+        boolean fractionAllowed = isFractionAllowed(bill.getBusinessService());
+        if (fractionAllowed) {
+            if (!hasAtMostTwoDecimals(bill.getTotalAmount()))
+                errorMap.put("INVALID_BILL", "The due amount cannot have more than 2 decimal places");
+            if (!hasAtMostTwoDecimals(paymentDetail.getTotalAmountPaid()))
+                errorMap.put("INVALID_PAYMENTDETAIL", "The amount paid cannot have more than 2 decimal places");
+        }
+
         // Total amount to be paid should be same in bill and paymentDetail
         if (paymentDetail.getTotalDue().compareTo(bill.getTotalAmount()) != 0)
             errorMap.put("INVALID_PAYMENTDETAIL",
@@ -381,7 +391,7 @@ public class PaymentValidator {
 
 
         // If advance is not allowed bill total amount should be positive integer
-        if(!isAdvanceAllowed && !Utils.isPositiveInteger(paymentDetail.getBill().getTotalAmount()))
+        if(!isAdvanceAllowed && !isPermittedAmount(paymentDetail.getBill().getTotalAmount(), fractionAllowed))
             errorMap.put("INVALID_BILL_AMOUNT","The bill amount of bill: "+paymentDetail.getBill().getId()+" is fractional or less than zero");
 
         // Amount to be paid should be greater than minimum collection amount
@@ -407,7 +417,7 @@ public class PaymentValidator {
                     "The paymentMode: " + paymentMode + " is not allowed for the bill: " + bill.getId());
 
         // Checks if the amount paid is positive integer
-        if (!Utils.isPositiveInteger(paymentDetail.getTotalAmountPaid()))
+        if (!isPermittedAmount(paymentDetail.getTotalAmountPaid(), fractionAllowed))
             errorMap.put("INVALID_PAYMENTDETAIL",
                     "The amount paid for the paymentDetail with bill number: " + paymentDetail.getBillId());
 
@@ -418,11 +428,11 @@ public class PaymentValidator {
                     "The amount paid for the paymentDetail with bill number: " + paymentDetail.getBillId());
 
         // Checks if the amount to be paid is fractional
-        if ((bill.getTotalAmount().remainder(BigDecimal.ONE)).doubleValue() != 0)
+        if (!fractionAllowed && (bill.getTotalAmount().remainder(BigDecimal.ONE)).doubleValue() != 0)
             errorMap.put("INVALID_BILL", "The due amount cannot be fractional");
 
         // Checks if the amount paid is fractional
-        if ((paymentDetail.getTotalAmountPaid().remainder(BigDecimal.ONE)).doubleValue() != 0)
+        if (!fractionAllowed && (paymentDetail.getTotalAmountPaid().remainder(BigDecimal.ONE)).doubleValue() != 0)
             errorMap.put("INVALID_PAYMENTDETAIL", "The amount paid cannot be fractional");
 
         // Checks if the bill is expired
@@ -432,6 +442,26 @@ public class PaymentValidator {
             }
         });
 
+    }
+
+    /** True when this business service is listed in collection.fraction.allowed.businessservices. */
+    boolean isFractionAllowed(String businessService) {
+        String configured = applicationProperties.getFractionAllowedBusinessServices();
+        if (businessService == null || configured == null || configured.trim().isEmpty())
+            return false;
+        for (String code : configured.split(","))
+            if (code.trim().equals(businessService))
+                return true;
+        return false;
+    }
+
+    /** Whole rupees for every service; for a fraction-allowed one, any non-negative amount (scale checked separately). */
+    private static boolean isPermittedAmount(BigDecimal amount, boolean fractionAllowed) {
+        return fractionAllowed ? amount.signum() >= 0 : Utils.isPositiveInteger(amount);
+    }
+
+    private static boolean hasAtMostTwoDecimals(BigDecimal amount) {
+        return amount == null || amount.stripTrailingZeros().scale() <= 2;
     }
 
     /**

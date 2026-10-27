@@ -446,14 +446,17 @@ public class ReceiptServiceV2 {
 				gstAdvanceMap = GstAdvanceMap.builder().build();
 
 			FiFlow flow = determineFiFlow(demandRequest.getDemands(), gstAdvanceMap);
-			BigDecimal total = nz(gstAdvanceMap.getTotalAmountPaid());
+			// Every flow below books what the receipt APPLIED to dues. The paise a cash receipt was
+			// rounded up by are added afterwards, once per receipt, by addCoinNote.
+			BigDecimal coinNote = verifiedCoinNote(gstAdvanceMap, bills);
+			BigDecimal total = nz(gstAdvanceMap.getTotalAmountPaid()).subtract(coinNote);
 			BigDecimal cgst = flow == FiFlow.GST_REGULAR
 					? sumDetails(demandRequest.getDemands(), "CGST")
 					: nz(gstAdvanceMap.getCgstAmount());
 			BigDecimal sgst = flow == FiFlow.GST_REGULAR
 					? sumDetails(demandRequest.getDemands(), "SGST")
 					: nz(gstAdvanceMap.getSgstAmount());
-			log.info("Collection FI flow={} total={} cgst={} sgst={}", flow, total, cgst, sgst);
+			log.info("Collection FI flow={} total={} coinNote={} cgst={} sgst={}", flow, total, coinNote, cgst, sgst);
 
 			// BMC 24-Sep-2026 entries: the regular credit goes on the receivable accounts each paid
 			// demand actually debited. Inactive (today's single line) unless a paid demand carries a
@@ -472,6 +475,7 @@ public class ReceiptServiceV2 {
 				report = buildCollectionRows(d, flow, total, cgst, sgst, gstAdvanceMap, false, collectionDate,
 						regularPlan);
 			}
+			demandRepository.addCoinNote(report, d, coinNote, false, collectionDate);
 
 			// Label only; the accounting rows are unaffected. Every collection — advance or
 			// regular — is a market collection. The advance is identified downstream by its
@@ -531,7 +535,10 @@ public class ReceiptServiceV2 {
 				gstAdvanceMap = GstAdvanceMap.builder().build();
 
 			FiFlow flow = determineFiFlow(demandRequest.getDemands(), gstAdvanceMap);
-			BigDecimal total = nz(gstAdvanceMap.getTotalAmountPaid());
+			// Same split as the forward path: the flows reverse what was applied, the coin is given back
+			// separately (only when the reversal is rebuilt; a mirrored one already carries it).
+			BigDecimal coinNote = verifiedCoinNote(gstAdvanceMap, bills);
+			BigDecimal total = nz(gstAdvanceMap.getTotalAmountPaid()).subtract(coinNote);
 			BigDecimal cgst = flow == FiFlow.GST_REGULAR
 					? sumDetails(demandRequest.getDemands(), "CGST")
 					: nz(gstAdvanceMap.getCgstAmount());
@@ -572,9 +579,10 @@ public class ReceiptServiceV2 {
 			log.info("Reversal FI date for payment {}: {} (dishonour date {})", paymentId, reversalDate, dishonourDate);
 
 			List<FiReport> report = mirroredReversal(d, dishonourDate);
-			if (report.isEmpty())
+			if (report.isEmpty()) {
 				report = buildCollectionRows(d, flow, total, cgst, sgst, gstAdvanceMap, true, reversalDate, null);
-			else
+				demandRepository.addCoinNote(report, d, coinNote, true, reversalDate);
+			} else
 				log.info("Reversal of receipt {} mirrors its {} posted legs", d.getFiReceiptNo(), report.size());
 
 			// Label only (accounting rows unchanged): receipt cancellation -> collection reversal.
@@ -730,6 +738,16 @@ public class ReceiptServiceV2 {
 					? info.getTotalAmountPaid()
 					: info.getTotalDue();
 
+			// ---- coinNoteAdjustment (ROOT LEVEL) ----
+			// Written by emarket-v1 on a cash receipt rounded up to the rupee. Anything outside
+			// (0, 1) is not a coin rounding and is ignored, so a malformed value cannot move money.
+			BigDecimal coinNote = null;
+			if (root.hasNonNull("coinNoteAdjustment") && root.get("coinNoteAdjustment").isNumber()) {
+				BigDecimal c = root.get("coinNoteAdjustment").decimalValue();
+				if (c.signum() > 0 && c.compareTo(BigDecimal.ONE) < 0)
+					coinNote = c;
+			}
+
 			log.info("rentalAdvancePaiddddddddddd" + rentalAdvancePaid);
 			return GstAdvanceMap.builder()
 					.cgstAmount(cgstAmount)
@@ -741,6 +759,7 @@ public class ReceiptServiceV2 {
 					.totalAmountPaid(paidAmount)
 					.rentalAdvancePaid(rentalAdvancePaid)
 					.licenseAdvancePaid(licenseAdvancePaid)
+					.coinNoteAdjustment(coinNote)
 					.build();
 
 		} catch (Exception e) {
@@ -1051,6 +1070,33 @@ public class ReceiptServiceV2 {
 
 	private static BigDecimal nz(BigDecimal v) {
 		return v == null ? BigDecimal.ZERO : v;
+	}
+
+	/**
+	 * The Coin Note to post for this receipt, or zero. The payment JSON's value is used only when it is exactly the
+	 * cash received less what collection-services applied to the bills (paymentAppliedTotal, set by the consumer),
+	 * to the paisa. Anything else, including a value written straight into a payment by hand, is ignored and the
+	 * receipt is booked exactly as it was before Coin Note existed.
+	 */
+	BigDecimal verifiedCoinNote(GstAdvanceMap m, List<BillV2> bills) {
+		BigDecimal coin = m == null ? null : m.getCoinNoteAdjustment();
+		if (coin == null || coin.signum() <= 0)
+			return BigDecimal.ZERO;
+		try {
+			String applied = bills == null || bills.isEmpty() ? null
+					: util.getValueFromAdditionalDetailsForKey(bills.get(0).getAdditionalDetails(),
+							Constants.PAYMENT_APPLIED_TOTAL_KEY);
+			if (applied != null && !applied.trim().isEmpty()) {
+				BigDecimal expected = nz(m.getTotalAmountPaid()).subtract(new BigDecimal(applied.trim()));
+				if (expected.subtract(coin).abs().compareTo(new BigDecimal("0.005")) <= 0)
+					return coin;
+			}
+			log.warn("Coin Note {} of a receipt does not match cash received {} less applied {}; not posted",
+					coin, m.getTotalAmountPaid(), applied);
+		} catch (RuntimeException e) {
+			log.warn("Coin Note {} could not be verified; not posted", coin, e);
+		}
+		return BigDecimal.ZERO;
 	}
 
 	/**

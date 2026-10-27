@@ -268,5 +268,12 @@ public class ApplicationProperties {
     @Value("${egov.razorpay.url}")
     private String razorPayUrl;
 
+    /**
+     * Business services whose bills may carry paise (comma separated codes). eMarket demands carry their exact
+     * amount and the cash rounding goes to Coin Note (BMC 26-10-2026). Empty = whole rupees only, as before.
+     */
+    @Value("${collection.fraction.allowed.businessservices:}")
+    private String fractionAllowedBusinessServices;
+
 
 }

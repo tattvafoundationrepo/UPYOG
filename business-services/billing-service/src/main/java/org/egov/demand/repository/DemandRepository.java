@@ -153,6 +153,18 @@ public class DemandRepository {
 	private String chequeBankGlCode = "450210010";
 
 	/**
+	 * The Coin Note account (BMC 26-10-2026). A demand carries its exact amount; a cash receipt is rounded
+	 * up to the rupee at the counter and those paise are credited here on the collection voucher. Never a
+	 * receivable, so it needs no 4-Series code.
+	 */
+	@org.springframework.beans.factory.annotation.Value("${emarket.fi.coin.note.gl:350119997}")
+	private String coinNoteGlCode = "350119997";
+
+	/** Remarks of the Coin Note leg. Also how the reversal-path checks tell it from a per-head credit on the same GL. */
+	public static final String COIN_NOTE_REMARK = "Coin Note";
+	private static final String BANK_LEG_REMARK = "Bank/Interim Receipt";
+
+	/**
 	 * The SAP dimensions of the interim receipt, the money leg of a collection voucher (cash
 	 * interim or cheques-in-hand). BMC: "in the interim receipt entry functional area is fixed
 	 * 00301000000 and the fund centre is business area + 130000; business area is the ward of the
@@ -2366,6 +2378,38 @@ public List<FiReport> buildCollectionFiReports(Demand demand,
 }
 
 /**
+ * Books the paise a cash receipt was rounded up by: the money leg grows by {@code coin} and a Coin Note
+ * credit of the same amount is appended, so the voucher still balances. Called once per receipt, after
+ * every flow has built its rows on the amount applied to dues; a mixed receipt's two vouchers get it once,
+ * on the last money leg (the regular voucher). Nothing is changed when {@code coin} is not positive, which
+ * is every receipt taken before the rule and every cheque/DD.
+ *
+ * <p>The leg is dimensioned like any non-money leg: the licensee's market on the forward voucher, the
+ * posted leg's own values on a reversal.
+ */
+public void addCoinNote(List<FiReport> rows, Demand demand, BigDecimal coin, boolean reversal, Long collectionDate) {
+    if (rows == null || coin == null || coin.signum() <= 0)
+        return;
+    FiReport moneyLeg = null;
+    for (FiReport r : rows)
+        if (BANK_LEG_REMARK.equals(r.getRemarks()))
+            moneyLeg = r;
+    if (moneyLeg == null) {
+        // No money leg means no voucher to balance against; posting the credit alone would unbalance it.
+        log.error("Receipt {}: no money leg to carry Coin Note {}; not posted", demand.getFiReceiptNo(), coin);
+        return;
+    }
+    moneyLeg.setCollectionAmount(moneyLeg.getCollectionAmount().add(coin));
+    FiReport coinLeg = fiRow(demand, coinNoteGlCode, "50", reversal, coin, COIN_NOTE_REMARK, collectionDate);
+    // Same voucher as the money leg it balances: a split receipt's vouchers can be keyed to different demands.
+    coinLeg.setTransactionNumber(moneyLeg.getTransactionNumber());
+    coinLeg.setReferenceNo(moneyLeg.getReferenceNo());
+    coinLeg.setDocDate(moneyLeg.getDocDate());
+    coinLeg.setPostingDate(moneyLeg.getPostingDate());
+    rows.add(coinLeg);
+}
+
+/**
  * The credit legs of a regular collection under BMC's 24-Sep-2026 entries, one per receivable
  * account (and per demand) the plan places the money on. Each is an ordinary collection row (same
  * dates, reference, receipt, payment mode and market dimensions as the single line it replaces)
@@ -2415,7 +2459,9 @@ private String receivableGlPredicate(String column, String remarksColumn) {
     return "(" + column + " BETWEEN '" + FOUR_SERIES_GL_FIRST + "' AND '" + FOUR_SERIES_GL_LAST + "'"
             + " OR " + column + " IN ('431409936', '431190300', '" + HISTORICAL_PLACEHOLDER_GL + "', ?, ?)"
             + " OR " + remarksColumn + " IN ('" + RegularCollectionPlan.RECEIVABLE_REMARK + "', '"
-            + REVENUE_ADJUSTMENT_REMARK + "'))";
+            + REVENUE_ADJUSTMENT_REMARK + "'))"
+            // A Coin Note credit never clears a receivable, whatever GL the coin properties name.
+            + " AND COALESCE(" + remarksColumn + ", '') <> '" + COIN_NOTE_REMARK + "'";
 }
 
 /**
@@ -2558,7 +2604,9 @@ public List<FiReport> mirrorPerHeadCollection(String receiptNo, String consumerC
             + "  AND regexp_replace(reference_no, '[^0-9]', '', 'g') = ? ";
     try {
         Integer perHead = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*)::int" + scope + " AND posting_key = '50' AND gl_code NOT IN " + OLD_SHAPE_COLLECTION_CREDIT_GLS,
+                "SELECT COUNT(*)::int" + scope + " AND posting_key = '50' AND gl_code NOT IN " + OLD_SHAPE_COLLECTION_CREDIT_GLS
+                        // A Coin Note leg alone must not switch a receipt to mirroring; the rebuild adds it back.
+                        + " AND COALESCE(remarks, '') <> '" + COIN_NOTE_REMARK + "'",
                 new Object[] { receiptNo, FiReportType.UPMKT_COLL, licence }, Integer.class);
         if (perHead == null || perHead == 0)
             return rows;
@@ -2592,7 +2640,9 @@ public List<FiReport> mirrorSplitDepositCollection(String receiptNo, String cons
         Integer split = jdbcTemplate.queryForObject(
                 "SELECT (COUNT(*) FILTER (WHERE gl_code = '340100300') > 0"
               + "    AND COUNT(*) FILTER (WHERE gl_code <> '340100300') > 0)::int"
-              + scope + " AND posting_key = '50'",
+              + scope + " AND posting_key = '50'"
+              // A deposit paid in cash with a Coin Note is not a split deposit.
+              + " AND COALESCE(remarks, '') <> '" + COIN_NOTE_REMARK + "'",
                 new Object[] { receiptNo, FiReportType.UPMKT_COLL, licence }, Integer.class);
         if (split == null || split == 0)
             return new ArrayList<>();

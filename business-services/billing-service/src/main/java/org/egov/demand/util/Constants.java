@@ -150,6 +150,9 @@ public class Constants {
 	public static final String RECEIPTNUMBER_KEY = "receiptNumber";
 	public static final String PAYMENT_ID_KEY = "paymentId";
 
+	/** Sum of the payment's paymentDetails[].totalAmountPaid, carried on bill 0 for the Coin Note check. */
+	public static final String PAYMENT_APPLIED_TOTAL_KEY = "paymentAppliedTotal";
+
 	public static final String EMPLOYEE_TYPE_CODE = "EMPLOYEE";
 	
 	

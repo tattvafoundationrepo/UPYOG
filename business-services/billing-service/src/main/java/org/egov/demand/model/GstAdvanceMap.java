@@ -25,4 +25,10 @@ public class GstAdvanceMap {
     private BigDecimal rentalAdvancePaid ;
     private BigDecimal licenseAdvancePaid ;
 
+    /**
+     * Paise the cashier rounded a cash receipt up by (0 &lt; x &lt; 1), or null. Included in
+     * totalAmountPaid (money received) but never applied to a demand; posted to the Coin Note account.
+     */
+    private BigDecimal coinNoteAdjustment ;
+
 }

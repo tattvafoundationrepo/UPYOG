@@ -114,4 +114,14 @@ public class BillingServiceConsumerDishonourDateTest {
         assertFalse(sent.has("dishonourDate"));
         assertEquals("pay-1", sent.get("paymentId").asText());
     }
+
+    @Test
+    public void bothDirectionsCarryTheAppliedTotalForTheCoinNoteCheck() throws Exception {
+        for (boolean cancellation : new boolean[] { false, true }) {
+            JsonNode sent = billZeroSent(message("CANCELLED", null, null), cancellation);
+            assertEquals("150", sent.get("paymentAppliedTotal").asText(), "sum of paymentDetails[].totalAmountPaid");
+            assertEquals("150", new Util() {{ ReflectionTestUtils.setField(this, "mapper", mapper); }}
+                    .getValueFromAdditionalDetailsForKey(sent, "paymentAppliedTotal"), "readable as String by Util");
+        }
+    }
 }
