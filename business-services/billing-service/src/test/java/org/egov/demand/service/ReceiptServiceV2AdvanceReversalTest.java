@@ -92,6 +92,7 @@ public class ReceiptServiceV2AdvanceReversalTest {
 	void setUp() {
 
 		ReflectionTestUtils.setField(receiptServiceV2, "reverseAllAdvanceVessels", true);
+		ReflectionTestUtils.setField(receiptServiceV2, "reverseOnlyPaidAdvanceVessels", true);
 		ReflectionTestUtils.setField(receiptServiceV2, "penaltyReversalBusinessService", RENT_SERVICE);
 
 		when(util.getValueFromAdditionalDetailsForKey(any(), any())).thenReturn("market1124121012");
@@ -275,6 +276,122 @@ public class ReceiptServiceV2AdvanceReversalTest {
 
 		verify(demandRepository, never()).getSettledDemandIdsByAdvanceDemandId(any());
 		verify(producer, never()).push(eq(PENALTY_TOPIC), any());
+	}
+
+	// ------------------------- an earlier advance riding on a later receipt (UAT 29-10-2026)
+
+	private static final String LICENCE_FEE_FY27 = "licence-fee-fy27";
+
+	/**
+	 * The 5000008377 shape. Receipt 000258 paid a 900 licence advance, which settled the FY 2026-27
+	 * fee; both stay flagged unpaid. Receipt 000259 paid the FY 2027-28 fee of 990, and its bill also
+	 * carried the old advance as a line it paid nothing on.
+	 */
+	private void givenLaterReceiptCarryingAnOldAdvance() {
+		Demand oldVessel = advanceVessel(LICENCE_VESSEL, "5000008377lf", LICENCE_SERVICE,
+				"TX.EMARKET_LICENSE_ADVANCE_CARRYFORWARD");
+		Demand fy27Fee = settledDemand(LICENCE_FEE_FY27, "5000008377lf", LICENCE_SERVICE,
+				"TX.EMARKET_LICENSE_FEES", "990.00");
+		when(demandService.getDemands(any(), any()))
+				.thenReturn(new ArrayList<>(Arrays.asList(oldVessel, fy27Fee)));
+		when(demandRepository.getSettledDemandIdsByAdvanceDemandId(LICENCE_VESSEL))
+				.thenReturn(Collections.singletonList(settlement(LICENCE_VESSEL, LICENCE_SETTLED, "5000008377lf")));
+		when(demandRepository.getDemands(any(DemandCriteria.class)))
+				.thenAnswer(inv -> new ArrayList<>(Collections.singletonList(settledDemand(LICENCE_SETTLED,
+						"5000008377lf", LICENCE_SERVICE, "TX.EMARKET_LICENSE_FEES", "900.00"))));
+	}
+
+	private static BillRequestV2 laterReceiptBill(BigDecimal paidOnOldAdvance) {
+		return billRequest(bill(LICENCE_SERVICE, "bill-licence", new ArrayList<>(Arrays.asList(
+				line("bill-licence", LICENCE_VESSEL, paidOnOldAdvance),
+				line("bill-licence", LICENCE_FEE_FY27, new BigDecimal("990.00"))))));
+	}
+
+	@Test
+	@DisplayName("Cancelling a later receipt leaves an earlier advance and the fee it settled alone")
+	void laterReceiptDoesNotUnwindAnEarlierAdvance() {
+
+		givenLaterReceiptCarryingAnOldAdvance();
+
+		receiptServiceV2.updateDemandFromReceipt(laterReceiptBill(BigDecimal.ZERO), true);
+
+		verify(demandRepository, never()).getSettledDemandIdsByAdvanceDemandId(any());
+		verify(demandRepository, never()).buildAdvanceSettlementReversalFiReports(any());
+		Map<String, Demand> updated = capturedDemandsById();
+		assertFalse(updated.containsKey(LICENCE_SETTLED), "the FY 2026-27 fee must not be reopened");
+		DemandDetail vessel = updated.get(LICENCE_VESSEL).getDemandDetails().get(0);
+		assertEquals(new BigDecimal("-900.00"), vessel.getTaxAmount(), "the advance must keep its amount");
+		assertEquals(new BigDecimal("-900.00"), vessel.getCollectionAmount(), "and stay drawn on");
+	}
+
+	@Test
+	@DisplayName("Cancelling the receipt that paid the advance still unwinds it")
+	void fundingReceiptStillUnwinds() {
+
+		givenLaterReceiptCarryingAnOldAdvance();
+
+		receiptServiceV2.updateDemandFromReceipt(laterReceiptBill(new BigDecimal("900.00")), true);
+
+		Map<String, Demand> updated = capturedDemandsById();
+		assertEquals(BigDecimal.ZERO, collectedOn(updated.get(LICENCE_SETTLED), "TX.EMARKET_LICENSE_FEES"),
+				"the fee the advance settled is reopened");
+		assertEquals(BigDecimal.ZERO, updated.get(LICENCE_VESSEL).getDemandDetails().get(0).getTaxAmount(),
+				"the advance is removed");
+		verify(demandRepository).buildAdvanceSettlementReversalFiReports(LICENCE_SETTLED);
+	}
+
+	@Test
+	@DisplayName("A receipt that buys a new advance and carries an old one unwinds only the new one")
+	void onlyTheAdvanceThisReceiptPaidIsUnwound() {
+
+		givenTwoVesselPayment();
+
+		// The rental advance was bought on this receipt; the licence advance is an old one riding along.
+		receiptServiceV2.updateDemandFromReceipt(billRequest(
+				bill(RENT_SERVICE, "bill-rent", new ArrayList<>(Collections.singletonList(
+						line("bill-rent", RENT_VESSEL, new BigDecimal("1590.00"))))),
+				bill(LICENCE_SERVICE, "bill-licence", new ArrayList<>(Collections.singletonList(
+						line("bill-licence", LICENCE_VESSEL, BigDecimal.ZERO))))), true);
+
+		Map<String, Demand> updated = capturedDemandsById();
+		assertEquals(BigDecimal.ZERO, collectedOn(updated.get(RENT_SETTLED_APRIL), "STALLAGE"));
+		assertEquals(BigDecimal.ZERO, collectedOn(updated.get(RENT_SETTLED_MAY), "STALLAGE"));
+		assertFalse(updated.containsKey(LICENCE_SETTLED), "the old licence settlement stays");
+		assertEquals(new BigDecimal("-900.00"),
+				updated.get(LICENCE_VESSEL).getDemandDetails().get(0).getTaxAmount(), "the old advance stays");
+		assertEquals(BigDecimal.ZERO, updated.get(RENT_VESSEL).getDemandDetails().get(0).getTaxAmount(),
+				"the new advance is removed");
+		verify(demandRepository, never()).getSettledDemandIdsByAdvanceDemandId(LICENCE_VESSEL);
+	}
+
+	@Test
+	@DisplayName("Kill switch off restores the previous state-based selection")
+	void onlyPaidKillSwitchRestoresPreviousBehaviour() {
+
+		ReflectionTestUtils.setField(receiptServiceV2, "reverseOnlyPaidAdvanceVessels", false);
+		givenLaterReceiptCarryingAnOldAdvance();
+
+		receiptServiceV2.updateDemandFromReceipt(laterReceiptBill(BigDecimal.ZERO), true);
+
+		Map<String, Demand> updated = capturedDemandsById();
+		assertTrue(updated.containsKey(LICENCE_SETTLED), "as before, the old settlement is reopened");
+		assertEquals(BigDecimal.ZERO, updated.get(LICENCE_VESSEL).getDemandDetails().get(0).getTaxAmount());
+	}
+
+	@Test
+	@DisplayName("A demand paid on any line of the receipt is not treated as merely carried")
+	void demandsCarriedUnpaidNeedsEveryLineZero() {
+
+		BillV2 first = bill(LICENCE_SERVICE, "b1", new ArrayList<>(Arrays.asList(
+				line("b1", "carried", BigDecimal.ZERO),
+				line("b1", "split", BigDecimal.ZERO),
+				line("b1", "unknown", null))));
+		BillV2 second = bill(LICENCE_SERVICE, "b2", new ArrayList<>(Collections.singletonList(
+				line("b2", "split", new BigDecimal("0.01")))));
+
+		assertEquals(Collections.singleton("carried"),
+				ReceiptServiceV2.demandsCarriedUnpaid(Arrays.asList(first, second)));
+		assertTrue(ReceiptServiceV2.demandsCarriedUnpaid(null).isEmpty());
 	}
 
 	// ---------------------------------------------- interim-receipt dimensions wiring
@@ -542,20 +659,30 @@ public class ReceiptServiceV2AdvanceReversalTest {
 				.build();
 	}
 
-	/** A bill whose details carry no money, so the bill-detail pass is a no-op for these tests. */
+	/**
+	 * A bill the cancelled receipt paid on every line, as the receipt that funds an advance does. The
+	 * lines carry no account details, so the bill-detail pass is a no-op for these tests.
+	 */
 	private static BillV2 billFor(String businessService, String billId, String... demandIds) {
 		List<BillDetailV2> details = new ArrayList<>();
-		for (String demandId : demandIds) {
-			details.add(BillDetailV2.builder()
-					.id(billId + "-" + demandId)
-					.demandId(demandId)
-					.fromPeriod(1L)
-					.toPeriod(2L)
-					.amount(BigDecimal.ONE)
-					.amountPaid(BigDecimal.ZERO)
-					.billAccountDetails(new ArrayList<>())
-					.build());
-		}
+		for (String demandId : demandIds)
+			details.add(line(billId, demandId, BigDecimal.ONE));
+		return bill(businessService, billId, details);
+	}
+
+	private static BillDetailV2 line(String billId, String demandId, BigDecimal amountPaid) {
+		return BillDetailV2.builder()
+				.id(billId + "-" + demandId)
+				.demandId(demandId)
+				.fromPeriod(1L)
+				.toPeriod(2L)
+				.amount(BigDecimal.ONE)
+				.amountPaid(amountPaid)
+				.billAccountDetails(new ArrayList<>())
+				.build();
+	}
+
+	private static BillV2 bill(String businessService, String billId, List<BillDetailV2> details) {
 		return BillV2.builder()
 				.id(billId)
 				.tenantId(TENANT)

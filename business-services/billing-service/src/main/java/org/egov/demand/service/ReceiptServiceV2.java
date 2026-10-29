@@ -115,6 +115,22 @@ public class ReceiptServiceV2 {
 	private boolean reverseAllAdvanceVessels;
 
 	/**
+	 * On cancellation, unwind only the advances this receipt actually paid.
+	 *
+	 * <p>An advance row that has been fully drawn on stays flagged unpaid, so it rides on every later
+	 * bill of its service as a line the receipt pays nothing on. Picking advances by their state
+	 * (a negative collection) treated such a row as part of the cancelled receipt: cancelling or
+	 * dishonouring a later licence-fee receipt reopened the fee an earlier cash advance had settled,
+	 * zeroed that advance and posted its settlement reversal (UAT 29-10-2026: 5000008365 receipt
+	 * 000255, 5000008377 receipt 000259). The receipt that funds an advance always records the money
+	 * on that advance's bill line, so a line with an explicit zero {@code amountPaid} is left alone.
+	 *
+	 * <p>Defaults on. Kept as a property only as a kill switch: false restores the previous behaviour.
+	 */
+	@org.springframework.beans.factory.annotation.Value("${emarket.advance.reversal.only.paid.vessels.enabled:true}")
+	private boolean reverseOnlyPaidAdvanceVessels;
+
+	/**
 	 * The only business service whose settled demands may be published to the penalty-regeneration
 	 * topic. The consumer re-drives rent calculation over the settled demand's period, so a licence
 	 * settlement — whose period is a whole fiscal year — must never reach it. The licence penalty
@@ -258,6 +274,33 @@ public class ReceiptServiceV2 {
 	}
 
 	/**
+	 * Ids of demands that appear on these bills only as lines with an explicit zero {@code amountPaid}:
+	 * the receipt paid nothing on them. A demand with any non-zero line, or any line whose
+	 * {@code amountPaid} is missing, is left out, so an unknown amount keeps the previous behaviour.
+	 */
+	static Set<String> demandsCarriedUnpaid(List<BillV2> bills) {
+		Set<String> zeroOnly = new HashSet<>();
+		Set<String> paidOrUnknown = new HashSet<>();
+		if (bills == null)
+			return zeroOnly;
+		for (BillV2 bill : bills) {
+			if (bill == null || bill.getBillDetails() == null)
+				continue;
+			for (BillDetailV2 detail : bill.getBillDetails()) {
+				if (detail == null || detail.getDemandId() == null)
+					continue;
+				BigDecimal paid = detail.getAmountPaid();
+				if (paid != null && paid.compareTo(BigDecimal.ZERO) == 0)
+					zeroOnly.add(detail.getDemandId());
+				else
+					paidOrUnknown.add(detail.getDemandId());
+			}
+		}
+		zeroOnly.removeAll(paidOrUnknown);
+		return zeroOnly;
+	}
+
+	/**
 	 * Update the demand collection details based on the bill
 	 * 
 	 * @param billRequest
@@ -313,6 +356,15 @@ public class ReceiptServiceV2 {
 
         List<AdvSettlement> settledDemandIds = null;
 
+		// Demands on this receipt's bills only as lines it paid nothing on — e.g. an earlier advance,
+		// already drawn on, that rides along because it is still flagged unpaid. Empty with the
+		// kill switch off, so the cancellation below behaves exactly as before.
+		final Set<String> carriedUnpaid = isReceiptCancellation && reverseOnlyPaidAdvanceVessels
+				? demandsCarriedUnpaid(bills)
+				: Collections.emptySet();
+		// Demands reopened because an advance this receipt paid had settled them.
+		final Set<String> reopenedBySettlement = new HashSet<>();
+
 		/**
 		 * Business service of each settled demand, captured while the demand objects are in hand so
 		 * the penalty publish below can tell a rent settlement from a licence one. Deliberately not
@@ -337,6 +389,7 @@ public class ReceiptServiceV2 {
                 )
                 .map(Demand::getId)
                 .filter(Objects::nonNull)
+                .filter(id -> !carriedUnpaid.contains(id))
                 .distinct()
                 .collect(Collectors.toList());
 
@@ -358,6 +411,7 @@ public class ReceiptServiceV2 {
                                 bySettledDemand.putIfAbsent(row.getSettledDemandId(), row);
                     }
                     settledDemandIds = new ArrayList<>(bySettledDemand.values());
+                    reopenedBySettlement.addAll(bySettledDemand.keySet());
                     if(!settledDemandIds.isEmpty()){
 						DemandCriteria searchCriteria = DemandCriteria.builder()
 					.tenantId(tenantId)
@@ -389,6 +443,10 @@ public class ReceiptServiceV2 {
 	    if(isReceiptCancellation) {
 		demandRequest.getDemands().forEach(d -> {
 			if (d.getDemandDetails() == null)
+				return;
+			// An advance this receipt paid nothing on keeps its balance; one an unwound advance had
+			// settled is still zeroed, as before.
+			if (carriedUnpaid.contains(d.getId()) && !reopenedBySettlement.contains(d.getId()))
 				return;
 			d.getDemandDetails().forEach(dd -> {
 				String code = dd.getTaxHeadMasterCode();

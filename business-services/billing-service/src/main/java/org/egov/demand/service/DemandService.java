@@ -117,6 +117,15 @@ public class DemandService {
 	@org.springframework.beans.factory.annotation.Value("${emarket.fi.advance.settlement.existing.demand.enabled:false}")
 	private boolean advanceSettlementFiEnabled;
 
+	/**
+	 * Also record, on each advance settlement row, how much of the advance it drew and when. Record only:
+	 * nothing reads the two columns yet; they are kept so a later change can tell which receipt's money
+	 * paid which settlement. Off by default, and must stay off until the columns exist
+	 * (emarket-v1 docs/sql/add_settlement_amount.sql): with it on and the columns missing, the insert fails.
+	 */
+	@org.springframework.beans.factory.annotation.Value("${emarket.advance.settlement.record.amount.enabled:false}")
+	private boolean recordSettlementAmount;
+
 	@Autowired
 	private ApplicationProperties applicationProperties;
 
@@ -626,6 +635,12 @@ public class DemandService {
 					.anyMatch(dd -> dd.getTaxHeadMasterCode() != null
 							&& dd.getTaxHeadMasterCode().contains("ADVANCE"));
             if(!advanceDemandIds.isEmpty() && !currentDemandHasAdvance){
+				Map<String, Demand> advanceAfter = new HashMap<>();
+				if (recordSettlementAmount)
+					for (Demand d : apportionDemandResponse.getDemands())
+						if (d.getId() != null)
+							advanceAfter.putIfAbsent(d.getId(), d);
+				Long settledAt = recordSettlementAmount ? System.currentTimeMillis() : null;
 				for (String advanceDemandId : advanceDemandIds) {
 					AdvSettlement advSettlement = new AdvSettlement();
 					advSettlement.setAdvanceDemandId(advanceDemandId);
@@ -633,7 +648,12 @@ public class DemandService {
 					advSettlement.setConsumerCode(demand.getConsumerCode());
 					advSettlement.setTaxPeriodFrom(demand.getTaxPeriodFrom());
 					advSettlement.setTaxPeriodTo(demand.getTaxPeriodTo());
-					demandRepository.saveAdvSettlementDemandIds(advSettlement);
+					if (recordSettlementAmount)
+						demandRepository.saveAdvSettlementDemandIds(advSettlement,
+								advanceDrawn(advanceCollectedBefore.get(advanceDemandId), advanceAfter.get(advanceDemandId)),
+								settledAt);
+					else
+						demandRepository.saveAdvSettlementDemandIds(advSettlement);
 				}
 				settledFromAdvance = true;
 			}
@@ -730,6 +750,16 @@ public class DemandService {
 		}
 
 		return new ArrayList<>(demandsWithAdvance);
+	}
+
+	/**
+	 * How much of an advance one apportion drew: its advance collection runs negative as it is used, so
+	 * the drop from before to after. Null when either side is unknown, never a guess.
+	 */
+	static BigDecimal advanceDrawn(BigDecimal collectedBefore, Demand advanceAfter) {
+		if (collectedBefore == null || advanceAfter == null)
+			return null;
+		return collectedBefore.subtract(sumAdvanceCollected(advanceAfter));
 	}
 
 	/**

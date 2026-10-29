@@ -1298,8 +1298,30 @@ public class DemandRepository {
                 settlement.getTaxPeriodFrom(),
                 settlement.getTaxPeriodTo()
         );
-    
 
+
+	}
+
+	/**
+	 * The same settlement row, plus how much of the advance it drew and when. Record only: nothing reads
+	 * the two columns yet. Needs {@code settled_amount} and {@code createdtime} on the table (see
+	 * emarket-v1 docs/sql/add_settlement_amount.sql); the caller uses it only when that switch is on.
+	 */
+	public void saveAdvSettlementDemandIds(AdvSettlement settlement, BigDecimal settledAmount, Long createdTime) {
+		String SQL =
+            "INSERT INTO eg_emarket_demand_settlement_info " +
+            "(advance_demandid, settled_demandid, consumercode, periodfrom, periodto, settled_amount, createdtime) " +
+            "VALUES (?, ?, ?, ?, ?, ?, ?)";
+		jdbcTemplate.update(
+                SQL,
+                settlement.getAdvanceDemandId(),
+                settlement.getSettledDemandId(),
+                settlement.getConsumerCode(),
+                settlement.getTaxPeriodFrom(),
+                settlement.getTaxPeriodTo(),
+                settledAmount,
+                createdTime
+        );
 	}
 
 public List<AdvSettlement> getSettledDemandIdsByAdvanceDemandId(String advanceDemandId) {
