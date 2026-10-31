@@ -2,6 +2,7 @@ package org.egov.demand.model;
 
 
 import java.math.BigDecimal;
+import java.util.Map;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,7 +10,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@Builder
+@Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
 public class FiReport {
@@ -59,4 +60,12 @@ public class FiReport {
      * value and SAP can clear them. Null on every other row.
      */
     private String assignment;
+
+    /**
+     * Collection rows only. Set on a leg that merges several same-GL legs of one receipt (one per month
+     * paid) into the single line SAP receives: the demand id each part cleared, with its amount. The
+     * parts add up to {@code collectionAmount}. Null on every unmerged row, whose
+     * {@code transactionNumber} already names the one demand it cleared.
+     */
+    private Map<String, BigDecimal> demandSplit;
 }

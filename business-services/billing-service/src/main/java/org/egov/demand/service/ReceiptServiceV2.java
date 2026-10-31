@@ -36,6 +36,7 @@ import org.egov.demand.model.GstAdvanceMap;
 import org.egov.demand.model.PaymentBackUpdateAudit;
 import org.egov.demand.model.PaymentMarketInfo;
 import org.egov.demand.producer.Producer;
+import org.egov.demand.repository.CollectionFiRowMerger;
 import org.egov.demand.repository.DemandRepository;
 import org.egov.demand.repository.RegularCollectionPlan;
 import org.egov.demand.util.Constants;
@@ -129,6 +130,19 @@ public class ReceiptServiceV2 {
 	 */
 	@org.springframework.beans.factory.annotation.Value("${emarket.advance.reversal.only.paid.vessels.enabled:true}")
 	private boolean reverseOnlyPaidAdvanceVessels;
+
+	/**
+	 * One line per GL on a collection voucher (BMC 30-10-2026): a receipt paying several months posts one
+	 * credit per receivable GL with the months added up, instead of one per month. Applies to receipts
+	 * taken while on; their reversal mirrors them merged. The per-month parts are kept on the merged leg
+	 * (demand_split), so open balances read exactly as before.
+	 *
+	 * <p>Needs the demand_split column (emarket-v1 docs/sql/add_fi_collection_demand_split.sql); without
+	 * it nothing is merged whatever this says. Default off. Turning it off later is safe: legs already
+	 * merged keep reading back through the column.
+	 */
+	@org.springframework.beans.factory.annotation.Value("${emarket.fi.collection.merge.same.gl.enabled:false}")
+	private boolean mergeSameGlCollectionLegs;
 
 	/**
 	 * The only business service whose settled demands may be published to the penalty-regeneration
@@ -539,6 +553,10 @@ public class ReceiptServiceV2 {
 			// regular — is a market collection. The advance is identified downstream by its
 			// GL codes, not by the report type.
 			report.forEach(r -> r.setReportType(FiReportType.UPMKT_COLL));
+
+			// Last, so the money leg already carries any Coin Note and every leg its final values.
+			if (mergeSameGlCollectionLegs && demandRepository.hasDemandSplitColumn())
+				report = CollectionFiRowMerger.merge(report, demandRepository::isMoneyLeg);
 
 			collectionReportList.addAll(report);
 			demandRepository.batchInsertCollectionFiReports(collectionReportList);

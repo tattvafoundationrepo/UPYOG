@@ -381,7 +381,14 @@ public class DemandRepository {
             // table, so a twelve-month restoration batch paid for it twenty-four times.
             AdvanceReceiptRef advanceRef = null;
 
-            if (BS_RENTAL.equalsIgnoreCase(demand.getBusinessService()) && demand.isApportionedAgainstAdvance()) {
+            // A transfer JV (TransferJv) recognises no GST, so there is no GST liability to net off here.
+            boolean transferJv = TransferJv.sources(demand) != null;
+            if (TransferJv.isMarked(demand) && !transferJv) {
+                log.error("Demand {} ({}) carries a malformed {} marker; posting an ordinary demand voucher",
+                        demand.getId(), demand.getConsumerCode(), TransferJv.KEY);
+            }
+            if (BS_RENTAL.equalsIgnoreCase(demand.getBusinessService()) && demand.isApportionedAgainstAdvance()
+                    && !transferJv) {
 
                 // The batch tally below covers demands within THIS request; this lock covers
                 // concurrent requests for the same licensee, which would otherwise both read
@@ -749,6 +756,15 @@ public class DemandRepository {
         + " remarks, payment_mode_details, is_new,"
         + " created_at, updated_at, doc_type, cost_center, commitmentitem, report_type, assignment "
         + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? , ? , ? , ? , ?)";
+    // The split column is written only where it exists, so a database without it gets the very same
+    // statement as before. Decided per batch, not per row: one INSERT shape for the whole voucher.
+    // A row carrying parts proves the column exists (they came from it, or from a merge that required
+    // it), so a failed lookup can never silently drop them.
+    final boolean withSplit = hasDemandSplitColumn()
+            || reports.stream().anyMatch(r -> r.getDemandSplit() != null && !r.getDemandSplit().isEmpty());
+    if (withSplit)
+        sql = sql.replace(" assignment ) VALUES (", " assignment, demand_split ) VALUES (")
+                 .replace(", ? , ? , ? , ? , ?)", ", ? , ? , ? , ? , ?, CAST(? AS jsonb))");
 
 
     jdbcTemplate.batchUpdate(sql, reports, 100, (ps, r) -> {
@@ -780,6 +796,8 @@ public class DemandRepository {
         ps.setString(20,    r.getCommitmentItem());
         ps.setString(21,    r.getReportType());
         ps.setString(22,    r.getAssignment());
+        if (withSplit)
+            ps.setString(23, demandSplitJson(r.getDemandSplit()));
     });
 
     log.info("Batch inserted {} Collection FI Report records", reports.size());
@@ -1817,6 +1835,9 @@ public List<FiReport> buildDemandFiReports(Demand demand, List<DemandDetail> ext
     // while that feature is on.
     List<PerHeadReceivable.Head> receivableHeads = new ArrayList<>();
 
+    // Transfer reclassification (BMC 30-10-2026): no revenue / GST lines, the receivable moves between licences.
+    List<TransferJv.Source> jvSources = TransferJv.sources(demand);
+
     List<DemandDetail> detailsForFi = demand.getDemandDetails();
     if (extraDetails != null && !extraDetails.isEmpty()) {
         detailsForFi = new ArrayList<>(detailsForFi);
@@ -1828,6 +1849,7 @@ public List<FiReport> buildDemandFiReports(Demand demand, List<DemandDetail> ext
            continue;
         String th = dd.getTaxHeadMasterCode();
 
+          if (jvSources == null)
           reports.add(FiReport.builder()
             .transactionNumber(demand.getId())
             .docDate(postingDate)
@@ -1918,16 +1940,25 @@ public List<FiReport> buildDemandFiReports(Demand demand, List<DemandDetail> ext
     }
 
     if (!perHeadLines.isEmpty()) {
-        reports.addAll(perHeadReceivableRows(demand, perHeadLines, settledFromAdvance, postingDate,
-                consumerCode, fund, fundCenter, businessArea, functionalArea, advance.documentNo));
+        List<FiReport> receivable = perHeadReceivableRows(demand, perHeadLines, settledFromAdvance, postingDate,
+                consumerCode, fund, fundCenter, businessArea, functionalArea, advance.documentNo);
+        if (jvSources != null) {
+            List<TransferJvLine> jvLines = new ArrayList<>();
+            for (PerHeadReceivable.Line l : perHeadLines)
+                jvLines.add(new TransferJvLine(l.taxHeadCode, l.glCode, l.amount));
+            receivable = asTransferJv(demand, receivable, jvLines, jvSources, postingDate,
+                    fund, fundCenter, businessArea, functionalArea);
+        }
+        reports.addAll(receivable);
         // The Revenue Adjustment above replaces the 4-Series pair; posting both would credit the
         // 4-Series accounts and revenue twice.
         return reports;
     }
 
     // 1️⃣ Customer / Receivable (Dr)
+    List<FiReport> single = new ArrayList<>();
      if(openReceivable.compareTo(BigDecimal.ZERO) != 0){
-    reports.add(FiReport.builder()
+    single.add(FiReport.builder()
             .transactionNumber(demand.getId())
             .docDate(postingDate)
             .postingDate(postingDate)
@@ -1948,11 +1979,79 @@ public List<FiReport> buildDemandFiReports(Demand demand, List<DemandDetail> ext
             .build());
      }
 
+    if (jvSources != null) {
+        // The whole receivable (open + advance-settled) moves from the source licence(s).
+        reports.addAll(asTransferJv(demand, single,
+                Collections.singletonList(new TransferJvLine(null, receivableGlCode, totalReceivable)),
+                jvSources, postingDate, fund, fundCenter, businessArea, functionalArea));
+        // The 4-Series pair credits revenue; a reclassification posts none.
+        return reports;
+    }
+    reports.addAll(single);
+
     reports.addAll(buildFourSeriesPair(demand, fourSeriesLines, postingDate, consumerCode,
             fund, fundCenter, businessArea, functionalArea, advance.documentNo));
 
     return reports;
 }
+
+/** One receivable account a transfer JV moves: the head it came from (null for the single control line). */
+private static final class TransferJvLine {
+    private final String taxHeadCode;
+    private final String glCode;
+    private final BigDecimal amount;
+
+    TransferJvLine(String taxHeadCode, String glCode, BigDecimal amount) {
+        this.taxHeadCode = taxHeadCode;
+        this.glCode = glCode;
+        this.amount = amount;
+    }
+}
+
+/**
+ * Turns a carried demand's receivable rows into BMC's transfer JV (30-10-2026): its receivable debits (new licence
+ * reference) are tagged {@link FiReportType#UPMKT_TRF_JV}, and each account is credited back to the source
+ * licence(s) for the same amount (old licence reference, same GL, posting key 50), so the receivable moves between
+ * customers and its total is unchanged. Any Revenue Adjustment credit (a demand settled from an advance) is left as
+ * it is, with its own type. The source-side credits carry the new demand's id like every row of the document; the
+ * open-receivable readers leave them out (see {@link #TRANSFER_JV_SOURCE_LEG_EXCLUSION}), so collections on the new
+ * licence still find the whole receivable.
+ */
+private List<FiReport> asTransferJv(Demand demand, List<FiReport> receivable, List<TransferJvLine> lines,
+                                    List<TransferJv.Source> sources, Long postingDate, String fund,
+                                    String fundCenter, String businessArea, String functionalArea) {
+    List<FiReport> out = new ArrayList<>();
+    for (FiReport r : receivable) {
+        if ("40".equals(r.getPostingKey()))
+            r.setReportType(FiReportType.UPMKT_TRF_JV);
+        out.add(r);
+    }
+    String headerText = demand.getDemandSeqNo() != null ? demand.getDemandSeqNo().toString() : null;
+    long now = System.currentTimeMillis();
+    for (TransferJvLine l : lines) {
+        if (l.amount == null || l.amount.signum() == 0)
+            continue;
+        String remark = l.taxHeadCode != null && isFourSeriesOrPlaceholderGl(l.glCode)
+                ? l.taxHeadCode : RegularCollectionPlan.RECEIVABLE_REMARK;
+        for (Map.Entry<String, BigDecimal> part : TransferJv.split(l.amount, l.taxHeadCode, sources).entrySet()) {
+            if (part.getValue().signum() == 0)
+                continue;
+            FiReport credit = perHeadRow(demand, "50", l.glCode, part.getValue(), remark, null, postingDate,
+                    part.getKey(), fund, fundCenter, businessArea, functionalArea, headerText, now);
+            credit.setReportType(FiReportType.UPMKT_TRF_JV);
+            out.add(credit);
+        }
+    }
+    return out;
+}
+
+/**
+ * The source-licence side of a transfer JV: its credits (and, once reversed, their mirrors). They sit on the new
+ * demand's id but belong to the old licence's receivable, so a reader of the new demand's open balance skips them.
+ */
+static final String TRANSFER_JV_SOURCE_LEG_EXCLUSION =
+        " AND NOT (COALESCE(report_type, '') = '" + FiReportType.UPMKT_TRF_JV + "' AND posting_key = '50') "
+      + " AND NOT (COALESCE(report_type, '') = '" + FiReportType.UPMKT_TRF_JV_REV + "' AND posting_key = '40') ";
 
 /** Remark on the Revenue Adjustment credits (BMC 24-Sep-2026, "Revenue Adjustment entry"). */
 static final String REVENUE_ADJUSTMENT_REMARK = "Revenue Adjustment";
@@ -2510,9 +2609,9 @@ public Map<String, Map<String, BigDecimal>> openReceivableByDemand(java.util.Col
       // unwind (buildFourSeriesReversalFiReports) gives it back. Counting it would send cash there.
       + "            AND COALESCE(report_type, '') NOT IN ('" + FiReportType.UPMKT_DEMDADV_4S + "', '"
       + FiReportType.UPMKT_DEMDADV_4S_REV + "') "
+      + TRANSFER_JV_SOURCE_LEG_EXCLUSION
       + "         UNION ALL "
-      + "         SELECT transaction_number, gl_code, posting_key, collection_amount, remarks "
-      + "           FROM public.eg_emarket_fi_report_collection WHERE transaction_number IN (" + in + ") ) x "
+      + collectionCreditsByDemand(in) + " ) x "
       + " WHERE " + receivableGlPredicate("gl_code", "remarks")
       + " GROUP BY transaction_number, gl_code "
       + "HAVING SUM(CASE WHEN posting_key = '40' THEN collection_amount ELSE -collection_amount END) > 0 "
@@ -2683,7 +2782,11 @@ private List<FiReport> mirrorCollection(String scope, String receiptNo, String l
     jdbcTemplate.query(
             "SELECT transaction_number, doc_date, reference_no, document_header_text, posting_key, gl_code, "
           + "       collection_amount, fund, fund_centre, functional_area, business_area, remarks, "
-          + "       payment_mode_details, doc_type, assignment" + scope + " ORDER BY id",
+          + "       payment_mode_details, doc_type, assignment, "
+          // Read through the row, not the column, so the parts come back whether or not the column check
+          // could run: NULL without the column, JSON null on an unmerged leg. One receipt's rows only.
+          + "       (to_jsonb(eg_emarket_fi_report_collection) -> 'demand_split')::text AS demand_split"
+          + scope + " ORDER BY id",
             new Object[] { receiptNo, FiReportType.UPMKT_COLL, licence },
             (ResultSet rs) -> {
                 Long date = reversalDate != null ? reversalDate : (Long) rs.getObject("doc_date");
@@ -2704,12 +2807,92 @@ private List<FiReport> mirrorCollection(String scope, String receiptNo, String l
                         .paymentModeDetails(rs.getString("payment_mode_details"))
                         .docType(rs.getString("doc_type"))
                         .assignment(rs.getString("assignment"))
+                        // A merged leg is given back merged, with the same parts, so each month it
+                        // cleared is reopened by exactly what it was credited.
+                        .demandSplit(parseDemandSplit(rs.getString("demand_split")))
                         .isNew(Boolean.TRUE)
                         .createdAt(now)
                         .updatedAt(now)
                         .build());
             });
     return rows;
+}
+
+/**
+ * The collection legs of {@link #openReceivableByDemand}, one per (leg, demand it cleared): an unmerged
+ * leg as stored, a merged one (CollectionFiRowMerger) expanded back into its parts. Expanded, the rows are
+ * the very ones that were written before merging, so every open balance is what it was. Without the
+ * column, the original single-table read.
+ */
+private String collectionCreditsByDemand(String in) {
+    if (!hasDemandSplitColumn())
+        return "         SELECT transaction_number, gl_code, posting_key, collection_amount, remarks "
+             + "           FROM public.eg_emarket_fi_report_collection WHERE transaction_number IN (" + in + ")";
+    return "         SELECT COALESCE(s.key, c.transaction_number) AS transaction_number, c.gl_code, c.posting_key, "
+         + "                COALESCE(s.value::numeric, c.collection_amount) AS collection_amount, c.remarks "
+         + "           FROM public.eg_emarket_fi_report_collection c "
+         // jsonb_each_text of NULL yields nothing, so an unmerged leg keeps exactly one row.
+         + "           LEFT JOIN LATERAL jsonb_each_text(CASE WHEN jsonb_typeof(c.demand_split) = 'object' "
+         + "                                                  THEN c.demand_split END) s ON TRUE "
+         + "          WHERE COALESCE(s.key, c.transaction_number) IN (" + in + ")";
+}
+
+/** Cached once found; a miss is asked again, so adding the column needs no restart. */
+private volatile boolean demandSplitColumnFound;
+
+/**
+ * Does the collection FI table carry {@code demand_split} (emarket-v1 docs/sql/add_fi_collection_demand_split.sql)?
+ * Readers use it whenever it exists, whatever the merge switch says now, so legs merged while the
+ * switch was on keep reading back correctly after it is turned off.
+ */
+public boolean hasDemandSplitColumn() {
+    if (demandSplitColumnFound)
+        return true;
+    if (jdbcTemplate == null)
+        return false;
+    try {
+        Boolean found = jdbcTemplate.queryForObject(
+                "SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' "
+              + "  AND table_name = 'eg_emarket_fi_report_collection' AND column_name = 'demand_split')",
+                Boolean.class);
+        demandSplitColumnFound = Boolean.TRUE.equals(found);
+    } catch (DataAccessException e) {
+        log.warn("Could not tell whether eg_emarket_fi_report_collection.demand_split exists: {}", e.getMessage());
+    }
+    return demandSplitColumnFound;
+}
+
+/** The money leg, which a collection voucher never merges (CollectionFiRowMerger). */
+public boolean isMoneyLeg(FiReport r) {
+    return r != null && (BANK_LEG_REMARK.equals(r.getRemarks())
+            || cashBankGlCode.equals(r.getGlCode()) || chequeBankGlCode.equals(r.getGlCode()));
+}
+
+private static final com.fasterxml.jackson.databind.ObjectMapper SPLIT_JSON = new com.fasterxml.jackson.databind.ObjectMapper();
+
+static String demandSplitJson(Map<String, BigDecimal> split) {
+    if (split == null || split.isEmpty())
+        return null;
+    try {
+        return SPLIT_JSON.writeValueAsString(split);
+    } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+        // Unreachable for a map of strings to numbers; failing loud beats a merged leg with no parts.
+        throw new IllegalStateException("Could not write the demand split " + split, e);
+    }
+}
+
+static Map<String, BigDecimal> parseDemandSplit(String json) {
+    if (json == null || json.trim().isEmpty() || "null".equals(json.trim()))
+        return null;
+    try {
+        Map<String, BigDecimal> split = SPLIT_JSON.readValue(json,
+                new com.fasterxml.jackson.core.type.TypeReference<LinkedHashMap<String, BigDecimal>>() { });
+        return split == null || split.isEmpty() ? null : split;
+    } catch (java.io.IOException e) {
+        // Never abort a cancellation's FI over it: the mirrored leg still balances, it just names one demand.
+        log.error("Unreadable demand split {}; the mirrored leg names its first demand only", json, e);
+        return null;
+    }
 }
 
 /**

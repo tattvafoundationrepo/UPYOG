@@ -41,4 +41,14 @@ public final class FiReportType {
 
     /** The mirror of {@link #UPMKT_DEMDADV_4S}, written when the demand or its receipt is reversed. */
     public static final String UPMKT_DEMDADV_4S_REV = "upmktdemdadv4srev";
+
+    /**
+     * Transfer reclassification JV (BMC 30-10-2026): the old licence's unpaid dues move to the new licence as
+     * Dr 4-Series receivable (new licence reference) / Cr the same 4-Series receivable (old licence reference). No
+     * revenue, no GST. Outside the GST return's report_type filter by design. Must stay in step with emarket-v1.
+     */
+    public static final String UPMKT_TRF_JV = "upmkttrfjv";
+
+    /** The mirror of {@link #UPMKT_TRF_JV}, written when the transfer (or the carried demand) is reversed. */
+    public static final String UPMKT_TRF_JV_REV = "upmkttrfjvrev";
 }
