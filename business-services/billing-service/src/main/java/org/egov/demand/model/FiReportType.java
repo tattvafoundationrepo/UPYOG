@@ -51,4 +51,15 @@ public final class FiReportType {
 
     /** The mirror of {@link #UPMKT_TRF_JV}, written when the transfer (or the carried demand) is reversed. */
     public static final String UPMKT_TRF_JV_REV = "upmkttrfjvrev";
+
+    /**
+     * Transfer JV of an advance (BMC 05-11-2026), in the COLLECTION table: the unused advance carried to the new
+     * licence moves on the advance liability, Dr 350410215 (old licence reference) / Cr 350410215 (new licence
+     * reference). No GST, no bank. Every collection-table reader that means a receipt selects {@link #UPMKT_COLL} or a
+     * receipt number, so these rows are invisible to them. Must stay in step with emarket-v1.
+     */
+    public static final String UPMKT_COL_TRF_JV = "upmktcoltrfjv";
+
+    /** The mirror of {@link #UPMKT_COL_TRF_JV}, written by emarket-v1 when the carried advance is reversed. */
+    public static final String UPMKT_COL_TRF_JV_REV = "upmktcoltrfjvrev";
 }

@@ -360,6 +360,9 @@ public class DemandRepository {
         // licensee in one DemandRequest.
         Map<String, BigDecimal> releasedInThisBatch = new HashMap<>();
 
+        // Collection-file JVs of carried advances (TransferAdvanceJv), written with the demand vouchers below.
+        List<FiReport> advanceJvRows = new ArrayList<>();
+
         for (Demand demand : demands) {
 
             // GST netting-off voucher (Accounting Entries 2025, entry 4): a demand raised
@@ -447,6 +450,22 @@ public class DemandRepository {
         //         .build());
 
 			//reportList.addAll(buildFiReportsFromDemand(demand , "50", false , null));
+			// A transfer's carried advance (BMC 05-11-2026) moves by a JV in the collection file, Dr 350410215 old
+			// licence / Cr 350410215 new licence. A demand that is only that advance posts no demand voucher.
+			TransferAdvanceJv.Plan advanceJv = TransferAdvanceJv.plan(demand);
+			if (TransferAdvanceJv.isMarked(demand) && advanceJv == null) {
+			    log.error("Demand {} ({}) carries a {} marker that does not match its advance; posting the ordinary "
+			            + "demand voucher", demand.getId(), demand.getConsumerCode(), TransferAdvanceJv.KEY);
+			}
+			if (advanceJv != null) {
+			    advanceJvRows.addAll(TransferAdvanceJv.rows(demand, advanceJv,
+			            resolveDemandDocDate(demand, AdvanceReceiptRef.NONE), marketDimension(demand, "fund"),
+			            marketDimension(demand, "fundCenter"), marketDimension(demand, "businessArea"),
+			            marketDimension(demand, "functionalArea")));
+			    if (TransferAdvanceJv.isAdvanceOnly(demand)) {
+			        continue;
+			    }
+			}
 			if (!"TX.Emarket_Deposit_Fees".equalsIgnoreCase(demand.getBusinessService())
 			        && !isRecognisedOnCollection(demand)) {
 			    List<FiReport> demandFiReports = buildDemandFiReports(demand, nettingDetails, advanceRef);
@@ -482,7 +501,17 @@ public class DemandRepository {
 		if(!reportList.isEmpty()){
             batchInsertDemandFiReports(reportList);
 		}
+		if (!advanceJvRows.isEmpty()) {
+		    batchInsertCollectionFiReports(advanceJvRows);
+		}
 
+	}
+
+	/** One of the market dimensions emarket-v1 puts on a demand's additionalDetails, or null. */
+	private static String marketDimension(Demand demand, String key) {
+	    Object add = demand.getAdditionalDetails();
+	    Object v = add instanceof Map ? ((Map<?, ?>) add).get(key) : null;
+	    return v == null ? null : v.toString();
 	}
 
 
